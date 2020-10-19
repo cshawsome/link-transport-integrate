@@ -15,3 +15,6 @@ dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/HCAP/HC16/",
 
 HCAP <- read_da_dct(data_path, dict_path, HHIDPN = "TRUE")
 
+#---- variables of interest ----
+HCAP_vars <- c("HHIDPN", )
+
