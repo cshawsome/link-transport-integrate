@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr")
+p_load("tidyverse", "magrittr", "stringr")
 
 #---- source scripts ----
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
@@ -26,7 +26,44 @@ not_these <- c("TEST", "INTRO", "H1RMSESCORE", "H1RTICSSCORE", "H1R11066SCORE",
 HCAP_assessment <- HCAP %>% dplyr::select(contains(HCAP_vars)) %>% 
   dplyr::select(-c(contains(not_these), "H1RMSE11T")) #H1RMSE11T1 needs to stay
 
+#---- coding correct/incorrect answers ----
+#Need to recode 2 = correct (different level) to 1
+recode_correct <- c("H1RMSE17", "H1RMSE21")
+
+#Need to recode 5 = error to 0
+recode_incorrect <- 
+  colnames(HCAP_assessment)[as.logical(
+    str_detect(colnames(HCAP_assessment), "MSE") + 
+      str_detect(colnames(HCAP_assessment), "TICS") + 
+      str_detect(colnames(HCAP_assessment), "1066"))] 
+recode_incorrect <- recode_incorrect[-which(recode_incorrect == "H1RMSE11T1" | 
+                                              recode_incorrect == "H1RMSE13")]
+for(var in recode_incorrect){
+  HCAP_assessment[which(HCAP_assessment[, var] == 5), var] <- 0
+}
+
+for(var in recode_correct){
+  HCAP_assessment[which(HCAP_assessment[, var] == 2), var] <- 1
+}
+
+#Sanity check
+for(var in colnames(HCAP_assessment)){
+  print(var)
+  print(table(HCAP_assessment[, var], useNA = "ifany"))
+}
+
+#---- code missigness ----
+
+
+
+
 #---- sum scores and averages of repeated trials ----
+HCAP_assessment %<>% 
+  mutate("H1RMSE12SCORE" = rowSums(HCAP_assessment %>% 
+                                     dplyr::select(contains("H1RMSE12"))))
+
+#Sanity check
+View(HCAP_assessment %>% dplyr::select(contains("H1RMSE12")))
 
 
 #---- make correlation matrix ----
