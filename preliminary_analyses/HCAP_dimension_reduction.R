@@ -20,7 +20,7 @@ HCAP <- read_da_dct(data_path, dict_path, HHIDPN = "TRUE")
 #---- variables of interest ----
 HCAP_vars <- c("HHIDPN", "MSE", "TICS", "WLIMM1", "WLIMM2", "WLIMM3", "1066", 
                "SCORE")
-not_these <- c("TEST", "INTRO", "H1RMSESCORE", "H1RTICSSCORE", "H1R11066SCORE", 
+not_these <- c("TEST", "INTRO", "H1RMSESCORE", "H1RTICSSCORE", "H1R1066SCORE", 
                "SCORESE", "CESDSCORE", "STSCORE")
 
 HCAP_assessment <- HCAP %>% dplyr::select(contains(HCAP_vars)) %>% 
@@ -46,16 +46,41 @@ for(var in recode_correct){
   HCAP_assessment[which(HCAP_assessment[, var] == 2), var] <- 1
 }
 
-#Sanity check
-for(var in colnames(HCAP_assessment)){
-  print(var)
-  print(table(HCAP_assessment[, var], useNA = "ifany"))
-}
+# #Sanity check
+# for(var in colnames(HCAP_assessment)){
+#   print(var)
+#   print(table(HCAP_assessment[, var], useNA = "ifany"))
+# }
 
 #---- code missigness ----
+recode_missing_97 <- colnames(HCAP_assessment)[as.logical(
+  str_detect(colnames(HCAP_assessment), "MSE") + 
+    str_detect(colnames(HCAP_assessment), "H1RCPIMMSCORE") + 
+    str_detect(colnames(HCAP_assessment), "H1RCPDELSCORE"))]
 
+recode_missing_8 <- colnames(HCAP_assessment)[as.logical(
+  str_detect(colnames(HCAP_assessment), "TICS") + 
+    str_detect(colnames(HCAP_assessment), "1066"))]
 
+recode_missing_996 <- c("H1RNSSCORE", "H1RTMASCORE", "H1RTMBSCORE")
+  
+for(var in recode_missing_97){
+  HCAP_assessment[which(HCAP_assessment[, var] >= 97), var] <- NA
+}
 
+for(var in recode_missing_8){
+  HCAP_assessment[which(HCAP_assessment[, var] >= 8), var] <- NA
+}
+
+for(var in recode_missing_996){
+  HCAP_assessment[which(HCAP_assessment[, var] >= 996), var] <- NA
+}
+
+# #Sanity check
+# for(var in colnames(HCAP_assessment)){
+#   print(var)
+#   print(table(HCAP_assessment[, var], useNA = "ifany"))
+# }
 
 #---- sum scores and averages of repeated trials ----
 HCAP_assessment %<>% 
