@@ -98,6 +98,10 @@ View(HCAP_assessment %>% dplyr::select(contains("H1RMSE12")))
 View(HCAP_assessment %>% dplyr::select(contains("H1RWLIMM")))
 table(HCAP_assessment$H1RWLIMMSCORE, useNA = "ifany")
 
+#Drop item-level for these variables
+HCAP_assessment %<>% dplyr::select(-c(paste0("H1RMSE12", LETTERS[seq(1, 5)]), 
+                                      paste0("H1RWLIMM", seq(1, 3), "SCORE")))
+
 #---- make correlation matrix ----
 
 
