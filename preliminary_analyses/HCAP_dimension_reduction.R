@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "stringr")
+p_load("tidyverse", "magrittr", "stringr", "ggcorrplot")
 
 #---- source scripts ----
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
@@ -16,6 +16,8 @@ dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/HCAP/HC16/",
                     "HC16sta/HC16HP_R.dct")
 
 HCAP <- read_da_dct(data_path, dict_path, HHIDPN = "TRUE")
+cog_test_labels <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                            "cog_test_meaningful_labels.csv"))
 
 #---- variables of interest ----
 HCAP_vars <- c("HHIDPN", "MSE", "TICS", "WLIMM1", "WLIMM2", "WLIMM3", "1066", 
@@ -103,5 +105,25 @@ HCAP_assessment %<>% dplyr::select(-c(paste0("H1RMSE12", LETTERS[seq(1, 5)]),
                                       paste0("H1RWLIMM", seq(1, 3), "SCORE")))
 
 #---- make correlation matrix ----
+# #Number of people with complete battery = 2303
+# num_complete <- rowSums(is.na(HCAP_assessment[, 2:ncol(HCAP_assessment)]))
+# table(num_complete, useNA = "ifany")
 
+HCAP_corr <- cor(HCAP_assessment[, 2:ncol(HCAP_assessment)], 
+                 use = "complete.obs")
+colnames(HCAP_corr) <- unlist(cog_test_labels[`Variable Name` == 
+                                                colnames(HCAP_corr), "Label"])
+rownames(HCAP_corr) <- colnames(HCAP_corr)
+
+#Visualize the matrix
+HCAP_corr_plot <- ggcorrplot(HCAP_corr, hc.order = TRUE) + 
+  theme(axis.text.x = element_text(size = 5), 
+        axis.text.y = element_text(size = 5), 
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 6))
+
+ggsave(paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/",
+              "figures/HCAP_corr.jpeg"), 
+       plot = HCAP_corr_plot, device = "jpeg", width = 5, height = 5, 
+       units = "in", dpi = 300)
 
