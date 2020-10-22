@@ -85,11 +85,18 @@ for(var in recode_missing_996){
 #---- sum scores and averages of repeated trials ----
 HCAP_assessment %<>% 
   mutate("H1RMSE12SCORE" = rowSums(HCAP_assessment %>% 
-                                     dplyr::select(contains("H1RMSE12"))))
+                                     dplyr::select(contains("H1RMSE12")), 
+                                   na.rm = TRUE), 
+         "H1RWLIMMSCORE" = apply(HCAP_assessment %>% 
+                                      dplyr::select(contains("H1RWLIMM")), 1, 
+                                 max, na.rm = TRUE)) 
+HCAP_assessment[is.infinite(HCAP_assessment[, "H1RWLIMMSCORE"]), 
+                "H1RWLIMMSCORE"] <- 0
 
 #Sanity check
 View(HCAP_assessment %>% dplyr::select(contains("H1RMSE12")))
-
+View(HCAP_assessment %>% dplyr::select(contains("H1RWLIMM")))
+table(HCAP_assessment$H1RWLIMMSCORE, useNA = "ifany")
 
 #---- make correlation matrix ----
 
