@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "stringr", "ggcorrplot")
+p_load("tidyverse", "magrittr", "stringr", "ggcorrplot", "psych")
 
 #---- source scripts ----
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
@@ -126,4 +126,46 @@ ggsave(paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/",
               "figures/HCAP_corr.jpeg"), 
        plot = HCAP_corr_plot, device = "jpeg", width = 5, height = 5, 
        units = "in", dpi = 300)
+
+#---- PCA ----
+#Checking appropriateness of method
+num_complete <- sum(rowSums(is.na(
+  HCAP_assessment[, 2:ncol(HCAP_assessment)])) == 0)
+
+bartlett_p <- cortest.bartlett(HCAP_corr, n = num_complete)
+
+det_corr <- det(HCAP_corr)
+
+#First pass PCA-- don't know how many factors we want yet
+HCAP_PCA_1 <- principal(HCAP_corr, nfactors = 10, rotate = "none", 
+                        n.obs = num_complete)
+
+#Scree plot
+jpeg(paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/",
+     "figures/PCA_scree.jpeg"), width = 7, height = 5, units = "in", 
+     res = 300)
+plot(HCAP_PCA_1$values, type = "b")
+dev.off()
+
+#Second pass PCA-- seems like we want 4 components
+HCAP_PCA <- principal(HCAP_corr, nfactors = 5, rotate = "none", 
+                      n.obs = num_complete)
+
+#---- Reproduced Correlations ----
+HCAP_factor_residuals <- factor.residuals(HCAP_corr, HCAP_PCA$loadings)
+HCAP_factor_residuals <- 
+  as.matrix(HCAP_factor_residuals[upper.tri(HCAP_factor_residuals)])
+
+#Sanity check-- want these most residuals to be <0.05 (80% of ours are)
+plot(HCAP_factor_residuals)
+large_resid <- abs(HCAP_factor_residuals) > 0.05
+sum(large_resid)/nrow(HCAP_factor_residuals)
+
+#---- PCA Rotations ----
+HCAP_PCA_varimax <- principal(HCAP_corr, nfactors = 4, rotate = "varimax", 
+                              n.obs = num_complete)
+print.psych(HCAP_PCA_varimax, cut = 0.3, sort = TRUE)
+
+
+
 
