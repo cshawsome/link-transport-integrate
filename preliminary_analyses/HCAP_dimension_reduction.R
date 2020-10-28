@@ -148,7 +148,7 @@ plot(HCAP_PCA_1$values, type = "b")
 dev.off()
 
 #Second pass PCA-- seems like we want 4 components
-HCAP_PCA <- principal(HCAP_corr, nfactors = 5, rotate = "none", 
+HCAP_PCA <- principal(HCAP_corr, nfactors = 4, rotate = "none", 
                       n.obs = num_complete)
 
 #---- Reproduced Correlations ----
@@ -162,9 +162,23 @@ large_resid <- abs(HCAP_factor_residuals) > 0.05
 sum(large_resid)/nrow(HCAP_factor_residuals)
 
 #---- PCA Rotations ----
-HCAP_PCA_varimax <- principal(HCAP_corr, nfactors = 4, rotate = "varimax", 
+HCAP_PCA_varimax <- principal(HCAP_corr, nfactors = 32, rotate = "varimax", 
                               n.obs = num_complete)
-print.psych(HCAP_PCA_varimax, cut = 0.3, sort = TRUE)
+print.psych(HCAP_PCA_varimax, cut = 0.03, sort = TRUE)
+
+PCA_loadings_32 <- as.data.frame(unclass(HCAP_PCA_varimax$loadings)) %>% 
+  rownames_to_column(var = "test_item") 
+
+PCA_loadings_32 %<>% 
+  mutate("Factor_index" = 
+           unlist(apply(PCA_loadings_32[, 2:ncol(PCA_loadings_32)], 
+                              1, function(x) which(abs(x) == max(abs(x)))))) %>% 
+  mutate("Factor" = colnames(PCA_loadings_32)[`Factor_index` + 1])
+
+#Save matrix of loadings
+write_csv(PCA_loadings_32, 
+          paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/",
+                 "tables/PCA_loadings_32.csv"))
 
 
 
