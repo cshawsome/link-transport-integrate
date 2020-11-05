@@ -15,12 +15,20 @@ neuropsych_data_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 neuropsych_dict_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
                                  "ADAMS/adams1a/adams1asta/ADAMS1AN_R.dct")
 
-these_vars <- c()
-
 ADAMS_neuropsych_A <- read_da_dct(neuropsych_data_path_A, 
                                   neuropsych_dict_path_A, HHIDPN = "TRUE")
 
-
-
 cog_test_labels <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                                    "cog_test_meaningful_labels.csv"))
+
+#---- variables of interest ----
+ADAMS_vars <- c("HHIDPN", paste0("MSE", seq(1, 22, by = 1)), "BWC86", "SER7T", 
+                "SCISOR", "CACTUS", "ANPRES", "ANAFTOT", "CPTOT", "IMMCR", 
+                "DELCOR", "RECYES", "RECNO", "WM1TOT", "WM2TOT", "MASEC", 
+                "MBSEC", "ANSDMTOT")
+
+not_these <- c("ANMSE11T", "ANRCPTOT")
+
+ADAMSA_assessment <- ADAMS_neuropsych_A %>% 
+  dplyr::select(contains(ADAMS_vars)) %>% 
+  dplyr::select(-c(contains(not_these))) 
