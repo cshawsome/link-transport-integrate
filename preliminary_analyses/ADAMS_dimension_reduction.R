@@ -32,3 +32,27 @@ not_these <- c("ANMSE11T", "ANRCPTOT")
 ADAMSA_assessment <- ADAMS_neuropsych_A %>% 
   dplyr::select(contains(ADAMS_vars)) %>% 
   dplyr::select(-c(contains(not_these))) 
+
+#---- coding correct/incorrect answers ----
+#Need to recode 2 = correct (different level) to 1
+recode_correct <- c("ANMSE17", "ANMSE19", "ANMSE21")
+
+#Need to recode 6 = start over to 0
+recode_incorrect <- 
+  colnames(ADAMSA_assessment)[as.logical(
+    str_detect(colnames(ADAMSA_assessment), "BWC"))] 
+
+for(var in recode_incorrect){
+  ADAMSA_assessment[which(ADAMSA_assessment[, var] == 6), var] <- 0
+}
+
+for(var in recode_correct){
+  ADAMSA_assessment[which(ADAMSA_assessment[, var] == 2), var] <- 1
+}
+
+# #Sanity check
+# for(var in colnames(ADAMSA_assessment)){
+#   print(var)
+#   print(table(ADAMSA_assessment[, var], useNA = "ifany"))
+# }
+
