@@ -35,7 +35,7 @@ ADAMSA_assessment <- ADAMS_neuropsych_A %>%
 
 #---- coding correct/incorrect answers ----
 #Need to recode 2 = correct (different level) to 1
-recode_correct <- c("ANMSE17", "ANMSE19", "ANMSE21")
+recode_correct <- c("ANMSE16", "ANMSE17", "ANMSE19", "ANMSE21")
 
 #Need to recode 6 = start over to 0
 recode_incorrect <- 
@@ -55,4 +55,34 @@ for(var in recode_correct){
 #   print(var)
 #   print(table(ADAMSA_assessment[, var], useNA = "ifany"))
 # }
+
+#---- code missigness ----
+recode_missing_97 <- colnames(ADAMSA_assessment)[as.logical(
+  str_detect(colnames(ADAMSA_assessment), "MSE") + 
+    str_detect(colnames(ADAMSA_assessment), "BWC") + 
+    str_detect(colnames(ADAMSA_assessment), "SER7") + 
+    str_detect(colnames(ADAMSA_assessment), "SCISOR") + 
+    str_detect(colnames(ADAMSA_assessment), "CACTUS") + 
+    str_detect(colnames(ADAMSA_assessment), "PRES") + 
+    str_detect(colnames(ADAMSA_assessment), "TOT") + 
+    str_detect(colnames(ADAMSA_assessment), "IMMCR") + 
+    str_detect(colnames(ADAMSA_assessment), "DELCOR") + 
+    str_detect(colnames(ADAMSA_assessment), "REC"))]
+
+recode_missing_995 <- c("ANTMASEC", "ANTMBSEC")
+
+for(var in recode_missing_97){
+  ADAMSA_assessment[which(ADAMSA_assessment[, var] >= 97), var] <- NA
+}
+
+for(var in recode_missing_995){
+  ADAMSA_assessment[which(ADAMSA_assessment[, var] >= 995), var] <- NA
+}
+
+#Sanity check
+for(var in colnames(ADAMSA_assessment)){
+  print(var)
+  print(table(ADAMSA_assessment[, var], useNA = "ifany"))
+}
+
 
