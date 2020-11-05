@@ -93,7 +93,7 @@ HCAP_assessment %<>%
                                       dplyr::select(contains("H1RWLIMM")), 1, 
                                  max, na.rm = TRUE)) 
 HCAP_assessment[is.infinite(HCAP_assessment[, "H1RWLIMMSCORE"]), 
-                "H1RWLIMMSCORE"] <- 0
+                "H1RWLIMMSCORE"] <- NA
 
 #Sanity check
 View(HCAP_assessment %>% dplyr::select(contains("H1RMSE12")))
