@@ -195,24 +195,24 @@ plot(ADAMSA_factor_residuals)
 large_resid <- abs(ADAMSA_factor_residuals) > 0.05
 sum(large_resid)/nrow(ADAMSA_factor_residuals)
 
-#---- PCA Rotations ----
-ADAMSA_PCA_varimax <- principal(ADAMSA_corr, nfactors = 32, rotate = "varimax", 
-                              n.obs = num_complete)
-print.psych(ADAMSA_PCA_varimax, cut = 0.03, sort = TRUE)
+#---- Factor loadings ----
+print.psych(ADAMSA_PCA, cut = 0.03, sort = TRUE)
 
-PCA_loadings_32 <- as.data.frame(unclass(ADAMSA_PCA_varimax$loadings)) %>% 
+PCA_loadings_10 <- as.data.frame(unclass(ADAMSA_PCA$loadings)) %>% 
   rownames_to_column(var = "test_item") 
 
-PCA_loadings_32 %<>% 
+PCA_loadings_10 %<>% 
   mutate("Factor_index" = 
-           unlist(apply(PCA_loadings_32[, 2:ncol(PCA_loadings_32)], 
+           unlist(apply(PCA_loadings_10[, 2:ncol(PCA_loadings_10)], 
                         1, function(x) which(abs(x) == max(abs(x)))))) %>% 
-  mutate("Factor" = colnames(PCA_loadings_32)[`Factor_index` + 1])
+  mutate("Factor" = colnames(PCA_loadings_10)[`Factor_index` + 1])
+
+View(PCA_loadings_10 %>% dplyr::select("test_item", "Factor"))
 
 #Save matrix of loadings
-write_csv(PCA_loadings_32, 
+write_csv(PCA_loadings_10, 
           paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/",
-                 "tables/PCA_loadings_32.csv"))
+                 "ADAMS_PCA/tables/PCA_loadings_10.csv"))
 
 #---- import demdx data ----
 demdx_data_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
