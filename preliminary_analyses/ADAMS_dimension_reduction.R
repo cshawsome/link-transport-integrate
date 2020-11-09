@@ -9,7 +9,7 @@ p_load("tidyverse", "magrittr", "stringr", "ggcorrplot", "psych")
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
               "data_read/read_da_dct.R"))
 
-#---- import data ----
+#---- import neuropsych data ----
 neuropsych_data_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                                  "ADAMS/adams1a/adams1ada/ADAMS1AN_R.da")
 neuropsych_dict_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
@@ -20,10 +20,16 @@ ADAMS_neuropsych_A <- read_da_dct(neuropsych_data_path_A,
 
 cog_test_labels <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                                    "cog_test_meaningful_labels.csv"))
+test_labels <- unlist(cog_test_labels$Label)
+names(test_labels) <- unlist(cog_test_labels$`Variable Name`)
 
 #---- variables of interest ----
-ADAMS_vars <- c("HHIDPN", paste0("MSE", seq(1, 22, by = 1)), "BWC86", "SER7T", 
-                "SCISOR", "CACTUS", "ANPRES", "ANAFTOT", "CPTOT", "IMMCR", 
+ADAMS_vars <- c("HHIDPN",
+                #item-level
+                paste0("MSE", seq(1, 22, by = 1)), 
+                "SCISOR", "CACTUS", "ANPRES", 
+                #total scores
+                "ANMSETOT", "SER7T", "ANAFTOT", "CPTOT", "BWC86", "IMMCR", 
                 "DELCOR", "RECYES", "RECNO", "WM1TOT", "WM2TOT", "MASEC", 
                 "MBSEC", "ANSDMTOT")
 
@@ -106,5 +112,118 @@ ADAMSA_assessment[is.infinite(ADAMSA_assessment[, "ANIMMCR"]),
 #Drop item-level for these variables
 ADAMSA_assessment %<>% dplyr::select(-c("ANBWC861", "ANBWC862", 
                                         paste0("ANIMMCR", seq(1, 3, by = 1))))
+#---- make correlation matrix ----
+# #Number of people with complete battery = 312
+# num_complete <- rowSums(is.na(ADAMSA_assessment[, 2:ncol(ADAMSA_assessment)]))
+# table(num_complete, useNA = "ifany")
+
+# #ANMSE 16 and ANMSE 17 have no variance, so need to drop these from the analyses
+# apply(na.omit(ADAMSA_assessment[, 2:ncol(ADAMSA_assessment)]), 2, 
+#       function(x) sd(x, na.rm = TRUE))
+
+ADAMSA_corr <- 
+  cor(ADAMSA_assessment[, which(!colnames(ADAMSA_assessment) %in% 
+                                  c("HHIDPN", "ANMSE16", "ANMSE17"))], 
+      use = "complete.obs")
+
+
+colnames(ADAMSA_corr) <- test_labels[colnames(ADAMSA_corr)]
+rownames(ADAMSA_corr) <- colnames(ADAMSA_corr)
+
+#Visualize the matrix
+ADAMSA_corr_plot <- ggcorrplot(ADAMSA_corr, hc.order = TRUE) +
+  theme(axis.text.x = element_text(size = 5),
+        axis.text.y = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 6))
+
+ggsave(paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/",
+              "figures/ADAMSA_corr.jpeg"),
+       plot = ADAMSA_corr_plot, device = "jpeg", width = 5, height = 5,
+       units = "in", dpi = 300)
+
+#---- PCA ----
+#Checking appropriateness of method
+num_complete <- sum(rowSums(is.na(
+  HCAP_assessment[, 2:ncol(HCAP_assessment)])) == 0)
+
+bartlett_p <- cortest.bartlett(HCAP_corr, n = num_complete)
+
+det_corr <- det(HCAP_corr)
+
+#First pass PCA-- don't know how many factors we want yet
+HCAP_PCA_1 <- principal(HCAP_corr, nfactors = 10, rotate = "none", 
+                        n.obs = num_complete)
+
+#Scree plot
+jpeg(paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/",
+            "figures/PCA_scree.jpeg"), width = 7, height = 5, units = "in", 
+     res = 300)
+plot(HCAP_PCA_1$values, type = "b")
+dev.off()
+
+#Second pass PCA-- seems like we want 4 components
+HCAP_PCA <- principal(HCAP_corr, nfactors = 4, rotate = "none", 
+                      n.obs = num_complete)
+
+#---- Reproduced Correlations ----
+HCAP_factor_residuals <- factor.residuals(HCAP_corr, HCAP_PCA$loadings)
+HCAP_factor_residuals <- 
+  as.matrix(HCAP_factor_residuals[upper.tri(HCAP_factor_residuals)])
+
+#Sanity check-- want these most residuals to be <0.05 (80% of ours are)
+plot(HCAP_factor_residuals)
+large_resid <- abs(HCAP_factor_residuals) > 0.05
+sum(large_resid)/nrow(HCAP_factor_residuals)
+
+#---- PCA Rotations ----
+HCAP_PCA_varimax <- principal(HCAP_corr, nfactors = 32, rotate = "varimax", 
+                              n.obs = num_complete)
+print.psych(HCAP_PCA_varimax, cut = 0.03, sort = TRUE)
+
+PCA_loadings_32 <- as.data.frame(unclass(HCAP_PCA_varimax$loadings)) %>% 
+  rownames_to_column(var = "test_item") 
+
+PCA_loadings_32 %<>% 
+  mutate("Factor_index" = 
+           unlist(apply(PCA_loadings_32[, 2:ncol(PCA_loadings_32)], 
+                        1, function(x) which(abs(x) == max(abs(x)))))) %>% 
+  mutate("Factor" = colnames(PCA_loadings_32)[`Factor_index` + 1])
+
+#Save matrix of loadings
+write_csv(PCA_loadings_32, 
+          paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/",
+                 "tables/PCA_loadings_32.csv"))
+
+#---- import demdx data ----
+demdx_data_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                            "ADAMS/adams1a/adams1ada/ADAMS1AD_R.da")
+demdx_dict_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
+                            "ADAMS/adams1a/adams1asta/ADAMS1AD_R.dct")
+
+ADAMS_demdx_A <- read_da_dct(demdx_data_path_A, demdx_dict_path_A, 
+                             HHIDPN = "TRUE") %>% 
+  dplyr::select("HHIDPN", "ADFDX1") %>% 
+  mutate("dem_class" = 
+           case_when(ADFDX1 %in% c(1, 2) ~ "Probable/Possible AD", 
+                     ADFDX1 %in% c(3, 4) ~ 
+                       "Probable/Possible Vascular Dementia", 
+                     ADFDX1 %in% 
+                       c(5, 8, 14, 23, 24, 25, 26, 27, 21, 28, 29, 30) ~ 
+                       "Other",
+                     ADFDX1 %in% c(18) ~ "Probable Dementia",
+                     ADFDX1 %in% c(10, 13, 15) ~ "Dementia", 
+                     ADFDX1 %in% c(20, 22) ~ "MCI", 
+                     ADFDX1 == 31 ~ "Normal"))
+
+#---- dementia classifications ----
+table(ADAMS_demdx_A$dem_class, useNA = "ifany")
+
+ADAMSA_assessment <- left_join(ADAMSA_assessment, ADAMS_demdx_A, 
+                               by = "HHIDPN")
+
+complete_neuropsych <- ADAMSA_assessment %>% na.omit()
+table(complete_neuropsych$dem_class, useNA = "ifany")
+
 
 
