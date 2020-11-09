@@ -186,21 +186,21 @@ ADAMSA_PCA <- principal(ADAMSA_corr, nfactors = 10, rotate = "varimax",
                         n.obs = num_complete)
 
 #---- Reproduced Correlations ----
-HCAP_factor_residuals <- factor.residuals(HCAP_corr, HCAP_PCA$loadings)
-HCAP_factor_residuals <- 
-  as.matrix(HCAP_factor_residuals[upper.tri(HCAP_factor_residuals)])
+ADAMSA_factor_residuals <- factor.residuals(ADAMSA_corr, ADAMSA_PCA$loadings)
+ADAMSA_factor_residuals <- 
+  as.matrix(ADAMSA_factor_residuals[upper.tri(ADAMSA_factor_residuals)])
 
-#Sanity check-- want these most residuals to be <0.05 (80% of ours are)
-plot(HCAP_factor_residuals)
-large_resid <- abs(HCAP_factor_residuals) > 0.05
-sum(large_resid)/nrow(HCAP_factor_residuals)
+#Sanity check-- want most residuals to be <0.05 (85% of ours are)
+plot(ADAMSA_factor_residuals)
+large_resid <- abs(ADAMSA_factor_residuals) > 0.05
+sum(large_resid)/nrow(ADAMSA_factor_residuals)
 
 #---- PCA Rotations ----
-HCAP_PCA_varimax <- principal(HCAP_corr, nfactors = 32, rotate = "varimax", 
+ADAMSA_PCA_varimax <- principal(ADAMSA_corr, nfactors = 32, rotate = "varimax", 
                               n.obs = num_complete)
-print.psych(HCAP_PCA_varimax, cut = 0.03, sort = TRUE)
+print.psych(ADAMSA_PCA_varimax, cut = 0.03, sort = TRUE)
 
-PCA_loadings_32 <- as.data.frame(unclass(HCAP_PCA_varimax$loadings)) %>% 
+PCA_loadings_32 <- as.data.frame(unclass(ADAMSA_PCA_varimax$loadings)) %>% 
   rownames_to_column(var = "test_item") 
 
 PCA_loadings_32 %<>% 
