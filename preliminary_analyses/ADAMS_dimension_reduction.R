@@ -112,18 +112,38 @@ ADAMSA_assessment[is.infinite(ADAMSA_assessment[, "ANIMMCR"]),
 #Drop item-level for these variables
 ADAMSA_assessment %<>% dplyr::select(-c("ANBWC861", "ANBWC862", 
                                         paste0("ANIMMCR", seq(1, 3, by = 1))))
+#---- Create TICS short form total ----
+#Sum Scissor, Cactus, President
+ADAMSA_assessment %<>% 
+  mutate("TICSTOT" = apply(ADAMSA_assessment %>% 
+                             dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES"), 1, 
+                           function(x) ifelse(sum(is.na(x)) == 3, NA, 
+                                              sum(x, na.rm = TRUE))))
+
+#Sanity Check
+View(ADAMSA_assessment %>% 
+       dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES", "TICSTOT"))
+
 #---- make correlation matrix ----
-# #Number of people with complete battery = 312
-# num_complete <- rowSums(is.na(ADAMSA_assessment[, 2:ncol(ADAMSA_assessment)]))
+total_scores <- c("ANMSETOT", "ANSER7T", "TICSTOT", "ANAFTOT", "ANCPTOT", 
+                  "ANDCPTOT", "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", 
+                  "ANWM2TOT", "ANTMASEC", "ANTMBSEC", "ANSDMTOT", "ANBWC86", 
+                  "ANIMMCR")
+
+# #Number of people with complete battery (item-level) = 312
+# #Number of people with complete battery (total-scores) = 342
+# num_complete <- rowSums(is.na(ADAMSA_assessment %>% 
+#                                 dplyr::select(all_of(total_scores))))
 # table(num_complete, useNA = "ifany")
 
 # #ANMSE 16 and ANMSE 17 have no variance, so need to drop these from the analyses
 # apply(na.omit(ADAMSA_assessment[, 2:ncol(ADAMSA_assessment)]), 2, 
 #       function(x) sd(x, na.rm = TRUE))
 
+
 ADAMSA_corr <- 
-  cor(ADAMSA_assessment[, which(!colnames(ADAMSA_assessment) %in% 
-                                  c("HHIDPN", "ANMSE16", "ANMSE17"))], 
+  cor(ADAMSA_assessment[, which(colnames(ADAMSA_assessment) %in% 
+                                  all_of(total_scores))], 
       use = "complete.obs")
 
 
