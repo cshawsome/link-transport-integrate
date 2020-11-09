@@ -136,55 +136,54 @@ total_scores <- c("ANMSETOT", "ANSER7T", "TICSTOT", "ANAFTOT", "ANCPTOT",
 #                                 dplyr::select(all_of(total_scores))))
 # table(num_complete, useNA = "ifany")
 
-# #ANMSE 16 and ANMSE 17 have no variance, so need to drop these from the analyses
+# #ANMSE 16 and ANMSE 17 have no variance, so need to drop these from the item-
+# #level analyses
 # apply(na.omit(ADAMSA_assessment[, 2:ncol(ADAMSA_assessment)]), 2, 
 #       function(x) sd(x, na.rm = TRUE))
-
 
 ADAMSA_corr <- 
   cor(ADAMSA_assessment[, which(colnames(ADAMSA_assessment) %in% 
                                   all_of(total_scores))], 
       use = "complete.obs")
 
-
 colnames(ADAMSA_corr) <- test_labels[colnames(ADAMSA_corr)]
 rownames(ADAMSA_corr) <- colnames(ADAMSA_corr)
 
 #Visualize the matrix
 ADAMSA_corr_plot <- ggcorrplot(ADAMSA_corr, hc.order = TRUE) +
-  theme(axis.text.x = element_text(size = 5),
-        axis.text.y = element_text(size = 5),
-        legend.title = element_text(size = 6),
-        legend.text = element_text(size = 6))
+  theme(axis.text.x = element_text(size = 9),
+        axis.text.y = element_text(size = 9),
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 8))
 
-ggsave(paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/",
-              "figures/ADAMSA_corr.jpeg"),
+ggsave(paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/", 
+              "ADAMS_PCA/figures/ADAMSA_total_scores_corr.jpeg"),
        plot = ADAMSA_corr_plot, device = "jpeg", width = 5, height = 5,
        units = "in", dpi = 300)
 
 #---- PCA ----
 #Checking appropriateness of method
-num_complete <- sum(rowSums(is.na(
-  HCAP_assessment[, 2:ncol(HCAP_assessment)])) == 0)
+num_complete <- sum(rowSums(is.na(ADAMSA_assessment %>% 
+                                dplyr::select(all_of(total_scores)))) == 0)
 
-bartlett_p <- cortest.bartlett(HCAP_corr, n = num_complete)
+bartlett_p <- cortest.bartlett(ADAMSA_corr, n = num_complete)
 
-det_corr <- det(HCAP_corr)
+det_corr <- det(ADAMSA_corr)
 
 #First pass PCA-- don't know how many factors we want yet
-HCAP_PCA_1 <- principal(HCAP_corr, nfactors = 10, rotate = "none", 
-                        n.obs = num_complete)
+ADAMSA_PCA_1 <- principal(ADAMSA_corr, nfactors = 10, rotate = "varimax", 
+                          n.obs = num_complete)
 
 #Scree plot
-jpeg(paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/",
-            "figures/PCA_scree.jpeg"), width = 7, height = 5, units = "in", 
-     res = 300)
-plot(HCAP_PCA_1$values, type = "b")
+jpeg(paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/", 
+            "ADAMS_PCA/figures/PCA_scree.jpeg"), width = 7, height = 5, 
+     units = "in", res = 300)
+plot(ADAMSA_PCA_1$values, type = "b")
 dev.off()
 
-#Second pass PCA-- seems like we want 4 components
-HCAP_PCA <- principal(HCAP_corr, nfactors = 4, rotate = "none", 
-                      n.obs = num_complete)
+#Second pass PCA-- seems like we want 10 components (88% variance explained)
+ADAMSA_PCA <- principal(ADAMSA_corr, nfactors = 10, rotate = "varimax", 
+                        n.obs = num_complete)
 
 #---- Reproduced Correlations ----
 HCAP_factor_residuals <- factor.residuals(HCAP_corr, HCAP_PCA$loadings)
