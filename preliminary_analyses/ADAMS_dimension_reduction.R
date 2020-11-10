@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "stringr", "ggcorrplot", "psych")
+p_load("tidyverse", "magrittr", "stringr", "ggcorrplot", "psych", "broom")
 
 #---- source scripts ----
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
@@ -288,6 +288,22 @@ ADAMSA_complete <- left_join(ADAMSA_complete, ADAMS_tracker, by = "HHIDPN")
 table(ADAMSA_complete$female, useNA = "ifany")
 table(ADAMSA_complete$ethnic_cat, useNA = "ifany")
 hist(ADAMSA_complete$AAGE)
+
+#---- univariate models ----
+sex <- glm(impaired ~ female, family = binomial(link = "logit"), 
+           data = ADAMSA_complete)
+tidy(sex, exponentiate = TRUE, conf.int = TRUE)
+
+age <- glm(impaired ~ AAGE, family = binomial(link = "logit"), 
+           data = ADAMSA_complete)
+tidy(age, exponentiate = TRUE, conf.int = TRUE)
+
+ethnicity <- glm(impaired ~ as.factor(ethnic_cat), 
+                 family = binomial(link = "logit"), 
+                 data = ADAMSA_complete)
+tidy(ethnicity, exponentiate = TRUE, conf.int = TRUE)
+
+
 
 
 
