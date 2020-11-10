@@ -248,5 +248,23 @@ neuropsych_totals <- ADAMSA_assessment %>%
   dplyr::select(all_of(total_scores), "impaired") %>% na.omit()
 table(neuropsych_totals$impaired, useNA = "ifany")
 
+#---- sociodemographic data ----
+ADAMS_tracker_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                                  "ADAMS/adams1trk/ADAMS1TRK_R.da")
+ADAMS_tracker_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
+                                  "ADAMS/adams1trk/adams1trksta/ADAMS1TRK_R.dct")
+
+ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path, 
+                             HHIDPN = "TRUE") %>% 
+  dplyr::select("HHIDPN", "AAGE", "GENDER", "ETHNIC", "EDYRS") %>% 
+  mutate("female" = ifelse(GENDER == 1, 0, 1), 
+         "ethnic_cat" = case_when(ETHNIC == 1 ~ "Non-hispanic White", 
+                                  ETHNIC == 2 ~ "Non-hispanic Black", 
+                                  ETHNIC == 3 ~ "Hispanic"))
+
+#Sanity check
+table(ADAMS_tracker$GENDER, ADAMS_tracker$female, useNA = "ifany")
+table(ADAMS_tracker$ETHNIC, ADAMS_tracker$ethnic_cat, useNA = "ifany")
+
 
 
