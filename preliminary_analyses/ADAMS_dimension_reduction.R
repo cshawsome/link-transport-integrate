@@ -234,20 +234,19 @@ ADAMS_demdx_A <- read_da_dct(demdx_data_path_A, demdx_dict_path_A,
                      ADFDX1 %in% c(10, 13, 15) ~ "Dementia", 
                      ADFDX1 %in% c(20, 22) ~ "MCI", 
                      ADFDX1 == 31 ~ "Normal"), 
-         "impairment_indicator" = 
+         "impaired" = 
            ifelse(dem_dx %in% c("Normal", "Other"), 0, 1))
 
-#Sanity check
-table(ADAMS_demdx_A$dem_dx, ADAMS_demdx_A$impairment_indicator, useNA = "ifany")
+# #Sanity check
+# table(ADAMS_demdx_A$dem_dx, ADAMS_demdx_A$impaired, useNA = "ifany")
 
-#---- dementia classifications ----
-
-
+#---- join dementia data ----
 ADAMSA_assessment <- left_join(ADAMSA_assessment, ADAMS_demdx_A, 
                                by = "HHIDPN")
 
-complete_neuropsych <- ADAMSA_assessment %>% na.omit()
-table(complete_neuropsych$dem_class, useNA = "ifany")
+neuropsych_totals <- ADAMSA_assessment %>% 
+  dplyr::select(all_of(total_scores), "impaired") %>% na.omit()
+table(neuropsych_totals$impaired, useNA = "ifany")
 
 
 
