@@ -229,7 +229,6 @@ factors <- as.matrix(factors) %*% as.matrix(loadings)
 
 ADAMSA_complete %<>% cbind(factors)
 
-
 #---- demdx data ----
 demdx_data_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                             "ADAMS/adams1a/adams1ada/ADAMS1AD_R.da")
@@ -257,13 +256,12 @@ ADAMS_demdx_A <- read_da_dct(demdx_data_path_A, demdx_dict_path_A,
 # table(ADAMS_demdx_A$dem_dx, ADAMS_demdx_A$impaired, useNA = "ifany")
 
 #join dementia data
-ADAMSA_assessment <- left_join(ADAMSA_assessment, ADAMS_demdx_A, 
-                               by = "HHIDPN")
+ADAMSA_complete <- left_join(ADAMSA_complete, ADAMS_demdx_A, by = "HHIDPN")
 
-#data check
-neuropsych_totals <- ADAMSA_assessment %>% 
-  dplyr::select(all_of(total_scores), "impaired") %>% na.omit()
-table(neuropsych_totals$impaired, useNA = "ifany")
+# #data check
+# neuropsych_totals <- ADAMSA_assessment %>% 
+#   dplyr::select(all_of(total_scores), "impaired") %>% na.omit()
+# table(neuropsych_totals$impaired, useNA = "ifany")
 
 #---- sociodemographic data ----
 ADAMS_tracker_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
