@@ -282,16 +282,12 @@ ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
 # table(ADAMS_tracker$ETHNIC, ADAMS_tracker$ethnic_cat, useNA = "ifany")
 
 #join sociodemographic data
-ADAMSA_assessment <- left_join(ADAMSA_assessment, ADAMS_tracker, 
-                               by = "HHIDPN")
+ADAMSA_complete <- left_join(ADAMSA_complete, ADAMS_tracker, by = "HHIDPN")
 
 #data check
-neuropsych_totals <- ADAMSA_assessment %>% 
-  dplyr::select(all_of(total_scores), "female", "ethnic_cat", "AAGE") %>% 
-  na.omit()
-table(neuropsych_totals$female, useNA = "ifany")
-table(neuropsych_totals$ethnic_cat, useNA = "ifany")
-hist(neuropsych_totals$AAGE)
+table(ADAMSA_complete$female, useNA = "ifany")
+table(ADAMSA_complete$ethnic_cat, useNA = "ifany")
+hist(ADAMSA_complete$AAGE)
 
 
 
