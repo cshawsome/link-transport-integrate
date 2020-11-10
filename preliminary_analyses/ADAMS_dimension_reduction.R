@@ -214,7 +214,7 @@ write_csv(PCA_loadings_10,
           paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/",
                  "ADAMS_PCA/tables/PCA_loadings_10.csv"))
 
-#---- import demdx data ----
+#---- demdx data ----
 demdx_data_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                             "ADAMS/adams1a/adams1ada/ADAMS1AD_R.da")
 demdx_dict_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
@@ -240,10 +240,11 @@ ADAMS_demdx_A <- read_da_dct(demdx_data_path_A, demdx_dict_path_A,
 # #Sanity check
 # table(ADAMS_demdx_A$dem_dx, ADAMS_demdx_A$impaired, useNA = "ifany")
 
-#---- join dementia data ----
+#join dementia data
 ADAMSA_assessment <- left_join(ADAMSA_assessment, ADAMS_demdx_A, 
                                by = "HHIDPN")
 
+#data check
 neuropsych_totals <- ADAMSA_assessment %>% 
   dplyr::select(all_of(total_scores), "impaired") %>% na.omit()
 table(neuropsych_totals$impaired, useNA = "ifany")
@@ -262,9 +263,22 @@ ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
                                   ETHNIC == 2 ~ "Non-hispanic Black", 
                                   ETHNIC == 3 ~ "Hispanic"))
 
-#Sanity check
-table(ADAMS_tracker$GENDER, ADAMS_tracker$female, useNA = "ifany")
-table(ADAMS_tracker$ETHNIC, ADAMS_tracker$ethnic_cat, useNA = "ifany")
+# #Sanity check
+# table(ADAMS_tracker$GENDER, ADAMS_tracker$female, useNA = "ifany")
+# table(ADAMS_tracker$ETHNIC, ADAMS_tracker$ethnic_cat, useNA = "ifany")
+
+#join sociodemographic data
+ADAMSA_assessment <- left_join(ADAMSA_assessment, ADAMS_tracker, 
+                               by = "HHIDPN")
+
+#data check
+neuropsych_totals <- ADAMSA_assessment %>% 
+  dplyr::select(all_of(total_scores), "female", "ethnic_cat", "AAGE") %>% 
+  na.omit()
+table(neuropsych_totals$female, useNA = "ifany")
+table(neuropsych_totals$ethnic_cat, useNA = "ifany")
+hist(neuropsych_totals$AAGE)
+
 
 
 
