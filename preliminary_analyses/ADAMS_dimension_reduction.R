@@ -207,12 +207,28 @@ PCA_loadings_10 %<>%
                         1, function(x) which(abs(x) == max(abs(x)))))) %>% 
   mutate("Factor" = colnames(PCA_loadings_10)[`Factor_index` + 1])
 
-View(PCA_loadings_10 %>% dplyr::select("test_item", "Factor"))
+#View(PCA_loadings_10 %>% dplyr::select("test_item", "Factor"))
 
 #Save matrix of loadings
 write_csv(PCA_loadings_10, 
           paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/",
                  "ADAMS_PCA/tables/PCA_loadings_10.csv"))
+
+#---- create factors ----
+#Complete case data
+ADAMSA_complete <- ADAMSA_assessment %>% 
+  dplyr::select("HHIDPN", all_of(total_scores)) %>% na.omit()
+
+loadings <- as.data.frame(unclass(ADAMSA_PCA$loadings))
+factors <- ADAMSA_complete %>% dplyr::select(all_of(total_scores)) %>% 
+  set_colnames(test_labels[total_scores]) %>% 
+  #ensure ordering
+  dplyr::select(all_of(rownames(loadings)))
+
+factors <- as.matrix(factors) %*% as.matrix(loadings)
+
+ADAMSA_complete %<>% cbind(factors)
+
 
 #---- demdx data ----
 demdx_data_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
