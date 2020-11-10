@@ -223,7 +223,7 @@ demdx_dict_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 ADAMS_demdx_A <- read_da_dct(demdx_data_path_A, demdx_dict_path_A, 
                              HHIDPN = "TRUE") %>% 
   dplyr::select("HHIDPN", "ADFDX1") %>% 
-  mutate("dem_class" = 
+  mutate("dem_dx" = 
            case_when(ADFDX1 %in% c(1, 2) ~ "Probable/Possible AD", 
                      ADFDX1 %in% c(3, 4) ~ 
                        "Probable/Possible Vascular Dementia", 
@@ -233,10 +233,15 @@ ADAMS_demdx_A <- read_da_dct(demdx_data_path_A, demdx_dict_path_A,
                      ADFDX1 %in% c(18) ~ "Probable Dementia",
                      ADFDX1 %in% c(10, 13, 15) ~ "Dementia", 
                      ADFDX1 %in% c(20, 22) ~ "MCI", 
-                     ADFDX1 == 31 ~ "Normal"))
+                     ADFDX1 == 31 ~ "Normal"), 
+         "impairment_indicator" = 
+           ifelse(dem_dx %in% c("Normal", "Other"), 0, 1))
+
+#Sanity check
+table(ADAMS_demdx_A$dem_dx, ADAMS_demdx_A$impairment_indicator, useNA = "ifany")
 
 #---- dementia classifications ----
-table(ADAMS_demdx_A$dem_class, useNA = "ifany")
+
 
 ADAMSA_assessment <- left_join(ADAMSA_assessment, ADAMS_demdx_A, 
                                by = "HHIDPN")
