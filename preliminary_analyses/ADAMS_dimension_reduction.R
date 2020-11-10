@@ -120,9 +120,9 @@ ADAMSA_assessment %<>%
                            function(x) ifelse(sum(is.na(x)) == 3, NA, 
                                               sum(x, na.rm = TRUE))))
 
-#Sanity Check
-View(ADAMSA_assessment %>% 
-       dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES", "TICSTOT"))
+# #Sanity Check
+# View(ADAMSA_assessment %>% 
+#        dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES", "TICSTOT"))
 
 #---- make correlation matrix ----
 total_scores <- c("ANMSETOT", "ANSER7T", "TICSTOT", "ANAFTOT", "ANCPTOT", 
@@ -143,7 +143,7 @@ total_scores <- c("ANMSETOT", "ANSER7T", "TICSTOT", "ANAFTOT", "ANCPTOT",
 
 ADAMSA_corr <- 
   cor(ADAMSA_assessment[, which(colnames(ADAMSA_assessment) %in% 
-                                  all_of(total_scores))], 
+                                  tidyselect::all_of(total_scores))], 
       use = "complete.obs")
 
 colnames(ADAMSA_corr) <- test_labels[colnames(ADAMSA_corr)]
