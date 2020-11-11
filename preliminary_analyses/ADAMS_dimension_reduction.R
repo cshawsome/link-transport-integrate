@@ -333,8 +333,57 @@ write.xlsx(model.list,
 #---- Covariate Distributions ----
 #How different are complete cases from those who have at least one missing 
 #assessment
-ADAMSA_missing_some <- ADAMSA_assessment %<>%
+ADAMSA_complete <- ADAMSA_assessment %>% 
+  dplyr::select("HHIDPN", "AAGE", "female", "EDYRS", "ethnic_cat", 
+                all_of(total_scores), "impaired") %>% na.omit()
 
+ADAMSA_missing_some <- ADAMSA_assessment %>% 
+  dplyr::select(all_of(colnames(ADAMSA_complete))) %>% 
+  filter(!HHIDPN %in% ADAMSA_complete$HHIDPN)
+
+#AAGE
+plot_data <- data.frame(ADAMSA_complete$AAGE) %>% set_colnames("AGE") %>% 
+  mutate("Missingness" = "Complete")
+plot_data %<>% rbind(data.frame(ADAMSA_missing_some$AAGE) %>% 
+                       set_colnames("AGE") %>% 
+                       mutate("Missingness" = "At least 1 Missing"))
+
+age_dists <- ggplot(plot_data, aes(x = AGE, group = factor(Missingness))) + 
+  geom_bar(aes(fill = Missingness), position = "identity", alpha = 0.75) + 
+  theme_minimal() + ggtitle("AAGE")
+
+ggsave(paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/", 
+              "ADAMS_PCA/figures/age_dists.jpeg"),
+       plot = age_dists, device = "jpeg", width = 7, height = 5,
+       units = "in", dpi = 300)
+
+#EDYRS
+plot_data <- data.frame(ADAMSA_complete$EDYRS) %>% set_colnames("EDYRS") %>% 
+  mutate("Missingness" = "Complete")
+plot_data %<>% rbind(data.frame(ADAMSA_missing_some$EDYRS) %>% 
+                       set_colnames("EDYRS") %>% 
+                       mutate("Missingness" = "At least 1 Missing"))
+
+ed_dists <- ggplot(plot_data, aes(x = EDYRS, group = factor(Missingness))) + 
+  geom_bar(aes(fill = Missingness), position = "identity", alpha = 0.75) + 
+  theme_minimal() + ggtitle("EDYRS")
+
+ggsave(paste0("/Users/CrystalShaw/Box/Dissertation/preliminary_analyses/", 
+              "ADAMS_PCA/figures/ed_dists.jpeg"),
+       plot = ed_dists, device = "jpeg", width = 7, height = 5,
+       units = "in", dpi = 300)
+
+#Female
+table(ADAMSA_complete$female)/nrow(ADAMSA_complete)
+table(ADAMSA_missing_some$female)/nrow(ADAMSA_missing_some)
+
+#Ethnicity
+table(ADAMSA_complete$ethnic_cat)/nrow(ADAMSA_complete)
+table(ADAMSA_missing_some$ethnic_cat)/nrow(ADAMSA_missing_some)
+
+#Impaired
+table(ADAMSA_complete$impaired)/nrow(ADAMSA_complete)
+table(ADAMSA_missing_some$impaired)/nrow(ADAMSA_missing_some)
 
 
 
