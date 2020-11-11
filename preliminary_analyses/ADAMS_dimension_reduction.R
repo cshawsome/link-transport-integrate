@@ -217,18 +217,18 @@ write_csv(PCA_loadings_10,
 
 #---- create factors ----
 #Complete case data
-ADAMSA_complete <- ADAMSA_assessment %>% 
-  dplyr::select("HHIDPN", all_of(total_scores)) %>% na.omit()
+ADAMSA_test_data <- ADAMSA_assessment %>% 
+  dplyr::select("HHIDPN", all_of(total_scores)) 
 
 loadings <- as.data.frame(unclass(ADAMSA_PCA$loadings))
-factors <- ADAMSA_complete %>% dplyr::select(all_of(total_scores)) %>% 
+factors <- ADAMSA_test_data %>% dplyr::select(all_of(total_scores)) %>% 
   set_colnames(test_labels[total_scores]) %>% 
   #ensure ordering
   dplyr::select(all_of(rownames(loadings)))
 
 factors <- as.matrix(factors) %*% as.matrix(loadings)
 
-ADAMSA_complete %<>% cbind(factors)
+ADAMSA_assessment %<>% cbind(factors)
 
 #---- demdx data ----
 demdx_data_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
@@ -257,11 +257,16 @@ ADAMS_demdx_A <- read_da_dct(demdx_data_path_A, demdx_dict_path_A,
 # table(ADAMS_demdx_A$dem_dx, ADAMS_demdx_A$impaired, useNA = "ifany")
 
 #join dementia data
-ADAMSA_complete <- left_join(ADAMSA_complete, ADAMS_demdx_A, by = "HHIDPN")
+ADAMSA_assessment %<>% left_join(., ADAMS_demdx_A, by = "HHIDPN")
 
 # #data check
-# neuropsych_totals <- ADAMSA_assessment %>% 
+# #complete data only
+# neuropsych_totals <- ADAMSA_assessment %>%
 #   dplyr::select(all_of(total_scores), "impaired") %>% na.omit()
+# table(neuropsych_totals$impaired, useNA = "ifany")
+# #all data
+# neuropsych_totals <- ADAMSA_assessment %>%
+#   dplyr::select(all_of(total_scores), "impaired") 
 # table(neuropsych_totals$impaired, useNA = "ifany")
 
 #---- sociodemographic data ----
@@ -283,39 +288,38 @@ ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
 # table(ADAMS_tracker$ETHNIC, ADAMS_tracker$ethnic_cat, useNA = "ifany")
 
 #join sociodemographic data
-ADAMSA_complete <- left_join(ADAMSA_complete, ADAMS_tracker, by = "HHIDPN")
-
-#data check
-table(ADAMSA_complete$female, useNA = "ifany")
-table(ADAMSA_complete$ethnic_cat, useNA = "ifany")
-hist(ADAMSA_complete$AAGE)
-hist(ADAMSA_complete$EDYRS)
-hist(ADAMSA_assessment$EDYRS)
+ADAMSA_assessment %<>% left_join(., ADAMS_tracker, by = "HHIDPN")
 
 #---- univariate models ----
+#Running these models in the complete case data only leads to different 
+#conclusions
 sex <- glm(impaired ~ female, family = binomial(link = "logit"), 
-           data = ADAMSA_complete)
+           data = ADAMSA_assessment)
 tidy(sex, exponentiate = TRUE, conf.int = TRUE)
 
 age <- glm(impaired ~ AAGE, family = binomial(link = "logit"), 
-           data = ADAMSA_complete)
+           data = ADAMSA_assessment)
 tidy(age, exponentiate = TRUE, conf.int = TRUE)
 
 ethnicity <- glm(impaired ~ as.factor(ethnic_cat), 
                  family = binomial(link = "logit"), 
-                 data = ADAMSA_complete)
+                 data = ADAMSA_assessment)
 tidy(ethnicity, exponentiate = TRUE, conf.int = TRUE)
 
 education <- glm(impaired ~ EDYRS, 
                  family = binomial(link = "logit"), 
-                 data = ADAMSA_complete)
+                 data = ADAMSA_assessment)
 tidy(education, exponentiate = TRUE, conf.int = TRUE)
+
+#Sanity Check-- missingness in sociodemographic data
+ADAMSA_assessment %>% dplyr::select("female", "EDYRS", "ethnic_cat", "AAGE") %>% 
+  is.na() %>% colSums()
 
 #---- multivariate model ----
 model_complete <- glm(impaired ~ female + AAGE + as.factor(ethnic_cat) + EDYRS + 
                         RC1 + RC2 + RC3 + RC4 + RC5 + RC6 + RC7 + RC8 + RC9 + 
                         RC10, family = binomial(link = "logit"), 
-                      data = ADAMSA_complete)
+                      data = ADAMSA_assessment)
 
 tidy(model_complete, exponentiate = TRUE, conf.int = TRUE)
 
@@ -325,6 +329,12 @@ write.xlsx(model.list,
            file = paste0("/Users/CrystalShaw/Box/Dissertation/",
                          "preliminary_analyses/ADAMS_PCA/tables/", 
                          "dem_outcome_models.xlsx"))
+
+#---- Covariate Distributions ----
+#How different are complete cases from those who have at least one missing 
+#assessment
+ADAMSA_missing_some <- ADAMSA_assessment %<>%
+
 
 
 
