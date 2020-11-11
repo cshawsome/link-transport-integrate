@@ -3,7 +3,8 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "stringr", "ggcorrplot", "psych", "broom")
+p_load("tidyverse", "magrittr", "stringr", "ggcorrplot", "psych", "broom", 
+       "openxlsx")
 
 #---- source scripts ----
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
@@ -288,6 +289,8 @@ ADAMSA_complete <- left_join(ADAMSA_complete, ADAMS_tracker, by = "HHIDPN")
 table(ADAMSA_complete$female, useNA = "ifany")
 table(ADAMSA_complete$ethnic_cat, useNA = "ifany")
 hist(ADAMSA_complete$AAGE)
+hist(ADAMSA_complete$EDYRS)
+hist(ADAMSA_assessment$EDYRS)
 
 #---- univariate models ----
 sex <- glm(impaired ~ female, family = binomial(link = "logit"), 
@@ -303,6 +306,25 @@ ethnicity <- glm(impaired ~ as.factor(ethnic_cat),
                  data = ADAMSA_complete)
 tidy(ethnicity, exponentiate = TRUE, conf.int = TRUE)
 
+education <- glm(impaired ~ EDYRS, 
+                 family = binomial(link = "logit"), 
+                 data = ADAMSA_complete)
+tidy(education, exponentiate = TRUE, conf.int = TRUE)
+
+#---- multivariate model ----
+model_complete <- glm(impaired ~ female + AAGE + as.factor(ethnic_cat) + EDYRS + 
+                        RC1 + RC2 + RC3 + RC4 + RC5 + RC6 + RC7 + RC8 + RC9 + 
+                        RC10, family = binomial(link = "logit"), 
+                      data = ADAMSA_complete)
+
+tidy(model_complete, exponentiate = TRUE, conf.int = TRUE)
+
+model.list <- list("Complete Data" = tidy(model_complete, exponentiate = TRUE, 
+                                          conf.int = TRUE))
+write.xlsx(model.list, 
+           file = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                         "preliminary_analyses/ADAMS_PCA/tables/", 
+                         "dem_outcome_models.xlsx"))
 
 
 
