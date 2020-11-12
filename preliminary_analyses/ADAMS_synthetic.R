@@ -119,7 +119,9 @@ ADAMS_tracker %<>%
   mutate("female" = ifelse(GENDER == 1, 0, 1), 
          "ethnic_cat" = case_when(ETHNIC == 1 ~ "Non-hispanic White", 
                                   ETHNIC == 2 ~ "Non-hispanic Black", 
-                                  ETHNIC == 3 ~ "Hispanic"))
+                                  ETHNIC == 3 ~ "Hispanic")) %>% 
+  #drop ADAMS variables
+  dplyr::select(-c("GENDER", "ETHNIC"))
 
 #---- format data: dem dx ----
 ADAMSA_demdx %<>% 
@@ -136,7 +138,9 @@ ADAMSA_demdx %<>%
                      ADFDX1 %in% c(20, 22) ~ "MCI", 
                      ADFDX1 == 31 ~ "Normal"), 
          "impaired" = 
-           ifelse(dem_dx %in% c("Normal", "Other"), 0, 1))
+           ifelse(dem_dx %in% c("Normal", "Other"), 0, 1)) %>%
+  #drop ADAMS variables
+  dplyr::select(-c("ADFDX1"))
 
 #---- join all the data ----
 ADAMSA <- join_all(list(ADAMS_tracker, ADAMSA_assessment, ADAMSA_demdx), 
@@ -145,6 +149,7 @@ ADAMSA <- join_all(list(ADAMS_tracker, ADAMSA_assessment, ADAMSA_demdx),
   filter(AASSESS == 1)
 
 #---- look at distributions and models for key covariates ----
+
 
 #---- generate synthetic data ----
 
