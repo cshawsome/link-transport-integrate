@@ -37,6 +37,86 @@ ADAMS_demdx_A <- read_da_dct(demdx_data_path_A, demdx_dict_path_A,
                              HHIDPN = "TRUE") 
 
 #---- format data: neuropsych ----
+#variables of interest
+ADAMS_vars <- c("HHIDPN",
+                #item-level
+                "SCISOR", "CACTUS", "ANPRES", 
+                #total scores
+                "ANMSETOT", "SER7T", "ANAFTOT", "CPTOT", "BWC86", "IMMCR", 
+                "DELCOR", "RECYES", "RECNO", "WM1TOT", "WM2TOT", "MASEC", 
+                "MBSEC", "ANSDMTOT")
+
+not_these <- c("ANRCPTOT")
+
+ADAMSA_assessment <- ADAMS_neuropsych_A %>% 
+  dplyr::select(contains(ADAMS_vars)) %>% 
+  dplyr::select(-c(contains(not_these)))
+
+#Need to recode 6 = start over to 0
+recode_incorrect <- 
+  colnames(ADAMSA_assessment)[as.logical(
+    str_detect(colnames(ADAMSA_assessment), "BWC"))] 
+
+for(var in recode_incorrect){
+  ADAMSA_assessment[which(ADAMSA_assessment[, var] == 6), var] <- 0
+}
+
+# #Sanity check
+# for(var in colnames(ADAMSA_assessment)){
+#   print(var)
+#   print(table(ADAMSA_assessment[, var], useNA = "ifany"))
+# }
+
+#best trial of repeated trials-- need to account for possible 97 missing value
+BWC <- ADAMSA_assessment %>% dplyr::select(contains("BWC")) %>% 
+  mutate(ANBWC86 = ANBWC861)
+for(i in 1:nrow(BWC)){
+  if(BWC[i, "ANBWC86"] == 1 | is.na(BWC[i, "ANBWC86"])) 
+    next
+  else if(BWC[i, "ANBWC86"] == 0 & BWC[i, "ANBWC862"] == 1)
+    BWC[i, "ANBWC86"] = 1
+}
+
+ANIMMCR <- 
+
+ADAMSA_assessment %<>% 
+  mutate("ANBWC86" = BWC$ANBWC86)
+           
+           
+           
+           apply(ADAMSA_assessment %>% 
+                             dplyr::select(contains("BWC")), 1, 
+                           max, na.rm = TRUE), 
+         "ANIMMCR" = apply(ADAMSA_assessment %>% 
+                             dplyr::select(contains("ANIMMCR")), 1, 
+                           max, na.rm = TRUE)) 
+
+ADAMSA_assessment[is.infinite(ADAMSA_assessment[, "ANBWC86"]), 
+                  "ANBWC86"] <- NA
+ADAMSA_assessment[is.infinite(ADAMSA_assessment[, "ANIMMCR"]), 
+                  "ANIMMCR"] <- NA
+
+# #Sanity check
+# View(ADAMSA_assessment %>% dplyr::select(contains("BWC")))
+# View(ADAMSA_assessment %>% dplyr::select(contains("ANIMMCR")))
+
+#Drop item-level for these variables
+ADAMSA_assessment %<>% dplyr::select(-c("ANBWC861", "ANBWC862", 
+                                        paste0("ANIMMCR", seq(1, 3, by = 1))))
+#TICS short form total
+#Sum Scissor, Cactus, President
+ADAMSA_assessment %<>% 
+  mutate("TICSTOT" = apply(ADAMSA_assessment %>% 
+                             dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES"), 1, 
+                           function(x) ifelse(sum(is.na(x)) == 3, NA, 
+                                              sum(x, na.rm = TRUE))))
+
+# #Sanity Check
+# View(ADAMSA_assessment %>% 
+#        dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES", "TICSTOT"))
+
+#Drop item-level for these variables
+ADAMSA_assessment %<>% dplyr::select(-c("ANSCISOR", "ANCACTUS", "ANPRES"))
 
 #---- format data: sociodemographics ----
 ADAMS_tracker %<>% 
