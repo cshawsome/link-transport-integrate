@@ -162,6 +162,9 @@ ADAMSA_synthetic <-
 # head(ADAMSA_synthetic)
 
 #---- generate: female ----
+ADAMSA_synthetic[, "female"] <- rbernoulli(n = nrow(ADAMSA_synthetic), 
+                                           p = prop_female)
 
 #---- check: female ----
+diff_female <- prop_female - mean(ADAMSA_synthetic$female)
 
