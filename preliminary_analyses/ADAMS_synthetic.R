@@ -81,7 +81,7 @@ ADAMSA_assessment %<>% mutate("BWC" = BWC$ANBWC86)
 
 #Based on data check, I can define the best of the three trials this way
 #There are no NAs and there's no 97 after completed prior trials
-ADAMSA_assessment %<>% dplyr::select(contains("ANIMMCR")) %>% 
+ADAMSA_assessment %<>% 
   mutate("ANIMMCR" = apply(ADAMSA_assessment %>% 
                              dplyr::select(contains("ANIMMCR")), 1, 
                            max, na.rm = TRUE)) 
@@ -95,6 +95,12 @@ ADAMSA_assessment %<>% dplyr::select(-c("ANBWC861", "ANBWC862",
                                         paste0("ANIMMCR", seq(1, 3, by = 1))))
 #TICS short form total
 #Sum Scissor, Cactus, President
+TICSTOT <- ADAMSA_assessment %>% 
+  dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES")
+#Recode 98 = don't know or 99 = refused as 0
+TICSTOT[TICSTOT == 98] <- 0
+TICSTOT[TICSTOT == 99] <- 0
+
 ADAMSA_assessment %<>% 
   mutate("TICSTOT" = apply(ADAMSA_assessment %>% 
                              dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES"), 1, 
