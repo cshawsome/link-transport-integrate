@@ -9,7 +9,8 @@ p_load("tidyverse", "magrittr", "stringr", "plyr", "broom", "openxlsx")
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
               "data_read/read_da_dct.R"))
 
-#---- import data: neuropsych ----
+#---- import data ----
+#---- **neuropsych ----
 neuropsych_data_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                                  "ADAMS/adams1a/adams1ada/ADAMS1AN_R.da")
 neuropsych_dict_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
@@ -18,7 +19,7 @@ neuropsych_dict_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 ADAMS_neuropsych_A <- read_da_dct(neuropsych_data_path_A, 
                                   neuropsych_dict_path_A, HHIDPN = "TRUE")
 
-#---- import data: sociodemographic ----
+#---- **sociodemographic ----
 ADAMS_tracker_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                                   "ADAMS/adams1trk/ADAMS1TRK_R.da")
 ADAMS_tracker_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
@@ -27,7 +28,7 @@ ADAMS_tracker_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path, 
                              HHIDPN = "TRUE") 
 
-#---- import data: demdx ----
+#---- **demdx ----
 demdx_data_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                             "ADAMS/adams1a/adams1ada/ADAMS1AD_R.da")
 demdx_dict_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
@@ -36,7 +37,8 @@ demdx_dict_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 ADAMSA_demdx <- read_da_dct(demdx_data_path_A, demdx_dict_path_A, 
                             HHIDPN = "TRUE") 
 
-#---- format data: neuropsych ----
+#---- format data ----
+#---- **neuropsych ----
 #variables of interest
 ADAMS_vars <- c("HHIDPN",
                 #item-level
@@ -113,7 +115,7 @@ ADAMSA_assessment %<>%
 #Drop item-level for these variables
 ADAMSA_assessment %<>% dplyr::select(-c("ANSCISOR", "ANCACTUS", "ANPRES"))
 
-#---- format data: sociodemographics ----
+#---- **sociodemographics ----
 ADAMS_tracker %<>% 
   dplyr::select("HHIDPN", "AASSESS", "AAGE", "GENDER", "ETHNIC", "EDYRS") %>% 
   mutate("female" = ifelse(GENDER == 1, 0, 1), 
@@ -123,7 +125,7 @@ ADAMS_tracker %<>%
   #drop ADAMS variables
   dplyr::select(-c("GENDER", "ETHNIC"))
 
-#---- format data: dem dx ----
+#---- **dem dx ----
 ADAMSA_demdx %<>% 
   dplyr::select("HHIDPN", "ADFDX1") %>% 
   mutate("dem_dx" = 
@@ -148,8 +150,17 @@ ADAMSA <- join_all(list(ADAMS_tracker, ADAMSA_assessment, ADAMSA_demdx),
   #filter to those with Wave A assessment
   filter(AASSESS == 1)
 
-#---- look at distributions and models for key covariates ----
+#---- distributions ----
+#---- **female ----
 prop_female <- mean(ADAMSA$female)
+
+#---- **ethnicity ----
+ethnicity_females <- as.data.frame(table(ADAMSA$female, ADAMSA$ethnic_cat)) %>% 
+  filter(Var1 == 1) %>% 
+  mutate("prop" = Freq/sum(Freq))
+ethnicity_males<- as.data.frame(table(ADAMSA$female, ADAMSA$ethnic_cat)) %>% 
+  filter(Var1 == 1) %>% 
+  mutate("prop" = Freq/sum(Freq))
 
 #---- blank synthetic dataset ----
 ADAMSA_synthetic <- 
@@ -161,10 +172,14 @@ ADAMSA_synthetic <-
 # #Sanity check
 # head(ADAMSA_synthetic)
 
-#---- generate: female ----
+#---- generate data ----
+#---- **female ----
 ADAMSA_synthetic[, "female"] <- rbernoulli(n = nrow(ADAMSA_synthetic), 
                                            p = prop_female)
 
-#---- check: female ----
+#---- **ethnicity ----
+
+#---- check data ----
+#---- **female ----
 diff_female <- prop_female - mean(ADAMSA_synthetic$female)
 
