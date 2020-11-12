@@ -115,7 +115,7 @@ ADAMSA_assessment %<>% dplyr::select(-c("ANSCISOR", "ANCACTUS", "ANPRES"))
 
 #---- format data: sociodemographics ----
 ADAMS_tracker %<>% 
-  dplyr::select("HHIDPN", "AAGE", "GENDER", "ETHNIC", "EDYRS") %>% 
+  dplyr::select("HHIDPN", "AASSESS", "AAGE", "GENDER", "ETHNIC", "EDYRS") %>% 
   mutate("female" = ifelse(GENDER == 1, 0, 1), 
          "ethnic_cat" = case_when(ETHNIC == 1 ~ "Non-hispanic White", 
                                   ETHNIC == 2 ~ "Non-hispanic Black", 
@@ -140,7 +140,9 @@ ADAMSA_demdx %<>%
 
 #---- join all the data ----
 ADAMSA <- join_all(list(ADAMS_tracker, ADAMSA_assessment, ADAMSA_demdx), 
-                   by = "HHIDPN", type = "left") 
+                   by = "HHIDPN", type = "left") %>% 
+  #filter to those with Wave A assessment
+  filter(AASSESS == 1)
 
 #---- look at distributions and models for key covariates ----
 
