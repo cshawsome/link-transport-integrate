@@ -149,7 +149,19 @@ ADAMSA <- join_all(list(ADAMS_tracker, ADAMSA_assessment, ADAMSA_demdx),
   filter(AASSESS == 1)
 
 #---- look at distributions and models for key covariates ----
+prop_female <- mean(ADAMSA$female)
 
+#---- blank synthetic dataset ----
+ADAMSA_synthetic <- 
+  as.data.frame(matrix(nrow = 10*nrow(ADAMSA), ncol = ncol(ADAMSA))) %>% 
+  set_colnames(colnames(ADAMSA)) %>% 
+  mutate("HHIDPN" = seq(1, nrow(ADAMSA_synthetic), by = 1), 
+         "AASSESS" = 1)
 
-#---- generate synthetic data ----
+# #Sanity check
+# head(ADAMSA_synthetic)
+
+#---- generate: female ----
+
+#---- check: female ----
 
