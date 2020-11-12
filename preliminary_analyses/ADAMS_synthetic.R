@@ -100,16 +100,15 @@ TICSTOT <- ADAMSA_assessment %>%
 #Recode 98 = don't know or 99 = refused as 0
 TICSTOT[TICSTOT == 98] <- 0
 TICSTOT[TICSTOT == 99] <- 0
+TICSTOT[, "TOTAL"] = rowSums(TICSTOT)
+TICSTOT[TICSTOT$TOTAL > 3, "TOTAL"] <- 97
 
 ADAMSA_assessment %<>% 
-  mutate("TICSTOT" = apply(ADAMSA_assessment %>% 
-                             dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES"), 1, 
-                           function(x) ifelse(sum(is.na(x)) == 3, NA, 
-                                              sum(x, na.rm = TRUE))))
+  mutate("TICSTOT" = TICSTOT$TOTAL)
 
-#Sanity Check
-View(ADAMSA_assessment %>%
-       dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES", "TICSTOT"))
+# #Sanity Check
+# View(ADAMSA_assessment %>%
+#        dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES", "TICSTOT"))
 
 #Drop item-level for these variables
 ADAMSA_assessment %<>% dplyr::select(-c("ANSCISOR", "ANCACTUS", "ANPRES"))
@@ -139,4 +138,4 @@ ADAMS_demdx_A %<>%
          "impaired" = 
            ifelse(dem_dx %in% c("Normal", "Other"), 0, 1))
 
-#---- generate sythetic data ----
+#---- generate synthetic data ----
