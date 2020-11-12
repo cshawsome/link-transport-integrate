@@ -69,7 +69,7 @@ for(var in recode_incorrect){
 
 #best trial of repeated trials-- need to account for possible 97 missing value
 BWC <- ADAMSA_assessment %>% dplyr::select(contains("BWC")) %>% 
-  mutate(ANBWC86 = ANBWC861)
+  mutate("ANBWC86" = ANBWC861)
 for(i in 1:nrow(BWC)){
   if(BWC[i, "ANBWC86"] == 1 | is.na(BWC[i, "ANBWC86"])) 
     next
@@ -77,24 +77,14 @@ for(i in 1:nrow(BWC)){
     BWC[i, "ANBWC86"] = 1
 }
 
-ANIMMCR <- 
+ADAMSA_assessment %<>% mutate("BWC" = BWC$ANBWC86)
 
-ADAMSA_assessment %<>% 
-  mutate("ANBWC86" = BWC$ANBWC86)
-           
-           
-           
-           apply(ADAMSA_assessment %>% 
-                             dplyr::select(contains("BWC")), 1, 
-                           max, na.rm = TRUE), 
-         "ANIMMCR" = apply(ADAMSA_assessment %>% 
+#Based on data check, I can define the best of the three trials this way
+#There are no NAs and there's no 97 after completed prior trials
+ADAMSA_assessment %<>% dplyr::select(contains("ANIMMCR")) %>% 
+  mutate("ANIMMCR" = apply(ADAMSA_assessment %>% 
                              dplyr::select(contains("ANIMMCR")), 1, 
                            max, na.rm = TRUE)) 
-
-ADAMSA_assessment[is.infinite(ADAMSA_assessment[, "ANBWC86"]), 
-                  "ANBWC86"] <- NA
-ADAMSA_assessment[is.infinite(ADAMSA_assessment[, "ANIMMCR"]), 
-                  "ANIMMCR"] <- NA
 
 # #Sanity check
 # View(ADAMSA_assessment %>% dplyr::select(contains("BWC")))
@@ -111,9 +101,9 @@ ADAMSA_assessment %<>%
                            function(x) ifelse(sum(is.na(x)) == 3, NA, 
                                               sum(x, na.rm = TRUE))))
 
-# #Sanity Check
-# View(ADAMSA_assessment %>% 
-#        dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES", "TICSTOT"))
+#Sanity Check
+View(ADAMSA_assessment %>%
+       dplyr::select("ANSCISOR", "ANCACTUS", "ANPRES", "TICSTOT"))
 
 #Drop item-level for these variables
 ADAMSA_assessment %<>% dplyr::select(-c("ANSCISOR", "ANCACTUS", "ANPRES"))
