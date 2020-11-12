@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "stringr", "broom", "openxlsx")
+p_load("tidyverse", "magrittr", "stringr", "plyr", "broom", "openxlsx")
 
 #---- source scripts ----
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
@@ -33,8 +33,8 @@ demdx_data_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 demdx_dict_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
                             "ADAMS/adams1a/adams1asta/ADAMS1AD_R.dct")
 
-ADAMS_demdx_A <- read_da_dct(demdx_data_path_A, demdx_dict_path_A, 
-                             HHIDPN = "TRUE") 
+ADAMSA_demdx <- read_da_dct(demdx_data_path_A, demdx_dict_path_A, 
+                            HHIDPN = "TRUE") 
 
 #---- format data: neuropsych ----
 #variables of interest
@@ -122,7 +122,7 @@ ADAMS_tracker %<>%
                                   ETHNIC == 3 ~ "Hispanic"))
 
 #---- format data: dem dx ----
-ADAMS_demdx_A %<>% 
+ADAMSA_demdx %<>% 
   dplyr::select("HHIDPN", "ADFDX1") %>% 
   mutate("dem_dx" = 
            case_when(ADFDX1 %in% c(1, 2) ~ "Probable/Possible AD", 
@@ -138,4 +138,11 @@ ADAMS_demdx_A %<>%
          "impaired" = 
            ifelse(dem_dx %in% c("Normal", "Other"), 0, 1))
 
+#---- join all the data ----
+ADAMSA <- join_all(list(ADAMS_tracker, ADAMSA_assessment, ADAMSA_demdx), 
+                   by = "HHIDPN", type = "left") 
+
+#---- look at distributions and models for key covariates ----
+
 #---- generate synthetic data ----
+
