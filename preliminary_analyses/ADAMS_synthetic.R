@@ -154,7 +154,7 @@ ADAMSA <- join_all(list(ADAMS_tracker, ADAMSA_assessment, ADAMSA_demdx),
 #---- **female ----
 prop_female <- mean(ADAMSA$female)
 
-#---- **ethnicity ----
+#---- **sex x ethnicity ----
 ethnicity_females <- as.data.frame(table(ADAMSA$female, ADAMSA$ethnic_cat)) %>% 
   filter(Var1 == 1) %>% 
   mutate("prop" = Freq/sum(Freq))
