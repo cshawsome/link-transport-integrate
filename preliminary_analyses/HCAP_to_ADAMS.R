@@ -92,12 +92,26 @@ HCAP_subset %<>% dplyr::select(-c("H1RIWYEAR", "BIRTHYR"))
 # #Sanity check
 # colnames(HCAP_subset)
 
-#---- **sociodemographics ----
-ADAMS_tracker %<>% 
-  dplyr::select("HHIDPN", "AASSESS", "AAGE", "GENDER", "ETHNIC", "EDYRS") %>% 
-  mutate("female" = ifelse(GENDER == 1, 0, 1), 
-         "ethnic_cat" = case_when(ETHNIC == 1 ~ "Non-hispanic White", 
-                                  ETHNIC == 2 ~ "Non-hispanic Black", 
-                                  ETHNIC == 3 ~ "Hispanic")) %>% 
-  #drop ADAMS variables
-  dplyr::select(-c("GENDER", "ETHNIC"))
+#---- **race/ethnicity ----
+#Variable check
+#0 = "Not Obtained"; 1-3 = diff categories Hispanic; 5 = "Non-Hispanic"
+table(HCAP_subset$HISPANIC) 
+#0 = "Not Obtained"; 1 = "White"; 2 = "Black"; 7 = "Other"
+table(HCAP_subset$RACE)
+table(HCAP_subset$RACE, HCAP_subset$HISPANIC)
+
+#Drop missing race
+HCAP_subset %<>% filter(RACE != 0)
+
+HCAP_subset %<>% 
+  mutate("race_ethnic_cat" = 
+           case_when(RACE == 1 & HISPANIC == 5 ~ "Non-hispanic White", 
+                     HISPANIC %in% c(1, 2, 3) ~ "Hispanic", 
+                     RACE == 2 & (HISPANIC == 5 | HISPANIC == 0) ~ 
+                       "Non-hispanic Black", 
+                     RACE == 7 & HISPANIC == 5 ~ "Other"))
+
+# #Sanity check
+# table(HCAP_subset$race_ethnic_cat, useNA = "ifany")
+# table(HCAP_subset$race_ethnic_cat, useNA = "ifany")/nrow(HCAP_subset)
+  
