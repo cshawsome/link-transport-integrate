@@ -9,6 +9,9 @@ p_load("tidyverse", "magrittr")
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
               "data_read/read_da_dct.R"))
 
+#---- color palette ----
+green = "#66a182"
+
 #---- import data ----
 #---- **neuropsych ----
 #ADAMS
@@ -69,6 +72,25 @@ HCAP_subset %<>% filter(!is.na(H1RIWYEAR))
 
 #---- format data ----
 #---- **age ----
+HCAP_subset %<>% mutate("HCAP_age" = H1RIWYEAR - BIRTHYR)
+
+# #Sanity check
+# ggplot(data = HCAP_subset) + 
+#   geom_histogram(aes(HCAP_age), color = green, fill = green) + 
+#   theme_minimal() + xlab("Age") + theme(text = element_text(size = 14))
+# ggsave(filename = "HCAP_age.jpeg", plot = last_plot(), device = "jpeg", 
+#        path = paste0("/Users/CrystalShaw/Box/Dissertation/", 
+#                      "preliminary_analyses/", 
+#                      "HCAP_synthetic/figures/"), width = 7, height = 5, 
+#        units = "in")
+# 
+# summary(HCAP_subset$HCAP_age)
+
+#Drop original variables
+HCAP_subset %<>% dplyr::select(-c("H1RIWYEAR", "BIRTHYR"))
+
+# #Sanity check
+# colnames(HCAP_subset)
 
 #---- **sociodemographics ----
 ADAMS_tracker %<>% 
