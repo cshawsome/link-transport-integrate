@@ -93,12 +93,12 @@ HCAP_subset %<>% dplyr::select(-c("H1RIWYEAR", "BIRTHYR"))
 # colnames(HCAP_subset)
 
 #---- **race/ethnicity ----
-#Variable check
-#0 = "Not Obtained"; 1-3 = diff categories Hispanic; 5 = "Non-Hispanic"
-table(HCAP_subset$HISPANIC) 
-#0 = "Not Obtained"; 1 = "White"; 2 = "Black"; 7 = "Other"
-table(HCAP_subset$RACE)
-table(HCAP_subset$RACE, HCAP_subset$HISPANIC)
+# #Variable check
+# #0 = "Not Obtained"; 1-3 = diff categories Hispanic; 5 = "Non-Hispanic"
+# table(HCAP_subset$HISPANIC) 
+# #0 = "Not Obtained"; 1 = "White"; 2 = "Black"; 7 = "Other"
+# table(HCAP_subset$RACE)
+# table(HCAP_subset$RACE, HCAP_subset$HISPANIC)
 
 #Drop missing race
 HCAP_subset %<>% filter(RACE != 0)
@@ -114,4 +114,65 @@ HCAP_subset %<>%
 # #Sanity check
 # table(HCAP_subset$race_ethnic_cat, useNA = "ifany")
 # table(HCAP_subset$race_ethnic_cat, useNA = "ifany")/nrow(HCAP_subset)
+
+#Drop original variables
+HCAP_subset %<>% dplyr::select(-c("RACE", "HISPANIC"))
+
+#Sanity check
+colnames(HCAP_subset)
+
+#---- **sex/gender ----
+# #Variable check
+# #1 = "Male"; 2 = "Female"
+# table(HCAP_subset$GENDER)
+
+HCAP_subset %<>% mutate("female" = ifelse(GENDER == 2, 1, 0))
+
+# #Sanity check
+# table(HCAP_subset$female, useNA = "ifany")
+# table(HCAP_subset$female, useNA = "ifany")/nrow(HCAP_subset)
+
+#Drop original variable
+HCAP_subset %<>% dplyr::select(-c("GENDER"))
+
+# #Sanity check
+# colnames(HCAP_subset)
+
+#---- education distributions ----
+# #Variable Check
+# #0-17 = years of education; 99 = "Not Ascertained"
+# table(HCAP_subset$SCHLYRS)
+
+#Remove missing education
+HCAP_subset %<>% filter(SCHLYRS != 99)
+
+ggplot(data = HCAP_subset) + 
+  geom_histogram(aes(SCHLYRS), color = green, fill = green) +
+  theme_minimal() + xlab("Years of Education") + 
+  theme(text = element_text(size = 14))
+
+ggsave(filename = "HCAP_edyrs.jpeg", plot = last_plot(), device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 7, height = 5,
+       units = "in")
+
+# #Variable check
+# summary(HCAP_subset$SCHLYRS)
+
+#---- neuropsych distributions ----
+ggplot(data = HCAP_subset) + 
+  geom_histogram(aes(H1RMSESCORE), color = green, fill = green) +
+  theme_minimal() + xlab("MMSE Score") + theme(text = element_text(size = 14))
+
+ggsave(filename = "HCAP_MMSE_score.jpeg", plot = last_plot(), device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 7, height = 5,
+       units = "in")
+
+# #Variable check
+# summary(HCAP_subset$H1RMSESCORE)
+
+#---- Modeling HCAP data ----
   
