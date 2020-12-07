@@ -267,7 +267,7 @@ plot_data <- rbind(HCAP_plot_data, synthetic_HCAP_plot_data)
 #Comparison plot
 ggplot(data = plot_data, aes(x = values, color = data_type, fill = data_type)) + 
   geom_histogram(alpha = 0.5, position = "identity") + theme_minimal() + 
-  xlab("MMSE Total Scores")
+  xlab("MMSE Total Scores") + theme(text = element_text(size = 14))
 
 ggsave(filename = "synthetic_HCAP_MMSE_score.jpeg", plot = last_plot(), 
        device = "jpeg",
