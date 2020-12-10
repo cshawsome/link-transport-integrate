@@ -237,8 +237,8 @@ summary(MMSE_3way_intx$fitted.values)
 # consideration... yet
 samp_size = 10000
 
-high_score_prop = 0.60; high_score_mean = 27; high_score_SD = 2
-med_score_prop = 0.35; med_score_mean = 22; med_score_SD = 3.5
+high_score_prop = 0.65; high_score_mean = 28; high_score_SD = 2
+med_score_prop = 0.30; med_score_mean = 22; med_score_SD = 3.5
 low_score_prop = 0.05; low_score_mean = 15; low_score_SD = 5
 
 high_scores <- rnorm(n = floor(high_score_prop*samp_size), 
@@ -276,4 +276,96 @@ ggsave(filename = "synthetic_HCAP_MMSE_score.jpeg", plot = last_plot(),
                      "HCAP_synthetic/figures/"), width = 7, height = 5,
        units = "in")
 
-  
+#---- overlap in mixtures ----
+plot_data <- 
+  data.frame("score" = 
+               c(rnorm(n = floor(high_score_prop*samp_size), 
+                       mean = high_score_mean, sd = high_score_SD), 
+                 rnorm(n = floor(med_score_prop*samp_size), 
+                       mean = med_score_mean, sd = med_score_SD), 
+                 rnorm(n = floor(low_score_prop*samp_size), 
+                       mean = low_score_mean, sd = low_score_SD)), 
+             "group" = c(rep("high", floor(high_score_prop*samp_size)), 
+                         rep("med", floor(med_score_prop*samp_size)), 
+                         rep("low", floor(low_score_prop*samp_size))))
+plot_data[which(plot_data$score > 30), "score"] <- 30
+plot_data[which(plot_data$score < 0), "score"] <- 0
+
+ggplot(data = plot_data, aes(x = score, color = group, fill = group)) + 
+  geom_histogram(alpha = 0.5, position = "identity") + theme_minimal() + 
+  xlab("Scores") + theme(text = element_text(size = 14))
+
+ggsave(filename = "mixture_dists.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 7, height = 5, 
+       units = "in")
+
+#---- HCAP MMSE joint distributions ----
+#---- **sex x MMSE ----
+plot_data <- HCAP_subset %>% dplyr::select("female", "H1RMSESCORE")
+
+ggplot(data = plot_data, aes(x = H1RMSESCORE, color = factor(female), 
+                             fill = factor(female))) + 
+  geom_histogram(alpha = 0.5, position = "identity") + theme_minimal() + 
+  xlab("MMSE") + theme(text = element_text(size = 14)) + 
+  guides(fill = guide_legend(title = "female"), 
+         color = guide_legend(title = "female"))
+
+ggsave(filename = "HCAP_sex_by_MMSE.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 7, height = 5, 
+       units = "in")
+
+#---- **race/ethnicity x MMSE ----
+plot_data <- HCAP_subset %>% dplyr::select("race_ethnic_cat", "H1RMSESCORE")
+
+ggplot(data = plot_data, aes(x = H1RMSESCORE, color = race_ethnic_cat, 
+                             fill = race_ethnic_cat)) + 
+  geom_histogram(alpha = 0.5, position = "identity") + theme_minimal() + 
+  xlab("MMSE") + theme(text = element_text(size = 14)) + 
+  guides(fill = guide_legend(title = "Race/Ethnicity"), 
+         color = guide_legend(title = "Race/Ethnicity"))
+
+ggsave(filename = "HCAP_race_eth_by_MMSE.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 7, height = 5, 
+       units = "in")
+
+#---- **age x MMSE ----
+plot_data <- HCAP_subset %>% dplyr::select("HCAP_age", "H1RMSESCORE")
+
+ggplot(data = plot_data, aes(x = HCAP_age, y = H1RMSESCORE)) + 
+  geom_point(color = green) + theme_minimal() + 
+  xlab("Age") + ylab("MMSE") + theme(text = element_text(size = 14)) 
+
+ggsave(filename = "HCAP_age_by_MMSE.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 7, height = 5, 
+       units = "in")
+
+#---- **age x MMSE ----
+plot_data <- HCAP_subset %>% dplyr::select("SCHLYRS", "H1RMSESCORE")
+
+ggplot(data = plot_data, aes(x = SCHLYRS, y = H1RMSESCORE)) + 
+  geom_point(color = green) + theme_minimal() + 
+  xlab("Years of Education") + ylab("MMSE") + 
+  theme(text = element_text(size = 14)) 
+
+ggsave(filename = "HCAP_edu_by_MMSE.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 7, height = 5, 
+       units = "in")
+
+
+
+
