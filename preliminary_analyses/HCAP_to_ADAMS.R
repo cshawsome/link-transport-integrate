@@ -15,13 +15,25 @@ green = "#66a182"
 #---- import data ----
 #---- **neuropsych ----
 #ADAMS
-neuropsych_data_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                                 "ADAMS/adams1a/adams1ada/ADAMS1AN_R.da")
-neuropsych_dict_path_A <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                                 "ADAMS/adams1a/adams1asta/ADAMS1AN_R.dct")
-
-ADAMS_neuropsych_A <- read_da_dct(neuropsych_data_path_A, 
-                                  neuropsych_dict_path_A, HHIDPN = "TRUE")
+for(wave in c("a", "b", "c", "d")){
+  neuropsych_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                                 "ADAMS/adams1", wave, "/adams1", wave, "da/", 
+                                 "ADAMS1", str_to_upper(wave), "N_R.da")
+  
+  neuropsych_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                                 "ADAMS/adams1", wave, "/adams1", wave, "sta/", 
+                                 "ADAMS1", str_to_upper(wave), "N_R.dct")
+  
+  if(wave == "a"){
+    ADAMS_neuropsych <- read_da_dct(neuropsych_data_path, neuropsych_dict_path, 
+                                    HHIDPN = "TRUE") 
+  } else{
+    ADAMS_neuropsych %<>% 
+      left_join(., read_da_dct(neuropsych_data_path, neuropsych_dict_path, 
+                               HHIDPN = "TRUE"), 
+                by = "HHIDPN")
+  }
+}
 
 #HCAP
 HCAP_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/HCAP/HC16/", 
@@ -54,7 +66,7 @@ HRS_tracker <- read_da_dct(HCAP_tracker_data_path, HCAP_tracker_dict_path,
 
 #---- join data ----
 HCAP <- left_join(HCAP, HRS_tracker, by = "HHIDPN")
-ADAMS <- left_join(ADAMS_neuropsych_A, ADAMS_tracker, by = "HHIDPN")
+ADAMS <- left_join(ADAMS_neuropsych, ADAMS_tracker, by = "HHIDPN")
 
 #---- select variables ----
 HCAP_vars <- c("HHIDPN", "GENDER", "HISPANIC", "RACE", "SCHLYRS",
@@ -65,10 +77,10 @@ HCAP_vars <- c("HHIDPN", "GENDER", "HISPANIC", "RACE", "SCHLYRS",
 
 ADAMS_vars <- c("HHIDPN", 
                 #MMSE
-                "ANMSETOT")
+                "NMSETOT")
 
 HCAP_subset <- HCAP %>% dplyr::select(all_of(HCAP_vars))
-ADAMS_subset <- ADAMS %>% dplyr::select(all_of(ADAMS_vars))
+ADAMS_subset <- ADAMS %>% dplyr::select(contains(ADAMS_vars))
 
 # #Variable check
 # colSums(is.na(HCAP_subset))
@@ -385,14 +397,15 @@ for(wave in c("a", "b", "c", "d")){
                          dem_dx %in% c(3, 4) ~ 
                            "Probable/Possible Vascular Dementia", 
                          dem_dx %in% 
-                           c(5, 8, 14, 23, 24, 25, 26, 27, 21, 28, 29, 30) ~ 
-                           "Other",
-                         dem_dx %in% c(18) ~ "Probable Dementia",
-                         dem_dx %in% c(10, 13, 15) ~ "Dementia", 
+                           c(5, 6, 7, 8, 11, 14, 23, 24, 25, 26, 27, 21, 28, 29, 
+                             30, 33) ~ "Other",
+                         dem_dx %in% c(18, 32) ~ "Probable Dementia",
+                         dem_dx %in% c(10, 13, 15, 16, 17, 19) ~ "Dementia", 
                          dem_dx %in% c(20, 22) ~ "MCI", 
                          dem_dx == 31 ~ "Normal")) %>% 
-      set_colnames(c("HHIDPN", paste0("dem_dx", str_to_upper(wave)), 
-                     paste0("dem_dx_cat", str_to_upper(wave))))
+      dplyr::select(-c("dem_dx")) %>%
+      set_colnames(c("HHIDPN", 
+                     paste0(str_to_upper(wave), "dem_dx_cat")))
   } else{
     ADAMS_demdx %<>% 
       left_join(., read_da_dct(demdx_data_path, demdx_dict_path, 
@@ -406,18 +419,30 @@ for(wave in c("a", "b", "c", "d")){
                                      dem_dx %in% c(3, 4) ~ 
                                        "Probable/Possible Vascular Dementia", 
                                      dem_dx %in% 
-                                       c(5, 8, 14, 23, 24, 25, 26, 27, 21, 28, 
-                                         29, 30) ~ "Other",
-                                     dem_dx %in% c(18) ~ "Probable Dementia",
-                                     dem_dx %in% c(10, 13, 15) ~ "Dementia", 
+                                       c(5, 6, 7, 8, 11, 14, 23, 24, 25, 26, 27, 
+                                         21, 28, 29, 30, 33) ~ "Other",
+                                     dem_dx %in% c(18, 32) ~ 
+                                       "Probable Dementia",
+                                     dem_dx %in% c(10, 13, 15, 16, 17, 19) ~ 
+                                       "Dementia", 
                                      dem_dx %in% c(20, 22) ~ "MCI", 
                                      dem_dx == 31 ~ "Normal")) %>% 
-                  set_colnames(c("HHIDPN", paste0("dem_dx", str_to_upper(wave)), 
-                                 paste0("dem_dx_cat", str_to_upper(wave)))), 
+                  dplyr::select(-c("dem_dx")) %>% 
+                  set_colnames(c("HHIDPN", 
+                                 paste0(str_to_upper(wave), "dem_dx_cat"))), 
                          by = "HHIDPN")
   }
 }
 
+# #Sanity check-- need to comment out lines 406 and 430 and add "temp" as second 
+# # column name in set_colnames for this check
+# table(ADAMS_demdx$temp.x, ADAMS_demdx$Adem_dx_cat, useNA = "ifany")
+# table(ADAMS_demdx$temp.y, ADAMS_demdx$Bdem_dx_cat, useNA = "ifany")
+# table(ADAMS_demdx$temp.x.x, ADAMS_demdx$Cdem_dx_cat, useNA = "ifany")
+# table(ADAMS_demdx$temp.y.y, ADAMS_demdx$Ddem_dx_cat, useNA = "ifany")
+
+#---- **join with neurospych ----
+ADAMS_subset %<>% left_join(., ADAMS_demdx, by = "HHIDPN")
 
 #Sanity check
 table(ADAMS_demdx_A$dem_dx, ADAMS_demdx_A$dem_class, useNA = "ifany")
