@@ -35,6 +35,8 @@ for(wave in c("a", "b", "c", "d")){
   }
 }
 
+
+
 #HCAP
 HCAP_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/HCAP/HC16/", 
                     "HC16da/HC16HP_R.da")
@@ -87,8 +89,14 @@ ADAMS_subset <- ADAMS %>% dplyr::select(contains(ADAMS_vars))
 
 #Drop people without an interview year
 HCAP_subset %<>% filter(!is.na(H1RIWYEAR))
-#Drop people with missing MMSE data in ADAMS
-ADAMS_subset %<>% filter(ANMSETOT <= 30)
+#Set people with missing MMSE data (code = 97) to NA in ADAMS
+ADAMS_subset %<>% 
+  mutate_at(.vars = paste0(c("A", "B", "C", "D"), "NMSETOT"), 
+            function(x) ifelse(x > 30, NA, x))
+
+# #Sanity check
+# ADAMS_subset %>% dplyr::select(contains("NMSETOT")) %>% 
+#   apply(2, function(x) max(x, na.rm = TRUE))
 
 #---- format data ----
 #---- **age ----
@@ -444,8 +452,28 @@ for(wave in c("a", "b", "c", "d")){
 #---- **join with neurospych ----
 ADAMS_subset %<>% left_join(., ADAMS_demdx, by = "HHIDPN")
 
-#Sanity check
-table(ADAMS_demdx_A$dem_dx, ADAMS_demdx_A$dem_class, useNA = "ifany")
+#---- **plots ----
+plot_data <- ADAMS_subset %>%
+  pivot_longer(-HHIDPN,
+               names_to = c("wave", ".value"),
+               names_pattern = "(.)(.*)") %>% 
+  mutate("dem_dx_new_cat" = 
+           case_when(dem_dx_cat %in% 
+                       c("Dementia", "Probable Dementia", 
+                         "Probable/Possible AD", 
+                         "Probable/Possible Vascular Dementia") ~ "Dementia", 
+                     TRUE ~ dem_dx_cat))
+
+# #Variable check
+# table(plot_data$dem_dx_cat, useNA = "ifany")
+# table(plot_data$dem_dx_cat, plot_data$dem_dx_new_cat, useNA = "ifany")
+
+ggplot(data = plot_data, aes(x = NMSETOT, color = factor(dem_dx_new_cat), 
+                             fill = factor(dem_dx_new_cat))) + 
+  geom_histogram(alpha = 0.5, position = "identity") + theme_minimal() + 
+  xlab("MMSE") + theme(text = element_text(size = 14)) + 
+  guides(fill = guide_legend(title = "Dementia Dx"), 
+         color = guide_legend(title = "Dementia Dx"))
 
 
 
