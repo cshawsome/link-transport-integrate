@@ -366,6 +366,63 @@ ggsave(filename = "HCAP_edu_by_MMSE.jpeg", plot = last_plot(),
                      "HCAP_synthetic/figures/"), width = 7, height = 5, 
        units = "in")
 
+#---- ADAMS distributions by dem status ----
+#---- **read in demdx data ----
+for(wave in c("a", "b", "c", "d")){
+  demdx_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                              "ADAMS/adams1", wave, "/adams1", wave, "da/", 
+                            "ADAMS1", str_to_upper(wave), "D_R.da")
+  demdx_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                            "ADAMS/adams1", wave, "/adams1", wave, "sta/", 
+                            "ADAMS1", str_to_upper(wave), "D_R.dct")
+  if(wave == "a"){
+    ADAMS_demdx <- read_da_dct(demdx_data_path, demdx_dict_path, 
+                               HHIDPN = "TRUE") %>% 
+      dplyr::select("HHIDPN", paste0(str_to_upper(wave), "DFDX1")) %>% 
+      set_colnames(c("HHIDPN", "dem_dx")) %>% 
+      mutate(new_col = 
+               case_when(dem_dx %in% c(1, 2) ~ "Probable/Possible AD", 
+                         dem_dx %in% c(3, 4) ~ 
+                           "Probable/Possible Vascular Dementia", 
+                         dem_dx %in% 
+                           c(5, 8, 14, 23, 24, 25, 26, 27, 21, 28, 29, 30) ~ 
+                           "Other",
+                         dem_dx %in% c(18) ~ "Probable Dementia",
+                         dem_dx %in% c(10, 13, 15) ~ "Dementia", 
+                         dem_dx %in% c(20, 22) ~ "MCI", 
+                         dem_dx == 31 ~ "Normal")) %>% 
+      set_colnames(c("HHIDPN", paste0("dem_dx", str_to_upper(wave)), 
+                     paste0("dem_dx_cat", str_to_upper(wave))))
+  } else{
+    ADAMS_demdx %<>% 
+      left_join(., read_da_dct(demdx_data_path, demdx_dict_path, 
+                               HHIDPN = "TRUE") %>% 
+                  dplyr::select("HHIDPN", 
+                                paste0(str_to_upper(wave), "DFDX1")) %>% 
+                  set_colnames(c("HHIDPN", "dem_dx")) %>% 
+                  mutate(new_col = 
+                           case_when(dem_dx %in% c(1, 2) ~ 
+                                       "Probable/Possible AD", 
+                                     dem_dx %in% c(3, 4) ~ 
+                                       "Probable/Possible Vascular Dementia", 
+                                     dem_dx %in% 
+                                       c(5, 8, 14, 23, 24, 25, 26, 27, 21, 28, 
+                                         29, 30) ~ "Other",
+                                     dem_dx %in% c(18) ~ "Probable Dementia",
+                                     dem_dx %in% c(10, 13, 15) ~ "Dementia", 
+                                     dem_dx %in% c(20, 22) ~ "MCI", 
+                                     dem_dx == 31 ~ "Normal")) %>% 
+                  set_colnames(c("HHIDPN", paste0("dem_dx", str_to_upper(wave)), 
+                                 paste0("dem_dx_cat", str_to_upper(wave)))), 
+                         by = "HHIDPN")
+  }
+}
+
+
+#Sanity check
+table(ADAMS_demdx_A$dem_dx, ADAMS_demdx_A$dem_class, useNA = "ifany")
+
+
 
 
 
