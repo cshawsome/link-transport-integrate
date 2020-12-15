@@ -468,12 +468,23 @@ plot_data <- ADAMS_subset %>%
 # table(plot_data$dem_dx_cat, useNA = "ifany")
 # table(plot_data$dem_dx_cat, plot_data$dem_dx_new_cat, useNA = "ifany")
 
-ggplot(data = plot_data, aes(x = NMSETOT, color = factor(dem_dx_new_cat), 
+ggplot(data = plot_data %>% filter(dem_dx_new_cat != "Other"), 
+       aes(x = NMSETOT, color = factor(dem_dx_new_cat), 
                              fill = factor(dem_dx_new_cat))) + 
-  geom_histogram(alpha = 0.5, position = "identity") + theme_minimal() + 
+  geom_histogram(alpha = 0.4, position = "identity") + theme_minimal() + 
   xlab("MMSE") + theme(text = element_text(size = 14)) + 
   guides(fill = guide_legend(title = "Dementia Dx"), 
-         color = guide_legend(title = "Dementia Dx"))
+         color = guide_legend(title = "Dementia Dx")) + 
+  facet_grid(cols = vars(wave))
+
+ggsave(filename = "ADAMS_MMSE_by_dem.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 15, height = 5, 
+       units = "in")
+
+
 
 
 
