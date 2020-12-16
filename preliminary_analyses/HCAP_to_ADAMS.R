@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "broom")
+p_load("tidyverse", "magrittr", "broom", "haven")
 
 #---- source scripts ----
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
@@ -13,7 +13,7 @@ source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/",
 green = "#66a182"
 
 #---- import data ----
-#---- **neuropsych ----
+#---- **ADAMS neuropsych ----
 #ADAMS
 for(wave in c("a", "b", "c", "d")){
   neuropsych_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
@@ -35,9 +35,7 @@ for(wave in c("a", "b", "c", "d")){
   }
 }
 
-
-
-#HCAP
+#---- **HCAP neuropsych ----
 HCAP_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/HCAP/HC16/", 
                     "HC16da/HC16HP_R.da")
 HCAP_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/HCAP/HC16/", 
@@ -47,8 +45,20 @@ HCAP <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE")
 cog_test_labels <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                                    "cog_test_meaningful_labels.csv"))
 
-#---- **sociodemographic ----
-#ADAMS
+#---- **RAND ----
+rand_waves <- seq(5, 9, by = 1)
+rand_variables <- c("hhidpn", paste0("r", rand_waves, "cogtot"))
+
+RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                        "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
+                 col_select = all_of(rand_variables)) 
+
+colnames(RAND)[1] <- "HHIDPN" #For merging
+
+#Remove labeled data format
+val_labels(RAND) <- NULL
+
+#---- **ADAMS sociodemographic ----
 ADAMS_tracker_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                                   "ADAMS/adams1trk/ADAMS1TRK_R.da")
 ADAMS_tracker_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
@@ -57,7 +67,7 @@ ADAMS_tracker_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path, 
                              HHIDPN = "TRUE") 
 
-#HCAP
+#---- **HCAP sociodemographics ----
 HRS_tracker_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                                 "tracker/trk2018_3/TRK2018TR_R.da")
 HRS_tracker_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
