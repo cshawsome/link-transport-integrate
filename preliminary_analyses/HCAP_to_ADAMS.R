@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "broom", "haven")
+p_load("tidyverse", "magrittr", "broom", "haven", "labelled")
 
 #---- source scripts ----
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
@@ -51,7 +51,8 @@ rand_variables <- c("hhidpn", paste0("r", rand_waves, "cogtot"))
 
 RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                         "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
-                 col_select = all_of(rand_variables)) 
+                 col_select = all_of(rand_variables)) %>% 
+  mutate_at("hhidpn", as.character)
 
 colnames(RAND)[1] <- "HHIDPN" #For merging
 
@@ -460,9 +461,12 @@ for(wave in c("a", "b", "c", "d")){
 # table(ADAMS_demdx$temp.y.y, ADAMS_demdx$Ddem_dx_cat, useNA = "ifany")
 
 #---- **join with neurospych ----
-ADAMS_subset %<>% left_join(., ADAMS_demdx, by = "HHIDPN")
+ADAMS_subset %<>% left_join(., ADAMS_demdx, by = "HHIDPN") %>% 
+  left_join(., RAND, by = "HHIDPN")
 
-#---- **plots ----
+#---- **closest HRS cog total ----
+
+#---- **plot: MMSE x dem dx ----
 plot_data <- ADAMS_subset %>%
   pivot_longer(-HHIDPN,
                names_to = c("wave", ".value"),
