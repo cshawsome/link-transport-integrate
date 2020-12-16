@@ -88,9 +88,9 @@ HCAP_vars <- c("HHIDPN", "GENDER", "HISPANIC", "RACE", "SCHLYRS",
                #MMSE
                "H1RMSESCORE")
 
-ADAMS_vars <- c("HHIDPN", 
-                #MMSE
-                "NMSETOT")
+ADAMS_vars <- c("HHIDPN",
+                #Interview year, MMSE
+                paste0(c("A", "B", "C", "D"), "YEAR"), "NMSETOT")
 
 HCAP_subset <- HCAP %>% dplyr::select(all_of(HCAP_vars))
 ADAMS_subset <- ADAMS %>% dplyr::select(contains(ADAMS_vars))
@@ -109,7 +109,18 @@ ADAMS_subset %<>%
 # ADAMS_subset %>% dplyr::select(contains("NMSETOT")) %>% 
 #   apply(2, function(x) max(x, na.rm = TRUE))
 
+# table(ADAMS_subset$AYEAR, useNA = "ifany")
+# table(ADAMS_subset$BYEAR, useNA = "ifany")
+# table(ADAMS_subset$CYEAR, useNA = "ifany")
+# table(ADAMS_subset$DYEAR, useNA = "ifany")
+
 #---- format data ----
+#---- **ADAMS interview year ----
+ADAMS_subset %<>% mutate_at("BYEAR", function(x) ifelse(x == 9997, NA, x))
+
+#Sanity check
+table(ADAMS_subset$BYEAR, useNA = "ifany")
+
 #---- **age ----
 HCAP_subset %<>% mutate("HCAP_age" = H1RIWYEAR - BIRTHYR)
 
@@ -464,7 +475,38 @@ for(wave in c("a", "b", "c", "d")){
 ADAMS_subset %<>% left_join(., ADAMS_demdx, by = "HHIDPN") %>% 
   left_join(., RAND, by = "HHIDPN")
 
-#---- **closest HRS cog total ----
+#---- **closest RAND year ----
+#Wave Year | HRS Core Data | RAND
+# 2000 | G | 5
+# 2002 | H | 6
+# 2004 | J | 7
+# 2006 | K | 8
+# 2008 | L | 9
+
+#For the even years, take the year itself; for odd years, take the year before
+for(wave in c("A", "B", "C", "D")){
+  ADAMS_subset[, paste0(wave, "RANDYEAR")] <- 
+    ifelse(ADAMS_subset[, paste0(wave, "YEAR")] %% 2 == 0, 
+           ADAMS_subset[, paste0(wave, "YEAR")], 
+           ADAMS_subset[, paste0(wave, "YEAR")] - 1)
+  
+  ADAMS_subset[, paste0(wave, "RANDWAVE")] <- 
+    ((ADAMS_subset[, paste0(wave, "RANDYEAR")] - 2000)/2) + 5
+}
+
+# #Sanity check
+# table(ADAMS_subset$AYEAR, ADAMS_subset$ARANDYEAR, useNA = "ifany")
+# table(ADAMS_subset$BYEAR, ADAMS_subset$BRANDYEAR, useNA = "ifany")
+# table(ADAMS_subset$CYEAR, ADAMS_subset$CRANDYEAR, useNA = "ifany")
+# table(ADAMS_subset$DYEAR, ADAMS_subset$DRANDYEAR, useNA = "ifany")
+# 
+# table(ADAMS_subset$ARANDYEAR, ADAMS_subset$ARANDWAVE, useNA = "ifany")
+# table(ADAMS_subset$BRANDYEAR, ADAMS_subset$BRANDWAVE, useNA = "ifany")
+# table(ADAMS_subset$CRANDYEAR, ADAMS_subset$CRANDWAVE, useNA = "ifany")
+# table(ADAMS_subset$DRANDYEAR, ADAMS_subset$DRANDWAVE, useNA = "ifany")
+
+#---- **closest RAND cog score ----
+
 
 #---- **plot: MMSE x dem dx ----
 plot_data <- ADAMS_subset %>%
