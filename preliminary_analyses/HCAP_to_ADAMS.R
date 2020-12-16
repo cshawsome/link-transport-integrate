@@ -506,7 +506,32 @@ for(wave in c("A", "B", "C", "D")){
 # table(ADAMS_subset$DRANDYEAR, ADAMS_subset$DRANDWAVE, useNA = "ifany")
 
 #---- **closest RAND cog score ----
+for(wave in c("A", "B", "C", "D")){
+  for(i in 1:nrow(ADAMS_subset)){
+    if(!is.na(ADAMS_subset[i, paste0(wave, "NMSETOT")])){
+      RAND_wave <- ADAMS_subset[i, paste0(wave, "RANDWAVE")]
+      RAND_cog_val <- ADAMS_subset[i, paste0("r", RAND_wave, "cogtot")]
+      if(!is.na(RAND_cog_val)){
+        ADAMS_subset[i, paste0(wave, "RANDcogtot")] <- RAND_cog_val
+      } else{
+        if(RAND_wave != 9){
+          future_cog_vals <- 
+            ADAMS_subset[i, paste0("r", seq(RAND_wave + 1, 9), "cogtot")]
+          nearest <- min(which(!is.na(future_cog_vals)))
+          if(is.finite(nearest)){
+            ADAMS_subset[i, paste0(wave, "RANDcogtot")] <- 
+              future_cog_vals[nearest]
+          } 
+        }
+      }
+    }
+  }
+}
 
+# #Sanity check
+# ADAMS_subset %>% dplyr::select(contains(c("ARANDWAVE", "ANMSE", "cogtot")))
+# ADAMS_subset %>% dplyr::select(contains(c("BRANDWAVE", "BNMSE", "cogtot")))
+# ADAMS_subset %>% dplyr::select(contains(c("CRANDWAVE", "CNMSE", "cogtot")))
 
 #---- **plot: MMSE x dem dx ----
 plot_data <- ADAMS_subset %>%
