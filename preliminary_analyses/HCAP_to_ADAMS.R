@@ -74,7 +74,7 @@ HRS_tracker_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 HRS_tracker_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                                 "tracker/trk2018_3/TRK2018TR_R.dct")
 
-HRS_tracker <- read_da_dct(HCAP_tracker_data_path, HCAP_tracker_dict_path, 
+HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path, 
                            HHIDPN = "TRUE") 
 
 #---- join data ----
@@ -528,10 +528,37 @@ for(wave in c("A", "B", "C", "D")){
   }
 }
 
+#Zscore the cognitive measures
+MMSE_Zscore <- ADAMS_subset %>% dplyr::select(contains("NMSETOT")) %>% 
+  mutate_all(function(x) (x - mean(x, na.rm = TRUE))/sd(x, na.rm = TRUE)) %>% 
+  set_colnames(paste0(colnames(MMSE_Zscore), "_Zscore"))
+cogtot_Zscore <- ADAMS_subset %>% dplyr::select(contains("RANDcogtot")) %>% 
+  mutate_all(function(x) (x - mean(x, na.rm = TRUE))/sd(x, na.rm = TRUE)) %>% 
+  set_colnames(paste0(colnames(cogtot_Zscore), "_Zscore"))
+
+#cbind Zscores
+ADAMS_subset %<>% cbind(MMSE_Zscore) %>% cbind(cogtot_Zscore)
+
+
 # #Sanity check
-# ADAMS_subset %>% dplyr::select(contains(c("ARANDWAVE", "ANMSE", "cogtot")))
-# ADAMS_subset %>% dplyr::select(contains(c("BRANDWAVE", "BNMSE", "cogtot")))
-# ADAMS_subset %>% dplyr::select(contains(c("CRANDWAVE", "CNMSE", "cogtot")))
+# View(ADAMS_subset %>%
+#        dplyr::select(contains(c("ARANDWAVE", "ANMSE", "cogtot"))))
+# View(ADAMS_subset %>%
+#        dplyr::select(contains(c("ARANDWAVE", "ANMSE", "cogtot"))) %>% 
+#        filter(is.na(ARANDcogtot)))
+# View(ADAMS_subset %>% 
+#        dplyr::select(contains(c("BRANDWAVE", "BNMSE", "cogtot"))))
+# View(ADAMS_subset %>% 
+#        dplyr::select(contains(c("CRANDWAVE", "CNMSE", "cogtot"))))
+
+# head((ADAMS_subset$ANMSETOT - 
+#     mean(ADAMS_subset$ANMSETOT, na.rm = TRUE))/
+#   sd(ADAMS_subset$ANMSETOT, na.rm = TRUE))
+# head((ADAMS_subset$BNMSETOT - 
+#         mean(ADAMS_subset$BNMSETOT, na.rm = TRUE))/
+#        sd(ADAMS_subset$BNMSETOT, na.rm = TRUE))
+# 
+# head(MMSE_Zscore)
 
 #---- **plot: MMSE x dem dx ----
 plot_data <- ADAMS_subset %>%
@@ -565,7 +592,22 @@ ggsave(filename = "ADAMS_MMSE_by_dem.jpeg", plot = last_plot(),
                      "HCAP_synthetic/figures/"), width = 15, height = 5, 
        units = "in")
 
+#---- **plot: MMSE x closest RAND cog score ----
+plot_data <- ADAMS_subset %>% 
+  dplyr::select(contains(c("NMSE", "RANDcogtot"))) %>% 
+  pivot_longer(everything(),
+               names_to = c("wave", ".value"),
+               names_pattern = "(.)(.*)") 
 
+ggplot(data = plot_data, 
+       aes(x = NMSETOT, y = RANDcogtot)) + 
+  geom_point(color = green) + theme_minimal() + 
+  geom_abline(intercept = 0, slope = 1) + 
+  xlab("ADAMS MMSE Score") + ylab("HRS Total Cognition Score") + 
+  theme(text = element_text(size = 14)) +
+  facet_grid(cols = vars(wave))
+  
+  
 
 
 
