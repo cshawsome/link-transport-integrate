@@ -610,19 +610,41 @@ ggsave(filename = "ADAMS_MMSE_by_dem_and_other.jpeg", plot = last_plot(),
        units = "in")
 
 #---- **plot: MMSE x closest RAND cog score ----
+corA <- round(cor(ADAMS_subset$ANMSETOT_Zscore, ADAMS_subset$ARANDcogtot_Zscore, 
+            use = "complete.obs"), 2)
+corB <- round(cor(ADAMS_subset$BNMSETOT_Zscore, ADAMS_subset$BRANDcogtot_Zscore, 
+            use = "complete.obs"), 2)
+corC <- round(cor(ADAMS_subset$CNMSETOT_Zscore, ADAMS_subset$CRANDcogtot_Zscore, 
+                  use = "complete.obs"), 2)
+corD <- round(cor(ADAMS_subset$DNMSETOT_Zscore, ADAMS_subset$DRANDcogtot_Zscore, 
+                  use = "complete.obs"), 2)
+
 plot_data <- ADAMS_subset %>% 
-  dplyr::select(contains(c("NMSE", "RANDcogtot"))) %>% 
+  dplyr::select(contains(c("NMSETOT_Zscore", "RANDcogtot_Zscore"))) %>% 
   pivot_longer(everything(),
                names_to = c("wave", ".value"),
-               names_pattern = "(.)(.*)") 
+               names_pattern = "(.)(.*)") %>% 
+  mutate("wave_corr" = case_when(wave == "A" ~ paste0("A: rho = ", corA), 
+                                 wave == "B" ~ paste0("B: rho = ", corB), 
+                                 wave == "C" ~ paste0("C: rho = ", corC), 
+                                 wave == "D" ~ paste0("D: rho = ", corD)))
 
 ggplot(data = plot_data, 
-       aes(x = NMSETOT, y = RANDcogtot)) + 
+       aes(x = NMSETOT_Zscore, y = RANDcogtot_Zscore)) + 
   geom_point(color = green) + theme_minimal() + 
   geom_abline(intercept = 0, slope = 1) + 
-  xlab("ADAMS MMSE Score") + ylab("HRS Total Cognition Score") + 
+  xlab("ADAMS MMSE Score (Z score)") + 
+  ylab("HRS Total Cognition Score (Z score)") + 
   theme(text = element_text(size = 14)) +
-  facet_grid(cols = vars(wave))
+  facet_grid(cols = vars(wave_corr))
+
+ggsave(filename = "ADAMS_MMSE_by_total_cog_Zscore.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 15, height = 5, 
+       units = "in")
+
   
   
 
