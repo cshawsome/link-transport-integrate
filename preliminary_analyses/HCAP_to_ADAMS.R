@@ -609,6 +609,55 @@ ggsave(filename = "ADAMS_MMSE_by_dem_and_other.jpeg", plot = last_plot(),
                      "HCAP_synthetic/figures/"), width = 15, height = 5, 
        units = "in")
 
+#---- **plot: RAND cog score x dem dx ----
+plot_data <- ADAMS_subset %>% 
+  dplyr::select(contains(c("RANDcogtot", "dem_dx_cat"))) %>%
+  pivot_longer(everything(), 
+               names_to = c("wave", ".value"),
+               names_pattern = "(.)(.*)") %>% 
+  mutate("dem_dx_new_cat" = 
+           case_when(dem_dx_cat %in% 
+                       c("Dementia", "Probable Dementia", 
+                         "Probable/Possible AD", 
+                         "Probable/Possible Vascular Dementia") ~ "Dementia", 
+                     TRUE ~ dem_dx_cat))
+
+# #Variable check
+# table(plot_data$dem_dx_cat, useNA = "ifany")
+# table(plot_data$dem_dx_cat, plot_data$dem_dx_new_cat, useNA = "ifany")
+
+ggplot(data = plot_data %>% filter(dem_dx_new_cat != "Other"), 
+       aes(x = RANDcogtot, color = factor(dem_dx_new_cat), 
+           fill = factor(dem_dx_new_cat))) + 
+  geom_histogram(alpha = 0.4, position = "identity") + theme_minimal() + 
+  xlab("HRS Total Cognition Score") + theme(text = element_text(size = 14)) + 
+  guides(fill = guide_legend(title = "Dementia Dx"), 
+         color = guide_legend(title = "Dementia Dx")) + 
+  facet_grid(cols = vars(wave))
+
+ggsave(filename = "HRS_total_cog_by_dem.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 15, height = 5, 
+       units = "in")
+
+ggplot(data = plot_data, 
+       aes(x = RANDcogtot, color = factor(dem_dx_new_cat), 
+           fill = factor(dem_dx_new_cat))) + 
+  geom_histogram(alpha = 0.4, position = "identity") + theme_minimal() + 
+  xlab("HRS Total Cognition Score") + theme(text = element_text(size = 14)) + 
+  guides(fill = guide_legend(title = "Dementia Dx"), 
+         color = guide_legend(title = "Dementia Dx")) + 
+  facet_grid(cols = vars(wave))
+
+ggsave(filename = "HRS_total_cog_by_dem_and_other.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 15, height = 5, 
+       units = "in")
+
 #---- **plot: MMSE x closest RAND cog score ----
 corA <- round(cor(ADAMS_subset$ANMSETOT_Zscore, ADAMS_subset$ARANDcogtot_Zscore, 
             use = "complete.obs"), 2)
