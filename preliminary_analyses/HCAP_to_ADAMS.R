@@ -47,7 +47,8 @@ cog_test_labels <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 
 #---- **RAND ----
 rand_waves <- seq(5, 9, by = 1)
-rand_variables <- c("hhidpn", paste0("r", rand_waves, "cogtot"))
+rand_variables <- c("hhidpn", paste0("r", rand_waves, "cogtot"), 
+                    paste0("r", rand_waves, "iadla"))
 
 RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                         "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
