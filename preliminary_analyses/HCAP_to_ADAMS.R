@@ -166,8 +166,8 @@ HCAP_subset %<>%
 #Drop original variables
 HCAP_subset %<>% dplyr::select(-c("RACE", "HISPANIC"))
 
-#Sanity check
-colnames(HCAP_subset)
+# #Sanity check
+# colnames(HCAP_subset)
 
 #---- **sex/gender ----
 # #Variable check
@@ -240,9 +240,49 @@ summary(ADAMS_subset$ANMSETOT)
 HCAP_subset %<>% mutate_at("race_ethnic_cat", as.factor) %>% 
   mutate_at("race_ethnic_cat", function(x) fct_relevel(x, "Non-hispanic White"))
 
+#---- **closest RAND total cognition measure ----
+#join RAND and HCAP
+HCAP_subset %<>% left_join(., RAND, by = "HHIDPN")
+
+#closest RAND year
+HCAP_subset[, "RANDYEAR"] <- 
+  ifelse(HCAP_subset[, "H1RIWYEAR"] %% 2 == 0, 
+         HCAP_subset[, "H1RIWYEAR"], 
+         HCAP_subset[, "H1RIWYEAR"] - 1)
+
+HCAP_subset[, "RANDWAVE"] <- 
+  ((HCAP_subset[, "RANDYEAR"] - 2000)/2) + 5
+
+# #Sanity check
+# table(HCAP_subset$H1RIWYEAR, HCAP_subset$RANDYEAR, useNA = "ifany")
+# table(HCAP_subset$RANDYEAR, HCAP_subset$RANDWAVE, useNA = "ifany")
+
+#closest RAND measure
+for(i in 1:nrow(HCAP_subset)){
+  if(!is.na(HCAP_subset[i, "H1RMSESCORE"])){
+    RAND_wave <- HCAP_subset[i, "RANDWAVE"]
+    RAND_cog_val <- HCAP_subset[i, paste0("r", RAND_wave, "cogtot")]
+    if(!is.na(RAND_cog_val)){
+      HCAP_subset[i, "RANDcogtot"] <- RAND_cog_val
+    } else{
+      past_cog_vals <- 
+        HCAP_subset[i, paste0("r", seq(5, (RAND_wave - 1)), "cogtot")]
+      nearest <- max(which(!is.na(past_cog_vals)))
+      if(is.finite(nearest)){
+        HCAP_subset[i, "RANDcogtot"] <- past_cog_vals[nearest]
+      } 
+    }
+  }
+}
+
+# #Sanity check-- we only have 1,474 people with any RAND cognitive data
+# View(HCAP_subset %>% dplyr::select(c("H1RMSESCORE", "RANDcogtot", 
+#                                      contains("cogtot"))))
+# sum(!is.na(HCAP_subset$RANDcogtot))
+
 #---- **main effects models ----
 MMSE_main_effects <- lm(H1RMSESCORE ~ HCAP_age + female + 
-                          race_ethnic_cat + 
+                          race_ethnic_cat + RANDcogtot +
                           SCHLYRS, data = HCAP_subset)
 
 summary(MMSE_main_effects)
