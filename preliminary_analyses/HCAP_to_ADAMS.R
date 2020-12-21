@@ -137,9 +137,6 @@ HCAP_subset %<>% mutate("HCAP_age" = H1RIWYEAR - BIRTHYR)
 # 
 # summary(HCAP_subset$HCAP_age)
 
-#Drop original variables
-HCAP_subset %<>% dplyr::select(-c("H1RIWYEAR", "BIRTHYR"))
-
 # #Sanity check
 # colnames(HCAP_subset)
 
@@ -540,7 +537,6 @@ cogtot_Zscore <- ADAMS_subset %>% dplyr::select(contains("RANDcogtot")) %>%
 #cbind Zscores
 ADAMS_subset %<>% cbind(MMSE_Zscore) %>% cbind(cogtot_Zscore)
 
-
 # #Sanity check
 # View(ADAMS_subset %>%
 #        dplyr::select(contains(c("ARANDWAVE", "ANMSE", "cogtot"))))
@@ -694,6 +690,8 @@ ggsave(filename = "ADAMS_MMSE_by_total_cog_Zscore.jpeg", plot = last_plot(),
                      "preliminary_analyses/",
                      "HCAP_synthetic/figures/"), width = 15, height = 5, 
        units = "in")
+
+
 
   
   
