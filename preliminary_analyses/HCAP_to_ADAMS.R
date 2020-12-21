@@ -46,7 +46,7 @@ cog_test_labels <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
                                    "cog_test_meaningful_labels.csv"))
 
 #---- **RAND ----
-rand_waves <- seq(5, 9, by = 1)
+rand_waves <- seq(5, 13, by = 1)
 rand_variables <- c("hhidpn", paste0("r", rand_waves, "cogtot"), 
                     paste0("r", rand_waves, "iadla"))
 
