@@ -89,9 +89,10 @@ HCAP_vars <- c("HHIDPN", "GENDER", "HISPANIC", "RACE", "SCHLYRS",
                #MMSE
                "H1RMSESCORE")
 
-ADAMS_vars <- c("HHIDPN",
+ADAMS_vars <- c("HHIDPN", "GENDER", "RACE", "HISPANIC", "EDYRS",
                 #Interview year, MMSE
-                paste0(c("A", "B", "C", "D"), "YEAR"), "NMSETOT")
+                paste0(c("A", "B", "C", "D"), "YEAR"), "NMSETOT", 
+                "AAGE")
 
 HCAP_subset <- HCAP %>% dplyr::select(all_of(HCAP_vars))
 ADAMS_subset <- ADAMS %>% dplyr::select(contains(ADAMS_vars))
@@ -119,8 +120,8 @@ ADAMS_subset %<>%
 #---- **ADAMS interview year ----
 ADAMS_subset %<>% mutate_at("BYEAR", function(x) ifelse(x == 9997, NA, x))
 
-#Sanity check
-table(ADAMS_subset$BYEAR, useNA = "ifany")
+# #Sanity check
+# table(ADAMS_subset$BYEAR, useNA = "ifany")
 
 #---- **age ----
 HCAP_subset %<>% mutate("HCAP_age" = H1RIWYEAR - BIRTHYR)
@@ -150,8 +151,17 @@ HCAP_subset %<>% mutate("HCAP_age" = H1RIWYEAR - BIRTHYR)
 
 #Drop missing race
 HCAP_subset %<>% filter(RACE != 0)
+ADAMS_subset %<>% filter(RACE != 0)
 
 HCAP_subset %<>% 
+  mutate("race_ethnic_cat" = 
+           case_when(RACE == 1 & HISPANIC == 5 ~ "Non-hispanic White", 
+                     HISPANIC %in% c(1, 2, 3) ~ "Hispanic", 
+                     RACE == 2 & (HISPANIC == 5 | HISPANIC == 0) ~ 
+                       "Non-hispanic Black", 
+                     RACE == 7 & HISPANIC == 5 ~ "Other"))
+
+ADAMS_subset %<>% 
   mutate("race_ethnic_cat" = 
            case_when(RACE == 1 & HISPANIC == 5 ~ "Non-hispanic White", 
                      HISPANIC %in% c(1, 2, 3) ~ "Hispanic", 
@@ -162,12 +172,17 @@ HCAP_subset %<>%
 # #Sanity check
 # table(HCAP_subset$race_ethnic_cat, useNA = "ifany")
 # table(HCAP_subset$race_ethnic_cat, useNA = "ifany")/nrow(HCAP_subset)
+# 
+# table(ADAMS_subset$race_ethnic_cat, useNA = "ifany")
+# table(ADAMS_subset$race_ethnic_cat, useNA = "ifany")/nrow(ADAMS_subset)
 
 #Drop original variables
 HCAP_subset %<>% dplyr::select(-c("RACE", "HISPANIC"))
+ADAMS_subset %<>% dplyr::select(-c("RACE", "HISPANIC"))
 
 # #Sanity check
 # colnames(HCAP_subset)
+# colnames(ADAMS_subset)
 
 #---- **sex/gender ----
 # #Variable check
@@ -175,21 +190,27 @@ HCAP_subset %<>% dplyr::select(-c("RACE", "HISPANIC"))
 # table(HCAP_subset$GENDER)
 
 HCAP_subset %<>% mutate("female" = ifelse(GENDER == 2, 1, 0))
+ADAMS_subset %<>% mutate("female" = ifelse(GENDER == 2, 1, 0))
 
 # #Sanity check
 # table(HCAP_subset$female, useNA = "ifany")
 # table(HCAP_subset$female, useNA = "ifany")/nrow(HCAP_subset)
+# table(ADAMS_subset$female, useNA = "ifany")
+# table(ADAMS_subset$female, useNA = "ifany")/nrow(ADAMS_subset)
 
 #Drop original variable
 HCAP_subset %<>% dplyr::select(-c("GENDER"))
+ADAMS_subset %<>% dplyr::select(-c("GENDER"))
 
 # #Sanity check
 # colnames(HCAP_subset)
+# colnames(ADAMS_subset)
 
 #---- education distributions ----
 # #Variable Check
 # #0-17 = years of education; 99 = "Not Ascertained"
 # table(HCAP_subset$SCHLYRS)
+# table(ADAMS_subset$EDYRS, useNA = "ifany")
 
 #Remove missing education
 HCAP_subset %<>% filter(SCHLYRS != 99)
@@ -280,7 +301,17 @@ for(i in 1:nrow(HCAP_subset)){
 #                                      contains("cogtot"))))
 # sum(!is.na(HCAP_subset$RANDcogtot))
 
+#---- HCAP people in model ----
+HCAP_RANDcomplete <- HCAP_subset %>% filter(!is.na(RANDcogtot))
+
+hist(HCAP_RANDcomplete$H1RMSESCORE)
+summary(HCAP_RANDcomplete$H1RMSESCORE)
+
 #---- **main effects models ----
+MMSE_main_effects_no_cog <- lm(H1RMSESCORE ~ HCAP_age + female + 
+                                 race_ethnic_cat +
+                                 SCHLYRS, data = HCAP_subset)
+
 MMSE_main_effects <- lm(H1RMSESCORE ~ HCAP_age + female + 
                           race_ethnic_cat + RANDcogtot +
                           SCHLYRS, data = HCAP_subset)
@@ -290,10 +321,24 @@ plot(MMSE_main_effects$residuals)
 hist(MMSE_main_effects$fitted.values)
 summary(MMSE_main_effects$fitted.values)
 
+summary(MMSE_main_effects_no_cog)
+plot(MMSE_main_effects_no_cog$residuals)
+hist(MMSE_main_effects_no_cog$fitted.values)
+summary(MMSE_main_effects_no_cog$fitted.values)
+
 #---- **2-way interactions ----
-MMSE_2way_intx <- lm(H1RMSESCORE ~ HCAP_age*female + HCAP_age*race_ethnic_cat + 
+MMSE_2way_intx_no_cog <- lm(H1RMSESCORE ~ HCAP_age*female + 
+                              HCAP_age*race_ethnic_cat + 
+                              female*race_ethnic_cat + female*SCHLYRS + 
+                              race_ethnic_cat*SCHLYRS, 
+                            data = HCAP_subset)
+
+MMSE_2way_intx <- lm(H1RMSESCORE ~ HCAP_age*female + 
+                       HCAP_age*race_ethnic_cat + 
                        female*race_ethnic_cat + female*SCHLYRS + 
-                       race_ethnic_cat*SCHLYRS, 
+                       race_ethnic_cat*SCHLYRS + RANDcogtot*female + 
+                       RANDcogtot*race_ethnic_cat + RANDcogtot*SCHLYRS + 
+                       RANDcogtot*HCAP_age, 
                      data = HCAP_subset)
 
 summary(MMSE_2way_intx)
@@ -302,10 +347,73 @@ plot(MMSE_2way_intx$residuals)
 hist(MMSE_2way_intx$fitted.values)
 summary(MMSE_2way_intx$fitted.values)
 
+summary(MMSE_2way_intx_no_cog)
+tidy(MMSE_2way_intx_no_cog, conf.int = TRUE)
+plot(MMSE_2way_intx_no_cog$residuals)
+hist(MMSE_2way_intx_no_cog$fitted.values)
+summary(MMSE_2way_intx_no_cog$fitted.values)
+
+#---- ****performance plots ----
+#MMSE Dists
+plot_data <- cbind(MMSE_2way_intx$fitted.values, 
+                   HCAP_RANDcomplete$H1RMSESCORE) %>% 
+  set_colnames(c("fitted", "observed"))
+plot_data[plot_data > 30] <- 30
+plot_data %<>% as.data.frame() %>% 
+  pivot_longer(everything(), names_to = "Value", values_to = "MMSE")
+
+ggplot(data = plot_data, 
+       aes(x = MMSE, color = factor(Value), 
+           fill = factor(Value))) + 
+  geom_histogram(alpha = 0.4, position = "identity") + theme_minimal() + 
+  xlab("MMSE") + theme(text = element_text(size = 14)) + 
+  guides(fill = guide_legend(title = "Value Type"), 
+         color = guide_legend(title = "Value Type")) 
+
+ggsave(filename = "hists_HCAP_obs_pred_MMSE.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 7, height = 5, 
+       units = "in")
+
+#Scatterplot
+plot_data <- cbind(MMSE_2way_intx$fitted.values, 
+                   HCAP_RANDcomplete$H1RMSESCORE) %>% 
+  set_colnames(c("fitted", "observed"))
+plot_data[plot_data > 30] <- 30
+plot_data %<>% as.data.frame()
+
+ggplot(data = plot_data, 
+       aes(x = observed, y = fitted)) + 
+  geom_point(color = green) + theme_minimal() + 
+  geom_abline(intercept = 0, slope = 1) + 
+  xlab("HCAP MMSE") + 
+  ylab("Fitted Value") + 
+  theme(text = element_text(size = 14)) 
+
+ggsave(filename = "person-level_HCAP_obs_pred_MMSE.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 7, height = 5, 
+       units = "in")
+
 #---- **3-way interactions ----
+MMSE_3way_intx_no_cog <- lm(H1RMSESCORE ~ HCAP_age*female*race_ethnic_cat + 
+                              SCHLYRS*female*race_ethnic_cat, 
+                            data = HCAP_subset)
+
 MMSE_3way_intx <- lm(H1RMSESCORE ~ HCAP_age*female*race_ethnic_cat + 
-                       SCHLYRS*female*race_ethnic_cat, 
+                       SCHLYRS*female*race_ethnic_cat + 
+                       RANDcogtot*HCAP_age*female + 
+                       RANDcogtot*female*race_ethnic_cat, 
                      data = HCAP_subset)
+
+summary(MMSE_3way_intx_no_cog)
+plot(MMSE_3way_intx_no_cog$residuals)
+hist(MMSE_3way_intx_no_cog$fitted.values)
+summary(MMSE_3way_intx_no_cog$fitted.values)
 
 summary(MMSE_3way_intx)
 plot(MMSE_3way_intx$residuals)
@@ -729,6 +837,64 @@ ggsave(filename = "ADAMS_MMSE_by_total_cog_Zscore.jpeg", plot = last_plot(),
        path = paste0("/Users/CrystalShaw/Box/Dissertation/",
                      "preliminary_analyses/",
                      "HCAP_synthetic/figures/"), width = 15, height = 5, 
+       units = "in")
+
+#---- **out-of-sample performance ----
+#It looks like the model with 2-way interactions has the best fit in HCAP
+
+#format ADAMS data
+ADAMS_test <- ADAMS_subset %>% 
+  dplyr::select("HHIDPN", "EDYRS", "AAGE", "ANMSETOT", "race_ethnic_cat", 
+                "female", "ARANDcogtot") %>% 
+  set_colnames(c("HHIDPN", "SCHLYRS", "HCAP_age", "ANMSETOT", "race_ethnic_cat", 
+                 "female", "RANDcogtot")) %>% na.omit()
+
+ADAMS_predicted <- predict.lm(MMSE_2way_intx, newdata = ADAMS_test)
+
+#Results
+#MMSE Dists
+plot_data <- cbind(ADAMS_predicted, 
+                   ADAMS_test$ANMSETOT) %>% 
+  set_colnames(c("fitted", "observed"))
+plot_data[plot_data > 30] <- 30
+plot_data %<>% as.data.frame() %>% 
+  pivot_longer(everything(), names_to = "Value", values_to = "MMSE")
+
+ggplot(data = plot_data, 
+       aes(x = MMSE, color = factor(Value), 
+           fill = factor(Value))) + 
+  geom_histogram(alpha = 0.4, position = "identity") + theme_minimal() + 
+  xlab("MMSE") + theme(text = element_text(size = 14)) + 
+  guides(fill = guide_legend(title = "Value Type"), 
+         color = guide_legend(title = "Value Type")) 
+
+ggsave(filename = "hists_ADAMS_obs_pred_MMSE.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 7, height = 5, 
+       units = "in")
+
+#Scatterplot
+plot_data <- cbind(ADAMS_predicted, 
+                   ADAMS_test$ANMSETOT) %>% 
+  set_colnames(c("fitted", "observed"))
+plot_data[plot_data > 30] <- 30
+plot_data %<>% as.data.frame()
+
+ggplot(data = plot_data, 
+       aes(x = observed, y = fitted)) + 
+  geom_point(color = green) + theme_minimal() + 
+  geom_abline(intercept = 0, slope = 1) + 
+  xlab("ADAMS MMSE") + 
+  ylab("Fitted Value") + 
+  theme(text = element_text(size = 14)) 
+
+ggsave(filename = "person-level_ADAMS_obs_pred_MMSE.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "preliminary_analyses/",
+                     "HCAP_synthetic/figures/"), width = 7, height = 5, 
        units = "in")
 
 
