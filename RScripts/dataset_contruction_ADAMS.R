@@ -39,8 +39,9 @@ ADAMS_tracker_dict_path <-
   paste0("/Users/CrystalShaw/Box/Dissertation/data/",
          "ADAMS/adams1trk/adams1trksta/ADAMS1TRK_R.dct")
 
+#filter to those who completed Wave A assessment
 ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path, 
-                             HHIDPN = "TRUE") 
+                             HHIDPN = "TRUE") %>% filter(AASSESS == 1) 
 #---- **dem dx ----
 for(wave in c("a", "b", "c", "d")){
   demdx_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
@@ -101,6 +102,12 @@ ADAMS_subset <- ADAMS %>% dplyr::select(contains(all_of(vars)))
 
 #---- clean: MMSE ----
 #Variable check
+for(wave in c("A", "B", "C", "D")){
+  MMSE_var <- paste0(wave, "NMSETOT")
+  print(paste0("Wave ", wave))
+  print(table(ADAMS[, MMSE_var], useNA = "ifany"))
+}
+
 
 
 #---- save dataset ----
