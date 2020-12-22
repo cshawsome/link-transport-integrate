@@ -105,10 +105,12 @@ ADAMS_subset <- ADAMS %>% dplyr::select(contains(all_of(vars)))
 for(wave in c("A", "B", "C", "D")){
   MMSE_var <- paste0(wave, "NMSETOT")
   print(paste0("Wave ", wave))
-  print(table(ADAMS[, MMSE_var], useNA = "ifany"))
+  print(table(ADAMS_subset[, MMSE_var], useNA = "ifany"))
 }
 
-
+ADAMS_subset %<>% 
+  mutate_at(.vars = paste0(c("A", "B", "C", "D"), "NMSETOT"), 
+            function(x) ifelse(x > 30, NA, x))
 
 #---- save dataset ----
 write_csv(ADAMS_subset, path = paste0("/Users/CrystalShaw/Box/Dissertation/", 
