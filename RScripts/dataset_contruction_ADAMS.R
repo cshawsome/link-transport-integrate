@@ -101,4 +101,12 @@ ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>%
   left_join(., ADAMS_demdx, by = "HHIDPN")
 
 #---- select vars ----
-vars <- c("HHIDPN", "NMSETOT", )
+vars <- c("HHIDPN", "NMSETOT", "dem_dx_cat")
+
+ADAMS_subset <- ADAMS %>% dplyr::select(contains(all_of(vars)))
+
+#---- save dataset ----
+write_csv(ADAMS_subset, path = paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                      "data/cleaned/ADAMS_subset.csv"))
+
+
