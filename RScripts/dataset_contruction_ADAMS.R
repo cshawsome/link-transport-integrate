@@ -52,49 +52,43 @@ for(wave in c("a", "b", "c", "d")){
   if(wave == "a"){
     ADAMS_demdx <- read_da_dct(demdx_data_path, demdx_dict_path, 
                                HHIDPN = "TRUE") %>% 
-      dplyr::select("HHIDPN", paste0(str_to_upper(wave), "DFDX1")) %>% 
-      set_colnames(c("HHIDPN", "dem_dx")) %>% 
-      mutate(new_col = 
-               case_when(dem_dx %in% c(1, 2) ~ "Probable/Possible AD", 
-                         dem_dx %in% c(3, 4) ~ 
-                           "Probable/Possible Vascular Dementia", 
-                         dem_dx %in% 
-                           c(5, 6, 7, 8, 11, 14, 23, 24, 25, 26, 27, 21, 28, 29, 
-                             30, 33) ~ "Other",
-                         dem_dx %in% c(18, 32) ~ "Probable Dementia",
-                         dem_dx %in% c(10, 13, 15, 16, 17, 19) ~ "Dementia", 
-                         dem_dx %in% c(20, 22) ~ "MCI", 
-                         dem_dx == 31 ~ "Normal")) %>% 
-      dplyr::select(-c("dem_dx")) %>%
-      set_colnames(c("HHIDPN", 
-                     paste0(str_to_upper(wave), "dem_dx_cat")))
+      dplyr::select("HHIDPN", paste0(str_to_upper(wave), "DFDX1")) 
   } else{
     ADAMS_demdx %<>% 
       left_join(., read_da_dct(demdx_data_path, demdx_dict_path, 
                                HHIDPN = "TRUE") %>% 
                   dplyr::select("HHIDPN", 
-                                paste0(str_to_upper(wave), "DFDX1")) %>% 
-                  set_colnames(c("HHIDPN", "dem_dx")) %>% 
-                  mutate(new_col = 
-                           case_when(dem_dx %in% c(1, 2) ~ 
-                                       "Probable/Possible AD", 
-                                     dem_dx %in% c(3, 4) ~ 
-                                       "Probable/Possible Vascular Dementia", 
-                                     dem_dx %in% 
-                                       c(5, 6, 7, 8, 11, 14, 23, 24, 25, 26, 27, 
-                                         21, 28, 29, 30, 33) ~ "Other",
-                                     dem_dx %in% c(18, 32) ~ 
-                                       "Probable Dementia",
-                                     dem_dx %in% c(10, 13, 15, 16, 17, 19) ~ 
-                                       "Dementia", 
-                                     dem_dx %in% c(20, 22) ~ "MCI", 
-                                     dem_dx == 31 ~ "Normal")) %>% 
-                  dplyr::select(-c("dem_dx")) %>% 
-                  set_colnames(c("HHIDPN", 
-                                 paste0(str_to_upper(wave), "dem_dx_cat"))), 
-                by = "HHIDPN")
+                                paste0(str_to_upper(wave), "DFDX1")))
   }
 }
+
+for(wave in c("A", "B", "C", "D")){
+  dem_dx_var <- paste0(wave, "DFDX1")
+  ADAMS_demdx[, paste0(wave, "dem_dx_cat")] <- 
+    case_when(ADAMS_demdx[, dem_dx_var] %in% c(1, 2) ~ "Probable/Possible AD", 
+              ADAMS_demdx[, dem_dx_var] %in% c(3, 4) ~ 
+                "Probable/Possible Vascular Dementia", 
+              ADAMS_demdx[, dem_dx_var] %in% 
+                c(5, 6, 7, 8, 11, 14, 23, 24, 25, 26, 27, 21, 28, 29, 
+                  30, 33) ~ "Other",
+              ADAMS_demdx[, dem_dx_var] %in% c(18, 32) ~ "Probable Dementia",
+              ADAMS_demdx[, dem_dx_var] %in% c(10, 13, 15, 16, 17, 19) ~ 
+                "Dementia", 
+              ADAMS_demdx[, dem_dx_var] %in% c(20, 22) ~ "MCI", 
+              ADAMS_demdx[, dem_dx_var] == 31 ~ "Normal")
+}
+
+# #Sanity check
+# for(wave in c("A", "B", "C", "D")){
+#   dem_dx_var <- paste0(wave, "DFDX1")
+#   print(paste0("Wave ", wave))
+#   print(table(ADAMS_demdx[, dem_dx_var], 
+#               ADAMS_demdx[, paste0(wave, "dem_dx_cat")], 
+#               useNA = "ifany"))
+# }
+
+#Remove original variables
+ADAMS_demdx %<>% dplyr::select(-c(paste0(c("A", "B", "C", "D"), "DFDX1")))
 
 #---- join data ----
 ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>% 
@@ -104,6 +98,10 @@ ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>%
 vars <- c("HHIDPN", "NMSETOT", "dem_dx_cat")
 
 ADAMS_subset <- ADAMS %>% dplyr::select(contains(all_of(vars)))
+
+#---- clean: MMSE ----
+#Variable check
+
 
 #---- save dataset ----
 write_csv(ADAMS_subset, path = paste0("/Users/CrystalShaw/Box/Dissertation/", 
