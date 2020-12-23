@@ -37,7 +37,22 @@ ggsave(filename = "ADAMS_MMSE_by_dem.jpeg", plot = last_plot(),
        path = paste0("/Users/CrystalShaw/Box/Dissertation/",
                      "figures/"), width = 15, height = 5, units = "in")
 
-#---- **table: ADAMS dem dx x wave ---
+#Including "Other" category
+ggplot(data = plot_data, 
+       aes(x = NMSETOT, color = factor(dem_dx_new_cat), 
+           fill = factor(dem_dx_new_cat))) + 
+  geom_histogram(alpha = 0.4, position = "identity") + theme_minimal() + 
+  xlab("MMSE") + theme(text = element_text(size = 14)) + 
+  guides(fill = guide_legend(title = "Dementia Dx"), 
+         color = guide_legend(title = "Dementia Dx")) + 
+  facet_grid(cols = vars(wave))
+
+ggsave(filename = "ADAMS_MMSE_by_dem+other.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "figures/"), width = 15, height = 5, units = "in")
+
+#---- **table: ADAMS dem dx x wave ----
 table_data <- ADAMS_subset %>% dplyr::select(contains("dem_dx_cat")) %>% 
   mutate_all(function(x) case_when(x %in% 
                c("Dementia", "Probable Dementia", 
@@ -48,7 +63,9 @@ table_data <- ADAMS_subset %>% dplyr::select(contains("dem_dx_cat")) %>%
 for(wave in c("A", "B", "C", "D")){
   dem_dx_var <- paste0(wave, "dem_dx_cat")
   print(paste0("Wave ", wave))
-  print(table(table_data[, dem_dx_var], useNA = "ifany")/
+  print(table(table_data[, dem_dx_var], useNA = "ifany"))
+  print(sum(table(table_data[, dem_dx_var])))
+  print(table(table_data[, dem_dx_var])/
           sum(!is.na(table_data[, dem_dx_var])))
 }
 
