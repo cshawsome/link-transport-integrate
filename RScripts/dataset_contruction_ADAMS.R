@@ -96,9 +96,23 @@ ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>%
   left_join(., ADAMS_demdx, by = "HHIDPN")
 
 #---- select vars ----
-vars <- c("HHIDPN", "NMSETOT", "dem_dx_cat")
+vars <- c("HHIDPN",
+          #Sociodemographics
+          "AGE", "GENDER", "ETHNIC", "EDYRS",
+          #Cognition
+          "NMSETOT", 
+          #Dem dx
+          "dem_dx_cat")
 
-ADAMS_subset <- ADAMS %>% dplyr::select(contains(all_of(vars)))
+ADAMS_subset <- ADAMS %>% dplyr::select(contains(all_of(vars))) %>% 
+  #Drop age bracket, age at selection, and language variables
+  dplyr::select(-contains(c("BKT", "AGESEL", "LANGUAGE")))
+
+ADAMS_waves <- c("A", "B", "C", "D")
+
+#---- clean: AGE ----
+for(wave in )
+ADAMS_subset %<>% mutate()
 
 #---- clean: MMSE ----
 #Variable check
