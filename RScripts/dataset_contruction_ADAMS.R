@@ -111,8 +111,24 @@ ADAMS_subset <- ADAMS %>% dplyr::select(contains(all_of(vars))) %>%
 ADAMS_waves <- c("A", "B", "C", "D")
 
 #---- clean: AGE ----
-for(wave in )
-ADAMS_subset %<>% mutate()
+for(wave in ADAMS_waves){
+  col <- paste0(wave, "AGE")
+  new_col <- paste0(col, "_cat")
+  
+  ADAMS_subset[, new_col] <- ADAMS_subset[, col] - 
+    (min(ADAMS_subset[, col], na.rm = TRUE) - 1)
+  
+  ADAMS_subset[which(ADAMS_subset[, new_col] > 900), new_col] <- NA
+}
+
+#Sanity check
+for(wave in ADAMS_waves){
+  col <- paste0(wave, "AGE")
+  new_col <- paste0(col, "_cat")
+  
+  print(paste0("Wave", wave))
+  print(table(ADAMS_subset[, new_col], ADAMS_subset[, col], useNA = "ifany"))
+}
 
 #---- clean: MMSE ----
 #Variable check
