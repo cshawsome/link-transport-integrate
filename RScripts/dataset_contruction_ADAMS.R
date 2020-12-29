@@ -143,17 +143,35 @@ ADAMS_subset %<>% mutate(EDYRS_cat = EDYRS + 1)
 # #Sanity check
 # table(ADAMS_subset$EDYRS, ADAMS_subset$EDYRS_cat, useNA = "ifany")
 
-#---- clean: MMSE ----
+#---- clean: neuropsych ----
+#---- **MMSE ----
 #Variable check
-for(wave in c("A", "B", "C", "D")){
+for(wave in ADAMS_waves){
   MMSE_var <- paste0(wave, "NMSETOT")
   print(paste0("Wave ", wave))
   print(table(ADAMS_subset[, MMSE_var], useNA = "ifany"))
 }
 
+for(wave in ADAMS_waves){
+  MMSE_var <- paste0(wave, "NMSETOT")
+  new_var <- paste0(wave, "NMSETOT_cat")
+  
+  ADAMS_subset[, new_var] <- ADAMS_subset[, MMSE_var] + 1
+}
+
 ADAMS_subset %<>% 
-  mutate_at(.vars = paste0(c("A", "B", "C", "D"), "NMSETOT"), 
-            function(x) ifelse(x > 30, NA, x))
+  mutate_at(.vars = paste0(c("A", "B", "C", "D"), "NMSETOT_cat"), 
+            function(x) ifelse(x > 31, NA, x))
+
+#Sanity check
+for(wave in ADAMS_waves){
+  MMSE_var <- paste0(wave, "NMSETOT")
+  new_var <- paste0(wave, "NMSETOT_cat")
+  
+  print(paste0("Wave ", wave))
+  print(table(ADAMS_subset[, new_var],
+              ADAMS_subset[, MMSE_var], useNA = "ifany"))
+}
 
 #---- drop original variables ----
 
