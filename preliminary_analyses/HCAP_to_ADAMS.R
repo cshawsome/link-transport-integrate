@@ -358,7 +358,7 @@ summary(MMSE_2way_intx_no_cog$fitted.values)
 plot_data <- cbind(MMSE_2way_intx$fitted.values, 
                    HCAP_RANDcomplete$H1RMSESCORE) %>% 
   set_colnames(c("fitted", "observed"))
-plot_data[plot_data > 30] <- 30
+#plot_data[plot_data > 30] <- 30
 plot_data %<>% as.data.frame() %>% 
   pivot_longer(everything(), names_to = "Value", values_to = "MMSE")
 
@@ -381,7 +381,7 @@ ggsave(filename = "hists_HCAP_obs_pred_MMSE.jpeg", plot = last_plot(),
 plot_data <- cbind(MMSE_2way_intx$fitted.values, 
                    HCAP_RANDcomplete$H1RMSESCORE) %>% 
   set_colnames(c("fitted", "observed"))
-plot_data[plot_data > 30] <- 30
+#plot_data[plot_data > 30] <- 30
 plot_data %<>% as.data.frame()
 
 ggplot(data = plot_data, 
@@ -676,11 +676,12 @@ for(wave in c("A", "B", "C", "D")){
 
 #Zscore the cognitive measures
 MMSE_Zscore <- ADAMS_subset %>% dplyr::select(contains("NMSETOT")) %>% 
-  mutate_all(function(x) (x - mean(x, na.rm = TRUE))/sd(x, na.rm = TRUE)) %>% 
-  set_colnames(paste0(colnames(MMSE_Zscore), "_Zscore"))
+  mutate_all(function(x) (x - mean(x, na.rm = TRUE))/sd(x, na.rm = TRUE)) 
+MMSE_Zscore %<>% set_colnames(paste0(colnames(MMSE_Zscore), "_Zscore"))
+
 cogtot_Zscore <- ADAMS_subset %>% dplyr::select(contains("RANDcogtot")) %>% 
-  mutate_all(function(x) (x - mean(x, na.rm = TRUE))/sd(x, na.rm = TRUE)) %>% 
-  set_colnames(paste0(colnames(cogtot_Zscore), "_Zscore"))
+  mutate_all(function(x) (x - mean(x, na.rm = TRUE))/sd(x, na.rm = TRUE))  
+cogtot_Zscore %<>% set_colnames(paste0(colnames(cogtot_Zscore), "_Zscore"))
 
 #cbind Zscores
 ADAMS_subset %<>% cbind(MMSE_Zscore) %>% cbind(cogtot_Zscore)
@@ -856,7 +857,7 @@ ADAMS_predicted <- predict.lm(MMSE_2way_intx, newdata = ADAMS_test)
 plot_data <- cbind(ADAMS_predicted, 
                    ADAMS_test$ANMSETOT) %>% 
   set_colnames(c("fitted", "observed"))
-plot_data[plot_data > 30] <- 30
+#plot_data[plot_data > 30] <- 30
 plot_data %<>% as.data.frame() %>% 
   pivot_longer(everything(), names_to = "Value", values_to = "MMSE")
 
@@ -879,7 +880,7 @@ ggsave(filename = "hists_ADAMS_obs_pred_MMSE.jpeg", plot = last_plot(),
 plot_data <- cbind(ADAMS_predicted, 
                    ADAMS_test$ANMSETOT) %>% 
   set_colnames(c("fitted", "observed"))
-plot_data[plot_data > 30] <- 30
+#plot_data[plot_data > 30] <- 30
 plot_data %<>% as.data.frame()
 
 ggplot(data = plot_data, 
