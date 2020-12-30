@@ -29,11 +29,11 @@ analytical_sample <- all_data %>% dplyr::select(all_of(vars))
 colSums(is.na(analytical_sample))
 
 #---- Mixture Model ----
-#---- **Step 1: Take SRS of data ----
+#---- **Step 1: SRS of data ----
 samp_size <- floor(0.5*nrow(analytical_sample))
 rsamp <- sample_n(analytical_sample, size = samp_size, replace = FALSE)
 
-#---- **Step 2: Set priors ----
+#---- **Step 2: priors ----
 #---- *** number of latent classes ----
 #number of group-level latent classes
 group_class_n <- 4
@@ -60,6 +60,10 @@ b_beta = 0.25
 v_g <- rgamma(n = (sub_class_n - 1), shape = a_beta, rate = b_beta)
 #The last v is fixed at 1
 v_g <- c(v_g, 1)
+
+#---- Step 3: draws ----
+
+
 
 
 
