@@ -118,7 +118,8 @@ ggplot() +
   geom_density(data = fake_data, 
                aes(x = NMSETOT, color = factor(dem_dx_new_cat))) + 
   geom_histogram(data = plot_data %>% filter(dem_dx_new_cat != "Other"), 
-                 aes(x = NMSETOT, y = ..density.., color = factor(dem_dx_new_cat), 
+                 aes(x = NMSETOT, y = ..density.., 
+                     color = factor(dem_dx_new_cat), 
                      fill = factor(dem_dx_new_cat)), alpha = 0.4, 
                  position = "identity")+
   theme_minimal() + 
@@ -130,4 +131,21 @@ ggsave(filename = "ADAMSA_MMSE_prior_overlay.jpeg", plot = last_plot(),
        device = "jpeg",
        path = paste0("/Users/CrystalShaw/Box/Dissertation/",
                      "figures/"), width = 7, height = 5, units = "in")
+
+#---- prior: Dirichlet mix ----
+sim_alpha <- rgamma(n = 1000, shape = 1, rate = 0.5)
+hist(sim_alpha)
+summary(sim_alpha)
+
+sim_beta_med <- rbeta(n = 1000, shape1 = 1, shape2 = median(sim_alpha))
+hist(sim_beta_med)
+summary(sim_beta_med)
+
+sim_beta_min <- rbeta(n = 1000, shape1 = 1, shape2 = min(sim_alpha))
+hist(sim_beta_min)
+summary(sim_beta_min)
+
+sim_beta_max <- rbeta(n = 1000, shape1 = 1, shape2 = max(sim_alpha))
+hist(sim_beta_max)
+summary(sim_beta_max)
 
