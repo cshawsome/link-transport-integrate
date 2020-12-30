@@ -34,10 +34,36 @@ samp_size <- floor(0.5*nrow(analytical_sample))
 rsamp <- sample_n(analytical_sample, size = samp_size, replace = FALSE)
 
 #---- **Step 2: Set priors ----
+#---- *** number of latent classes ----
 #number of group-level latent classes
 group_class_n <- 4
 #number of sub-latent classes
 sub_class_n <- 5
+
+#---- *** p(group-level latent classes) ----
+a_alpha = 1
+b_alpha = 0.5
+
+#Draw priors for one less than the number of group-level latent classes
+u_g <- rgamma(n = (group_class_n - 1), shape = a_alpha, rate = b_alpha)
+#The last u is fixed at 1
+u_g <- c(u_g, 1)
+
+#---- *** p(sub-level latent classes) ----
+#From Dunson and Xing (2009)
+#These can differ by group-level latent classes if we wish, but we're keeping
+# it "simple" for now
+a_beta = 0.25
+b_beta = 0.25
+
+#Draw priors for one less than the number of sub-level latent classes
+v_g <- rgamma(n = (sub_class_n - 1), shape = a_beta, rate = b_beta)
+#The last v is fixed at 1
+v_g <- c(v_g, 1)
+
+
+
+
 
 
 
