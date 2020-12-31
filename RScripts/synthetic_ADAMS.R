@@ -69,14 +69,19 @@ v_m <- c(v_m, 1)
 
 #---- Step 4: initiate chain storage ----
 beta_post <- vector(length = B)
+alpha_post <- vector(length = B)
 
 #---- Step 5: sampling ----
 for(i in 1:B){
-
   #---- **sample beta ----
   a_beta_post = a_beta + group_class_n*(sub_class_n - 1)
   b_beta_post = b_beta - 4*sum(log(1 - head(v_m, -1)))
   beta_post[i] <- rgamma(n = 1, shape = a_beta_post, rate = b_beta_post)
+  
+  #---- **sample alpha ----
+  a_alpha_post = a_alpha + group_class_n - 1
+  b_alpha_post = b_alpha - sum(log(1 - head(u_g, -1)))
+  alpha_post = rgamma(n = 1, shape = a_alpha_post, rate = b_alpha_post)
 }
 
 
