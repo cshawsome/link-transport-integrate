@@ -43,6 +43,7 @@ sub_class_n <- 5
 #---- *** p(group-level latent classes) ----
 a_alpha = 1
 b_alpha = 0.5
+alpha <- rgamma(n = 1, shape = a_alpha, rate = b_alpha)
 
 #---- *** p(sub-level latent classes) ----
 #From Dunson and Xing (2009)
@@ -50,27 +51,34 @@ b_alpha = 0.5
 # it "simple" for now
 a_beta = 0.25
 b_beta = 0.25
+beta <- rgamma(n = 1, shape = a_beta, rate = b_beta)
 
-#Draw priors for one less than the number of sub-level latent classes
-v_g <- rgamma(n = (sub_class_n - 1), shape = a_beta, rate = b_beta)
-#The last v is fixed at 1
-v_g <- c(v_g, 1)
+#---- Step 3: initiate values ----
+#Runs
+B = 2
 
-#---- Step 3: sampling ----
-#---- **initiate values ----
 #Draw priors for one less than the number of group-level latent classes
-u_g <- rgamma(n = (group_class_n - 1), shape = a_alpha, rate = b_alpha)
+u_g <- rbeta(n = (group_class_n - 1), shape1 = 1, shape2 = alpha)
 #The last u is fixed at 1
 u_g <- c(u_g, 1)
 
 #Draw priors for one less than the number of sub-level latent classes
-v_g <- rgamma(n = (sub_class_n - 1), shape = a_beta, rate = b_beta)
+v_m <- rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta)
 #The last v is fixed at 1
-v_g <- c(v_g, 1)
+v_m <- c(v_m, 1)
 
-#---- **sample beta ----
-a_beta_post = a_beta + group_class_n*(sub_class_n - 1)
-b_beta_post = 
+#---- Step 4: initiate chain storage ----
+beta_post <- vector(length = B)
+
+#---- Step 5: sampling ----
+for(i in 1:B){
+
+  #---- **sample beta ----
+  a_beta_post = a_beta + group_class_n*(sub_class_n - 1)
+  b_beta_post = b_beta - 4*sum(log(1 - head(v_m, -1)))
+  beta_post[i] <- rgamma(n = 1, shape = a_beta_post, rate = b_beta_post)
+}
+
 
 
 
