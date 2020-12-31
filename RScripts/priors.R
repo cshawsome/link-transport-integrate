@@ -133,7 +133,7 @@ ggsave(filename = "ADAMSA_MMSE_prior_overlay.jpeg", plot = last_plot(),
                      "figures/"), width = 7, height = 5, units = "in")
 
 #---- prior: Dirichlet mix ----
-sim_alpha <- rgamma(n = 1000, shape = 0.25, scale = 0.25)
+sim_alpha <- rgamma(n = 1000, shape = 0.25, rate = 0.25)
 hist(sim_alpha)
 summary(sim_alpha)
 
