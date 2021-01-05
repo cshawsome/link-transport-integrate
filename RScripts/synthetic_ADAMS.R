@@ -20,10 +20,11 @@ RAND_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
 all_data <- left_join(ADAMS_subset, RAND_subset, by = "HHIDPN")
 
 #---- select variables ----
-vars <- c("HHIDPN", "GENDER", "ETHNIC", "AAGE_cat", "EDYRS_cat", "ANMSETOT_cat", 
-          paste0("r", c(5, 6, 7), "iadla_cat"))
+person_level_vars <- c("GENDER", "ETHNIC", "AAGE_cat", "EDYRS_cat")
+measure_level_vars <- c("ANMSETOT_cat", paste0("r", seq(5, 7), "iadla_cat"))
 
-analytical_sample <- all_data %>% dplyr::select(all_of(vars))
+analytical_sample <- all_data %>% 
+  dplyr::select("HHIDPN", all_of(person_level_vars), all_of(measure_level_vars))
 
 #Variable check
 colSums(is.na(analytical_sample))
@@ -34,18 +35,26 @@ samp_size <- floor(0.5*nrow(analytical_sample))
 rsamp <- sample_n(analytical_sample, size = samp_size, replace = FALSE)
 
 #---- **Step 2: hyperpriors ----
-#---- *** number of latent classes ----
+#---- ***number of latent classes ----
 #number of group-level latent classes
 group_class_n <- 4
 #number of sub-latent classes
 sub_class_n <- 5
 
-#---- *** p(group-level latent classes) ----
+#---- ***assign latent classes ----
+#Everyone starts in class 1 at both the person level and measurement level
+rsamp[, "dem_group"] <- 1
+rsamp[, "measure_group"] <- 1
+
+person_level_vars <- c(person_level_vars, "dem_group")
+measure_level_vars <- c(measure_level_vars, "measure_group")
+
+#---- ***person-level latent classes parameter ----
 a_alpha = 1
 b_alpha = 0.5
 alpha <- rgamma(n = 1, shape = a_alpha, rate = b_alpha)
 
-#---- *** p(sub-level latent classes) ----
+#---- ***measure-level latent classes parameter ----
 #From Dunson and Xing (2009)
 #These can differ by group-level latent classes if we wish, but we're keeping
 # it "simple" for now
@@ -81,7 +90,11 @@ for(i in 1:B){
   #---- **sample alpha ----
   a_alpha_post = a_alpha + group_class_n - 1
   b_alpha_post = b_alpha - sum(log(1 - head(u_g, -1)))
-  alpha_post = rgamma(n = 1, shape = a_alpha_post, rate = b_alpha_post)
+  alpha_post[i] = rgamma(n = 1, shape = a_alpha_post, rate = b_alpha_post)
+  
+  #---- **sample phi ----
+  
+  
 }
 
 
