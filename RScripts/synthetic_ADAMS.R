@@ -82,6 +82,7 @@ beta_chain <- vector(length = B)
 alpha_chain <- vector(length = B)
 phi <- 
   array(NA, dim = c(sub_class_n, group_class_n, length(measure_level_vars)))
+lambda <- matrix(NA, nrow = group_class_n, ncol = length(person_level_vars))
 
 #---- Step 5: sampling ----
 for(i in 1:B){
@@ -106,12 +107,15 @@ for(i in 1:B){
         } else{
           all_counts = 0
         }
-        phi[k, g, m] <- rdirichlet(n = 1, alpha = cat_count + all_counts)
+        phi[m, g, k] <- rdirichlet(n = 1, alpha = cat_count + all_counts)
         }
       }
   }
   
-  
+  #---- **sample lambda ----
+  for(k in 1:length(person_level_vars)){
+    
+  }
   
 }
 
