@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse")
+p_load("tidyverse", "DirichletReg")
 
 #---- read in data ----
 #---- **ADAMS ----
@@ -46,8 +46,9 @@ sub_class_n <- 5
 rsamp[, "dem_group"] <- 1
 rsamp[, "measure_group"] <- 1
 
-person_level_vars <- c(person_level_vars, "dem_group")
-measure_level_vars <- c(measure_level_vars, "measure_group")
+#Everyone has the same number of measures/assessments for dementia
+rsamp[, "num_assessments"] <- length(measure_level_vars)
+person_level_vars <- c(person_level_vars, "num_assessments")
 
 #---- ***person-level latent classes parameter ----
 a_alpha = 1
@@ -76,23 +77,40 @@ v_m <- rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta)
 #The last v is fixed at 1
 v_m <- c(v_m, 1)
 
-#---- Step 4: initiate chain storage ----
-beta_post <- vector(length = B)
-alpha_post <- vector(length = B)
+#---- Step 4: initiate chain and parameter storage ----
+beta_chain <- vector(length = B)
+alpha_chain <- vector(length = B)
+phi <- 
+  array(NA, dim = c(sub_class_n, group_class_n, length(measure_level_vars)))
 
 #---- Step 5: sampling ----
 for(i in 1:B){
   #---- **sample beta ----
-  a_beta_post = a_beta + group_class_n*(sub_class_n - 1)
-  b_beta_post = b_beta - 4*sum(log(1 - head(v_m, -1)))
-  beta_post[i] <- rgamma(n = 1, shape = a_beta_post, rate = b_beta_post)
+  a_beta = a_beta + group_class_n*(sub_class_n - 1)
+  b_beta = b_beta - 4*sum(log(1 - head(v_m, -1)))
+  beta_chain[i] <- rgamma(n = 1, shape = a_beta, rate = b_beta)
   
   #---- **sample alpha ----
-  a_alpha_post = a_alpha + group_class_n - 1
-  b_alpha_post = b_alpha - sum(log(1 - head(u_g, -1)))
-  alpha_post[i] = rgamma(n = 1, shape = a_alpha_post, rate = b_alpha_post)
+  a_alpha = a_alpha + group_class_n - 1
+  b_alpha = b_alpha - sum(log(1 - head(u_g, -1)))
+  alpha_chain[i] = rgamma(n = 1, shape = a_alpha, rate = b_alpha)
   
   #---- **sample phi ----
+  for(k in 1:(dim(phi)[3])){
+    for(g in 1:(dim(phi)[2])){
+      for(m in 1:dim(phi)[1]){
+        subset <- rsamp %>% filter(measure_group == m & dem_group == g)
+        cat_count <- max(rsamp[, measure_level_vars[k]], na.rm = TRUE)
+        if(nrow(subset) > 0){
+          all_counts <- sum(table(subset[, measure_level_vars[k]]))
+        } else{
+          all_counts = 0
+        }
+        phi[k, g, m] <- rdirichlet(n = 1, alpha = cat_count + all_counts)
+        }
+      }
+  }
+  
   
   
 }
