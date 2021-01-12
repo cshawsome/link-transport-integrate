@@ -150,11 +150,10 @@ for(i in 1:B){
       shape1 = as.numeric(sum(1 + table(subset$measure_group)[m], na.rm = TRUE))
       shape2 = as.numeric(
         sum(beta_chain[i] + 
-              sum(table(subset$measure_group)[m + 1:sub_class_n], 
+              sum(table(subset$measure_group)[(m + 1):sub_class_n], 
                   na.rm = TRUE)))
+      v_gm[m, g] <- rbeta(n = 1, shape1 = shape1, shape2 = shape2)
     }
-    v_gm[1:(sub_class_n - 1), i] <- 
-      rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta)
   }
   
   #The last v is fixed at 1 for all groups
@@ -171,6 +170,18 @@ for(i in 1:B){
     omega_gm[m, ] <- v_gm[m, ]*colProd
   }
   
+  #---- **sample u_g ----
+  for(g in 1:group_class_n){
+    shape1 = as.numeric(sum(1 + table(rsamp$dem_group)[g], na.rm = TRUE))
+    shape2 = as.numeric(
+      sum(alpha_chain[i] + 
+            sum(table(rsamp$dem_group)[(g + 1):group_class_n], na.rm = TRUE)))
+    
+    u_g <- rbeta(n = (group_class_n - 1), shape1 = shape1, shape2 = shape2)
+  }
+  
+  #The last u is fixed at 1
+  u_g <- c(u_g, 1)
   
 }
 
