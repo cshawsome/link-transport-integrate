@@ -24,10 +24,13 @@ person_level_vars <- c("GENDER", "ETHNIC", "AAGE_cat", "EDYRS_cat")
 measure_level_vars <- c("ANMSETOT_cat", paste0("r", seq(5, 7), "iadla_cat"))
 
 analytical_sample <- all_data %>% 
-  dplyr::select("HHIDPN", all_of(person_level_vars), all_of(measure_level_vars))
+  dplyr::select("HHIDPN", 
+                all_of(person_level_vars), all_of(measure_level_vars)) %>% 
+  na.omit()
 
 #Variable check
 colSums(is.na(analytical_sample))
+dim(analytical_sample)
 
 #---- Mixture Model ----
 #---- **Step 1: SRS of data ----
@@ -88,6 +91,7 @@ alpha_chain <- vector(length = B)
 pi_chain <- matrix(ncol = B, nrow = group_class_n)
 omega_gm <- matrix(nrow = sub_class_n, ncol = group_class_n)
 pi_g <- matrix(nrow = group_class_n, ncol = B)
+M_ij <- matrix(nrow = nrow(rsamp), ncol = length(measure_level_vars))
 
 phi_list = lapply(phi_list <- vector(mode = "list", group_class_n), function(x) 
   x <- lapply(x <- vector(mode = "list", sub_class_n), function(x) 
@@ -98,16 +102,16 @@ lambda_list = lapply(lambda_list <- vector(mode = "list", group_class_n),
                                              length(person_level_vars)))
 
 #---- Step 5: sampling ----
-for(i in 1:B){
+for(b in 1:B){
   #---- **sample beta ----
   a_beta = a_beta + group_class_n*(sub_class_n - 1)
   b_beta = b_beta - sum(log(1 - v_gm[1:(sub_class_n - 1), ]))
-  beta_chain[i] <- rgamma(n = 1, shape = a_beta, rate = b_beta)
+  beta_chain[b] <- rgamma(n = 1, shape = a_beta, rate = b_beta)
   
   #---- **sample alpha ----
   a_alpha = a_alpha + group_class_n - 1
   b_alpha = b_alpha - sum(log(1 - head(u_g, -1)))
-  alpha_chain[i] = rgamma(n = 1, shape = a_alpha, rate = b_alpha)
+  alpha_chain[b] = rgamma(n = 1, shape = a_alpha, rate = b_alpha)
   
   #---- **sample phi ----
   for(k in 1:length(measure_level_vars)){
@@ -150,7 +154,7 @@ for(i in 1:B){
       subset <- rsamp %>% filter(dem_group == g)
       shape1 = as.numeric(sum(1 + table(subset$measure_group)[m], na.rm = TRUE))
       shape2 = as.numeric(
-        sum(beta_chain[i] + 
+        sum(beta_chain[b] + 
               sum(table(subset$measure_group)[(m + 1):sub_class_n], 
                   na.rm = TRUE)))
       v_gm[m, g] <- rbeta(n = 1, shape1 = shape1, shape2 = shape2)
@@ -172,7 +176,7 @@ for(i in 1:B){
   for(g in 1:(group_class_n - 1)){
     shape1 = as.numeric(sum(1 + table(rsamp$dem_group)[g], na.rm = TRUE))
     shape2 = as.numeric(
-      sum(alpha_chain[i] + 
+      sum(alpha_chain[b] + 
             sum(table(rsamp$dem_group)[(g + 1):group_class_n], na.rm = TRUE)))
     
     u_g[g] <- rbeta(n = 1, shape1 = shape1, shape2 = shape2)
@@ -181,13 +185,23 @@ for(i in 1:B){
   #---- ****calculate pi_g ----
   comp_probs <- 1 - u_g
   
-  pi_g[1, i] <- u_g[1]
-  pi_g[2, i] <- u_g[2]*comp_probs[1]
+  pi_g[1, b] <- u_g[1]
+  pi_g[2, b] <- u_g[2]*comp_probs[1]
   
   for(g in 3:group_class_n){
-    pi_g[g, i] <- u_g[g]*prod(comp_probs[1:(g - 1)])
+    pi_g[g, b] <- u_g[g]*prod(comp_probs[1:(g - 1)])
   }
   
+  #---- **sample M_ij ----
+  for(i in 1:nrow(rsamp)){
+    group = as.numeric(rsamp[i, "dem_group"])
+    X_ijk = rsamp[i, measure_level_vars]
+    for(m in 1:sub_class_n){
+      for(j in 1:length(measure_level_vars)){
+        
+      }
+    }
+  }
   
 }
 
