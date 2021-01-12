@@ -74,8 +74,8 @@ u_g <- c(u_g, 1)
 
 #Draw priors for one less than the number of sub-level latent classes
 v_gm <- matrix(nrow = sub_class_n, ncol = group_class_n)
-for(i in 1:group_class_n){
-  v_gm[1:(sub_class_n - 1), i] <- 
+for(g in 1:group_class_n){
+  v_gm[1:(sub_class_n - 1), g] <- 
     rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta)
 }
 
@@ -142,10 +142,22 @@ for(i in 1:B){
     }
   }
   
-  #---- **sample v_m ----
-  v_m <- rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta)
-  #The last v is fixed at 1
-  v_m <- c(v_m, 1)
+  #---- **sample v_gm ----
+  for(g in 1:group_class_n){
+    for(m in 1:sub_class_n){
+      subset <- rsamp %>% filter(dem_group == g)
+      shape1 = as.numeric(sum(1 + table(subset$measure_group)[m], na.rm = TRUE))
+      shape2 = as.numeric(
+        sum(beta_chain[i] + 
+              sum(table(subset$measure_group)[m + 1:sub_class_n], 
+                  na.rm = TRUE)))
+    }
+    v_gm[1:(sub_class_n - 1), i] <- 
+      rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta)
+  }
+  
+  #The last v is fixed at 1 for all groups
+  v_gm[nrow(v_gm), ] <- 1
   
 }
 
