@@ -139,12 +139,13 @@ for(b in 1:B){
       subset <- rsamp %>% filter(dem_group == g)
       cat_count <- max(rsamp[, person_level_vars[k]], na.rm = TRUE)
       if(nrow(subset) > 0){
-        pars <- 
-          as.numeric(strsplit(paste(
-            table(subset[, person_level_vars[k]]), 
-            collapse = ", "), split = ", ")[[1]])
+        #if you use the table function, you might miss some levels
+        pars <- vector(length = cat_count)
+        for(d in 1:length(pars)){
+          pars[d] = sum(rsamp[, person_level_vars[k]] == d)
+        }
       } else{
-        pars = rep(0, max(rsamp[, person_level_vars[k]], na.rm = TRUE))
+        pars = rep(0, cat_count)
       }
       lambda_list[[g]][[k]] <- rdirichlet(n = 1, alpha = 1 + pars)
     }
