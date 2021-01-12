@@ -119,10 +119,11 @@ for(b in 1:B){
       for(m in 1:sub_class_n){
         subset <- rsamp %>% filter(measure_group == m & dem_group == g)
         if(nrow(subset) > 0){
-          pars <- 
-            as.numeric(strsplit(paste(
-              table(subset[, measure_level_vars[k]]), 
-              collapse = ", "), split = ", ")[[1]])
+          #if you use the table function, you might miss some levels
+          pars <- vector(length = max(rsamp[, measure_level_vars[k]]))
+          for(d in 1:length(pars)){
+            pars[d] = sum(rsamp[, measure_level_vars[k]] == d)
+          }
         } else{
           pars = rep(0, max(rsamp[, measure_level_vars[k]], na.rm = TRUE))
         }
@@ -197,8 +198,10 @@ for(b in 1:B){
     group = as.numeric(rsamp[i, "dem_group"])
     X_ijk = rsamp[i, measure_level_vars]
     for(m in 1:sub_class_n){
-      for(j in 1:length(measure_level_vars)){
-        
+      omega_val <- omega_gm[m, group]
+      phi_vec <- vector(length = length(measure_level_vars))
+      for(k in 1:phi_vec){
+        phi_vec[k] <- as.numeric(phi_list[[group]][[m]][[k]])[X_ijk]
       }
     }
   }
