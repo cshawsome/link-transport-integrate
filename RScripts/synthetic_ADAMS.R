@@ -98,9 +98,9 @@ for(i in 1:B){
   alpha_chain[i] = rgamma(n = 1, shape = a_alpha, rate = b_alpha)
   
   #---- **sample phi ----
-  for(k in 1:(dim(phi)[3])){
-    for(g in 1:(dim(phi)[2])){
-      for(m in 1:dim(phi)[1]){
+  for(k in 1:length(measure_level_vars)){
+    for(g in 1:group_class_n){
+      for(m in 1:sub_class_n){
         subset <- rsamp %>% filter(measure_group == m & dem_group == g)
         if(nrow(subset) > 0){
           pars <- 
