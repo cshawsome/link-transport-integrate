@@ -118,14 +118,15 @@ for(b in 1:B){
     for(g in 1:group_class_n){
       for(m in 1:sub_class_n){
         subset <- rsamp %>% filter(measure_group == m & dem_group == g)
+        cat_count <- max(rsamp[, measure_level_vars[k]], na.rm = TRUE)
         if(nrow(subset) > 0){
           #if you use the table function, you might miss some levels
-          pars <- vector(length = max(rsamp[, measure_level_vars[k]]))
+          pars <- vector(length = cat_count)
           for(d in 1:length(pars)){
             pars[d] = sum(rsamp[, measure_level_vars[k]] == d)
           }
         } else{
-          pars = rep(0, max(rsamp[, measure_level_vars[k]], na.rm = TRUE))
+          pars = rep(0, cat_count)
         }
         phi_list[[g]][[m]][[k]] <- rdirichlet(n = 1, alpha = 1 + pars)
         }
