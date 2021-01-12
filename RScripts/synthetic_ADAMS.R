@@ -80,6 +80,7 @@ v_m <- c(v_m, 1)
 #---- Step 4: initiate chain and parameter storage ----
 beta_chain <- vector(length = B)
 alpha_chain <- vector(length = B)
+pi_chain <- matrix(ncol = B, nrow = group_class_n)
 
 phi_list = lapply(phi_list <- vector(mode = "list", group_class_n), function(x) 
   x <- lapply(x <- vector(mode = "list", sub_class_n), function(x) 
@@ -136,7 +137,7 @@ for(i in 1:B){
     }
   }
   
-  
+  #---- **sample 
 }
 
 
