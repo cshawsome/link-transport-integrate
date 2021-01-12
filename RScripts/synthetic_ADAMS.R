@@ -174,8 +174,10 @@ for(i in 1:B){
       sum(alpha_chain[i] + 
             sum(table(rsamp$dem_group)[(g + 1):group_class_n], na.rm = TRUE)))
     
-    u_g[g] <- rbeta(n = (group_class_n - 1), shape1 = shape1, shape2 = shape2)
+    u_g[g] <- rbeta(n = 1, shape1 = shape1, shape2 = shape2)
   }
+  
+  
   
 }
 
