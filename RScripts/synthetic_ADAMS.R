@@ -145,7 +145,7 @@ for(i in 1:B){
   
   #---- **sample v_gm ----
   for(g in 1:group_class_n){
-    for(m in 1:sub_class_n){
+    for(m in 1:(sub_class_n - 1)){
       subset <- rsamp %>% filter(dem_group == g)
       shape1 = as.numeric(sum(1 + table(subset$measure_group)[m], na.rm = TRUE))
       shape2 = as.numeric(
@@ -155,9 +155,6 @@ for(i in 1:B){
       v_gm[m, g] <- rbeta(n = 1, shape1 = shape1, shape2 = shape2)
     }
   }
-  
-  #The last v is fixed at 1 for all groups
-  v_gm[nrow(v_gm), ] <- 1
   
   #---- ****calculate omega_gm ----
   comp_probs <- 1 - v_gm
@@ -171,17 +168,14 @@ for(i in 1:B){
   }
   
   #---- **sample u_g ----
-  for(g in 1:group_class_n){
+  for(g in 1:(group_class_n - 1)){
     shape1 = as.numeric(sum(1 + table(rsamp$dem_group)[g], na.rm = TRUE))
     shape2 = as.numeric(
       sum(alpha_chain[i] + 
             sum(table(rsamp$dem_group)[(g + 1):group_class_n], na.rm = TRUE)))
     
-    u_g <- rbeta(n = (group_class_n - 1), shape1 = shape1, shape2 = shape2)
+    u_g[g] <- rbeta(n = (group_class_n - 1), shape1 = shape1, shape2 = shape2)
   }
-  
-  #The last u is fixed at 1
-  u_g <- c(u_g, 1)
   
 }
 
