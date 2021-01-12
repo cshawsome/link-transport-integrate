@@ -73,9 +73,14 @@ u_g <- rbeta(n = (group_class_n - 1), shape1 = 1, shape2 = alpha)
 u_g <- c(u_g, 1)
 
 #Draw priors for one less than the number of sub-level latent classes
-v_m <- rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta)
-#The last v is fixed at 1
-v_m <- c(v_m, 1)
+v_gm <- matrix(nrow = sub_class_n, ncol = group_class_n)
+for(i in 1:group_class_n){
+  v_gm[1:(sub_class_n - 1), i] <- 
+    rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta)
+}
+
+#The last v is fixed at 1 for all groups
+v_gm[nrow(v_gm), ] <- 1
 
 #---- Step 4: initiate chain and parameter storage ----
 beta_chain <- vector(length = B)
@@ -137,7 +142,11 @@ for(i in 1:B){
     }
   }
   
-  #---- **sample 
+  #---- **sample v_m ----
+  v_m <- rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta)
+  #The last v is fixed at 1
+  v_m <- c(v_m, 1)
+  
 }
 
 
