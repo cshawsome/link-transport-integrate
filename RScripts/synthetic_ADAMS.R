@@ -87,6 +87,7 @@ beta_chain <- vector(length = B)
 alpha_chain <- vector(length = B)
 pi_chain <- matrix(ncol = B, nrow = group_class_n)
 omega_gm <- matrix(nrow = sub_class_n, ncol = group_class_n)
+pi_g <- matrix(nrow = group_class_n, ncol = B)
 
 phi_list = lapply(phi_list <- vector(mode = "list", group_class_n), function(x) 
   x <- lapply(x <- vector(mode = "list", sub_class_n), function(x) 
@@ -177,6 +178,15 @@ for(i in 1:B){
     u_g[g] <- rbeta(n = 1, shape1 = shape1, shape2 = shape2)
   }
   
+  #---- ****calculate pi_g ----
+  comp_probs <- 1 - u_g
+  
+  pi_g[1, i] <- u_g[1]
+  pi_g[2, i] <- u_g[2]*comp_probs[1]
+  
+  for(g in 3:group_class_n){
+    pi_g[g, i] <- u_g[g]*prod(comp_probs[1:(g - 1)])
+  }
   
   
 }
