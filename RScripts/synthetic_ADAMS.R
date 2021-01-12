@@ -85,6 +85,10 @@ phi_list = lapply(phi_list <- vector(mode = "list", group_class_n), function(x)
   x <- lapply(x <- vector(mode = "list", sub_class_n), function(x) 
     x <- vector(mode = "list", length(measure_level_vars))))
 
+lambda_list = lapply(lambda_list <- vector(mode = "list", group_class_n), 
+                     function(x) x <- vector(mode = "list", 
+                                             length(person_level_vars)))
+
 #---- Step 5: sampling ----
 for(i in 1:B){
   #---- **sample beta ----
@@ -116,18 +120,23 @@ for(i in 1:B){
   }
   
   #---- **sample lambda ----
-  for(k in 1:ncol(lambda)){
-    for(g in 1:nrow(lambda)){
+  for(k in 1:length(person_level_vars)){
+    for(g in 1:group_class_n){
       subset <- rsamp %>% filter(dem_group == g)
       cat_count <- max(rsamp[, person_level_vars[k]], na.rm = TRUE)
       if(nrow(subset) > 0){
-        all_counts <- sum(table(subset[, person_level_vars[k]]))
+        pars <- 
+          as.numeric(strsplit(paste(
+            table(subset[, person_level_vars[k]]), 
+            collapse = ", "), split = ", ")[[1]])
       } else{
-        all_counts = 0
+        pars = rep(0, max(rsamp[, person_level_vars[k]], na.rm = TRUE))
       }
-      lambda[g, k] <- rdirichlet(n = 1, alpha = cat_count + all_counts)
+      lambda_list[[g]][[k]] <- rdirichlet(n = 1, alpha = 1 + pars)
     }
   }
+  
+  
 }
 
 
