@@ -99,7 +99,7 @@ lambda_list = lapply(lambda_list <- vector(mode = "list", group_class_n),
 for(i in 1:B){
   #---- **sample beta ----
   a_beta = a_beta + group_class_n*(sub_class_n - 1)
-  b_beta = b_beta - 4*sum(log(1 - head(v_m, -1)))
+  b_beta = b_beta - sum(log(1 - v_gm[1:(sub_class_n - 1), ]))
   beta_chain[i] <- rgamma(n = 1, shape = a_beta, rate = b_beta)
   
   #---- **sample alpha ----
