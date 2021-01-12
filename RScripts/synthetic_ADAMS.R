@@ -86,6 +86,7 @@ v_gm[nrow(v_gm), ] <- 1
 beta_chain <- vector(length = B)
 alpha_chain <- vector(length = B)
 pi_chain <- matrix(ncol = B, nrow = group_class_n)
+omega_gm <- matrix(nrow = sub_class_n, ncol = group_class_n)
 
 phi_list = lapply(phi_list <- vector(mode = "list", group_class_n), function(x) 
   x <- lapply(x <- vector(mode = "list", sub_class_n), function(x) 
@@ -158,6 +159,18 @@ for(i in 1:B){
   
   #The last v is fixed at 1 for all groups
   v_gm[nrow(v_gm), ] <- 1
+  
+  #---- ****calculate omega_gm ----
+  comp_probs <- 1 - v_gm
+  
+  omega_gm[1, ] <- v_gm[1, ]
+  omega_gm[2, ] <- v_gm[2, ]*comp_probs[1, ]
+  
+  for(m in 3:sub_class_n){
+    colProd <- apply(comp_probs[1:(m - 1), ], 2, prod)
+    omega_gm[m, ] <- v_gm[m, ]*colProd
+  }
+  
   
 }
 
