@@ -47,7 +47,7 @@ sub_class_n <- 5
 #---- ***assign latent classes ----
 #Everyone starts in class 1 at both the person level and measurement level
 rsamp[, "dem_group"] <- 1
-rsamp[, "measure_group"] <- 1
+M_ij <- matrix(1, nrow = nrow(rsamp), ncol = length(measure_level_vars))
 
 #Everyone has the same number of measures/assessments for dementia
 rsamp[, "num_assessments"] <- length(measure_level_vars)
@@ -91,15 +91,21 @@ alpha_chain <- vector(length = B)
 pi_chain <- matrix(ncol = B, nrow = group_class_n)
 omega_gm <- matrix(nrow = sub_class_n, ncol = group_class_n)
 pi_g <- matrix(nrow = group_class_n, ncol = B)
-M_ij <- matrix(nrow = nrow(rsamp), ncol = length(measure_level_vars))
 
-phi_list = lapply(phi_list <- vector(mode = "list", group_class_n), function(x) 
+p_M_ij_list <- 
+  lapply(phi_list <- vector(mode = "list", nrow(rsamp)), 
+         function(x) x <- 
+           lapply(x <- vector(mode = "list", 
+                              length(measure_level_vars)), 
+                  function(x) x <- vector(mode = "list", sub_class_n)))
+
+phi_list <- lapply(phi_list <- vector(mode = "list", group_class_n), function(x) 
   x <- lapply(x <- vector(mode = "list", sub_class_n), function(x) 
     x <- vector(mode = "list", length(measure_level_vars))))
 
-lambda_list = lapply(lambda_list <- vector(mode = "list", group_class_n), 
-                     function(x) x <- vector(mode = "list", 
-                                             length(person_level_vars)))
+lambda_list <- lapply(lambda_list <- vector(mode = "list", group_class_n), 
+                      function(x) x <- vector(mode = "list", 
+                                              length(person_level_vars)))
 
 #---- Step 5: sampling ----
 for(b in 1:B){
@@ -117,13 +123,14 @@ for(b in 1:B){
   for(k in 1:length(measure_level_vars)){
     for(g in 1:group_class_n){
       for(m in 1:sub_class_n){
-        subset <- rsamp %>% filter(measure_group == m & dem_group == g)
+        people <- which(M_ij[, k] == m)
+        subset <- rsamp[people, ] %>% filter(dem_group == g)
         cat_count <- max(rsamp[, measure_level_vars[k]], na.rm = TRUE)
         if(nrow(subset) > 0){
           #if you use the table function, you might miss some levels
           pars <- vector(length = cat_count)
           for(d in 1:length(pars)){
-            pars[d] = sum(rsamp[, measure_level_vars[k]] == d)
+            pars[d] = sum(subset[, measure_level_vars[k]] == d)
           }
         } else{
           pars = rep(0, cat_count)
@@ -142,7 +149,7 @@ for(b in 1:B){
         #if you use the table function, you might miss some levels
         pars <- vector(length = cat_count)
         for(d in 1:length(pars)){
-          pars[d] = sum(rsamp[, person_level_vars[k]] == d)
+          pars[d] = sum(subset[, person_level_vars[k]] == d)
         }
       } else{
         pars = rep(0, cat_count)
@@ -202,9 +209,11 @@ for(b in 1:B){
     for(m in 1:sub_class_n){
       omega_val <- omega_gm[m, group]
       phi_vec <- vector(length = length(measure_level_vars))
-      for(k in 1:phi_vec){
-        phi_vec[k] <- as.numeric(phi_list[[group]][[m]][[k]])[X_ijk]
+      for(k in 1:length(phi_vec)){
+        phi_vec[k] <- 
+          as.numeric(phi_list[[group]][[m]][[k]])[as.numeric(X_ijk[k])]
       }
+      num_prob <- omega_val*prod(phi_vec)
     }
   }
   
