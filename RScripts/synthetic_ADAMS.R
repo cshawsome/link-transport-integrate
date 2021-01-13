@@ -90,7 +90,6 @@ beta_chain <- vector(length = B)
 alpha_chain <- vector(length = B)
 pi_chain <- matrix(ncol = B, nrow = group_class_n)
 omega_gm <- matrix(nrow = sub_class_n, ncol = group_class_n)
-pi_g <- matrix(nrow = group_class_n, ncol = B)
 
 p_M_ij_list <- 
   lapply(phi_list <- vector(mode = "list", nrow(rsamp)), 
@@ -161,7 +160,9 @@ for(b in 1:B){
   #---- **sample v_gm ----
   for(g in 1:group_class_n){
     for(m in 1:(sub_class_n - 1)){
-      subset <- rsamp %>% filter(dem_group == g)
+      people <- which(M_ij[, k] == m)
+      next_groups <- which(M_ij[, k] > m)
+      subset <- rsamp[people, ] %>% filter(dem_group == g)
       shape1 = as.numeric(sum(1 + table(subset$measure_group)[m], na.rm = TRUE))
       shape2 = as.numeric(
         sum(beta_chain[b] + 
@@ -171,7 +172,7 @@ for(b in 1:B){
     }
   }
   
-  #---- ****calculate omega_gm ----
+  #---- ***calculate omega_gm ----
   comp_probs <- 1 - v_gm
   
   omega_gm[1, ] <- v_gm[1, ]
@@ -192,7 +193,7 @@ for(b in 1:B){
     u_g[g] <- rbeta(n = 1, shape1 = shape1, shape2 = shape2)
   }
   
-  #---- ****calculate pi_g ----
+  #---- ***calculate pi_g ----
   comp_probs <- 1 - u_g
   
   pi_g[1, b] <- u_g[1]
