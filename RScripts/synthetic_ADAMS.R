@@ -96,7 +96,7 @@ p_M_ij_list <-
          function(x) x <- 
            lapply(x <- vector(mode = "list", 
                               length(measure_level_vars)), 
-                  function(x) x <- vector(mode = "list", sub_class_n)))
+                  function(x) x <- vector(length = sub_class_n)))
 
 phi_list <- lapply(phi_list <- vector(mode = "list", group_class_n), function(x) 
   x <- lapply(x <- vector(mode = "list", sub_class_n), function(x) 
