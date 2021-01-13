@@ -45,7 +45,8 @@ group_class_n <- 4
 sub_class_n <- 5
 
 #---- ***assign latent classes ----
-#Everyone starts in class 1 at both the person level and measurement level
+#Everyone starts in class 1 at the person level (normal cog maybe?) and 
+# a uniform distribution of class membership at the measurement level
 rsamp[, "dem_group"] <- 1
 M_ij <- matrix(1, nrow = nrow(rsamp), ncol = length(measure_level_vars))
 
@@ -159,16 +160,17 @@ for(b in 1:B){
   
   #---- **sample v_gm ----
   for(g in 1:group_class_n){
-    for(m in 1:(sub_class_n - 1)){
-      people <- which(M_ij[, k] == m)
-      next_groups <- which(M_ij[, k] > m)
-      subset <- rsamp[people, ] %>% filter(dem_group == g)
-      shape1 = as.numeric(sum(1 + table(subset$measure_group)[m], na.rm = TRUE))
-      shape2 = as.numeric(
-        sum(beta_chain[b] + 
-              sum(table(subset$measure_group)[(m + 1):sub_class_n], 
-                  na.rm = TRUE)))
-      v_gm[m, g] <- rbeta(n = 1, shape1 = shape1, shape2 = shape2)
+    people <- which(rsamp[, "dem_group"] == g)
+    if(length(people) > 0){
+      M_ij_subset <- M_ij[people, ]
+      for(m in 1:(sub_class_n - 1)){
+        shape1 = 1 + sum(M_ij_subset == m)
+        shape2 = beta_chain[b] + sum(M_ij_subset > m)
+        v_gm[m, g] <- rbeta(n = 1, shape1 = shape1, shape2 = shape2)
+      }
+    } else{
+      v_gm[1:(sub_class_n - 1), g] <- 
+        rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta_chain[b])
     }
   }
   
