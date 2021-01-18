@@ -28,9 +28,19 @@ analytical_sample <- all_data %>%
   dplyr::select("HHIDPN", all_of(person_level_vars), all_of(measure_vars)) %>% 
     na.omit()
 
-#Variable check
+#Variable check-- there's 538 people in the complete data set
 colSums(is.na(analytical_sample))
 dim(analytical_sample)
+
+#---- create measure-level vars ----
+timepoints <- 1
+
+#---- **MMSE ----
+
+#---- **IADLA ----
+
+
+
 
 #---- Mixture Model ----
 #---- **Step 1: SRS of data ----
