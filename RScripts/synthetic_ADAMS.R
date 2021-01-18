@@ -21,10 +21,11 @@ all_data <- left_join(ADAMS_subset, RAND_subset, by = "HHIDPN")
 
 #---- select variables ----
 person_level_vars <- c("GENDER", "ETHNIC", "AAGE_cat", "EDYRS_cat")
-measure_level_vars <- c("ANMSETOT_cat", paste0("r", seq(5, 7), "iadla_cat"))
+measures <- c("ANMSETOT", "iadla")
+measure_vars <- c("ANMSETOT_cat", paste0("r", seq(5, 7), "iadla_cat"))
 
 analytical_sample <- all_data %>% 
-  dplyr::select("HHIDPN", all_of(person_level_vars), all_of(measure_level_vars))
+  dplyr::select("HHIDPN", all_of(person_level_vars), all_of(measure_vars))
 
 #Variable check
 colSums(is.na(analytical_sample))
