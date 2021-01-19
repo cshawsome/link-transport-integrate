@@ -61,27 +61,28 @@ rsamp <- sample_n(analytical_sample, size = samp_size, replace = FALSE)
 
 #---- **Step 2: hyperpriors ----
 #---- ***number of latent classes ----
-#number of group-level latent classes
+#number of person-level latent classes
 group_class_n <- 4
-#number of sub-latent classes
-sub_class_n <- 5
+#number of assessment-level classes
+sub_class_n <- 4
 
 #---- ***assign latent classes ----
-#Everyone starts in class 1 at the person level (normal cog maybe?) and 
-# a uniform distribution of class membership at the measurement level
-rsamp[, "dem_group"] <- 1
-M_ij <- matrix(1, nrow = nrow(rsamp), ncol = length(measure_level_vars))
+#Everyone starts in class 1 at the person level and sub level 
+#(normal cog maybe?) 
+rsamp[, "group_class"] <- 1
+rsamp[, "sub_class_1"] <- 1
 
-#Everyone has the same number of measures/assessments for dementia
-rsamp[, "num_assessments"] <- length(measure_level_vars)
+#Everyone has one set of assessments in this example
+rsamp[, "num_assessments"] <- 1
 person_level_vars <- c(person_level_vars, "num_assessments")
 
 #---- ***person-level latent classes parameter ----
-a_alpha = 1
-b_alpha = 0.5
+#From Dunson and Xing (2009)
+a_alpha = 0.25
+b_alpha = 0.25
 alpha <- rgamma(n = 1, shape = a_alpha, rate = b_alpha)
 
-#---- ***measure-level latent classes parameter ----
+#---- ***sub-level latent classes parameter ----
 #From Dunson and Xing (2009)
 #These can differ by group-level latent classes if we wish, but we're keeping
 # it "simple" for now
