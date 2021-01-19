@@ -42,7 +42,17 @@ analytical_sample[, "MMSE_1"] <- analytical_sample[, "ANMSETOT_cat"]
 analytical_sample %<>% dplyr::select(-"ANMSETOT_cat")
 
 #---- **IADLA ----
+#Take the IADLA measure closest to ADAMS interview year
+analytical_sample %<>% 
+  mutate("IADLA_1" = case_when(AYEAR == 2001 ~ r5iadla_cat, 
+                               AYEAR %in% c(2002, 2003) ~ r6iadla_cat, 
+                               AYEAR == 2004 ~ r7iadla_cat))
 
+# #Sanity check
+# table(analytical_sample$IADLA_1, useNA = "ifany")
+
+#Get rid of original variables
+analytical_sample %<>% dplyr::select(-c(contains("iadla_cat"), "AYEAR")) 
 
 #---- Mixture Model ----
 #---- **Step 1: SRS of data ----
