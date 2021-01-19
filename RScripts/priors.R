@@ -80,6 +80,7 @@ ADAMSA_dem <- sum(dem_dx_cat_counts[c("Dementia", "Probable Dementia",
                                       "Probable/Possible Vascular Dementia")])
 ADAMSA_MCI <- dem_dx_cat_counts["MCI"]
 ADAMSA_normal <- dem_dx_cat_counts["Normal"]
+
 #---- **generate fake data ----
 set.seed(20201223)
 fake_normal <- rnorm(n = ADAMSA_dem, mean = 28.5, sd = 3) %>% 
