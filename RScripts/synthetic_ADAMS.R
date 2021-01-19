@@ -115,20 +115,20 @@ alpha_chain <- vector(length = B)
 pi_chain <- matrix(ncol = B, nrow = group_class_n)
 omega_gm <- matrix(ncol = sub_class_n, nrow = group_class_n)
 
-p_M_ij_list <- 
-  lapply(phi_list <- vector(mode = "list", nrow(rsamp)), 
-         function(x) x <- 
-           lapply(x <- vector(mode = "list", 
-                              length(measure_level_vars)), 
-                  function(x) x <- vector(length = sub_class_n)))
-
-phi_list <- lapply(phi_list <- vector(mode = "list", group_class_n), function(x) 
-  x <- lapply(x <- vector(mode = "list", sub_class_n), function(x) 
-    x <- vector(mode = "list", length(measure_level_vars))))
-
-lambda_list <- lapply(lambda_list <- vector(mode = "list", group_class_n), 
-                      function(x) x <- vector(mode = "list", 
-                                              length(person_level_vars)))
+# p_M_ij_list <- 
+#   lapply(phi_list <- vector(mode = "list", nrow(rsamp)), 
+#          function(x) x <- 
+#            lapply(x <- vector(mode = "list", 
+#                               length(measure_level_vars)), 
+#                   function(x) x <- vector(length = sub_class_n)))
+# 
+# phi_list <- lapply(phi_list <- vector(mode = "list", group_class_n), function(x) 
+#   x <- lapply(x <- vector(mode = "list", sub_class_n), function(x) 
+#     x <- vector(mode = "list", length(measure_level_vars))))
+# 
+# lambda_list <- lapply(lambda_list <- vector(mode = "list", group_class_n), 
+#                       function(x) x <- vector(mode = "list", 
+#                                               length(person_level_vars)))
 
 #---- Step 5: sampling ----
 for(b in 1:B){
