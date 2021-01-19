@@ -100,7 +100,7 @@ u_g <- rbeta(n = (group_class_n - 1), shape1 = 1, shape2 = alpha)
 u_g <- c(u_g, 1)
 
 #Draw priors for one less than the number of sub-level latent classes
-v_gm <- matrix(nrow = sub_class_n, ncol = group_class_n)
+v_gm <- matrix(ncol = sub_class_n, nrow = group_class_n)
 for(g in 1:group_class_n){
   v_gm[g, 1:(sub_class_n - 1)] <- 
     rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta)
@@ -113,7 +113,7 @@ v_gm[, ncol(v_gm)] <- 1
 beta_chain <- vector(length = B)
 alpha_chain <- vector(length = B)
 pi_chain <- matrix(ncol = B, nrow = group_class_n)
-omega_gm <- matrix(nrow = sub_class_n, ncol = group_class_n)
+omega_gm <- matrix(ncol = sub_class_n, nrow = group_class_n)
 
 p_M_ij_list <- 
   lapply(phi_list <- vector(mode = "list", nrow(rsamp)), 
