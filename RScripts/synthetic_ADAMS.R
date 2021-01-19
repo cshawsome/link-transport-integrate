@@ -25,8 +25,8 @@ measures <- c("ANMSETOT", "iadla")
 measure_vars <- c("ANMSETOT_cat", paste0("r", seq(5, 7), "iadla_cat"))
 
 analytical_sample <- all_data %>% 
-  dplyr::select("HHIDPN", all_of(person_level_vars), all_of(measure_vars)) %>% 
-    na.omit()
+  dplyr::select("HHIDPN", "AYEAR", 
+                all_of(person_level_vars), all_of(measure_vars)) %>% na.omit()
 
 #Variable check-- there's 538 people in the complete data set
 colSums(is.na(analytical_sample))
@@ -36,10 +36,12 @@ dim(analytical_sample)
 timepoints <- 1
 
 #---- **MMSE ----
+analytical_sample[, "MMSE_1"] <- analytical_sample[, "ANMSETOT_cat"]
+
+#drop original variable
+analytical_sample %<>% dplyr::select(-"ANMSETOT_cat")
 
 #---- **IADLA ----
-
-
 
 
 #---- Mixture Model ----
