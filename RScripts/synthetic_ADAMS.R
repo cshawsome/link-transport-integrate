@@ -155,30 +155,22 @@ for(b in 1:B){
   for(k in 1:length(measures)){
     for(g in 1:group_class_n){
       for(m in 1:sub_class_n){
+        #these are the a_ks... might want to change this later to be empirical
+        # dist
+        pars <- rep(1, measures[1, k])
         for(j in 1:timepoints){
-          #these are the a_ks... might want to change this later to be empirical
-          # dist
-          
-          pars <- rep(1, )
-          subset <- rsamp %>% filter(group_class == g)
-          
-        }
-        #This code is not general yet to sum over many timepoints
-        subset <- rsamp %>% filter(group_class == g & sub_class_1 == m)
-    
-        cat_count <- max(rsamp[, measure_level_vars[k]], na.rm = TRUE)
-        if(nrow(subset) > 0){
-          #if you use the table function, you might miss some levels
-          pars <- vector(length = cat_count)
-          for(d in 1:length(pars)){
-            pars[d] = sum(subset[, measure_level_vars[k]] == d)
+          subclass <- paste0("sub_class_", j)
+          var <- paste0(colnames(measures)[k], "_", j)
+          subset <- rsamp %>% filter(group_class == g & !!sym(subclass) == m)
+          if(nrow(subset > 0)){
+            counts <- table(subset[, var])
+            pars[as.numeric(names(counts))] = pars[as.numeric(names(counts))] + 
+              counts
           }
-        } else{
-          pars = rep(0, cat_count)
         }
-        phi_list[[g]][[m]][[k]] <- rdirichlet(n = 1, alpha = 1 + pars)
-        }
+        phi_list[[g]][[m]][[k]] <- rdirichlet(n = 1, alpha = pars)
       }
+    }
   }
   
   #---- **sample lambda ----
