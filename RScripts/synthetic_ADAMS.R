@@ -162,7 +162,7 @@ for(b in 1:B){
   alpha_chain[b] = rgamma(n = 1, shape = a_alpha, rate = b_alpha)
   
   #---- **sample phi ----
-  for(k in 1:length(measures)){
+  for(k in 1:ncol(measures)){
     for(g in 1:group_class_n){
       for(m in 1:sub_class_n){
         #these are the a_ks... might want to change this later to be empirical
@@ -184,23 +184,19 @@ for(b in 1:B){
   }
   
   #---- **sample lambda ----
-  for(k in 1:length(person_level_vars)){
+  for(k in 1:ncol(person_level_vars)){
     for(g in 1:group_class_n){
-      subset <- rsamp %>% filter(dem_group == g)
-      for(j in 1:timepoint)
-      
-      
-      cat_count <- max(rsamp[, person_level_vars[k]], na.rm = TRUE)
-      if(nrow(subset) > 0){
-        #if you use the table function, you might miss some levels
-        pars <- vector(length = cat_count)
-        for(d in 1:length(pars)){
-          pars[d] = sum(subset[, person_level_vars[k]] == d)
-        }
-      } else{
-        pars = rep(0, cat_count)
+      #these are the a_ks... might want to change this later to be empirical
+      # dist
+      pars <- rep(1, person_level_vars[1, k])
+      var <- paste0(colnames(person_level_vars)[k])
+      subset <- rsamp %>% filter(group_class == g)
+      if(nrow(subset > 0)){
+        counts <- table(subset[, var])
+        pars[as.numeric(names(counts))] = pars[as.numeric(names(counts))] + 
+          counts
       }
-      lambda_list[[g]][[k]] <- rdirichlet(n = 1, alpha = 1 + pars)
+      lambda_list[[g]][[k]] <- rdirichlet(n = 1, alpha = pars)
     }
   }
   
