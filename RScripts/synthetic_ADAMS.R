@@ -21,16 +21,38 @@ all_data <- left_join(ADAMS_subset, RAND_subset, by = "HHIDPN")
 
 #---- select variables ----
 person_level_vars <- c("GENDER", "ETHNIC", "AAGE_cat", "EDYRS_cat")
-measure_level_vars <- c("ANMSETOT_cat", paste0("r", seq(5, 7), "iadla_cat"))
+measures <- c("ANMSETOT", "iadla")
+measure_vars <- c("ANMSETOT_cat", paste0("r", seq(5, 7), "iadla_cat"))
 
 analytical_sample <- all_data %>% 
-  dplyr::select("HHIDPN", 
-                all_of(person_level_vars), all_of(measure_level_vars)) %>% 
-  na.omit()
+  dplyr::select("HHIDPN", "AYEAR", 
+                all_of(person_level_vars), all_of(measure_vars)) %>% na.omit()
 
-#Variable check
+#Variable check-- there's 538 people in the complete data set
 colSums(is.na(analytical_sample))
 dim(analytical_sample)
+
+#---- create measure-level vars ----
+timepoints <- 1
+
+#---- **MMSE ----
+analytical_sample[, "MMSE_1"] <- analytical_sample[, "ANMSETOT_cat"]
+
+#drop original variable
+analytical_sample %<>% dplyr::select(-"ANMSETOT_cat")
+
+#---- **IADLA ----
+#Take the IADLA measure closest to ADAMS interview year
+analytical_sample %<>% 
+  mutate("IADLA_1" = case_when(AYEAR == 2001 ~ r5iadla_cat, 
+                               AYEAR %in% c(2002, 2003) ~ r6iadla_cat, 
+                               AYEAR == 2004 ~ r7iadla_cat))
+
+# #Sanity check
+# table(analytical_sample$IADLA_1, useNA = "ifany")
+
+#Get rid of original variables
+analytical_sample %<>% dplyr::select(-c(contains("iadla_cat"), "AYEAR")) 
 
 #---- Mixture Model ----
 #---- **Step 1: SRS of data ----
@@ -39,27 +61,28 @@ rsamp <- sample_n(analytical_sample, size = samp_size, replace = FALSE)
 
 #---- **Step 2: hyperpriors ----
 #---- ***number of latent classes ----
-#number of group-level latent classes
+#number of person-level latent classes
 group_class_n <- 4
-#number of sub-latent classes
-sub_class_n <- 5
+#number of assessment-level classes
+sub_class_n <- 4
 
 #---- ***assign latent classes ----
-#Everyone starts in class 1 at the person level (normal cog maybe?) and 
-# a uniform distribution of class membership at the measurement level
-rsamp[, "dem_group"] <- 1
-M_ij <- matrix(1, nrow = nrow(rsamp), ncol = length(measure_level_vars))
+#Everyone starts in class 1 at the person level and sub level 
+#(normal cog maybe?) 
+rsamp[, "group_class"] <- 1
+rsamp[, "sub_class_1"] <- 1
 
-#Everyone has the same number of measures/assessments for dementia
-rsamp[, "num_assessments"] <- length(measure_level_vars)
+#Everyone has one set of assessments in this example
+rsamp[, "num_assessments"] <- 1
 person_level_vars <- c(person_level_vars, "num_assessments")
 
 #---- ***person-level latent classes parameter ----
-a_alpha = 1
-b_alpha = 0.5
+#From Dunson and Xing (2009)
+a_alpha = 0.25
+b_alpha = 0.25
 alpha <- rgamma(n = 1, shape = a_alpha, rate = b_alpha)
 
-#---- ***measure-level latent classes parameter ----
+#---- ***sub-level latent classes parameter ----
 #From Dunson and Xing (2009)
 #These can differ by group-level latent classes if we wish, but we're keeping
 # it "simple" for now
@@ -77,35 +100,35 @@ u_g <- rbeta(n = (group_class_n - 1), shape1 = 1, shape2 = alpha)
 u_g <- c(u_g, 1)
 
 #Draw priors for one less than the number of sub-level latent classes
-v_gm <- matrix(nrow = sub_class_n, ncol = group_class_n)
+v_gm <- matrix(ncol = sub_class_n, nrow = group_class_n)
 for(g in 1:group_class_n){
-  v_gm[1:(sub_class_n - 1), g] <- 
+  v_gm[g, 1:(sub_class_n - 1)] <- 
     rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta)
 }
 
 #The last v is fixed at 1 for all groups
-v_gm[nrow(v_gm), ] <- 1
+v_gm[, ncol(v_gm)] <- 1
 
 #---- Step 4: initiate chain and parameter storage ----
 beta_chain <- vector(length = B)
 alpha_chain <- vector(length = B)
 pi_chain <- matrix(ncol = B, nrow = group_class_n)
-omega_gm <- matrix(nrow = sub_class_n, ncol = group_class_n)
+omega_gm <- matrix(ncol = sub_class_n, nrow = group_class_n)
 
-p_M_ij_list <- 
-  lapply(phi_list <- vector(mode = "list", nrow(rsamp)), 
-         function(x) x <- 
-           lapply(x <- vector(mode = "list", 
-                              length(measure_level_vars)), 
-                  function(x) x <- vector(length = sub_class_n)))
-
-phi_list <- lapply(phi_list <- vector(mode = "list", group_class_n), function(x) 
-  x <- lapply(x <- vector(mode = "list", sub_class_n), function(x) 
-    x <- vector(mode = "list", length(measure_level_vars))))
-
-lambda_list <- lapply(lambda_list <- vector(mode = "list", group_class_n), 
-                      function(x) x <- vector(mode = "list", 
-                                              length(person_level_vars)))
+# p_M_ij_list <- 
+#   lapply(phi_list <- vector(mode = "list", nrow(rsamp)), 
+#          function(x) x <- 
+#            lapply(x <- vector(mode = "list", 
+#                               length(measure_level_vars)), 
+#                   function(x) x <- vector(length = sub_class_n)))
+# 
+# phi_list <- lapply(phi_list <- vector(mode = "list", group_class_n), function(x) 
+#   x <- lapply(x <- vector(mode = "list", sub_class_n), function(x) 
+#     x <- vector(mode = "list", length(measure_level_vars))))
+# 
+# lambda_list <- lapply(lambda_list <- vector(mode = "list", group_class_n), 
+#                       function(x) x <- vector(mode = "list", 
+#                                               length(person_level_vars)))
 
 #---- Step 5: sampling ----
 for(b in 1:B){
