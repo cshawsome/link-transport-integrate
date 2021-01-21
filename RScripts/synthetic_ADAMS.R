@@ -20,9 +20,12 @@ RAND_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
 all_data <- left_join(ADAMS_subset, RAND_subset, by = "HHIDPN")
 
 #---- select variables ----
-person_level_vars <- c("GENDER", "ETHNIC", "AAGE_cat", "EDYRS_cat")
-#store measures and number of levels for the measure variable
+#store measures and number of levels for each variable
+person_level_vars <- matrix(nrow = 1, ncol = 5) %>% 
+  set_colnames(c("GENDER", "ETHNIC", "AAGE_cat", "EDYRS_cat", 
+                 "num_assessments"))
 measures <- matrix(nrow = 1, ncol = 2) %>% set_colnames(c("MMSE", "IADLA"))
+
 measure_vars <- c("ANMSETOT_cat", paste0("r", seq(5, 7), "iadla_cat"))
 
 analytical_sample <- all_data %>% 
@@ -57,6 +60,11 @@ measures[1, "IADLA"] <- max(analytical_sample$IADLA_1, na.rm = TRUE)
 #Get rid of original variables
 analytical_sample %<>% dplyr::select(-c(contains("iadla_cat"), "AYEAR")) 
 
+#---- number of assessments ----
+#needs to be generalized later to sum over the number of assessments available
+# for a person
+analytical_sample %<>% mutate("num_assessments" = 1)
+
 #---- Mixture Model ----
 #---- **Step 1: SRS of data ----
 samp_size <- floor(0.5*nrow(analytical_sample))
@@ -77,10 +85,12 @@ for(j in 1:timepoints){
   rsamp[, paste0("sub_class_", j)] <- 1
 }
 
-#Everyone has one set of assessments in this example-- need to generalize later
-  #need to sum over the assessments that a person has
-rsamp[, "num_assessments"] <- 1
-person_level_vars <- c(person_level_vars, "num_assessments")
+#---- ***person-level counts ----
+person_level_counts <- analytical_sample %>% 
+  dplyr::select(colnames(person_level_vars)) %>% 
+  apply(., 2, function(x) max(x, na.rm = TRUE))
+
+person_level_vars[1, names(person_level_counts)] <- person_level_counts
 
 #---- ***person-level latent classes parameter ----
 #From Dunson and Xing (2009)
@@ -134,10 +144,10 @@ phi_list <-
                                  function(x) x <- 
                                    vector(mode = "list", 
                                           length = ncol(measures))))
-# 
-# lambda_list <- lapply(lambda_list <- vector(mode = "list", group_class_n), 
-#                       function(x) x <- vector(mode = "list", 
-#                                               length(person_level_vars)))
+
+lambda_list <- lapply(lambda_list <- vector(mode = "list", group_class_n),
+                      function(x) x <- vector(mode = "list",
+                                              ncol(person_level_vars)))
 
 #---- Step 5: sampling ----
 for(b in 1:B){
