@@ -202,7 +202,35 @@ for(b in 1:B){
   
   #---- **sample v_gm ----
   for(g in 1:group_class_n){
-    people <- which(rsamp[, "dem_group"] == g)
+    for(m in 1:(sub_class_n - 1)){
+      pars <- c(1, beta_chain[b])
+      for(j in 1:timepoints){
+        subclass <- paste0("sub_class_", j)
+        subset <- rsamp %>% filter(group_class == g)
+        if(nrow(subset > 0)){
+          counts <- table(subset[, subclass])
+          pars[1] = pars[1] + sum(counts[which(as.numeric(names(counts)) == m)])
+          pars[2] = pars[2] + sum(counts[which(as.numeric(names(counts)) > m)])
+        }
+      }
+      v_gm[g, m] <- rbeta(n = 1, shape1 = pars[1], shape2 = pars[2])
+    }
+  }
+  v_gm[, sub_class_n] <- 1
+  
+  #---- ***calculate omega_gm ----
+  comp_probs <- 1 - v_gm
+  
+  omega_gm[, 1] <- v_gm[, 1]
+  omega_gm[, 2] <- v_gm[, 2]*comp_probs[, 1]
+  
+  for(m in 3:sub_class_n){
+    rowProd <- apply(comp_probs[, 1:(m - 1)], 1, prod)
+    omega_gm[, m] <- v_gm[, m]*rowProd
+  }
+  
+    
+    for(j in 1:)
     if(length(people) > 0){
       M_ij_subset <- M_ij[people, ]
       for(m in 1:(sub_class_n - 1)){
@@ -216,16 +244,6 @@ for(b in 1:B){
     }
   }
   
-  #---- ***calculate omega_gm ----
-  comp_probs <- 1 - v_gm
-  
-  omega_gm[1, ] <- v_gm[1, ]
-  omega_gm[2, ] <- v_gm[2, ]*comp_probs[1, ]
-  
-  for(m in 3:sub_class_n){
-    colProd <- apply(comp_probs[1:(m - 1), ], 2, prod)
-    omega_gm[m, ] <- v_gm[m, ]*colProd
-  }
   
   #---- **sample u_g ----
   for(g in 1:(group_class_n - 1)){
