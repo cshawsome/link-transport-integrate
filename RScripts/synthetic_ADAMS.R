@@ -142,11 +142,12 @@ for(b in 1:B){
   alpha_chain[b] = rgamma(n = 1, shape = a_alpha, rate = b_alpha)
   
   #---- **sample phi ----
-  for(k in 1:length(measure_level_vars)){
+  for(k in 1:length(measures)){
     for(g in 1:group_class_n){
       for(m in 1:sub_class_n){
-        people <- which(M_ij[, k] == m)
-        subset <- rsamp[people, ] %>% filter(dem_group == g)
+        #This code is not general yet to sum over many timepoints
+        subset <- rsamp %>% filter(group_class == g & sub_class_1 == m)
+    
         cat_count <- max(rsamp[, measure_level_vars[k]], na.rm = TRUE)
         if(nrow(subset) > 0){
           #if you use the table function, you might miss some levels
