@@ -128,8 +128,12 @@ omega_gm <- matrix(ncol = sub_class_n, nrow = group_class_n)
 #                               length(measure_level_vars)), 
 #                   function(x) x <- vector(length = sub_class_n)))
 # 
-phi_list <- lapply(1:length(measures), matrix, data = NA, 
-                   nrow = group_class_n, ncol = sub_class_n)
+phi_list <- 
+  lapply(phi_list <- vector(mode = "list", group_class_n),
+         function(x) x <- lapply(x <- vector(mode = "list", sub_class_n),
+                                 function(x) x <- 
+                                   vector(mode = "list", 
+                                          length = ncol(measures))))
 # 
 # lambda_list <- lapply(lambda_list <- vector(mode = "list", group_class_n), 
 #                       function(x) x <- vector(mode = "list", 
