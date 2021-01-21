@@ -70,7 +70,9 @@ sub_class_n <- 4
 #Everyone starts in class 1 at the person level and sub level 
 #(normal cog maybe?) 
 rsamp[, "group_class"] <- 1
-rsamp[, "sub_class_1"] <- 1
+for(j in 1:timepoints){
+  rsamp[, paste0("sub_class_", j)] <- 1
+}
 
 #Everyone has one set of assessments in this example
 rsamp[, "num_assessments"] <- 1
@@ -145,6 +147,9 @@ for(b in 1:B){
   for(k in 1:length(measures)){
     for(g in 1:group_class_n){
       for(m in 1:sub_class_n){
+        for(j in 1:timepoints){
+          subset <- rsamp %>% filter()
+        }
         #This code is not general yet to sum over many timepoints
         subset <- rsamp %>% filter(group_class == g & sub_class_1 == m)
     
