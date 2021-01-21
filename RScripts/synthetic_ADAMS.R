@@ -122,9 +122,8 @@ omega_gm <- matrix(ncol = sub_class_n, nrow = group_class_n)
 #                               length(measure_level_vars)), 
 #                   function(x) x <- vector(length = sub_class_n)))
 # 
-# phi_list <- lapply(phi_list <- vector(mode = "list", group_class_n), function(x) 
-#   x <- lapply(x <- vector(mode = "list", sub_class_n), function(x) 
-#     x <- vector(mode = "list", length(measure_level_vars))))
+phi_list <- lapply(1:length(measures), matrix, data = NA, 
+                   nrow = group_class_n, ncol = sub_class_n)
 # 
 # lambda_list <- lapply(lambda_list <- vector(mode = "list", group_class_n), 
 #                       function(x) x <- vector(mode = "list", 
@@ -134,7 +133,7 @@ omega_gm <- matrix(ncol = sub_class_n, nrow = group_class_n)
 for(b in 1:B){
   #---- **sample beta ----
   a_beta = a_beta + group_class_n*(sub_class_n - 1)
-  b_beta = b_beta - sum(log(1 - v_gm[1:(sub_class_n - 1), ]))
+  b_beta = b_beta - sum(log(1 - v_gm[, 1:(sub_class_n - 1)]))
   beta_chain[b] <- rgamma(n = 1, shape = a_beta, rate = b_beta)
   
   #---- **sample alpha ----
@@ -143,11 +142,12 @@ for(b in 1:B){
   alpha_chain[b] = rgamma(n = 1, shape = a_alpha, rate = b_alpha)
   
   #---- **sample phi ----
-  for(k in 1:length(measure_level_vars)){
+  for(k in 1:length(measures)){
     for(g in 1:group_class_n){
       for(m in 1:sub_class_n){
-        people <- which(M_ij[, k] == m)
-        subset <- rsamp[people, ] %>% filter(dem_group == g)
+        #This code is not general yet to sum over many timepoints
+        subset <- rsamp %>% filter(group_class == g & sub_class_1 == m)
+    
         cat_count <- max(rsamp[, measure_level_vars[k]], na.rm = TRUE)
         if(nrow(subset) > 0){
           #if you use the table function, you might miss some levels
