@@ -21,7 +21,8 @@ all_data <- left_join(ADAMS_subset, RAND_subset, by = "HHIDPN")
 
 #---- select variables ----
 person_level_vars <- c("GENDER", "ETHNIC", "AAGE_cat", "EDYRS_cat")
-measures <- c("MMSE", "IADLA")
+#store measures and number of levels for the measure variable
+measures <- matrix(nrow = 1, ncol = 2) %>% set_colnames(c("MMSE", "IADLA"))
 measure_vars <- c("ANMSETOT_cat", paste0("r", seq(5, 7), "iadla_cat"))
 
 analytical_sample <- all_data %>% 
@@ -37,6 +38,7 @@ timepoints <- 1
 
 #---- **MMSE ----
 analytical_sample[, "MMSE_1"] <- analytical_sample[, "ANMSETOT_cat"]
+measures[1, "MMSE"] <- max(analytical_sample$MMSE_1, na.rm = TRUE)
 
 #drop original variable
 analytical_sample %<>% dplyr::select(-"ANMSETOT_cat")
@@ -47,6 +49,7 @@ analytical_sample %<>%
   mutate("IADLA_1" = case_when(AYEAR == 2001 ~ r5iadla_cat, 
                                AYEAR %in% c(2002, 2003) ~ r6iadla_cat, 
                                AYEAR == 2004 ~ r7iadla_cat))
+measures[1, "IADLA"] <- max(analytical_sample$IADLA_1, na.rm = TRUE)
 
 # #Sanity check
 # table(analytical_sample$IADLA_1, useNA = "ifany")
@@ -151,6 +154,7 @@ for(b in 1:B){
         for(j in 1:timepoints){
           #these are the a_ks... might want to change this later to be empirical
           # dist
+          
           pars <- rep(1, )
           subset <- rsamp %>% filter(group_class == g)
           
