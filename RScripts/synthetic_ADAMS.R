@@ -21,7 +21,7 @@ all_data <- left_join(ADAMS_subset, RAND_subset, by = "HHIDPN")
 
 #---- select variables ----
 person_level_vars <- c("GENDER", "ETHNIC", "AAGE_cat", "EDYRS_cat")
-measures <- c("ANMSETOT", "iadla")
+measures <- c("MMSE", "IADLA")
 measure_vars <- c("ANMSETOT_cat", paste0("r", seq(5, 7), "iadla_cat"))
 
 analytical_sample <- all_data %>% 
@@ -74,7 +74,8 @@ for(j in 1:timepoints){
   rsamp[, paste0("sub_class_", j)] <- 1
 }
 
-#Everyone has one set of assessments in this example
+#Everyone has one set of assessments in this example-- need to generalize later
+  #need to sum over the assessments that a person has
 rsamp[, "num_assessments"] <- 1
 person_level_vars <- c(person_level_vars, "num_assessments")
 
@@ -148,7 +149,11 @@ for(b in 1:B){
     for(g in 1:group_class_n){
       for(m in 1:sub_class_n){
         for(j in 1:timepoints){
-          subset <- rsamp %>% filter()
+          #these are the a_ks... might want to change this later to be empirical
+          # dist
+          pars <- rep(1, )
+          subset <- rsamp %>% filter(group_class == g)
+          
         }
         #This code is not general yet to sum over many timepoints
         subset <- rsamp %>% filter(group_class == g & sub_class_1 == m)
