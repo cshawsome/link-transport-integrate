@@ -144,6 +144,9 @@ for(b in 1:B){
   for(k in 1:length(person_level_vars)){
     for(g in 1:group_class_n){
       subset <- rsamp %>% filter(dem_group == g)
+      for(j in 1:timepoint)
+      
+      
       cat_count <- max(rsamp[, person_level_vars[k]], na.rm = TRUE)
       if(nrow(subset) > 0){
         #if you use the table function, you might miss some levels
