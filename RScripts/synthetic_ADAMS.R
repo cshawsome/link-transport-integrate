@@ -131,13 +131,13 @@ alpha_chain <- vector(length = B)
 pi_chain <- matrix(ncol = B, nrow = group_class_n)
 omega_gm <- matrix(ncol = sub_class_n, nrow = group_class_n)
 
-# p_M_ij_list <- 
-#   lapply(phi_list <- vector(mode = "list", nrow(rsamp)), 
-#          function(x) x <- 
-#            lapply(x <- vector(mode = "list", 
-#                               length(measure_level_vars)), 
-#                   function(x) x <- vector(length = sub_class_n)))
-# 
+p_Mij_list <-
+  lapply(p_Mij_list <- vector(mode = "list", nrow(rsamp)),
+         function(x) x <-
+           lapply(x <- vector(mode = "list",
+                              length(timepoints)),
+                  function(x) x <- vector(length = sub_class_n)))
+
 phi_list <- 
   lapply(phi_list <- vector(mode = "list", group_class_n),
          function(x) x <- lapply(x <- vector(mode = "list", sub_class_n),
@@ -229,28 +229,12 @@ for(b in 1:B){
     omega_gm[, m] <- v_gm[, m]*rowProd
   }
   
-    
-    for(j in 1:)
-    if(length(people) > 0){
-      M_ij_subset <- M_ij[people, ]
-      for(m in 1:(sub_class_n - 1)){
-        shape1 = 1 + sum(M_ij_subset == m)
-        shape2 = beta_chain[b] + sum(M_ij_subset > m)
-        v_gm[m, g] <- rbeta(n = 1, shape1 = shape1, shape2 = shape2)
-      }
-    } else{
-      v_gm[1:(sub_class_n - 1), g] <- 
-        rbeta(n = (sub_class_n - 1), shape1 = 1, shape2 = beta_chain[b])
-    }
-  }
-  
-  
   #---- **sample u_g ----
   for(g in 1:(group_class_n - 1)){
-    shape1 = as.numeric(sum(1 + table(rsamp$dem_group)[g], na.rm = TRUE))
+    shape1 = as.numeric(sum(1 + table(rsamp$group_class)[g], na.rm = TRUE))
     shape2 = as.numeric(
       sum(alpha_chain[b] + 
-            sum(table(rsamp$dem_group)[(g + 1):group_class_n], na.rm = TRUE)))
+            sum(table(rsamp$group_class)[(g + 1):group_class_n], na.rm = TRUE)))
     
     u_g[g] <- rbeta(n = 1, shape1 = shape1, shape2 = shape2)
   }
@@ -258,16 +242,36 @@ for(b in 1:B){
   #---- ***calculate pi_g ----
   comp_probs <- 1 - u_g
   
-  pi_g[1, b] <- u_g[1]
-  pi_g[2, b] <- u_g[2]*comp_probs[1]
+  pi_chain[1, b] <- u_g[1]
+  pi_chain[2, b] <- u_g[2]*comp_probs[1]
   
   for(g in 3:group_class_n){
-    pi_g[g, b] <- u_g[g]*prod(comp_probs[1:(g - 1)])
+    pi_chain[g, b] <- u_g[g]*prod(comp_probs[1:(g - 1)])
   }
   
   #---- **sample M_ij ----
   for(i in 1:nrow(rsamp)){
-    group = as.numeric(rsamp[i, "dem_group"])
+    for(m in 1:sub_class_n){
+      group <- as.numeric(rsamp[i, "group_class"])
+      omega_Gim <- omega_gm[group, m]
+      num_product_term <- 1
+      denominator <- 0
+      
+      for(j in 1:timepoints){
+        for(k in 1:ncol(measures)){
+          var <- paste0(colnames(measures)[k], "_", j)
+          product_term = 
+            prod(product_term, 
+                 phi_list[[group]][[m]][[k]][as.numeric(rsamp[i, var])])
+          denominator = 
+            sum(denominator, )
+        }
+        
+        numerator <- omega_Gim*product_term
+        
+      }
+    }
+    
     X_ijk = rsamp[i, measure_level_vars]
     for(m in 1:sub_class_n){
       omega_val <- omega_gm[m, group]
