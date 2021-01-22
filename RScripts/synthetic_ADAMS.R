@@ -151,6 +151,8 @@ p_Mij_list <-
 
 p_Gi <- matrix(nrow = nrow(rsamp), ncol = group_class_n)
 
+#---- time start ----
+start <- Sys.time()
 #---- Step 5: sampling ----
 for(b in 1:B){
   #---- **sample beta ----
@@ -341,10 +343,13 @@ for(b in 1:B){
       }
       p_Gi[i, g] <- numerator/dem_sum_1
     }
+    rsamp[i, "group_class"] <- 
+      which(rmultinom(n = 1, size = 1, prob = p_Gi[i, ]) == 1)
   }
-  
 }
 
+#---- time end ----
+end <- Sys.time() - start
 
 
 
