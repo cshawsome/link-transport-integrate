@@ -131,13 +131,6 @@ alpha_chain <- vector(length = B)
 pi_chain <- matrix(ncol = B, nrow = group_class_n)
 omega_gm <- matrix(ncol = sub_class_n, nrow = group_class_n)
 
-p_Mij_list <-
-  lapply(p_Mij_list <- vector(mode = "list", nrow(rsamp)),
-         function(x) x <-
-           lapply(x <- vector(mode = "list",
-                              length(timepoints)),
-                  function(x) x <- vector(length = sub_class_n)))
-
 phi_list <- 
   lapply(phi_list <- vector(mode = "list", group_class_n),
          function(x) x <- lapply(x <- vector(mode = "list", sub_class_n),
@@ -148,6 +141,15 @@ phi_list <-
 lambda_list <- lapply(lambda_list <- vector(mode = "list", group_class_n),
                       function(x) x <- vector(mode = "list",
                                               ncol(person_level_vars)))
+
+p_Mij_list <-
+  lapply(p_Mij_list <- vector(mode = "list", nrow(rsamp)),
+         function(x) x <-
+           lapply(x <- vector(mode = "list",
+                              length(timepoints)),
+                  function(x) x <- vector(length = sub_class_n)))
+
+p_Gi <- matrix(nrow = nrow(rsamp), ncol = group_class_n)
 
 #---- Step 5: sampling ----
 for(b in 1:B){
@@ -249,7 +251,7 @@ for(b in 1:B){
     pi_chain[g, b] <- u_g[g]*prod(comp_probs[1:(g - 1)])
   }
   
-  #---- **sample M_ij ----
+  #---- **sample Mij ----
   for(i in 1:nrow(rsamp)){
     for(j in 1:timepoints){
       for(m in 1:sub_class_n){
@@ -283,7 +285,7 @@ for(b in 1:B){
     }
   }
   
-  
+  #---- **sample Gi ----
   
 }
 
