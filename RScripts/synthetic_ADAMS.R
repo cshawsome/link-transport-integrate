@@ -290,74 +290,57 @@ for(b in 1:B){
     for(g in 1:group_class_n){
       pi_g <- pi_chain[g, b]
       num_prod_1 = 1
-      
       for(k in 1:ncol(person_level_vars)){
         var <- colnames(person_level_vars)[k]
-        lambda_gk <- lambda_list[[g]][[k]][as.numeric(rsamp[i, var])] 
+        lambda_gk <- lambda_list[[g]][[k]][as.numeric(rsamp[i, var])]
         num_prod_2 = 1
-        
         for(j in 1:timepoints){
           num_sum = 0
-          
           for(m in 1:sub_class_n){
             num_prod_3 = 1
-            
             for(k2 in 1:ncol(measures)){
               var2 <- paste0(colnames(measures)[k2], "_", j)
               num_prod_3 = 
                 prod(num_prod_3, 
-                     phi_list[[g]][[m]][[k2]][as.numeric(rsamp[i, var])])
+                     phi_list[[g]][[m]][[k2]][as.numeric(rsamp[i, var2])])
             }
-            
             num_sum = sum(num_sum, omega_gm[g, m]*num_prod_3)
           }
-          
           num_prod_2 = prod(num_prod_2, num_sum)
         }
-        
         num_prod_1 = prod(num_prod_1, lambda_gk*num_prod_2)
       }
       
-      dem_sum = 0
+      numerator = pi_g*num_prod_1
+      
+      dem_sum_1 = 0
       for(f in 1:group_class_n){
         pi_f <- pi_chain[f, b]
         dem_prod_1 = 1
-        
         for(k in 1:ncol(person_level_vars)){
           var <- colnames(person_level_vars)[k]
-          lambda_fk <- lambda_list[[f]][[k]][as.numeric(rsamp[i, var])] 
+          lambda_fk <- lambda_list[[f]][[k]][as.numeric(rsamp[i, var])]
           dem_prod_2 = 1
-          
           for(j in 1:timepoints){
             dem_sum_2 = 0
-            
             for(m in 1:sub_class_n){
               dem_prod_3 = 1
-              
               for(k2 in 1:ncol(measures)){
                 var2 <- paste0(colnames(measures)[k2], "_", j)
                 dem_prod_3 = 
                   prod(dem_prod_3, 
-                       phi_list[[f]][[m]][[k2]][as.numeric(rsamp[i, var])])
+                       phi_list[[f]][[m]][[k2]][as.numeric(rsamp[i, var2])])
               }
-              
               dem_sum_2 = sum(dem_sum_2, omega_gm[f, m]*dem_prod_3)
             }
-            
             dem_prod_2 = prod(dem_prod_2, dem_sum_2)
           }
-          
           dem_prod_1 = prod(dem_prod_1, lambda_fk*dem_prod_2)
         }
-        
-        dem_sum = sum(dem_sum, pi_f*dem_prod_1)
+        dem_sum_1 = sum(dem_sum_1, pi_f*dem_prod_1)
       }
-      
-      p_Gi[i, g] <- (pi_g*num_prod_1)/dem_sum
+      p_Gi[i, g] <- numerator/dem_sum_1
     }
-    
-    rsamp[i, "group_class"] <- 
-      which(rmultinom(n = 1, size = 1, prob = p_Gi[i, ]) == 1)
   }
   
 }
