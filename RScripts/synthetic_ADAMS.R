@@ -251,38 +251,39 @@ for(b in 1:B){
   
   #---- **sample M_ij ----
   for(i in 1:nrow(rsamp)){
-    for(m in 1:sub_class_n){
-      group <- as.numeric(rsamp[i, "group_class"])
-      omega_Gim <- omega_gm[group, m]
-      num_product_term <- 1
-      denominator <- 0
-      
-      for(j in 1:timepoints){
+    for(j in 1:timepoints){
+      for(m in 1:sub_class_n){
+        group <- as.numeric(rsamp[i, "group_class"])
+        omega_Gim <- omega_gm[group, m]
+        num_prod = 1
+        
         for(k in 1:ncol(measures)){
           var <- paste0(colnames(measures)[k], "_", j)
-          product_term = 
-            prod(product_term, 
+          num_prod = 
+            prod(num_prod, 
                  phi_list[[group]][[m]][[k]][as.numeric(rsamp[i, var])])
-          denominator = 
-            sum(denominator, )
         }
         
-        numerator <- omega_Gim*product_term
+        den_sum = 0
+        for(s in 1:sub_class_n){
+          den_prod = 1
+          for(k in 1:ncol(measures)){
+            var <- paste0(colnames(measures)[k], "_", j)
+            den_prod = 
+              prod(den_prod, 
+                   phi_list[[group]][[s]][[k]][as.numeric(rsamp[i, var])])
+          }
+          den_sum = sum(den_sum, omega_gm[group, s]*den_prod)
+        }
         
+        p_Mij_list[[i]][[j]][[m]] = (omega_Gim*num_prod)/den_sum
       }
-    }
-    
-    X_ijk = rsamp[i, measure_level_vars]
-    for(m in 1:sub_class_n){
-      omega_val <- omega_gm[m, group]
-      phi_vec <- vector(length = length(measure_level_vars))
-      for(k in 1:length(phi_vec)){
-        phi_vec[k] <- 
-          as.numeric(phi_list[[group]][[m]][[k]])[as.numeric(X_ijk[k])]
-      }
-      num_prob <- omega_val*prod(phi_vec)
+      rsamp[i, paste0("sub_class_", j)] <- 
+        which(rmultinom(n = 1, size = 1, prob = p_Mij_list[[i]][[j]]) == 1)
     }
   }
+  
+  
   
 }
 
