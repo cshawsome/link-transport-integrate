@@ -108,7 +108,7 @@ beta <- rgamma(n = 1, shape = a_beta, rate = b_beta)
 
 #---- Step 3: initiate values ----
 #Runs
-B = 2
+B = 10
 
 #Draw priors for one less than the number of group-level latent classes
 u_g <- rbeta(n = (group_class_n - 1), shape1 = 1, shape2 = alpha)
@@ -351,8 +351,35 @@ for(b in 1:B){
 #---- time end ----
 end <- Sys.time() - start
 
+#---- model diagnostics ----
+#---- **alpha chain (group class) ----
+plot_data <- as.data.frame(alpha_chain)
+ggplot(data = plot_data, aes(x = seq(1, nrow(plot_data), by = 1), 
+                             y = alpha_chain)) +
+  geom_line() + theme_minimal() + xlab("Run") + 
+  scale_x_continuous(breaks = seq(1, nrow(plot_data), by = 2))
+  
+#---- **beta chain (sub class) ----
+plot_data <- as.data.frame(beta_chain)
+ggplot(data = plot_data, aes(x = seq(1, nrow(plot_data), by = 1), 
+                             y = beta_chain)) +
+  geom_line() + theme_minimal() + xlab("Run") + 
+  scale_x_continuous(breaks = seq(1, nrow(plot_data), by = 2))
 
+#---- **pi chain (p(group class)) ----
+plot_data <- as.data.frame(pi_chain) %>% 
+  set_colnames(seq(1, B, by = 1)) %>%
+  mutate("group" = seq(1, 4, by = 1)) %>% 
+  mutate_at("group", as.factor) %>% 
+  pivot_longer(-"group", names_to = "run", values_to = "probability") %>% 
+  mutate_at("run", as.numeric)
 
+ggplot(data = plot_data, aes(x = run, y = probability, 
+                             group = group, color = group)) +
+  geom_line() + theme_minimal() + xlab("Run") + 
+  scale_x_continuous(breaks = seq(1, B, by = 2))
+
+table(rsamp$group_class, useNA = "ifany")
 
 
 
