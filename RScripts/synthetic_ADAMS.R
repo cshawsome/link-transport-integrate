@@ -30,7 +30,8 @@ measure_vars <- c("ANMSETOT_cat", paste0("r", seq(5, 7), "iadla_cat"))
 
 analytical_sample <- all_data %>% 
   dplyr::select("HHIDPN", "AYEAR", 
-                all_of(person_level_vars), all_of(measure_vars)) %>% na.omit()
+                all_of(head(colnames(person_level_vars), -1)), 
+                all_of(measure_vars)) %>% na.omit()
 
 #Variable check-- there's 538 people in the complete data set
 colSums(is.na(analytical_sample))
