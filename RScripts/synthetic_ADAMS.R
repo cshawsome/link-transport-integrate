@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "DirichletReg")
+p_load("tidyverse", "DirichletReg", "magrittr")
 
 #---- read in data ----
 #---- **ADAMS ----
