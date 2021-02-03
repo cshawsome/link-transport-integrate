@@ -113,37 +113,10 @@ ADAMS_subset <- ADAMS %>% dplyr::select(contains(all_of(vars))) %>%
 ADAMS_waves <- c("A", "B", "C", "D")
 
 #---- variable check ----
-#We need to turn these variables into categories >= 1 
 table(ADAMS_subset$GENDER, useNA = "ifany")
 table(ADAMS_subset$ETHNIC, useNA = "ifany")
 table(ADAMS_subset$EDYRS, useNA = "ifany")
-
-#---- clean: Sociodemographics ----
-#---- **age ----
-for(wave in ADAMS_waves){
-  col <- paste0(wave, "AGE")
-  new_col <- paste0(col, "_cat")
-  
-  ADAMS_subset[, new_col] <- ADAMS_subset[, col] - 
-    (min(ADAMS_subset[, col], na.rm = TRUE) - 1)
-  
-  ADAMS_subset[which(ADAMS_subset[, new_col] > 900), new_col] <- NA
-}
-
-# #Sanity check
-# for(wave in ADAMS_waves){
-#   col <- paste0(wave, "AGE")
-#   new_col <- paste0(col, "_cat")
-#   
-#   print(paste0("Wave", wave))
-#   print(table(ADAMS_subset[, new_col], ADAMS_subset[, col], useNA = "ifany"))
-# }
-
-#---- **edyrs ----
-ADAMS_subset %<>% mutate(EDYRS_cat = EDYRS + 1)
-
-# #Sanity check
-# table(ADAMS_subset$EDYRS, ADAMS_subset$EDYRS_cat, useNA = "ifany")
+table(ADAMS_subset$AAGE, useNA = "ifany")
 
 #---- clean: neuropsych ----
 #---- **MMSE ----
@@ -154,26 +127,9 @@ for(wave in ADAMS_waves){
   print(table(ADAMS_subset[, MMSE_var], useNA = "ifany"))
 }
 
-for(wave in ADAMS_waves){
-  MMSE_var <- paste0(wave, "NMSETOT")
-  new_var <- paste0(wave, "NMSETOT_cat")
-  
-  ADAMS_subset[, new_var] <- ADAMS_subset[, MMSE_var] + 1
-}
-
 ADAMS_subset %<>% 
-  mutate_at(.vars = paste0(c("A", "B", "C", "D"), "NMSETOT_cat"), 
-            function(x) ifelse(x > 31, NA, x))
-
-#Sanity check
-for(wave in ADAMS_waves){
-  MMSE_var <- paste0(wave, "NMSETOT")
-  new_var <- paste0(wave, "NMSETOT_cat")
-  
-  print(paste0("Wave ", wave))
-  print(table(ADAMS_subset[, new_var],
-              ADAMS_subset[, MMSE_var], useNA = "ifany"))
-}
+  mutate_at(.vars = paste0(c("A", "B", "C", "D"), "NMSETOT"), 
+            function(x) ifelse(x > 30, NA, x))
 
 #---- drop original variables ----
 drop_these <- c("EDYRS", paste0(ADAMS_waves, "AGE"), 
