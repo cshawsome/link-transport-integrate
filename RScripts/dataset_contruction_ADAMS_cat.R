@@ -182,7 +182,7 @@ drop_these <- c("EDYRS", paste0(ADAMS_waves, "AGE"),
 ADAMS_subset %<>% dplyr::select(-all_of(drop_these))
 
 #---- save dataset ----
-write_csv(ADAMS_subset, file = paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                      "data/cleaned/ADAMS_subset.csv"))
+write_csv(ADAMS_subset, path = paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                      "data/cleaned/ADAMS_subset_cat.csv"))
 
 
