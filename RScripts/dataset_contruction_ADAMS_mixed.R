@@ -131,14 +131,32 @@ ADAMS_subset %<>%
   mutate_at(.vars = paste0(c("A", "B", "C", "D"), "NMSETOT"), 
             function(x) ifelse(x > 30, NA, x))
 
-#---- drop original variables ----
-drop_these <- c("EDYRS", paste0(ADAMS_waves, "AGE"), 
-                paste0(ADAMS_waves, "NMSETOT"))
+#---- transform: sociodemographics ----
+#We want to use normal approximations to these variables 
 
-ADAMS_subset %<>% dplyr::select(-all_of(drop_these))
+#---- **age ----
+#Variable check
+hist(ADAMS_subset$AAGE)
+
+ADAMS_subset %<>% mutate("log_AAGE" = log(AAGE))
+
+#Sanity check
+hist(ADAMS_subset$log_AAGE)
+
+#---- **education ----
+#Variable check
+hist(ADAMS_subset$EDYRS)
+
+#---- transform: neuropsych ----
+#We want to use normal approximations to these variables 
+
+#---- **MMSE ----
+#Variable check-- this one is going to be skewed no matter what and it's one of 
+# the variables that is going to help define out dementia classes
+hist(ADAMS_subset$ANMSETOT)
 
 #---- save dataset ----
-write_csv(ADAMS_subset, file = paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                      "data/cleaned/ADAMS_subset.csv"))
+write_csv(ADAMS_subset, path = paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                      "data/cleaned/ADAMS_subset_mixed.csv"))
 
 
