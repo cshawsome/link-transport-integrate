@@ -42,3 +42,7 @@ analytical_sample %<>%
 
 #Get rid of original variables
 analytical_sample %<>% dplyr::select(-c(contains("iadla_cat"), "AYEAR")) 
+
+#---- all-way contingency table ----
+cross_class <- table(analytical_sample$GENDER, analytical_sample$ETHNIC, 
+                     analytical_sample$IADLA)
