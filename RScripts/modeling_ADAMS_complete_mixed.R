@@ -45,4 +45,20 @@ analytical_sample %<>% dplyr::select(-c(contains("iadla_cat"), "AYEAR"))
 
 #---- all-way contingency table ----
 cross_class <- table(analytical_sample$GENDER, analytical_sample$ETHNIC, 
-                     analytical_sample$IADLA)
+                     analytical_sample$IADLA) %>% as.data.frame()
+
+#---- Bayes Stuff ----
+#---- **number of runs ----
+B = 2
+
+#---- **priors ----
+alpha_chain <- matrix(nrow = nrow(cross_class), ncol = B)
+alpha_chain[, 1] <- rep(1, nrow(cross_class))
+
+#---- **initiate values ----
+pi_chain <- matrix(nrow = nrow(cross_class), ncol = B)
+pi_chain[, 1] <- rep(1/nrow(cross_class), nrow(cross_class))
+
+#---- **sampling ----
+
+
