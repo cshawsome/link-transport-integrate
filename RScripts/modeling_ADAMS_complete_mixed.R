@@ -3,7 +3,8 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "DirichletReg", "magrittr")
+p_load("tidyverse", "DirichletReg", "magrittr", "wesanderson", "devtools")
+install_github("thomasp85/patchwork")
 
 #---- read in data ----
 #---- **ADAMS ----
@@ -46,6 +47,10 @@ analytical_sample %<>% dplyr::select(-c(contains("iadla_cat"), "AYEAR"))
 #---- all-way contingency table ----
 cross_class <- table(analytical_sample$GENDER, analytical_sample$ETHNIC, 
                      analytical_sample$IADLA) %>% as.data.frame()
+
+#---- plots ----
+#Categorical Variables
+#
 
 #---- Bayes Stuff ----
 #---- **number of runs ----
