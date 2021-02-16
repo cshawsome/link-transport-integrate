@@ -49,8 +49,54 @@ cross_class <- table(analytical_sample$GENDER, analytical_sample$ETHNIC,
                      analytical_sample$IADLA) %>% as.data.frame()
 
 #---- plots ----
-#Categorical Variables
-#
+#Categorical Variables: Sex/Gender, Race/Ethnicity, IADLs
+#---- **summary stats ----
+sex_gender_plot <- table(analytical_sample$GENDER) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
+  mutate("labels" = ifelse(Var1 == 1, "Male", "Female"))
+
+race_eth_plot <- table(analytical_sample$ETHNIC) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
+  mutate("labels" = case_when(Var1 == 1 ~ "White", 
+                              Var1 == 2 ~ "Black", 
+                              TRUE ~ "Hispanic"))
+  
+
+IADL_plot <- table(analytical_sample$IADLA) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
+  mutate("labels" = case_when(Var1 == 1 ~ "None", 
+                              Var1 == 2 ~ "One", 
+                              Var1 == 3 ~ "Two", 
+                              TRUE ~ "Three"))
+  
+#---- **categorical plots ----
+sex_gender <- 
+  ggplot(data = sex_gender_plot) + 
+  geom_bar(mapping = aes(x = factor(labels), y = Prop, fill = factor(labels)), 
+           stat = "identity") + 
+  theme_minimal() + xlab("Sex/Gender") + ylab("Proportion") + 
+  theme(legend.position = "none") +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+race_eth <- 
+  ggplot(data = race_eth_plot) + 
+  geom_bar(mapping = aes(x = factor(labels), y = Prop, fill = factor(labels)), 
+           stat = "identity") + 
+  theme_minimal() + xlab("Race/Ethnicity") + ylab("Proportion") + 
+  theme(legend.position = "none") +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+IADLs <- 
+  ggplot(data = IADL_plot) + 
+  geom_bar(mapping = aes(x = factor(labels), y = Prop, fill = factor(labels)), 
+           stat = "identity") + 
+  theme_minimal() + xlab("Difficulty with IADLs") + ylab("Proportion") + 
+  theme(legend.position = "none") +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+#Make a patchwork plot
+sex_gender + race_eth + IADLs
+
 
 #---- Bayes Stuff ----
 #---- **number of runs ----
