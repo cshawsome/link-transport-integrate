@@ -60,7 +60,11 @@ analytical_sample %<>%
          "IADLA_label" = case_when(IADLA == 1 ~ "None", 
                                    IADLA == 2 ~ "One", 
                                    IADLA == 3 ~ "Two", 
-                                   IADLA == 4 ~ "Three"))
+                                   IADLA == 4 ~ "Three")) %>% 
+  mutate_at(c("GENDER_label", "ETHNIC_label", "IADLA_label"), as.factor) 
+analytical_sample$IADLA_label <- fct_relevel(analytical_sample$IADLA_label, 
+                                             c("None", "One", "Two", "Three"))
+  
 
 #---- *marginal ----
 #---- **summary stats ----
@@ -143,7 +147,7 @@ MMSE <- ggplot(data = MMSE_plot) +
   theme_minimal() + xlab("MMSE") + ylab("Proportion") + 
   theme(legend.position = "none")
 
-#Make a patchwork plot
+#---- **patchwork plot ----
 (((sex_gender + race_eth + IADLs)/Age)/Edyrs)/MMSE
 
 ggsave(filename = "marginal_dists.jpeg", plot = last_plot(), 
@@ -154,13 +158,24 @@ ggsave(filename = "marginal_dists.jpeg", plot = last_plot(),
 #Sex/Gender by Race/Ethnicity
 sex_by_race <- 
   ggplot(data = analytical_sample) + 
-  geom_bar(mapping = aes(x = factor(GENDER), fill = factor(ETHNIC)), 
+  geom_bar(mapping = aes(x = factor(GENDER_label), fill = factor(ETHNIC_label)), 
            position = "dodge") + 
   theme_minimal() + xlab("Sex/Gender") + ylab("Count") +
-  guides(fill = guide_legend(title = "Race/Ethnicity"))
+  guides(fill = guide_legend(title = "Race/Ethnicity")) +
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
+sex_by_IADL <- 
+  ggplot(data = analytical_sample) + 
+  geom_bar(mapping = aes(x = factor(GENDER_label), fill = factor(IADLA_label)), 
+           position = "dodge") + 
+  theme_minimal() + xlab("Sex/Gender") + ylab("Count") +
+  guides(fill = guide_legend(title = "IADL")) +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
+#---- **patchwork plot ----
+ggsave(filename = "2way_cat_dists.jpeg", plot = last_plot(), 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/prelim_analyses/", 
+       width = 8, height = 4, units = "in", device = "jpeg")
 
 #---- Bayes Stuff ----
 #---- **number of runs ----
