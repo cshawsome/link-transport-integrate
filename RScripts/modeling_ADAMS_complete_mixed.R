@@ -50,6 +50,19 @@ cross_class <- table(analytical_sample$GENDER, analytical_sample$ETHNIC,
 
 #---- plots ----
 #Categorical Variables: Sex/Gender, Race/Ethnicity, IADLs
+#Continuous Variables: Age, Ed Yrs, MMSE
+#Create labeled data
+analytical_sample %<>% 
+  mutate("GENDER_label" = ifelse(GENDER == 1, "Male", "Female"), 
+         "ETHNIC_label" = case_when(ETHNIC == 1 ~ "White", 
+                                    ETHNIC == 2 ~ "Black", 
+                                    TRUE ~ "Hispanic"), 
+         "IADLA_label" = case_when(IADLA == 1 ~ "None", 
+                                   IADLA == 2 ~ "One", 
+                                   IADLA == 3 ~ "Two", 
+                                   IADLA == 4 ~ "Three"))
+
+#---- *marginal ----
 #---- **summary stats ----
 sex_gender_plot <- table(analytical_sample$GENDER) %>% as.data.frame() %>% 
   mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
