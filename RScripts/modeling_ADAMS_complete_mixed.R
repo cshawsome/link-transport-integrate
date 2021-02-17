@@ -172,10 +172,19 @@ sex_by_IADL <-
   guides(fill = guide_legend(title = "IADL")) +
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
+race_by_IADL <- ggplot(data = analytical_sample) + 
+  geom_bar(mapping = aes(x = factor(ETHNIC_label), fill = factor(IADLA_label)), 
+           position = "dodge") + 
+  theme_minimal() + xlab("Race/Ethnicity") + ylab("Count") +
+  guides(fill = guide_legend(title = "IADL")) +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
 #---- **patchwork plot ----
+sex_by_race + sex_by_IADL + race_by_IADL
+
 ggsave(filename = "2way_cat_dists.jpeg", plot = last_plot(), 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/prelim_analyses/", 
-       width = 8, height = 4, units = "in", device = "jpeg")
+       width = 12, height = 3, units = "in", device = "jpeg")
 
 #---- Bayes Stuff ----
 #---- **number of runs ----
