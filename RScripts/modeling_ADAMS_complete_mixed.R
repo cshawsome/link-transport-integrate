@@ -74,13 +74,24 @@ race_eth_plot <- table(analytical_sample$ETHNIC) %>% as.data.frame() %>%
                               Var1 == 2 ~ "Black", 
                               TRUE ~ "Hispanic"))
   
-
 IADL_plot <- table(analytical_sample$IADLA) %>% as.data.frame() %>% 
   mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
   mutate("labels" = case_when(Var1 == 1 ~ "None", 
                               Var1 == 2 ~ "One", 
                               Var1 == 3 ~ "Two", 
                               TRUE ~ "Three"))
+
+Age_plot <- table(exp(analytical_sample$log_AAGE)) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
+  mutate_at("Var1", as.factor)
+
+Edyrs_plot <- table(analytical_sample$EDYRS) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
+  mutate_at("Var1", as.factor)
+
+MMSE_plot <- table(analytical_sample$ANMSETOT) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
+  mutate_at("Var1", as.factor)
   
 #---- **categorical plots ----
 sex_gender <- 
@@ -88,13 +99,13 @@ sex_gender <-
   geom_bar(mapping = aes(x = factor(labels), y = Prop, fill = factor(labels)), 
            stat = "identity") + 
   theme_minimal() + xlab("Sex/Gender") + ylab("Proportion") + 
-  theme(legend.position = "none") +
+  theme(legend.position = "none") + ylim(c(0, 1)) +
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
 race_eth <- 
   ggplot(data = race_eth_plot) + 
   geom_bar(mapping = aes(x = factor(labels), y = Prop, fill = factor(labels)), 
-           stat = "identity") + 
+           stat = "identity") + ylim(c(0, 1)) +
   theme_minimal() + xlab("Race/Ethnicity") + ylab("Proportion") + 
   theme(legend.position = "none") +
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
@@ -102,13 +113,53 @@ race_eth <-
 IADLs <- 
   ggplot(data = IADL_plot) + 
   geom_bar(mapping = aes(x = factor(labels), y = Prop, fill = factor(labels)), 
-           stat = "identity") + 
+           stat = "identity") + ylim(c(0, 1)) +
   theme_minimal() + xlab("Difficulty with IADLs") + ylab("Proportion") + 
   theme(legend.position = "none") +
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
+#---- **continuous plots ----
+Age <- ggplot(data = Age_plot) + 
+  geom_bar(mapping = aes(x = Var1, y = Prop), 
+           color = rev(wes_palette("Darjeeling1"))[1],
+           fill = rev(wes_palette("Darjeeling1"))[1],
+           stat = "identity") + 
+  theme_minimal() + xlab("Age") + ylab("Proportion") + 
+  theme(legend.position = "none")
+
+Edyrs <- ggplot(data = Edyrs_plot) + 
+  geom_bar(mapping = aes(x = Var1, y = Prop), 
+           color = rev(wes_palette("Darjeeling1"))[2],
+           fill = rev(wes_palette("Darjeeling1"))[2],
+           stat = "identity") + 
+  theme_minimal() + xlab("Years of Education") + ylab("Proportion") + 
+  theme(legend.position = "none")
+
+MMSE <- ggplot(data = MMSE_plot) + 
+  geom_bar(mapping = aes(x = Var1, y = Prop), 
+           color = rev(wes_palette("Darjeeling1"))[4],
+           fill = rev(wes_palette("Darjeeling1"))[4],
+           stat = "identity") + 
+  theme_minimal() + xlab("MMSE") + ylab("Proportion") + 
+  theme(legend.position = "none")
+
 #Make a patchwork plot
-sex_gender + race_eth + IADLs
+(((sex_gender + race_eth + IADLs)/Age)/Edyrs)/MMSE
+
+ggsave(filename = "marginal_dists.jpeg", plot = last_plot(), 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/prelim_analyses/", 
+       width = 8, height = 8, units = "in", device = "jpeg")
+
+#---- *2-way categorical ----
+#Sex/Gender by Race/Ethnicity
+sex_by_race <- 
+  ggplot(data = analytical_sample) + 
+  geom_bar(mapping = aes(x = factor(GENDER), fill = factor(ETHNIC)), 
+           position = "dodge") + 
+  theme_minimal() + xlab("Sex/Gender") + ylab("Count") +
+  guides(fill = guide_legend(title = "Race/Ethnicity"))
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
 
 
 #---- Bayes Stuff ----
