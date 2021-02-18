@@ -45,8 +45,9 @@ analytical_sample %<>%
 analytical_sample %<>% dplyr::select(-c(contains("iadla_cat"), "AYEAR")) 
 
 #---- all-way contingency table ----
-cross_class <- table(analytical_sample$GENDER, analytical_sample$ETHNIC, 
-                     analytical_sample$IADLA) %>% as.data.frame()
+cross_class_label <- table(analytical_sample$GENDER_label, 
+                           analytical_sample$ETHNIC_label, 
+                           analytical_sample$IADLA_label) %>% as.data.frame()
 
 #---- plots ----
 #Categorical Variables: Sex/Gender, Race/Ethnicity, IADLs
@@ -64,7 +65,7 @@ analytical_sample %<>%
   mutate_at(c("GENDER_label", "ETHNIC_label", "IADLA_label"), as.factor) 
 analytical_sample$IADLA_label <- fct_relevel(analytical_sample$IADLA_label, 
                                              c("None", "One", "Two", "Three"))
-  
+
 
 #---- *marginal ----
 #---- **summary stats ----
@@ -74,7 +75,7 @@ sex_gender_plot <- table(analytical_sample$GENDER_label) %>%
 
 race_eth_plot <- table(analytical_sample$ETHNIC_label) %>% as.data.frame() %>% 
   mutate("Prop" = Freq/nrow(analytical_sample)) 
-  
+
 IADL_plot <- table(analytical_sample$IADLA_label) %>% as.data.frame() %>% 
   mutate("Prop" = Freq/nrow(analytical_sample)) 
 
@@ -89,7 +90,7 @@ Edyrs_plot <- table(analytical_sample$EDYRS) %>% as.data.frame() %>%
 MMSE_plot <- table(analytical_sample$ANMSETOT) %>% as.data.frame() %>% 
   mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
   mutate_at("Var1", as.factor)
-  
+
 #---- **categorical plots ----
 sex_gender <- 
   ggplot(data = sex_gender_plot) + 
@@ -191,6 +192,92 @@ IADL_by_sex_and_race <-
 ggsave(filename = "3way_cat_dists.jpeg", plot = last_plot(), 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/prelim_analyses/", 
        width = 8, height = 8, units = "in", device = "jpeg")
+
+#---- *cont | categorical ----
+for(i in 1:nrow(cross_class_label)){
+  if(cross_class_label[i, "Freq"] != 0){
+    gender <- cross_class_label[i, "Var1"]
+    ethnic <- cross_class_label[i, "Var2"]
+    iadl <- cross_class_label[i, "Var3"]
+    count <- cross_class_label[i, "Freq"]
+    
+    data_subset <- analytical_sample %>% 
+      filter(GENDER_label == gender & ETHNIC_label == ethnic & 
+               IADLA_label == iadl)
+    
+    #summary stats
+    age_plot <- table(exp(data_subset$log_AAGE)) %>% as.data.frame() %>% 
+      mutate("Prop" = Freq/nrow(data_subset)) %>% 
+      mutate_at("Var1", as.character) %>% 
+      mutate_at("Var1", as.numeric)
+    missing_ages <- which(!seq(min(exp(analytical_sample$log_AAGE)), 
+                               max(exp(analytical_sample$log_AAGE))) %in% 
+                            age_plot$Var1) + 69
+    age_plot %<>% rbind(as.matrix(cbind(missing_ages, NA, NA)) %>% 
+                          set_colnames(c("Var1", "Freq", "Prop"))) %>% 
+      mutate_at("Var1", as.factor)
+    
+    edyrs_plot <- table(data_subset$EDYRS) %>% as.data.frame() %>% 
+      mutate("Prop" = Freq/nrow(data_subset)) %>% 
+      mutate_at("Var1", as.character) %>% 
+      mutate_at("Var1", as.numeric)
+    missing_edyrs <- which(!seq(min(analytical_sample$EDYRS), 
+                                max(analytical_sample$EDYRS)) %in% 
+                             edyrs_plot$Var1) - 1
+    edyrs_plot %<>% rbind(as.matrix(cbind(missing_edyrs, NA, NA)) %>% 
+                            set_colnames(c("Var1", "Freq", "Prop"))) %>% 
+      mutate_at("Var1", as.factor)
+    
+    mmse_plot <- table(data_subset$ANMSETOT) %>% as.data.frame() %>% 
+      mutate("Prop" = Freq/nrow(data_subset)) %>% 
+      mutate_at("Var1", as.character) %>% 
+      mutate_at("Var1", as.numeric)
+    missing_mmse <- which(!seq(min(analytical_sample$ANMSETOT), 
+                               max(analytical_sample$ANMSETOT)) %in% 
+                            mmse_plot$Var1) - 1
+    mmse_plot %<>% rbind(as.matrix(cbind(missing_mmse, NA, NA)) %>% 
+                           set_colnames(c("Var1", "Freq", "Prop"))) %>% 
+      mutate_at("Var1", as.factor)
+    
+    #plots
+    age <- ggplot(data = age_plot) + 
+      geom_bar(mapping = aes(x = Var1, y = Prop), 
+               color = rev(wes_palette("Darjeeling1"))[1],
+               fill = rev(wes_palette("Darjeeling1"))[1],
+               stat = "identity") + 
+      theme_minimal() + xlab("Age") + ylab("Proportion") + 
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+      theme(legend.position = "none") + 
+      ggtitle(paste(paste(gender, ethnic, iadl, sep = " | "), "| n =", count)) 
+    
+    edyrs <- ggplot(data = edyrs_plot) + 
+      geom_bar(mapping = aes(x = Var1, y = Prop), 
+               color = rev(wes_palette("Darjeeling1"))[2],
+               fill = rev(wes_palette("Darjeeling1"))[2],
+               stat = "identity") + 
+      theme_minimal() + xlab("Years of Education") + ylab("Proportion") + 
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+      theme(legend.position = "none") + 
+      ggtitle(paste(paste(gender, ethnic, iadl, sep = " | "), "| n =", count)) 
+    
+    mmse <- ggplot(data = mmse_plot) + 
+      geom_bar(mapping = aes(x = Var1, y = Prop), 
+               color = rev(wes_palette("Darjeeling1"))[4],
+               fill = rev(wes_palette("Darjeeling1"))[4],
+               stat = "identity") + 
+      theme_minimal() + xlab("MMSE") + ylab("Proportion") +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+      theme(legend.position = "none") + 
+      ggtitle(paste(paste(gender, ethnic, iadl, sep = " | "), "| n =", count)) 
+    
+    #---- **patchwork plot ----
+    age + edyrs + mmse
+    
+    ggsave(filename = paste0("cont_given_cat", i, ".jpeg"), plot = last_plot(), 
+           path = "/Users/CrystalShaw/Box/Dissertation/figures/prelim_analyses/", 
+           width = 12, height = 3, units = "in", device = "jpeg")
+  }
+}
 
 #---- Bayes Stuff ----
 #---- **number of runs ----
