@@ -68,22 +68,15 @@ analytical_sample$IADLA_label <- fct_relevel(analytical_sample$IADLA_label,
 
 #---- *marginal ----
 #---- **summary stats ----
-sex_gender_plot <- table(analytical_sample$GENDER) %>% as.data.frame() %>% 
-  mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
-  mutate("labels" = ifelse(Var1 == 1, "Male", "Female"))
+sex_gender_plot <- table(analytical_sample$GENDER_label) %>% 
+  as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) 
 
-race_eth_plot <- table(analytical_sample$ETHNIC) %>% as.data.frame() %>% 
-  mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
-  mutate("labels" = case_when(Var1 == 1 ~ "White", 
-                              Var1 == 2 ~ "Black", 
-                              TRUE ~ "Hispanic"))
+race_eth_plot <- table(analytical_sample$ETHNIC_label) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) 
   
-IADL_plot <- table(analytical_sample$IADLA) %>% as.data.frame() %>% 
-  mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
-  mutate("labels" = case_when(Var1 == 1 ~ "None", 
-                              Var1 == 2 ~ "One", 
-                              Var1 == 3 ~ "Two", 
-                              TRUE ~ "Three"))
+IADL_plot <- table(analytical_sample$IADLA_label) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) 
 
 Age_plot <- table(exp(analytical_sample$log_AAGE)) %>% as.data.frame() %>% 
   mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
@@ -100,7 +93,7 @@ MMSE_plot <- table(analytical_sample$ANMSETOT) %>% as.data.frame() %>%
 #---- **categorical plots ----
 sex_gender <- 
   ggplot(data = sex_gender_plot) + 
-  geom_bar(mapping = aes(x = factor(labels), y = Prop, fill = factor(labels)), 
+  geom_bar(mapping = aes(x = factor(Var1), y = Prop, fill = factor(Var1)), 
            stat = "identity") + 
   theme_minimal() + xlab("Sex/Gender") + ylab("Proportion") + 
   theme(legend.position = "none") + ylim(c(0, 1)) +
@@ -108,7 +101,7 @@ sex_gender <-
 
 race_eth <- 
   ggplot(data = race_eth_plot) + 
-  geom_bar(mapping = aes(x = factor(labels), y = Prop, fill = factor(labels)), 
+  geom_bar(mapping = aes(x = factor(Var1), y = Prop, fill = factor(Var1)), 
            stat = "identity") + ylim(c(0, 1)) +
   theme_minimal() + xlab("Race/Ethnicity") + ylab("Proportion") + 
   theme(legend.position = "none") +
@@ -116,7 +109,7 @@ race_eth <-
 
 IADLs <- 
   ggplot(data = IADL_plot) + 
-  geom_bar(mapping = aes(x = factor(labels), y = Prop, fill = factor(labels)), 
+  geom_bar(mapping = aes(x = factor(Var1), y = Prop, fill = factor(Var1)), 
            stat = "identity") + ylim(c(0, 1)) +
   theme_minimal() + xlab("Difficulty with IADLs") + ylab("Proportion") + 
   theme(legend.position = "none") +
