@@ -179,6 +179,19 @@ ggsave(filename = "2way_cat_dists.jpeg", plot = last_plot(),
        path = "/Users/CrystalShaw/Box/Dissertation/figures/prelim_analyses/", 
        width = 12, height = 3, units = "in", device = "jpeg")
 
+#---- *3-way categorical ----
+IADL_by_sex_and_race <- 
+  ggplot(data = analytical_sample, aes(x = GENDER_label, y = ETHNIC_label, 
+                                       color = IADLA_label)) + 
+  geom_point(position = "jitter", alpha = 0.75) + 
+  theme_minimal() + ylab("Race/Ethnicity") + xlab("Sex/Gender") + 
+  guides(color = guide_legend(title = "IADL")) + 
+  scale_color_manual(values = rev(wes_palette("Darjeeling1")))
+
+ggsave(filename = "3way_cat_dists.jpeg", plot = last_plot(), 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/prelim_analyses/", 
+       width = 8, height = 8, units = "in", device = "jpeg")
+
 #---- Bayes Stuff ----
 #---- **number of runs ----
 B = 2
