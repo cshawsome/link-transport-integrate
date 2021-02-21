@@ -152,23 +152,26 @@ ggsave(filename = "marginal_dists.jpeg", plot = last_plot(),
 #Sex/Gender by Race/Ethnicity
 sex_by_race <- 
   ggplot(data = analytical_sample) + 
-  geom_bar(mapping = aes(x = factor(GENDER_label), fill = factor(ETHNIC_label)), 
-           position = "dodge") + 
+  geom_bar(mapping = aes(x = factor(GENDER_label), y = ..count../sum(..count..), 
+                         fill = factor(ETHNIC_label)), 
+           position = "dodge") + ylim(0, 1) +
   theme_minimal() + xlab("Sex/Gender") + ylab("Count") +
   guides(fill = guide_legend(title = "Race/Ethnicity")) +
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
 sex_by_IADL <- 
   ggplot(data = analytical_sample) + 
-  geom_bar(mapping = aes(x = factor(GENDER_label), fill = factor(IADLA_label)), 
-           position = "dodge") + 
+  geom_bar(mapping = aes(x = factor(GENDER_label), y = ..count../sum(..count..), 
+                         fill = factor(IADLA_label)), 
+           position = "dodge") + ylim(0, 1) +
   theme_minimal() + xlab("Sex/Gender") + ylab("Count") +
   guides(fill = guide_legend(title = "IADL")) +
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
 race_by_IADL <- ggplot(data = analytical_sample) + 
-  geom_bar(mapping = aes(x = factor(ETHNIC_label), fill = factor(IADLA_label)), 
-           position = "dodge") + 
+  geom_bar(mapping = aes(x = factor(ETHNIC_label), y = ..count../sum(..count..), 
+                         fill = factor(IADLA_label)), 
+           position = "dodge") + ylim(0, 1) +
   theme_minimal() + xlab("Race/Ethnicity") + ylab("Count") +
   guides(fill = guide_legend(title = "IADL")) +
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
