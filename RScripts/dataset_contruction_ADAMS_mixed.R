@@ -217,6 +217,32 @@ ADAMS_subset %<>%
 # #Sanity check
 # levels(ADAMS_subset$ETHNIC_label)
 
+#---- **education ----
+ADAMS_subset %<>% 
+  mutate(EDYRScat = case_when(EDYRS == 0 ~ 1, 
+                              EDYRS %in% seq(1, 8) ~ 2, 
+                              EDYRS %in% seq(9, 11) ~ 3, 
+                              EDYRS == 12 ~ 4, 
+                              EDYRS %in% seq(13, 15) ~ 5, 
+                              EDYRS >= 16 ~ 6)) %>% 
+  mutate(EDYRScat_label = 
+           as.factor(case_when(EDYRScat == 1 ~ "No School Completed", 
+                               EDYRScat == 2 ~ "1st-8th Grade", 
+                               EDYRScat == 3 ~ "Some High School", 
+                               EDYRScat == 4 ~ "High School Diploma",
+                               EDYRScat == 5 ~ "Some College", 
+                               EDYRScat == 6 ~ "Bachelor's Degree or Higher"))
+         ) %>% 
+  mutate(EDYRScat_label = 
+           fct_relevel(EDYRScat_label, "No School Completed", "1st-8th Grade", 
+                       "Some High School", "High School Diploma", 
+                       "Some College"))
+
+# #Sanity check
+# table(ADAMS_subset$EDYRS, ADAMS_subset$EDYRScat, useNA = "ifany")
+# table(ADAMS_subset$EDYRScat, ADAMS_subset$EDYRScat_label, useNA = "ifany")
+# levels(ADAMS_subset$EDYRScat_label)
+
 #---- clean: neuropsych ----
 #---- **MMSE ----
 #Variable check
