@@ -195,11 +195,9 @@ ADAMS_waves <- c("A", "B", "C", "D")
 #---- clean: sociodemographics ----
 #---- **variable check ----
 table(ADAMS_subset$AAGE, useNA = "ifany")
-table(ADAMS_subset$GENDER, useNA = "ifany")
-table(ADAMS_subset$ETHNIC, useNA = "ifany")
-table(ADAMS_subset$EDYRS, useNA = "ifany")
 
 #---- **sex/gender ----
+#table(ADAMS_subset$GENDER, useNA = "ifany")
 ADAMS_subset %<>% 
   mutate(GENDER_label = as.factor(ifelse(GENDER == 1, "Male", "Female"))) %>% 
   mutate(GENDER_label = fct_relevel(GENDER_label, "Female"))
@@ -208,6 +206,7 @@ ADAMS_subset %<>%
 # levels(ADAMS_subset$GENDER_label)
 
 #---- **race/ethnicity ----
+#table(ADAMS_subset$ETHNIC, useNA = "ifany")
 ADAMS_subset %<>% 
   mutate(ETHNIC_label = as.factor(case_when(ETHNIC == 1 ~ "White", 
                                             ETHNIC == 2 ~ "Black", 
@@ -218,6 +217,7 @@ ADAMS_subset %<>%
 # levels(ADAMS_subset$ETHNIC_label)
 
 #---- **education ----
+#table(ADAMS_subset$EDYRS, useNA = "ifany")
 ADAMS_subset %<>% 
   mutate(EDYRScat = case_when(EDYRS == 0 ~ 1, 
                               EDYRS %in% seq(1, 8) ~ 2, 
@@ -242,6 +242,9 @@ ADAMS_subset %<>%
 # table(ADAMS_subset$EDYRS, ADAMS_subset$EDYRScat, useNA = "ifany")
 # table(ADAMS_subset$EDYRScat, ADAMS_subset$EDYRScat_label, useNA = "ifany")
 # levels(ADAMS_subset$EDYRScat_label)
+
+#---- **marital status ----
+#table(ADAMS_subset$AAMARRD, useNA = "ifany")
 
 #---- clean: neuropsych ----
 #---- **MMSE ----
