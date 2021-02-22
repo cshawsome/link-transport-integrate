@@ -10,6 +10,47 @@ source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/",
               "data_read/read_da_dct.R"))
 
 #---- import data ----
+#---- **RAND ----
+rand_waves <- seq(5, 9, by = 1)
+rand_variables <- 
+  c("hhidpn", 
+    #Health and health behaviors (ever/never stroke, ever/never
+    # hypertension, ever/never diabetes, ever/never cvd, ever/never cancer, 
+    # BMI, IADLs, ADLs, gross motor, fine motor, depressive symptoms, 
+    # self-reported change in memory, smokes now, number days drinking per week, 
+    # number drinks/day) 
+    paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "hibpe"), 
+    paste0("r", rand_waves, "diabe"), paste0("r", rand_waves, "hearte"),
+    paste0("r", rand_waves, "cancre"), paste0("r", rand_waves, "bmi"),
+    paste0("r", rand_waves, "iadla"), paste0("r", rand_waves, "adla"),
+    paste0("r", rand_waves, "grossa"), paste0("r", rand_waves, "finea"),
+    paste0("r", rand_waves, "cesd"), paste0("r", rand_waves, "pstmem"), 
+    paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"),
+    paste0("r", rand_waves, "drinkn"),
+    #HRS Cognition (total cognition summary score)
+    paste0("r", seq(3, 13, by = 1), "cogtot"))
+
+RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                        "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
+                 col_select = all_of(rand_variables)) %>% 
+  mutate_at("hhidpn", as.character)
+
+colnames(RAND)[1] <- "HHIDPN" #For merging
+
+#Remove labeled data format
+val_labels(RAND) <- NULL
+
+#---- **ADAMS tracker ----
+ADAMS_tracker_data_path <- 
+  paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+         "ADAMS/adams1trk/ADAMS1TRK_R.da")
+ADAMS_tracker_dict_path <- 
+  paste0("/Users/CrystalShaw/Box/Dissertation/data/",
+         "ADAMS/adams1trk/adams1trksta/ADAMS1TRK_R.dct")
+
+#filter to those who completed Wave A assessment
+ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path, 
+                             HHIDPN = "TRUE") %>% filter(AASSESS == 1) 
 #---- **neuropsych ----
 for(wave in c("a", "b", "c", "d")){
   neuropsych_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
@@ -31,17 +72,6 @@ for(wave in c("a", "b", "c", "d")){
   }
 }
 
-#---- **sociodemographic ----
-ADAMS_tracker_data_path <- 
-  paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-         "ADAMS/adams1trk/ADAMS1TRK_R.da")
-ADAMS_tracker_dict_path <- 
-  paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-         "ADAMS/adams1trk/adams1trksta/ADAMS1TRK_R.dct")
-
-#filter to those who completed Wave A assessment
-ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path, 
-                             HHIDPN = "TRUE") %>% filter(AASSESS == 1) 
 #---- **dem dx ----
 for(wave in c("a", "b", "c", "d")){
   demdx_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
@@ -93,15 +123,20 @@ ADAMS_demdx %<>% dplyr::select(-c(paste0(c("A", "B", "C", "D"), "DFDX1")))
 
 #---- join data ----
 ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>% 
-  left_join(., ADAMS_demdx, by = "HHIDPN")
+  left_join(., ADAMS_demdx, by = "HHIDPN") %>% 
+  left_join(., RAND_subset, by = "HHIDPN")
 
 #---- select vars ----
 vars <- c("HHIDPN",
           #ADAMS interview year
           "AYEAR",
-          #Sociodemographics
-          "AGE", "GENDER", "ETHNIC", "EDYRS",
-          #Cognition
+          #Sociodemographics (age, sex/gender, ethnicity, years of education, 
+          # marital status, current working status)
+          "AGE", "GENDER", "ETHNIC", "EDYRS", "AMARRD", "ACURRWK",
+          #Health and health behaviors-- relevant to Wave A for now 
+          # (ever stroke)
+          paste0("r", seq(5, 7), "stroke"),
+          #Cognition (total score MMSE)
           "NMSETOT", 
           #Dem dx
           "dem_dx_cat")
