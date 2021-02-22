@@ -267,7 +267,7 @@ for(wave in ADAMS_waves){
 #   show(levels(ADAMS_subset[, paste0(wave, "AMARRD_label")]))
 # }
 
-#---- clean: retirement status ----
+#---- **retirement status ----
 #table(ADAMS_subset$AACURRWK, useNA = "ifany")
 
 #looks like there's no data on working status past wave B
@@ -290,6 +290,20 @@ for(wave in c("A", "B")){
 #         ADAMS_subset[, paste0(wave, "ACURRWK_label")], useNA = "ifany"))
 #   show(levels(ADAMS_subset[, paste0(wave, "ACURRWK_label")]))
 # }
+
+#---- clean: health and health behaviors ----
+#For repeated measures, want to take the wave most representative of ADAMS wave
+#---- **stroke ----
+#table(ADAMS_subset$r5stroke, useNA = "ifany")
+
+ADAMS_subset %<>% 
+  mutate("Astroke" = case_when(AYEAR == 2001 ~ r5stroke, 
+                               AYEAR %in% c(2002, 2003) ~ r6stroke, 
+                               AYEAR == 2004 ~ r7stroke))
+
+# #Sanity check
+# View(ADAMS_subset[, c("AYEAR", paste0("r", seq(5, 7), "stroke"), "Astroke")] %>% 
+#        filter(is.na(Astroke)))
 
 #---- clean: neuropsych ----
 #---- **MMSE ----
