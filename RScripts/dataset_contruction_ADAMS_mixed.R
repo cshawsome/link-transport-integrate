@@ -154,10 +154,33 @@ vars <- c("HHIDPN",
           # marital status, current working status)
           "AGE", "GENDER", "ETHNIC", "EDYRS", "AMARRD", "ACURRWK",
           #Health and health behaviors-- relevant to Wave A for now 
-          # (ever stroke)
-          paste0("r", seq(5, 7), "stroke"),
-          #Cognition (total score MMSE)
-          "NMSETOT", 
+          # (ever stroke, ever hypertension, ever diabetes, ever CVD, 
+          # ever cancer, BMI, IADLs, ADLs, gross motor, fine motor, depressive
+          # symptoms, subjective cognitive complaints, smoking status, 
+          # number days drinking, number drinks per day) 
+          paste0("r", seq(5, 7), "stroke"), paste0("r", seq(5, 7), "hibp"), 
+          paste0("r", seq(5, 7), "diab"), paste0("r", seq(5, 7), "heart"),
+          paste0("r", seq(5, 7), "cancr"), paste0("r", seq(5, 7), "bmi"), 
+          paste0("r", seq(5, 7), "iadla"), paste0("r", seq(5, 7), "adla"), 
+          paste0("r", seq(5, 7), "grossa"), paste0("r", seq(5, 7), "finea"),
+          paste0("r", seq(5, 7), "cesd"), paste0("r", seq(5, 7), "pstmem"), 
+          paste0("r", seq(5, 7), "smoken"), paste0("r", seq(5, 7), "drinkd"),
+          paste0("r", seq(5, 7), "drinkn"),
+          #WAVE A only
+          #Cognition (total score MMSE, backwards count 20 (>1 trials), 
+          #backwards count 86 (>1 trials), total score serial 7s, 
+          #object naming scissors, object naming cactus, President, VP, 
+          #total score animal naming, total score Boston naming, 
+          #total score immediate constructional praxis, total score delayed 
+          #constructional praxis, immediate word recall (>1 trials), delayed
+          #word recall, word recall (yes), word recall (no), 
+          #total score Wechsler logical memory I, 
+          #total score Wechsler logical memory II, Trails A, Trails B, 
+          #total score symbol digit modalities)
+          "ANMSETOT", "ANBWC20", "ANBWC86", "ANSER7T", "ANSCISOR", "ANCACTUS", 
+          "ANPRES", "ANVCPRES", "ANAFTOT", "ANBNTTOT", "ANCPTOT", "ANDCPTOT", 
+          "ANIMMCR", "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", "ANWM2TOT", 
+          "ANTMASEC", "ANTMBSEC", "ANSDMTOT",
           #Dem dx
           "dem_dx_cat")
 
