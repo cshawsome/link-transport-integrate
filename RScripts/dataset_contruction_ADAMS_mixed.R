@@ -245,6 +245,23 @@ ADAMS_subset %<>%
 
 #---- **marital status ----
 #table(ADAMS_subset$AAMARRD, useNA = "ifany")
+for(wave in ADAMS_waves){
+  ADAMS_subset %<>% 
+    mutate(!!paste0(wave, "AMARRD_label") := 
+             case_when(!!sym(paste0(wave, "AMARRD")) %in% c(1, 3, 4) ~ 
+                         "Not married/partnered",
+                       !!sym(paste0(wave, "AMARRD"))  == 2 ~ 
+                         "Married/partnered", 
+                       !!sym(paste0(wave, "AMARRD")) == 5 ~ "Widowed", 
+                       !!sym(paste0(wave, "AMARRD")) == 8 ~ "Unknown"))
+}
+
+# #Sanity check
+# for(wave in ADAMS_waves){
+#   print(paste0("Wave ", wave))
+#   show(table(ADAMS_subset[, paste0(wave, "AMARRD")], 
+#         ADAMS_subset[, paste0(wave, "AMARRD_label")], useNA = "ifany"))
+# }
 
 #---- clean: neuropsych ----
 #---- **MMSE ----
