@@ -192,11 +192,17 @@ ADAMS_subset <- ADAMS %>% dplyr::select(contains(all_of(vars))) %>%
 
 ADAMS_waves <- c("A", "B", "C", "D")
 
-#---- variable check ----
+#---- clean: sociodemographics ----
+#---- **variable check ----
+table(ADAMS_subset$AAGE, useNA = "ifany")
 table(ADAMS_subset$GENDER, useNA = "ifany")
 table(ADAMS_subset$ETHNIC, useNA = "ifany")
 table(ADAMS_subset$EDYRS, useNA = "ifany")
-table(ADAMS_subset$AAGE, useNA = "ifany")
+
+#---- **sex/gender ----
+ADAMS_subset %<>% 
+  mutate(GENDER_label = as.factor(ifelse(GENDER == 1, "Male", "Female"))) %>% 
+  mutate(GENDER_label = fct_relevel(GENDER_label, "Female"))
 
 #---- clean: neuropsych ----
 #---- **MMSE ----
