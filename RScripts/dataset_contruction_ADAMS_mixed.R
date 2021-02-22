@@ -26,9 +26,7 @@ rand_variables <-
     paste0("r", rand_waves, "grossa"), paste0("r", rand_waves, "finea"),
     paste0("r", rand_waves, "cesd"), paste0("r", rand_waves, "pstmem"), 
     paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"),
-    paste0("r", rand_waves, "drinkn"),
-    #HRS Cognition (total cognition summary score)
-    paste0("r", seq(3, 13, by = 1), "cogtot"))
+    paste0("r", rand_waves, "drinkn"))
 
 RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                         "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
