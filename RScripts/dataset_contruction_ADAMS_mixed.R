@@ -204,6 +204,19 @@ ADAMS_subset %<>%
   mutate(GENDER_label = as.factor(ifelse(GENDER == 1, "Male", "Female"))) %>% 
   mutate(GENDER_label = fct_relevel(GENDER_label, "Female"))
 
+# #Sanity check
+# levels(ADAMS_subset$GENDER_label)
+
+#---- **race/ethnicity ----
+ADAMS_subset %<>% 
+  mutate(ETHNIC_label = as.factor(case_when(ETHNIC == 1 ~ "White", 
+                                            ETHNIC == 2 ~ "Black", 
+                                            ETHNIC == 3 ~ "Hispanic"))) %>% 
+  mutate(ETHNIC_label = fct_relevel(ETHNIC_label, "White"))
+
+# #Sanity check
+# levels(ADAMS_subset$ETHNIC_label)
+
 #---- clean: neuropsych ----
 #---- **MMSE ----
 #Variable check
