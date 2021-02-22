@@ -292,18 +292,27 @@ for(wave in c("A", "B")){
 # }
 
 #---- clean: health and health behaviors ----
+#---- **wave-updated vars ----
 #For repeated measures, want to take the wave most representative of ADAMS wave
-#---- **stroke ----
-#table(ADAMS_subset$r5stroke, useNA = "ifany")
+wave_updated_vars <- c("stroke", "hibpe", "diabe", "hearte", "cancre", "bmi", 
+                       "iadla", "adla", "grossa", "finea", "cesd", "pstmem", 
+                       "smoken", "drinkd", "drinkn")
 
-ADAMS_subset %<>% 
-  mutate("Astroke" = case_when(AYEAR == 2001 ~ r5stroke, 
-                               AYEAR %in% c(2002, 2003) ~ r6stroke, 
-                               AYEAR == 2004 ~ r7stroke))
+for(var in wave_updated_vars){
+  ADAMS_subset %<>% 
+    mutate(!!paste0("A", var) := 
+             case_when(AYEAR == 2001 ~ !!sym(paste0("r5", var)), 
+                       AYEAR %in% c(2002, 2003) ~ !!sym(paste0("r6", var)), 
+                       AYEAR == 2004 ~ !!sym(paste0("r7", var))))
+}
 
-# #Sanity check
-# View(ADAMS_subset[, c("AYEAR", paste0("r", seq(5, 7), "stroke"), "Astroke")] %>% 
-#        filter(is.na(Astroke)))
+#Sanity check
+View(ADAMS_subset[, c("AYEAR", paste0("r", seq(5, 7), "cesd"), "Acesd")] %>%
+       filter(!is.na(Acesd)))
+colnames(ADAMS_subset)
+
+#Variable check
+summary(ADAMS_subset$Abmi)
 
 #---- clean: neuropsych ----
 #---- **MMSE ----
