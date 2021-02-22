@@ -268,7 +268,28 @@ for(wave in ADAMS_waves){
 # }
 
 #---- clean: retirement status ----
-table(ADAMS_subset$AACURRWK, useNA = "ifany")
+#table(ADAMS_subset$AACURRWK, useNA = "ifany")
+
+#looks like there's no data on working status past wave B
+for(wave in c("A", "B")){
+  ADAMS_subset %<>% 
+    mutate(!!paste0(wave, "ACURRWK_label") := 
+             case_when(!!sym(paste0(wave, "ACURRWK")) == 1 ~ "Working",
+                       !!sym(paste0(wave, "ACURRWK"))  == 2 ~ "Retired", 
+                       !!sym(paste0(wave, "ACURRWK")) == 3 ~ "Semi-retired", 
+                       !!sym(paste0(wave, "ACURRWK")) == 4 ~ "Disabled", 
+                       !!sym(paste0(wave, "ACURRWK")) == 5 ~ "Unemployed")) %>% 
+    mutate(!!paste0(wave, "ACURRWK_label") := 
+             fct_relevel(!!sym(paste0(wave, "ACURRWK_label")), "Retired"))
+}
+
+# #Sanity check
+# for(wave in c("A", "B")){
+#   print(paste0("Wave ", wave))
+#   show(table(ADAMS_subset[, paste0(wave, "ACURRWK")],
+#         ADAMS_subset[, paste0(wave, "ACURRWK_label")], useNA = "ifany"))
+#   show(levels(ADAMS_subset[, paste0(wave, "ACURRWK_label")]))
+# }
 
 #---- clean: neuropsych ----
 #---- **MMSE ----
