@@ -49,7 +49,7 @@ ADAMS_tracker_dict_path <-
 #filter to those who completed Wave A assessment
 ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path, 
                              HHIDPN = "TRUE") %>% filter(AASSESS == 1) 
-#---- **neuropsych ----
+#---- **ADAMS neuropsych ----
 for(wave in c("a", "b", "c", "d")){
   neuropsych_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                                  "ADAMS/adams1", wave, "/adams1", wave, "da/", 
@@ -70,7 +70,28 @@ for(wave in c("a", "b", "c", "d")){
   }
 }
 
-#---- **dem dx ----
+#---- **ADAMS informant questionnaire ----
+for(wave in c("a", "b", "c", "d")){
+  proxy_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                            "ADAMS/adams1", wave, "/adams1", wave, "da/", 
+                            "ADAMS1", str_to_upper(wave), "G_R.da")
+  proxy_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                            "ADAMS/adams1", wave, "/adams1", wave, "sta/", 
+                            "ADAMS1", str_to_upper(wave), "G_R.dct")
+  if(wave == "a"){
+    ADAMS_proxy <- read_da_dct(proxy_data_path, proxy_dict_path, 
+                               HHIDPN = "TRUE") %>% 
+      dplyr::select("HHIDPN", paste0(str_to_upper(wave), "GQ", seq(14, 29))) 
+  } else{
+    ADAMS_proxy %<>% 
+      left_join(., read_da_dct(proxy_data_path, proxy_dict_path, 
+                               HHIDPN = "TRUE") %>% 
+                  dplyr::select("HHIDPN", 
+                                paste0(str_to_upper(wave), "GQ", seq(14, 29))))
+  }
+}
+
+#---- **ADAMS dem dx ----
 for(wave in c("a", "b", "c", "d")){
   demdx_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                             "ADAMS/adams1", wave, "/adams1", wave, "da/", 
@@ -121,8 +142,9 @@ ADAMS_demdx %<>% dplyr::select(-c(paste0(c("A", "B", "C", "D"), "DFDX1")))
 
 #---- join data ----
 ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>% 
+  left_join(., ADAMS_proxy, by = "HHIDPN") %>% 
   left_join(., ADAMS_demdx, by = "HHIDPN") %>% 
-  left_join(., RAND_subset, by = "HHIDPN")
+  left_join(., RAND, by = "HHIDPN")
 
 #---- select vars ----
 vars <- c("HHIDPN",
