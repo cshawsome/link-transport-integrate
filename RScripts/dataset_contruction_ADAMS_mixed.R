@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr")
+p_load("tidyverse", "magrittr", "haven", "labelled")
 
 #---- source scripts ----
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
@@ -11,7 +11,7 @@ source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/",
 
 #---- import data ----
 #---- **RAND ----
-rand_waves <- seq(5, 9, by = 1)
+rand_waves <- seq(5, 9, by = 1) #Corresponding to ADAMS
 rand_variables <- 
   c("hhidpn", 
     #Health and health behaviors (ever/never stroke, ever/never
