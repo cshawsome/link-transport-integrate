@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "haven", "labelled")
+p_load("tidyverse", "magrittr", "haven", "labelled", "forcats")
 
 #---- source scripts ----
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
@@ -181,6 +181,8 @@ vars <- c("HHIDPN",
           "ANPRES", "ANVCPRES", "ANAFTOT", "ANBNTTOT", "ANCPTOT", "ANDCPTOT", 
           "ANIMMCR", "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", "ANWM2TOT", 
           "ANTMASEC", "ANTMBSEC", "ANSDMTOT",
+          #proxy cognition: IQCODE
+          "AGQ",
           #Dem dx
           "dem_dx_cat")
 
