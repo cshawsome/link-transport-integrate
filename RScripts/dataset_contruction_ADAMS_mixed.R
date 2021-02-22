@@ -253,15 +253,22 @@ for(wave in ADAMS_waves){
                        !!sym(paste0(wave, "AMARRD"))  == 2 ~ 
                          "Married/partnered", 
                        !!sym(paste0(wave, "AMARRD")) == 5 ~ "Widowed", 
-                       !!sym(paste0(wave, "AMARRD")) == 8 ~ "Unknown"))
+                       !!sym(paste0(wave, "AMARRD")) == 8 ~ "Unknown")) %>% 
+    mutate(!!paste0(wave, "AMARRD_label") := 
+             fct_relevel(!!sym(paste0(wave, "AMARRD_label")), 
+                         "Married/partnered"))
 }
 
 # #Sanity check
 # for(wave in ADAMS_waves){
 #   print(paste0("Wave ", wave))
-#   show(table(ADAMS_subset[, paste0(wave, "AMARRD")], 
+#   show(table(ADAMS_subset[, paste0(wave, "AMARRD")],
 #         ADAMS_subset[, paste0(wave, "AMARRD_label")], useNA = "ifany"))
+#   show(levels(ADAMS_subset[, paste0(wave, "AMARRD_label")]))
 # }
+
+#---- clean: retirement status ----
+table(ADAMS_subset$AACURRWK, useNA = "ifany")
 
 #---- clean: neuropsych ----
 #---- **MMSE ----
