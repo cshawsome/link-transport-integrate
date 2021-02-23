@@ -463,6 +463,17 @@ ADAMS_subset %<>%
   mutate_at(.vars = c("ANRECNO", "ANRECYES"), 
             #Missing/refused  
             function(x) ifelse(x > 10, NA, x))
+
+#---- **logical memory ----
+# #Variable check
+# table(ADAMS_subset$ANWM1TOT, useNA = "ifany")
+# table(ADAMS_subset$ANWM2TOT, useNA = "ifany")
+
+#Recode
+ADAMS_subset %<>% 
+  mutate_at(.vars = c("ANWM1TOT", "ANWM2TOT"), 
+            #Missing/refused  
+            function(x) ifelse(x > 37, NA, x))
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
