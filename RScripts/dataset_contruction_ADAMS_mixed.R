@@ -495,6 +495,9 @@ ADAMS_subset %<>%
   mutate_at(.vars = c("ANSDMTOT"),
             #Missing/refused
             function(x) ifelse(x > 90, NA, x))
+
+#---- **proxy cognition ----
+
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
@@ -517,7 +520,7 @@ hist(ADAMS_subset$EDYRS)
 
 #---- **MMSE ----
 #Variable check-- this one is going to be skewed no matter what and it's one of 
-# the variables that is going to help define out dementia classes
+# the variables that is going to help define our dementia classes
 hist(ADAMS_subset$ANMSETOT)
 
 #---- save dataset ----
