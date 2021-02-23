@@ -464,7 +464,7 @@ ADAMS_subset %<>%
             #Missing/refused  
             function(x) ifelse(x > 10, NA, x))
 
-#---- **logical memory ----
+#---- **logical memory (immediate and delayed) ----
 # #Variable check
 # table(ADAMS_subset$ANWM1TOT, useNA = "ifany")
 # table(ADAMS_subset$ANWM2TOT, useNA = "ifany")
@@ -474,6 +474,17 @@ ADAMS_subset %<>%
   mutate_at(.vars = c("ANWM1TOT", "ANWM2TOT"), 
             #Missing/refused  
             function(x) ifelse(x > 37, NA, x))
+
+#---- **Trails A and B ----
+#Variable check
+table(ADAMS_subset$ANTMASEC, useNA = "ifany")
+table(ADAMS_subset$ANTMBSEC, useNA = "ifany")
+
+# #Recode
+# ADAMS_subset %<>% 
+#   mutate_at(.vars = c("ANTMASEC", "ANTMBSEC"), 
+#             #Missing/refused  
+#             function(x) ifelse(x > 900, NA, x))
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
