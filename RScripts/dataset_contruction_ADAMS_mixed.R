@@ -425,6 +425,19 @@ ADAMS_subset %<>%
 # #Sanity check
 # table(ADAMS_subset$ANPRES, useNA = "ifany")
 # table(ADAMS_subset$ANVCPRES, useNA = "ifany")
+
+#---- **animal naming ----
+# #Variable check
+#table(ADAMS_subset$ANAFTOT, useNA = "ifany")
+
+#Recode
+ADAMS_subset %<>% 
+  mutate_at(.vars = c("ANAFTOT"), 
+            #Missing/refused  
+            function(x) ifelse(x > 1, NA, x)) 
+
+# #Sanity check
+#table(ADAMS_subset$ANAFTOT, useNA = "ifany")
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
