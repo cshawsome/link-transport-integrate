@@ -438,6 +438,19 @@ ADAMS_subset %<>%
 
 # #Sanity check
 #table(ADAMS_subset$ANAFTOT, useNA = "ifany")
+
+#---- **Boston naming ----
+# #Variable check
+# table(ADAMS_subset$ANBNTTOT, useNA = "ifany")
+
+#Recode
+ADAMS_subset %<>% 
+  mutate_at(.vars = c("ANBNTTOT"), 
+            #Missing/refused  
+            function(x) ifelse(x > 1, NA, x)) 
+
+# #Sanity check
+#table(ADAMS_subset$ANBNTTOT, useNA = "ifany")
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
