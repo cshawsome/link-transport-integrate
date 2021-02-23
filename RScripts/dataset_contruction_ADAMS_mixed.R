@@ -194,7 +194,7 @@ ADAMS_waves <- c("A", "B", "C", "D")
 
 #---- clean: sociodemographics ----
 #---- **variable check ----
-table(ADAMS_subset$AAGE, useNA = "ifany")
+#table(ADAMS_subset$AAGE, useNA = "ifany")
 
 #---- **sex/gender ----
 #table(ADAMS_subset$GENDER, useNA = "ifany")
@@ -353,22 +353,36 @@ ADAMS_subset %<>%
 # #Sanity check
 # table(ADAMS_subset$ANMSETOT, useNA = "ifany")
 
-#---- **BWC 20 ----
-#Variable check
-table(ADAMS_subset$ANBWC201, useNA = "ifany")
-table(ADAMS_subset$ANBWC202, useNA = "ifany")
+#---- **BWC 20 and 86 ----
+# #Variable check
+# table(ADAMS_subset$ANBWC201, useNA = "ifany")
+# table(ADAMS_subset$ANBWC202, useNA = "ifany")
+# table(ADAMS_subset$ANBWC861, useNA = "ifany")
+# table(ADAMS_subset$ANBWC862, useNA = "ifany")
 
 #Recode
 ADAMS_subset %<>% 
-  mutate_at(.vars = c("ANBWC201", "ANBWC202"), 
+  mutate_at(.vars = c("ANBWC201", "ANBWC202", "ANBWC861", "ANBWC862"), 
             #Missing/refused  
-            funs(case_when(. > 6 ~ NA_real_,
-                           #Restart
-                           . == 6 ~ 0)))
+            function(x) ifelse(x > 6, NA, x)) %>% 
+  mutate_at(.vars = c("ANBWC201", "ANBWC202", "ANBWC861", "ANBWC862"), 
+            #restart
+            function(x) ifelse(x == 6, 0, x)) 
 
+# #Sanity check
+# table(ADAMS_subset$ANBWC201, useNA = "ifany")
+# table(ADAMS_subset$ANBWC202, useNA = "ifany")
+# table(ADAMS_subset$ANBWC861, useNA = "ifany")
+# table(ADAMS_subset$ANBWC862, useNA = "ifany")
 
+#Take the higher score
+ADAMS_subset %<>% mutate("ANBWC20" = pmax(ANBWC201, ANBWC202, na.rm = TRUE), 
+                         "ANBWC86" = pmax(ANBWC861, ANBWC862, na.rm = TRUE))
 
-
+# #Sanity check
+# View(ADAMS_subset[, c("ANBWC201", "ANBWC202", "ANBWC20")])
+# View(ADAMS_subset[, c("ANBWC861", "ANBWC862", "ANBWC86")])
+                
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
 
