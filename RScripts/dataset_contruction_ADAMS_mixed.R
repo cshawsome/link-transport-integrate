@@ -350,9 +350,6 @@ ADAMS_subset %<>%
 ADAMS_subset %<>% 
   mutate_at(.vars = "ANMSETOT", function(x) ifelse(x > 30, NA, x))
 
-# #Sanity check
-# table(ADAMS_subset$ANMSETOT, useNA = "ifany")
-
 #---- **BWC 20 and 86 ----
 # #Variable check
 # table(ADAMS_subset$ANBWC201, useNA = "ifany")
@@ -368,12 +365,6 @@ ADAMS_subset %<>%
   mutate_at(.vars = c("ANBWC201", "ANBWC202", "ANBWC861", "ANBWC862"), 
             #restart
             function(x) ifelse(x == 6, 0, x)) 
-
-# #Sanity check
-# table(ADAMS_subset$ANBWC201, useNA = "ifany")
-# table(ADAMS_subset$ANBWC202, useNA = "ifany")
-# table(ADAMS_subset$ANBWC861, useNA = "ifany")
-# table(ADAMS_subset$ANBWC862, useNA = "ifany")
 
 #Take the higher score
 ADAMS_subset %<>% mutate("ANBWC20" = pmax(ANBWC201, ANBWC202, na.rm = TRUE), 
@@ -393,9 +384,6 @@ ADAMS_subset %<>%
             #Missing/refused  
             function(x) ifelse(x > 5, NA, x))
 
-# #Sanity check
-# table(ADAMS_subset$ANSER7T, useNA = "ifany")
-
 #---- **object naming: cactus, scissors ----
 # #Variable check
 # table(ADAMS_subset$ANCACTUS, useNA = "ifany")
@@ -406,10 +394,6 @@ ADAMS_subset %<>%
   mutate_at(.vars = c("ANCACTUS", "ANSCISOR"), 
             #Missing/refused  
             function(x) ifelse(x > 1, NA, x)) 
-
-# #Sanity check
-# table(ADAMS_subset$ANCACTUS, useNA = "ifany")
-# table(ADAMS_subset$ANSCISOR, useNA = "ifany")
 
 #---- **President and VP ----
 # #Variable check
@@ -422,10 +406,6 @@ ADAMS_subset %<>%
             #Missing/refused  
             function(x) ifelse(x > 1, NA, x)) 
 
-# #Sanity check
-# table(ADAMS_subset$ANPRES, useNA = "ifany")
-# table(ADAMS_subset$ANVCPRES, useNA = "ifany")
-
 #---- **animal naming ----
 # #Variable check
 #table(ADAMS_subset$ANAFTOT, useNA = "ifany")
@@ -435,9 +415,6 @@ ADAMS_subset %<>%
   mutate_at(.vars = c("ANAFTOT"), 
             #Missing/refused  
             function(x) ifelse(x > 1, NA, x)) 
-
-# #Sanity check
-#table(ADAMS_subset$ANAFTOT, useNA = "ifany")
 
 #---- **Boston naming ----
 # #Variable check
@@ -449,9 +426,6 @@ ADAMS_subset %<>%
             #Missing/refused  
             function(x) ifelse(x > 1, NA, x)) 
 
-# #Sanity check
-#table(ADAMS_subset$ANBNTTOT, useNA = "ifany")
-
 #---- **constructional praxis (immediate and delayed) ----
 # #Variable check
 # table(ADAMS_subset$ANCPTOT, useNA = "ifany")
@@ -462,10 +436,6 @@ ADAMS_subset %<>%
   mutate_at(.vars = c("ANCPTOT", "ANDCPTOT"), 
             #Missing/refused  
             function(x) ifelse(x > 11, NA, x)) 
-
-# #Sanity check
-# table(ADAMS_subset$ANCPTOT, useNA = "ifany")
-# table(ADAMS_subset$ANDCPTOT, useNA = "ifany")
 
 #---- **10-word recall (immediate and delayed) ----
 # #Variable check
@@ -481,8 +451,6 @@ ADAMS_subset %<>%
   mutate("ANIMMCR" = pmax(ANIMMCR1, ANIMMCR2, ANIMMCR3, na.rm = TRUE))
 
 # #Sanity check
-# table(ADAMS_subset$ANIMMCR1, useNA = "ifany")
-# table(ADAMS_subset$ANDELCOR, useNA = "ifany")
 # View(ADAMS_subset[, c("ANIMMCR1", "ANIMMCR2", "ANIMMCR3", "ANIMMCR")])
 
 #---- **word list recognition (yes/no) ----
@@ -495,10 +463,6 @@ ADAMS_subset %<>%
   mutate_at(.vars = c("ANRECNO", "ANRECYES"), 
             #Missing/refused  
             function(x) ifelse(x > 10, NA, x))
-
-# #Sanity check
-# table(ADAMS_subset$ANRECNO, useNA = "ifany")
-# table(ADAMS_subset$ANRECYES, useNA = "ifany")
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
