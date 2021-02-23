@@ -451,6 +451,21 @@ ADAMS_subset %<>%
 
 # #Sanity check
 #table(ADAMS_subset$ANBNTTOT, useNA = "ifany")
+
+#---- **constructional praxis (immediate and delayed) ----
+# #Variable check
+# table(ADAMS_subset$ANCPTOT, useNA = "ifany")
+# table(ADAMS_subset$ANDCPTOT, useNA = "ifany")
+
+#Recode
+ADAMS_subset %<>% 
+  mutate_at(.vars = c("ANCPTOT", "ANDCPTOT"), 
+            #Missing/refused  
+            function(x) ifelse(x > 11, NA, x)) 
+
+# #Sanity check
+# table(ADAMS_subset$ANCPTOT, useNA = "ifany")
+# table(ADAMS_subset$ANDCPTOT, useNA = "ifany")
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
