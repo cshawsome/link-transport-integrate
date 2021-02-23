@@ -410,6 +410,21 @@ ADAMS_subset %<>%
 # #Sanity check
 # table(ADAMS_subset$ANCACTUS, useNA = "ifany")
 # table(ADAMS_subset$ANSCISOR, useNA = "ifany")
+
+#---- **President and VP ----
+# #Variable check
+# table(ADAMS_subset$ANPRES, useNA = "ifany")
+# table(ADAMS_subset$ANVCPRES, useNA = "ifany")
+
+#Recode
+ADAMS_subset %<>% 
+  mutate_at(.vars = c("ANPRES", "ANVCPRES"), 
+            #Missing/refused  
+            function(x) ifelse(x > 1, NA, x)) 
+
+# #Sanity check
+# table(ADAMS_subset$ANPRES, useNA = "ifany")
+# table(ADAMS_subset$ANVCPRES, useNA = "ifany")
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
