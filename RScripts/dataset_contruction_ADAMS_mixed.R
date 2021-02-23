@@ -476,15 +476,25 @@ ADAMS_subset %<>%
             function(x) ifelse(x > 37, NA, x))
 
 #---- **Trails A and B ----
-#Variable check
-table(ADAMS_subset$ANTMASEC, useNA = "ifany")
-table(ADAMS_subset$ANTMBSEC, useNA = "ifany")
+# #Variable check
+# table(ADAMS_subset$ANTMASEC, useNA = "ifany")
+# table(ADAMS_subset$ANTMBSEC, useNA = "ifany")
 
-# #Recode
-# ADAMS_subset %<>% 
-#   mutate_at(.vars = c("ANTMASEC", "ANTMBSEC"), 
-#             #Missing/refused  
-#             function(x) ifelse(x > 900, NA, x))
+#Recode
+ADAMS_subset %<>%
+  mutate_at(.vars = c("ANTMASEC", "ANTMBSEC"),
+            #Missing/refused
+            function(x) ifelse(x > 900, NA, x))
+
+#---- **symbol/digit modalities ----
+# #Variable check
+# table(ADAMS_subset$ANSDMTOT, useNA = "ifany")
+
+#Recode
+ADAMS_subset %<>%
+  mutate_at(.vars = c("ANSDMTOT"),
+            #Missing/refused
+            function(x) ifelse(x > 90, NA, x))
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
