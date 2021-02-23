@@ -468,9 +468,9 @@ ADAMS_subset %<>%
 # table(ADAMS_subset$ANDCPTOT, useNA = "ifany")
 
 #---- **10-word recall (immediate and delayed) ----
-#Variable check
-table(ADAMS_subset$ANIMMCR1, useNA = "ifany")
-table(ADAMS_subset$ANDELCOR, useNA = "ifany")
+# #Variable check
+# table(ADAMS_subset$ANIMMCR1, useNA = "ifany")
+# table(ADAMS_subset$ANDELCOR, useNA = "ifany")
 
 #Recode
 ADAMS_subset %<>% 
@@ -480,10 +480,25 @@ ADAMS_subset %<>%
   #Best of 3 immediate recall trials
   mutate("ANIMMCR" = pmax(ANIMMCR1, ANIMMCR2, ANIMMCR3, na.rm = TRUE))
 
-#Sanity check
-table(ADAMS_subset$ANIMMCR1, useNA = "ifany")
-table(ADAMS_subset$ANDELCOR, useNA = "ifany")
-View(ADAMS_subset[, c("ANIMMCR1", "ANIMMCR2", "ANIMMCR3", "ANIMMCR")])
+# #Sanity check
+# table(ADAMS_subset$ANIMMCR1, useNA = "ifany")
+# table(ADAMS_subset$ANDELCOR, useNA = "ifany")
+# View(ADAMS_subset[, c("ANIMMCR1", "ANIMMCR2", "ANIMMCR3", "ANIMMCR")])
+
+#---- **word list recognition (yes/no) ----
+# #Variable check
+# table(ADAMS_subset$ANRECNO, useNA = "ifany")
+# table(ADAMS_subset$ANRECYES, useNA = "ifany")
+
+#Recode
+ADAMS_subset %<>% 
+  mutate_at(.vars = c("ANRECNO", "ANRECYES"), 
+            #Missing/refused  
+            function(x) ifelse(x > 10, NA, x))
+
+# #Sanity check
+# table(ADAMS_subset$ANRECNO, useNA = "ifany")
+# table(ADAMS_subset$ANRECYES, useNA = "ifany")
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
