@@ -395,6 +395,21 @@ ADAMS_subset %<>%
 
 # #Sanity check
 # table(ADAMS_subset$ANSER7T, useNA = "ifany")
+
+#---- **object naming: cactus, scissors ----
+# #Variable check
+# table(ADAMS_subset$ANCACTUS, useNA = "ifany")
+# table(ADAMS_subset$ANSCISOR, useNA = "ifany")
+
+#Recode
+ADAMS_subset %<>% 
+  mutate_at(.vars = c("ANCACTUS", "ANSCISOR"), 
+            #Missing/refused  
+            function(x) ifelse(x > 1, NA, x)) 
+
+# #Sanity check
+# table(ADAMS_subset$ANCACTUS, useNA = "ifany")
+# table(ADAMS_subset$ANSCISOR, useNA = "ifany")
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
