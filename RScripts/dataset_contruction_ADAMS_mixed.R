@@ -232,7 +232,7 @@ ADAMS_subset %<>%
                                EDYRScat == 4 ~ "High School Diploma",
                                EDYRScat == 5 ~ "Some College", 
                                EDYRScat == 6 ~ "Bachelor's Degree or Higher"))
-         ) %>% 
+  ) %>% 
   mutate(EDYRScat_label = 
            fct_relevel(EDYRScat_label, "No School Completed", "1st-8th Grade", 
                        "Some High School", "High School Diploma", 
@@ -306,26 +306,68 @@ for(var in wave_updated_vars){
                        AYEAR == 2004 ~ !!sym(paste0("r7", var))))
 }
 
-#Sanity check
-View(ADAMS_subset[, c("AYEAR", paste0("r", seq(5, 7), "cesd"), "Acesd")] %>%
-       filter(!is.na(Acesd)))
-colnames(ADAMS_subset)
-
+# #Sanity check
+# View(ADAMS_subset[, c("AYEAR", paste0("r", seq(5, 7), "cesd"), "Acesd")] %>%
+#        filter(!is.na(Acesd)))
+# colnames(ADAMS_subset)
+# 
 #Variable check
-summary(ADAMS_subset$Abmi)
+for(var in wave_updated_vars){
+  print(var)
+  show(table(ADAMS_subset[, paste0("A", var)], useNA = "ifany"))
+}
+
+#---- **drinking ----
+ADAMS_subset %<>% 
+  mutate("drinks_per_week" = Adrinkd*Adrinkn) %>%
+  mutate("DRINKcat" = 
+           case_when(drinks_per_week == 0 ~ 1,
+                     GENDER_label == "Male" &
+                       (drinks_per_week >= 1 & drinks_per_week < 14) ~ 2,
+                     GENDER_label == "Female" &
+                       (drinks_per_week >= 1 & drinks_per_week < 7) ~ 2,
+                     GENDER_label == "Male" &
+                       (drinks_per_week >= 14 | Adrinkn >= 4) ~ 3,
+                     GENDER_label == "Female" &
+                       (drinks_per_week >= 7 | Adrinkn >= 3) ~ 3)) %>% 
+  mutate("DRINKcat_label" = 
+           as.factor(case_when(DRINKcat == 1 ~ "No Drinking", 
+                               DRINKcat == 2 ~ "Moderate Drinking", 
+                               DRINKcat == 3 ~ "Heavy Drinking"))) %>% 
+  mutate(DRINKcat_label = fct_relevel(DRINKcat_label, "No Drinking", 
+                                      "Moderate Drinking"))
+
+# #Sanity check
+# View(ADAMS_subset[, c("GENDER_label", "drinks_per_week", "Adrinkn", 
+#                       "DRINKcat_label")])
+# levels(ADAMS_subset$DRINKcat_label)
 
 #---- clean: neuropsych ----
 #---- **MMSE ----
-#Variable check
-for(wave in ADAMS_waves){
-  MMSE_var <- paste0(wave, "NMSETOT")
-  print(paste0("Wave ", wave))
-  print(table(ADAMS_subset[, MMSE_var], useNA = "ifany"))
-}
+# #Variable check
+# table(ADAMS_subset$ANMSETOT, useNA = "ifany")
 
 ADAMS_subset %<>% 
-  mutate_at(.vars = paste0(c("A", "B", "C", "D"), "NMSETOT"), 
-            function(x) ifelse(x > 30, NA, x))
+  mutate_at(.vars = "ANMSETOT", function(x) ifelse(x > 30, NA, x))
+
+# #Sanity check
+# table(ADAMS_subset$ANMSETOT, useNA = "ifany")
+
+#---- **BWC 20 ----
+#Variable check
+table(ADAMS_subset$ANBWC201, useNA = "ifany")
+table(ADAMS_subset$ANBWC202, useNA = "ifany")
+
+#Recode
+ADAMS_subset %<>% 
+  mutate_at(.vars = c("ANBWC201", "ANBWC202"), 
+            #Missing/refused  
+            funs(case_when(. > 6 ~ NA_real_,
+                           #Restart
+                           . == 6 ~ 0)))
+
+
+
 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
