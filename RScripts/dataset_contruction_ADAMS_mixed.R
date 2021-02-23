@@ -382,6 +382,19 @@ ADAMS_subset %<>% mutate("ANBWC20" = pmax(ANBWC201, ANBWC202, na.rm = TRUE),
 # #Sanity check
 # View(ADAMS_subset[, c("ANBWC201", "ANBWC202", "ANBWC20")])
 # View(ADAMS_subset[, c("ANBWC861", "ANBWC862", "ANBWC86")])
+
+#---- **serial 7s ----
+# #Variable check
+# table(ADAMS_subset$ANSER7T, useNA = "ifany")
+
+#Recode 
+ADAMS_subset %<>% 
+  mutate_at(.vars = c("ANSER7T"), 
+            #Missing/refused  
+            function(x) ifelse(x > 5, NA, x))
+
+# #Sanity check
+# table(ADAMS_subset$ANSER7T, useNA = "ifany")
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
