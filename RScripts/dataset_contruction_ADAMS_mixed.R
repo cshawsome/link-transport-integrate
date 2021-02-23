@@ -466,6 +466,24 @@ ADAMS_subset %<>%
 # #Sanity check
 # table(ADAMS_subset$ANCPTOT, useNA = "ifany")
 # table(ADAMS_subset$ANDCPTOT, useNA = "ifany")
+
+#---- **10-word recall (immediate and delayed) ----
+#Variable check
+table(ADAMS_subset$ANIMMCR1, useNA = "ifany")
+table(ADAMS_subset$ANDELCOR, useNA = "ifany")
+
+#Recode
+ADAMS_subset %<>% 
+  mutate_at(.vars = c("ANIMMCR1", "ANIMMCR2", "ANIMMCR3", "ANDELCOR"), 
+            #Missing/refused  
+            function(x) ifelse(x > 10, NA, x)) %>% 
+  #Best of 3 immediate recall trials
+  mutate("ANIMMCR" = pmax(ANIMMCR1, ANIMMCR2, ANIMMCR3, na.rm = TRUE))
+
+#Sanity check
+table(ADAMS_subset$ANIMMCR1, useNA = "ifany")
+table(ADAMS_subset$ANDELCOR, useNA = "ifany")
+View(ADAMS_subset[, c("ANIMMCR1", "ANIMMCR2", "ANIMMCR3", "ANIMMCR")])
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
