@@ -504,33 +504,33 @@ ADAMS_subset %<>%
 
 # #Sanity check
 # View(ADAMS_subset %>% dplyr::select(contains(c("AGQ", "proxy"))))
-                
+
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
 
 #---- **age ----
-#Variable check
-hist(ADAMS_subset$AAGE)
+# #Variable check
+# hist(ADAMS_subset$AAGE)
 
 ADAMS_subset %<>% mutate("log_AAGE" = log(AAGE))
 
-#Sanity check
-hist(ADAMS_subset$log_AAGE)
+# #Sanity check
+# hist(ADAMS_subset$log_AAGE)
 
 #---- **education ----
-#Variable check
-hist(ADAMS_subset$EDYRS)
+# #Variable check
+# hist(ADAMS_subset$EDYRS)
 
 #---- transform: neuropsych ----
 #We want to use normal approximations to these variables 
 
 #---- **MMSE ----
-#Variable check-- this one is going to be skewed no matter what and it's one of 
-# the variables that is going to help define our dementia classes
-hist(ADAMS_subset$ANMSETOT)
+# #Variable check-- this one is going to be skewed no matter what and it's one of 
+# # the variables that is going to help define our dementia classes
+# hist(ADAMS_subset$ANMSETOT)
 
 #---- save dataset ----
-write_csv(ADAMS_subset, path = paste0("/Users/CrystalShaw/Box/Dissertation/", 
+write_csv(ADAMS_subset, file = paste0("/Users/CrystalShaw/Box/Dissertation/", 
                                       "data/cleaned/ADAMS_subset_mixed.csv"))
 
 
