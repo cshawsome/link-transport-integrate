@@ -497,7 +497,13 @@ ADAMS_subset %<>%
             function(x) ifelse(x > 90, NA, x))
 
 #---- **proxy cognition ----
+ADAMS_subset %<>% 
+  mutate("proxy_cog" = ADAMS_subset %>% 
+           dplyr::select(contains("AGQ")) %>% 
+           rowMeans(., na.rm = TRUE))
 
+# #Sanity check
+# View(ADAMS_subset %>% dplyr::select(contains(c("AGQ", "proxy"))))
                 
 #---- transform: sociodemographics ----
 #We want to use normal approximations to these variables 
