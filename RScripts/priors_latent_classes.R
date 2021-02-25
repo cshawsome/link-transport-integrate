@@ -71,11 +71,12 @@ normal_model_data <- ADAMS_subset %>% dplyr::select(all_of(vars)) %>%
   dplyr::select(-c("AOther", "AMCI")) 
 
 #check missingness-- add variables to model by level of missingness
+#try not to lose more than 25% of the sample (about 214 people)
 sort(colSums(is.na(normal_model_data)))
 
 #---- **model ----
 normal_model <- glm(ANormal ~ AAGE + ETHNIC_label + AACURRWK_label + ANMSETOT + 
-                      ANSER7T + ANIMMCR + ANRECYES,
+                      ANSER7T + ANIMMCR + ANRECYES + ANWM1TOT + proxy_cog,
                     family = "binomial", data = normal_model_data)
 
 summary(normal_model)
@@ -94,13 +95,62 @@ tidy_normal_model
 other_model_data <- ADAMS_subset %>% dplyr::select(all_of(vars)) %>% 
   filter(ANormal == 0) %>% dplyr::select(-c("ANormal", "AMCI")) 
 
-#Sanity check
+# #Sanity check
+# table(ADAMS_subset$Adem_dx_cat)
 
 #check missingness-- add variables to model by level of missingness
-sort(colSums(is.na(normal_model_data)))
+#try not to lose more than 25% of the sample (about 137 people)
+sort(colSums(is.na(other_model_data)))
+
+#---- **model ----
+other_model <- glm(AOther ~ AAGE + GENDER_label + EDYRScat_label + ANMSETOT + 
+                     ANIMMCR + ANDELCOR + proxy_cog,
+                   family = "binomial", data = other_model_data)
+
+summary(other_model)
+
+#H_0 is that model fits
+p_val_other_model <- 
+  1 - pchisq(other_model$deviance, other_model$df.residual)
+
+tidy_other_model <- tidy(other_model, exponentiate = TRUE, conf.int = TRUE, 
+                         conf.level = 0.95) %>% 
+  mutate_if(is.numeric, round, 4) %>% as.data.frame()
+#show results
+tidy_other_model
+
+#---- var select: MCI vs. Dementia ----
+MCI_model_data <- ADAMS_subset %>% dplyr::select(all_of(vars)) %>% 
+  filter(ANormal == 0 & AOther == 0) %>% dplyr::select(-c("ANormal", "AOther")) 
+
+# #Sanity check
+# table(ADAMS_subset$Adem_dx_cat)
+
+#check missingness-- add variables to model by level of missingness
+#try not to lose more than 25% of the sample (about 100 people)
+sort(colSums(is.na(MCI_model_data)))
+
+#---- **model ----
+MCI_model <- glm(AMCI ~ AAGE + ETHNIC_label + EDYRScat_label + Aiadla + 
+                   ANMSETOT + Astroke + Abmi + ANIMMCR + proxy_cog,
+                 family = "binomial", data = MCI_model_data)
+
+summary(MCI_model)
+
+#H_0 is that model fits
+p_val_MCI_model <- 
+  1 - pchisq(MCI_model$deviance, MCI_model$df.residual)
+
+tidy_MCI_model <- tidy(MCI_model, exponentiate = TRUE, conf.int = TRUE, 
+                       conf.level = 0.95) %>% 
+  mutate_if(is.numeric, round, 4) %>% as.data.frame()
+#show results
+tidy_MCI_model
 
 #---- save output ----
-table_list <- list("Normal vs. Impaired" = tidy_normal_model)
+table_list <- list("Normal vs. Impaired" = tidy_normal_model, 
+                   "Other vs. MCI or Dementia" = tidy_other_model, 
+                   "MCI vs. Dementia" = tidy_MCI_model)
 write.xlsx(table_list, file = paste0("/Users/CrystalShaw/Box/Dissertation/",
                                      "/tables/priors/", 
                                      "dem_class_nested_regressions.xlsx"))
