@@ -22,13 +22,17 @@ analytical_sample <- ADAMS_subset %>%
 
 #---- all-way contingency table ----
 cross_class_label <- table(analytical_sample$ETHNIC_label, 
-                           analytical_sample$Aiadla, 
                            analytical_sample$Astroke) %>% as.data.frame()
+
+# #How many are missing from this table?-- only 144! 
+# sum(cross_class_label$Freq)
+
 #---- OLD CODE ----
 #---- plots ----
-#Categorical Variables: Sex/Gender, Race/Ethnicity, IADLs
-#Continuous Variables: Age, Ed Yrs, MMSE
-#Create labeled data
+#Categorical Variables: Race/Ethnicity, IADLs, Ever/never stroke
+#Continuous Variables: Age, MMSE, Delayed Word Recall, Immediate Word Recall, 
+# Word list recog (Yes), proxy cognition, 
+#Create labeled data (if not already created)
 analytical_sample %<>% 
   mutate("GENDER_label" = ifelse(GENDER == 1, "Male", "Female"), 
          "ETHNIC_label" = case_when(ETHNIC == 1 ~ "White", 
