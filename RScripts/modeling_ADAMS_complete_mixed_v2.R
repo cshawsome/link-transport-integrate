@@ -3,7 +3,8 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "DirichletReg", "magrittr", "wesanderson", "devtools")
+p_load("tidyverse", "DirichletReg", "magrittr", "wesanderson", "devtools", 
+       "gmodels")
 install_github("thomasp85/patchwork")
 
 #---- read in data ----
@@ -26,6 +27,73 @@ cross_class_label <- table(analytical_sample$ETHNIC_label,
 
 # #How many are missing from this table?-- only 144! 
 # sum(cross_class_label$Freq)
+
+#---- summary stats ----
+#Looking at the same sample as the impaired vs. unimpaired model
+normal_model_data <- ADAMS_subset %>% 
+  dplyr::select(c("AAGE", "ETHNIC_label", "ANMSETOT", "ANSER7T", 
+                  "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+                  "proxy_cog", "Adem_dx_cat")) %>% na.omit() %>% 
+  mutate("Aunimpaired" = ifelse(Adem_dx_cat == "Normal", 1, 0))
+
+#How many of each race/ethnicity in the sample
+CrossTable(normal_model_data$ETHNIC_label, useNA = "ifany")
+
+#How many of each race/ethnicity classified as cognitively normal
+CrossTable(normal_model_data$ETHNIC_label, normal_model_data$Aunimpaired, 
+      useNA = "ifany", prop.chisq = FALSE)
+
+#---- plots ----
+#---- **race x age ----
+race_by_age_bar <- 
+  ggplot(data = normal_model_data) + 
+  geom_bar(mapping = aes(x = factor(AAGE), y = ..count../sum(..count..), 
+                         fill = factor(ETHNIC_label)), 
+           position = "dodge") +
+  theme_minimal() + xlab("Age") + ylab("Proportion") +
+  guides(fill = guide_legend(title = "Race/Ethnicity")) +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+race_by_age_dens <-
+  ggplot(data = normal_model_data, aes(x = AAGE, fill = ETHNIC_label)) + 
+  geom_density(color = NA, alpha = 0.4, position = 'identity') +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
+  theme_minimal() + xlab("Age") + ylab("Density") + 
+  guides(fill = guide_legend(title = "Race/Ethnicity")) 
+
+#---- **race x MMSE ----
+race_by_MMSE_bar <-
+  ggplot(data = normal_model_data) +
+  geom_bar(mapping = aes(x = factor(ANMSETOT), y = ..count../sum(..count..),
+                         fill = factor(ETHNIC_label)),
+           position = "dodge") +
+  theme_minimal() + xlab("MMSE") + ylab("Proportion") +
+  guides(fill = guide_legend(title = "Race/Ethnicity")) +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+race_by_MMSE_dens <-
+  ggplot(data = normal_model_data, aes(x = ANMSETOT, fill = ETHNIC_label)) + 
+  geom_density(color = NA, alpha = 0.4, position = 'identity') +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
+  theme_minimal() + xlab("MMSE") + ylab("Density") + 
+  guides(fill = guide_legend(title = "Race/Ethnicity")) 
+
+#---- **race x proxy cognition ----
+race_by_proxy_cog_dens <-
+  ggplot(data = normal_model_data, aes(x = proxy_cog, fill = ETHNIC_label)) + 
+  geom_density(color = NA, alpha = 0.4, position = 'identity') +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
+  theme_minimal() + xlab("Proxy Cognition") + ylab("Density") + 
+  guides(fill = guide_legend(title = "Race/Ethnicity")) 
+  
+#---- **patchwork plot ----
+(race_by_age_bar + race_by_age_dens)/(race_by_MMSE_bar + race_by_MMSE_dens)/
+  race_by_proxy_cog_dens
+
+ggsave(filename = "unimpaired_two_way_by_race.jpeg", plot = last_plot(), 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                     "prelim_analyses/latent_class_unimpaired/"), 
+       width = 10, height = 8, units = "in", device = "jpeg")
 
 #---- OLD CODE ----
 #---- plots ----
