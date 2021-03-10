@@ -26,13 +26,13 @@ ADAMS_subset %<>%
          "DRINKcat_label" = fct_relevel(DRINKcat_label, "No Drinking", 
                                         "Moderate Drinking"))
 
-#Sanity check
-levels(ADAMS_subset$GENDER_label)
-levels(ADAMS_subset$ETHNIC_label)
-levels(ADAMS_subset$EDYRScat_label)
-levels(ADAMS_subset$AAMARRD_label)
-levels(ADAMS_subset$AACURRWK_label)
-levels(ADAMS_subset$DRINKcat_label)
+# #Sanity check
+# levels(ADAMS_subset$GENDER_label)
+# levels(ADAMS_subset$ETHNIC_label)
+# levels(ADAMS_subset$EDYRScat_label)
+# levels(ADAMS_subset$AAMARRD_label)
+# levels(ADAMS_subset$AACURRWK_label)
+# levels(ADAMS_subset$DRINKcat_label)
 
 #---- dem class indicators ----
 ADAMS_subset %<>% 
