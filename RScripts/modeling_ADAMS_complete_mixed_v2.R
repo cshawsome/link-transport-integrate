@@ -23,12 +23,17 @@ vars <- c("AAGE", "ETHNIC_label", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES",
 
 analytical_sample <- ADAMS_subset %>% dplyr::select("HHIDPN", all_of(vars)) %>% 
   mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
-         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0))
+         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0)) %>% 
+  #use complete data for now
+  na.omit()
 
 # #Sanity check
 # table(analytical_sample$ETHNIC_label, analytical_sample$Black, useNA = "ifany")
-# table(analytical_sample$ETHNIC_label, analytical_sample$Hispanic, 
+# table(analytical_sample$ETHNIC_label, analytical_sample$Hispanic,
 #       useNA = "ifany")
+# 
+# colSums(is.na(analytical_sample))
+
 
 #---- all-way contingency table ----
 cross_class_label <- table(analytical_sample$ETHNIC_label, 
