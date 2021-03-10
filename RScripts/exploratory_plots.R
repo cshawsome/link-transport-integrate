@@ -1,0 +1,333 @@
+#---- Package loading + options ----
+if (!require("pacman")){
+  install.packages("pacman", repos='http://cran.us.r-project.org')
+}
+
+p_load("tidyverse", "DirichletReg", "magrittr", "wesanderson", "devtools", 
+       "gmodels")
+install_github("thomasp85/patchwork")
+
+#---- read in data ----
+#---- **ADAMS ----
+ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                "data/cleaned/ADAMS_subset_mixed.csv"), 
+                         col_types = cols(HHIDPN = col_character()))
+
+#---- select variables ----
+#based on analysis in priors_latent_classes.R
+vars <- c("AAGE", "ETHNIC_label", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", 
+          "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Astroke", "Abmi")
+
+analytical_sample <- ADAMS_subset %>% 
+  dplyr::select("HHIDPN", all_of(vars)) 
+
+#---- all-way contingency table ----
+cross_class_label <- table(analytical_sample$ETHNIC_label, 
+                           analytical_sample$Astroke) %>% as.data.frame()
+
+# #How many are missing from this table?-- only 144! 
+# sum(cross_class_label$Freq)
+
+#---- summary stats ----
+#Looking at the same sample as the impaired vs. unimpaired model
+normal_model_data <- ADAMS_subset %>% 
+  dplyr::select(c("AAGE", "ETHNIC_label", "ANMSETOT", "ANSER7T", 
+                  "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+                  "proxy_cog", "Adem_dx_cat")) %>% na.omit() %>% 
+  mutate("Aunimpaired" = ifelse(Adem_dx_cat == "Normal", 1, 0))
+
+#How many of each race/ethnicity in the sample
+CrossTable(normal_model_data$ETHNIC_label, useNA = "ifany")
+
+#How many of each race/ethnicity classified as cognitively normal
+CrossTable(normal_model_data$ETHNIC_label, normal_model_data$Aunimpaired, 
+      useNA = "ifany", prop.chisq = FALSE)
+
+#---- plots ----
+#---- **race x age ----
+race_by_age_bar <- 
+  ggplot(data = normal_model_data) + 
+  geom_bar(mapping = aes(x = factor(AAGE), y = ..count../sum(..count..), 
+                         fill = factor(ETHNIC_label)), 
+           position = "dodge") +
+  theme_minimal() + xlab("Age") + ylab("Proportion") +
+  guides(fill = guide_legend(title = "Race/Ethnicity")) +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+race_by_age_dens <-
+  ggplot(data = normal_model_data, aes(x = AAGE, fill = ETHNIC_label)) + 
+  geom_density(color = NA, alpha = 0.4, position = 'identity') +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
+  theme_minimal() + xlab("Age") + ylab("Density") + 
+  guides(fill = guide_legend(title = "Race/Ethnicity")) 
+
+#---- **race x MMSE ----
+race_by_MMSE_bar <-
+  ggplot(data = normal_model_data) +
+  geom_bar(mapping = aes(x = factor(ANMSETOT), y = ..count../sum(..count..),
+                         fill = factor(ETHNIC_label)),
+           position = "dodge") +
+  theme_minimal() + xlab("MMSE") + ylab("Proportion") +
+  guides(fill = guide_legend(title = "Race/Ethnicity")) +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+race_by_MMSE_dens <-
+  ggplot(data = normal_model_data, aes(x = ANMSETOT, fill = ETHNIC_label)) + 
+  geom_density(color = NA, alpha = 0.4, position = 'identity') +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
+  theme_minimal() + xlab("MMSE") + ylab("Density") + 
+  guides(fill = guide_legend(title = "Race/Ethnicity")) 
+
+#---- **race x proxy cognition ----
+race_by_proxy_cog_dens <-
+  ggplot(data = normal_model_data, aes(x = proxy_cog, fill = ETHNIC_label)) + 
+  geom_density(color = NA, alpha = 0.4, position = 'identity') +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
+  theme_minimal() + xlab("Proxy Cognition") + ylab("Density") + 
+  guides(fill = guide_legend(title = "Race/Ethnicity")) 
+  
+#---- **patchwork plot ----
+(race_by_age_bar + race_by_age_dens)/(race_by_MMSE_bar + race_by_MMSE_dens)/
+  race_by_proxy_cog_dens
+
+ggsave(filename = "unimpaired_two_way_by_race.jpeg", plot = last_plot(), 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                     "prelim_analyses/latent_class_unimpaired/"), 
+       width = 10, height = 8, units = "in", device = "jpeg")
+
+#---- OLD CODE ----
+#---- plots ----
+#Categorical Variables: Race/Ethnicity, IADLs, Ever/never stroke
+#Continuous Variables: Age, MMSE, Delayed Word Recall, Immediate Word Recall, 
+# Word list recog (Yes), proxy cognition, 
+#Create labeled data (if not already created)
+analytical_sample %<>% 
+  mutate("GENDER_label" = ifelse(GENDER == 1, "Male", "Female"), 
+         "ETHNIC_label" = case_when(ETHNIC == 1 ~ "White", 
+                                    ETHNIC == 2 ~ "Black", 
+                                    TRUE ~ "Hispanic"), 
+         "IADLA_label" = case_when(IADLA == 1 ~ "None", 
+                                   IADLA == 2 ~ "One", 
+                                   IADLA == 3 ~ "Two", 
+                                   IADLA == 4 ~ "Three")) %>% 
+  mutate_at(c("GENDER_label", "ETHNIC_label", "IADLA_label"), as.factor) 
+analytical_sample$IADLA_label <- fct_relevel(analytical_sample$IADLA_label, 
+                                             c("None", "One", "Two", "Three"))
+
+
+#---- *marginal ----
+#---- **summary stats ----
+sex_gender_plot <- table(analytical_sample$GENDER_label) %>% 
+  as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) 
+
+race_eth_plot <- table(analytical_sample$ETHNIC_label) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) 
+
+IADL_plot <- table(analytical_sample$IADLA_label) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) 
+
+Age_plot <- table(exp(analytical_sample$log_AAGE)) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
+  mutate_at("Var1", as.factor)
+
+Edyrs_plot <- table(analytical_sample$EDYRS) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
+  mutate_at("Var1", as.factor)
+
+MMSE_plot <- table(analytical_sample$ANMSETOT) %>% as.data.frame() %>% 
+  mutate("Prop" = Freq/nrow(analytical_sample)) %>% 
+  mutate_at("Var1", as.factor)
+
+#---- **categorical plots ----
+sex_gender <- 
+  ggplot(data = sex_gender_plot) + 
+  geom_bar(mapping = aes(x = factor(Var1), y = Prop, fill = factor(Var1)), 
+           stat = "identity") + 
+  theme_minimal() + xlab("Sex/Gender") + ylab("Proportion") + 
+  theme(legend.position = "none") + ylim(c(0, 1)) +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+race_eth <- 
+  ggplot(data = race_eth_plot) + 
+  geom_bar(mapping = aes(x = factor(Var1), y = Prop, fill = factor(Var1)), 
+           stat = "identity") + ylim(c(0, 1)) +
+  theme_minimal() + xlab("Race/Ethnicity") + ylab("Proportion") + 
+  theme(legend.position = "none") +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+IADLs <- 
+  ggplot(data = IADL_plot) + 
+  geom_bar(mapping = aes(x = factor(Var1), y = Prop, fill = factor(Var1)), 
+           stat = "identity") + ylim(c(0, 1)) +
+  theme_minimal() + xlab("Difficulty with IADLs") + ylab("Proportion") + 
+  theme(legend.position = "none") +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+#---- **continuous plots ----
+Age <- ggplot(data = Age_plot) + 
+  geom_bar(mapping = aes(x = Var1, y = Prop), 
+           color = rev(wes_palette("Darjeeling1"))[1],
+           fill = rev(wes_palette("Darjeeling1"))[1],
+           stat = "identity") + 
+  theme_minimal() + xlab("Age") + ylab("Proportion") + 
+  theme(legend.position = "none")
+
+Edyrs <- ggplot(data = Edyrs_plot) + 
+  geom_bar(mapping = aes(x = Var1, y = Prop), 
+           color = rev(wes_palette("Darjeeling1"))[2],
+           fill = rev(wes_palette("Darjeeling1"))[2],
+           stat = "identity") + 
+  theme_minimal() + xlab("Years of Education") + ylab("Proportion") + 
+  theme(legend.position = "none")
+
+MMSE <- ggplot(data = MMSE_plot) + 
+  geom_bar(mapping = aes(x = Var1, y = Prop), 
+           color = rev(wes_palette("Darjeeling1"))[4],
+           fill = rev(wes_palette("Darjeeling1"))[4],
+           stat = "identity") + 
+  theme_minimal() + xlab("MMSE") + ylab("Proportion") + 
+  theme(legend.position = "none")
+
+#---- **patchwork plot ----
+(((sex_gender + race_eth + IADLs)/Age)/Edyrs)/MMSE
+
+ggsave(filename = "marginal_dists.jpeg", plot = last_plot(), 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/prelim_analyses/", 
+       width = 8, height = 8, units = "in", device = "jpeg")
+
+#---- *2-way categorical ----
+#Sex/Gender by Race/Ethnicity
+sex_by_race <- 
+  ggplot(data = analytical_sample) + 
+  geom_bar(mapping = aes(x = factor(GENDER_label), y = ..count../sum(..count..), 
+                         fill = factor(ETHNIC_label)), 
+           position = "dodge") + ylim(0, 1) +
+  theme_minimal() + xlab("Sex/Gender") + ylab("Count") +
+  guides(fill = guide_legend(title = "Race/Ethnicity")) +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+sex_by_IADL <- 
+  ggplot(data = analytical_sample) + 
+  geom_bar(mapping = aes(x = factor(GENDER_label), y = ..count../sum(..count..), 
+                         fill = factor(IADLA_label)), 
+           position = "dodge") + ylim(0, 1) +
+  theme_minimal() + xlab("Sex/Gender") + ylab("Count") +
+  guides(fill = guide_legend(title = "IADL")) +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+race_by_IADL <- ggplot(data = analytical_sample) + 
+  geom_bar(mapping = aes(x = factor(ETHNIC_label), y = ..count../sum(..count..), 
+                         fill = factor(IADLA_label)), 
+           position = "dodge") + ylim(0, 1) +
+  theme_minimal() + xlab("Race/Ethnicity") + ylab("Count") +
+  guides(fill = guide_legend(title = "IADL")) +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+#---- **patchwork plot ----
+sex_by_race + sex_by_IADL + race_by_IADL
+
+ggsave(filename = "2way_cat_dists.jpeg", plot = last_plot(), 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/prelim_analyses/", 
+       width = 12, height = 3, units = "in", device = "jpeg")
+
+#---- *3-way categorical ----
+IADL_by_sex_and_race <- 
+  ggplot(data = analytical_sample, aes(x = GENDER_label, y = ETHNIC_label, 
+                                       color = IADLA_label)) + 
+  geom_point(position = "jitter", alpha = 0.75) + 
+  theme_minimal() + ylab("Race/Ethnicity") + xlab("Sex/Gender") + 
+  guides(color = guide_legend(title = "IADL")) + 
+  scale_color_manual(values = rev(wes_palette("Darjeeling1")))
+
+ggsave(filename = "3way_cat_dists.jpeg", plot = last_plot(), 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/prelim_analyses/", 
+       width = 8, height = 8, units = "in", device = "jpeg")
+
+#---- *cont | categorical ----
+for(i in 1:nrow(cross_class_label)){
+  if(cross_class_label[i, "Freq"] != 0){
+    gender <- cross_class_label[i, "Var1"]
+    ethnic <- cross_class_label[i, "Var2"]
+    iadl <- cross_class_label[i, "Var3"]
+    count <- cross_class_label[i, "Freq"]
+    
+    data_subset <- analytical_sample %>% 
+      filter(GENDER_label == gender & ETHNIC_label == ethnic & 
+               IADLA_label == iadl)
+    
+    #summary stats
+    age_plot <- table(exp(data_subset$log_AAGE)) %>% as.data.frame() %>% 
+      mutate("Prop" = Freq/nrow(data_subset)) %>% 
+      mutate_at("Var1", as.character) %>% 
+      mutate_at("Var1", as.numeric)
+    missing_ages <- which(!seq(min(exp(analytical_sample$log_AAGE)), 
+                               max(exp(analytical_sample$log_AAGE))) %in% 
+                            age_plot$Var1) + 69
+    age_plot %<>% rbind(as.matrix(cbind(missing_ages, NA, NA)) %>% 
+                          set_colnames(c("Var1", "Freq", "Prop"))) %>% 
+      mutate_at("Var1", as.factor)
+    
+    edyrs_plot <- table(data_subset$EDYRS) %>% as.data.frame() %>% 
+      mutate("Prop" = Freq/nrow(data_subset)) %>% 
+      mutate_at("Var1", as.character) %>% 
+      mutate_at("Var1", as.numeric)
+    missing_edyrs <- which(!seq(min(analytical_sample$EDYRS), 
+                                max(analytical_sample$EDYRS)) %in% 
+                             edyrs_plot$Var1) - 1
+    edyrs_plot %<>% rbind(as.matrix(cbind(missing_edyrs, NA, NA)) %>% 
+                            set_colnames(c("Var1", "Freq", "Prop"))) %>% 
+      mutate_at("Var1", as.factor)
+    
+    mmse_plot <- table(data_subset$ANMSETOT) %>% as.data.frame() %>% 
+      mutate("Prop" = Freq/nrow(data_subset)) %>% 
+      mutate_at("Var1", as.character) %>% 
+      mutate_at("Var1", as.numeric)
+    missing_mmse <- which(!seq(min(analytical_sample$ANMSETOT), 
+                               max(analytical_sample$ANMSETOT)) %in% 
+                            mmse_plot$Var1) - 1
+    mmse_plot %<>% rbind(as.matrix(cbind(missing_mmse, NA, NA)) %>% 
+                           set_colnames(c("Var1", "Freq", "Prop"))) %>% 
+      mutate_at("Var1", as.factor)
+    
+    #plots
+    age <- ggplot(data = age_plot) + 
+      geom_bar(mapping = aes(x = Var1, y = Prop), 
+               color = rev(wes_palette("Darjeeling1"))[1],
+               fill = rev(wes_palette("Darjeeling1"))[1],
+               stat = "identity") + 
+      theme_minimal() + xlab("Age") + ylab("Proportion") + 
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+      theme(legend.position = "none") + 
+      ggtitle(paste(paste(gender, ethnic, iadl, sep = " | "), "| n =", count)) 
+    
+    edyrs <- ggplot(data = edyrs_plot) + 
+      geom_bar(mapping = aes(x = Var1, y = Prop), 
+               color = rev(wes_palette("Darjeeling1"))[2],
+               fill = rev(wes_palette("Darjeeling1"))[2],
+               stat = "identity") + 
+      theme_minimal() + xlab("Years of Education") + ylab("Proportion") + 
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+      theme(legend.position = "none") + 
+      ggtitle(paste(paste(gender, ethnic, iadl, sep = " | "), "| n =", count)) 
+    
+    mmse <- ggplot(data = mmse_plot) + 
+      geom_bar(mapping = aes(x = Var1, y = Prop), 
+               color = rev(wes_palette("Darjeeling1"))[4],
+               fill = rev(wes_palette("Darjeeling1"))[4],
+               stat = "identity") + 
+      theme_minimal() + xlab("MMSE") + ylab("Proportion") +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+      theme(legend.position = "none") + 
+      ggtitle(paste(paste(gender, ethnic, iadl, sep = " | "), "| n =", count)) 
+    
+    #---- **patchwork plot ----
+    age + edyrs + mmse
+    
+    ggsave(filename = paste0("cont_given_cat", i, ".jpeg"), plot = last_plot(), 
+           path = "/Users/CrystalShaw/Box/Dissertation/figures/prelim_analyses/", 
+           width = 12, height = 3, units = "in", device = "jpeg")
+  }
+}
+
+
