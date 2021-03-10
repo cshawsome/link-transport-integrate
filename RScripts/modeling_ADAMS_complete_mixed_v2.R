@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "DirichletReg", "magrittr", "here")
+p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS")
 
 #---- read in data ----
 #---- **ADAMS ----
@@ -34,21 +34,38 @@ analytical_sample <- ADAMS_subset %>% dplyr::select("HHIDPN", all_of(vars)) %>%
 # 
 # colSums(is.na(analytical_sample))
 
-
 #---- all-way contingency table ----
+#We have one small cell-- Hispanics who have had a stroke
 cross_class_label <- table(analytical_sample$ETHNIC_label, 
                            analytical_sample$Astroke) %>% as.data.frame()
 
-# #How many are missing from this table?-- only 144! 
-# sum(cross_class_label$Freq)
-
 #---- Bayes Stuff ----
-#---- **number of runs ----
+#---- **parameters ----
+#number of runs
 B = 2
+
+#---- **chain storage ----
+normal_beta_chain <- 
+  matrix(nrow = length(coefficients(normal_prior)) , ncol = B)
+other_beta_chain <- 
+  matrix(nrow = length(coefficients(other_prior)) , ncol = B)
+MCI_beta_chain <- 
+  matrix(nrow = length(coefficients(MCI_prior)) , ncol = B)
 
 #---- **priors ----
 
-
 #---- **sampling ----
+for(b in 1:B){
+  #---- ****latent class betas ----
+  normal_beta_chain[, B] <- mvrnorm(n = 1, mu = coefficients(normal_prior), 
+                                    Sigma = vcov(normal_prior))
+  other_beta_chain[, B] <- mvrnorm(n = 1, mu = coefficients(other_prior), 
+                                   Sigma = vcov(other_prior))
+  MCI_beta_chain[, B] <- mvrnorm(n = 1, mu = coefficients(MCI_prior), 
+                                 Sigma = vcov(MCI_prior))
+  
+  #---- ****latent class membership ----
+}
+
 
 
