@@ -25,7 +25,7 @@ MCI_preds <- names(coefficients(MCI_prior))
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
-vars <- unique(c(Unimpaired_preds, Other_preds, MCI_preds))
+vars <- unique(c(Unimpaired_preds, Other_preds, MCI_preds, "ETHNIC_label"))
 
 analytical_sample <- ADAMS_subset %>% 
   mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
@@ -57,15 +57,21 @@ B = 2
 
 #---- **chain storage ----
 Unimpaired_beta_chain <- 
-  matrix(nrow = length(coefficients(Unimpaired_prior)) , ncol = B)
+  matrix(nrow = length(coefficients(Unimpaired_prior)), ncol = B) %>% 
+  set_rownames(paste0("Unimpaired:", Unimpaired_preds))
 Other_beta_chain <- 
-  matrix(nrow = length(coefficients(Other_prior)) , ncol = B)
+  matrix(nrow = length(coefficients(Other_prior)), ncol = B) %>% 
+  set_rownames(paste0("Other:", Other_preds))
 MCI_beta_chain <- 
-  matrix(nrow = length(coefficients(MCI_prior)) , ncol = B)
+  matrix(nrow = length(coefficients(MCI_prior)), ncol = B) %>% 
+  set_rownames(paste0("MCI:", MCI_preds))
 
-latent_class_chain <- matrix(nrow = 4, ncol = B)
+latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
+  set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
 
 #---- **priors ----
+#uninformative
+alpha_0 <- rep(1, nrow(cross_class_label))
 
 #---- **sampling ----
 for(b in 1:B){
@@ -80,47 +86,42 @@ for(b in 1:B){
   
   #---- ****group membership ----
   group = 1
+  analytical_sample[, "Group"] <- 0
   for(model in c("Unimpaired", "Other", "MCI")){
     subset_index <- which(analytical_sample$Group == 0)
-    preds <- get(paste0())
     
     analytical_sample[subset_index, paste0("p_", model)] <- 
-      expit(as.matrix(analytical_sample[subset_index, other_preds]) %*% 
-              as.matrix(other_beta_chain[, b]))
+      expit(as.matrix(analytical_sample[subset_index, 
+                                        get(paste0(model, "_preds"))]) %*% 
+              as.matrix(get(paste0(model, "_beta_chain"))[, b]))
     
     analytical_sample[subset_index, "Group"] <- 
       rbernoulli(n = length(subset_index), 
-                 p = analytical_sample[subset_index, "p_Other"])*2
+                 p = analytical_sample[subset_index, paste0("p_", model)])*group
     
     group = group + 1
   }
-  analytical_sample[, "p_Unimpaired"] <- 
-    expit(as.matrix(analytical_sample[, normal_preds]) %*% 
-            as.matrix(normal_beta_chain[, b]))
   
-  analytical_sample[, "Group"] <- 
-    rbernoulli(n = nrow(analytical_sample), 
-               p = analytical_sample[, "p_Unimpaired"])*1
-  
-  #---- ****group: Other vs. MCI/Dementia ----
-  
-  
-  
-  
-  #---- ****group: MCI vs. Dementia ----
-  subset_index <- which(analytical_sample$Group == 0)
-  
-  analytical_sample[subset_index, "p_Other"] <- 
-    expit(as.matrix(analytical_sample[subset_index, other_preds]) %*% 
-            as.matrix(other_beta_chain[, b]))
-  
-  analytical_sample[subset_index, "Group"] <- 
-    rbernoulli(n = length(subset_index), 
-               p = analytical_sample[subset_index, "p_Other"])*2
-  
+  analytical_sample[which(analytical_sample$Group == 0), "Group"] <- 4
   
   #---- ****group: summary ----
+  latent_class_chain[, b] <- 
+    table(analytical_sample$Group)/sum(table(analytical_sample$Group))
 }
 
-
-
+#---- **plots ----
+#---- **** beta chains ----
+beta_plot_data <- 
+  do.call(cbind, list(t(Unimpaired_beta_chain), t(Other_beta_chain), 
+                      t(MCI_beta_chain))) %>% as.data.frame() %>%
+  mutate("run" = seq(1:B)) %>% 
+  pivot_longer(-c("run"), names_to = c("Group", "Predictor"), 
+               names_sep = ":", values_to = "beta")
+  
+ggplot(data = df, aes(x = factor(Year), y = Value, colour = School)) +       
+  geom_line(aes(group = School))
+  
+  
+  
+  
+  
