@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS")
+p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "clusterPower")
 
 #---- read in data ----
 #---- **ADAMS ----
@@ -15,6 +15,12 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
 normal_prior <- readRDS(here::here("priors", "normal_model_25.rds"))
 other_prior <- readRDS(here::here("priors", "other_model_25.rds"))
 MCI_prior <- readRDS(here::here("priors", "MCI_model_25.rds"))
+
+normal_preds <- names(coefficients(normal_prior))
+normal_preds[which(normal_preds == "ETHNIC_labelBlack")] <- "Black"
+normal_preds[which(normal_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
+other_preds <- names(coefficients(other_prior))
+MCI_preds <- names(coefficients(MCI_prior))
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
