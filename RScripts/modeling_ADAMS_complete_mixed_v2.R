@@ -12,28 +12,29 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
                          col_types = cols(HHIDPN = col_character()))
 
 #---- **models for priors ----
-normal_prior <- readRDS(here::here("priors", "normal_model_25.rds"))
-other_prior <- readRDS(here::here("priors", "other_model_25.rds"))
+Unimpaired_prior <- readRDS(here::here("priors", "normal_model_25.rds"))
+Other_prior <- readRDS(here::here("priors", "other_model_25.rds"))
 MCI_prior <- readRDS(here::here("priors", "MCI_model_25.rds"))
 
-normal_preds <- names(coefficients(normal_prior))
-normal_preds[which(normal_preds == "ETHNIC_labelBlack")] <- "Black"
-normal_preds[which(normal_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
-other_preds <- names(coefficients(other_prior))
+Unimpaired_preds <- names(coefficients(Unimpaired_prior))
+Unimpaired_preds[which(Unimpaired_preds == "ETHNIC_labelBlack")] <- "Black"
+Unimpaired_preds[which(Unimpaired_preds == "ETHNIC_labelHispanic")] <- 
+  "Hispanic"
+Other_preds <- names(coefficients(Other_prior))
 MCI_preds <- names(coefficients(MCI_prior))
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
-vars <- c("AAGE", "ETHNIC_label", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", 
-          "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Astroke", "Abmi")
+vars <- unique(c(Unimpaired_preds, Other_preds, MCI_preds))
 
-analytical_sample <- ADAMS_subset %>% dplyr::select("HHIDPN", all_of(vars)) %>% 
+analytical_sample <- ADAMS_subset %>% 
   mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
-         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0)) %>% 
+         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
+         #Add intercept
+         "(Intercept)" = 1) %>% 
+  dplyr::select("HHIDPN", all_of(vars)) %>% 
   #use complete data for now
   na.omit() %>% 
-  #add intercept
-  mutate("(Intercept)" = 1) %>%
   #pre-allocate columns
   mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
 
@@ -86,6 +87,11 @@ for(b in 1:B){
                p = analytical_sample[, "p_Unimpaired"])*1
   
   #---- ****group: Other vs. MCI/Dementia ----
+  
+  
+  
+  
+  #---- ****group: MCI vs. Dementia ----
   subset_index <- which(analytical_sample$Group == 0)
   
   analytical_sample[subset_index, "p_Other"] <- 
@@ -95,8 +101,6 @@ for(b in 1:B){
   analytical_sample[subset_index, "Group"] <- 
     rbernoulli(n = length(subset_index), 
                p = analytical_sample[subset_index, "p_Other"])*2
-  
-  #---- ****group: MCI vs. Dementia ----
   
   
   #---- ****group: summary ----
