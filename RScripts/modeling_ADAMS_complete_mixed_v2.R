@@ -113,7 +113,7 @@ for(b in 1:B){
 #---- **plots ----
 extended_pallette14 <- colorRampPalette(wes_palette("Darjeeling1"))(14)
 
-#---- **** beta chains ----
+#---- ****beta chains ----
 beta_plot_data <- 
   do.call(cbind, list(t(Unimpaired_beta_chain), t(Other_beta_chain), 
                       t(MCI_beta_chain))) %>% as.data.frame() %>%
@@ -133,6 +133,26 @@ beta_chain_plot <-
 ggsave(filename = "beta_chain.jpeg", plot = beta_chain_plot, 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
        width = 14, height = 6, units = "in", device = "jpeg")
+
+#---- ****latent class chain ----
+latent_class_data <- t(latent_class_chain) %>% as.data.frame() %>%
+  mutate("run" = seq(1:B)) %>% 
+  pivot_longer(-c("run"), names_to = c("Group"), values_to = "prob") %>% 
+  arrange(desc(prob)) %>%
+  mutate_at("Group", as.factor)
+latent_class_data$Group <- fct_relevel(latent_class_data$Group, 
+                                       paste0(unique(latent_class_data$Group)))
+
+latent_class_chain_plot <- 
+  ggplot(data = latent_class_data, 
+         aes(x = as.factor(run), y = prob, colour = Group)) +       
+  geom_line(aes(group = Group)) + 
+  theme_minimal() + xlab("Run") + ylab("Proportion of Sample") +  
+  scale_color_manual(values = rev(wes_palette("Darjeeling1")))  
+  
+ggsave(filename = "latent_class_chain.jpeg", plot = latent_class_chain_plot, 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+       width = 14, height = 3, units = "in", device = "jpeg")
 
 
 
