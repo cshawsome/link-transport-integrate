@@ -56,10 +56,10 @@ cross_class_label <- table(analytical_sample$ETHNIC_label,
 B = 2
 
 #---- **chain storage ----
-normal_beta_chain <- 
-  matrix(nrow = length(coefficients(normal_prior)) , ncol = B)
-other_beta_chain <- 
-  matrix(nrow = length(coefficients(other_prior)) , ncol = B)
+Unimpaired_beta_chain <- 
+  matrix(nrow = length(coefficients(Unimpaired_prior)) , ncol = B)
+Other_beta_chain <- 
+  matrix(nrow = length(coefficients(Other_prior)) , ncol = B)
 MCI_beta_chain <- 
   matrix(nrow = length(coefficients(MCI_prior)) , ncol = B)
 
@@ -70,14 +70,30 @@ latent_class_chain <- matrix(nrow = 4, ncol = B)
 #---- **sampling ----
 for(b in 1:B){
   #---- ****latent class betas ----
-  normal_beta_chain[, b] <- mvrnorm(n = 1, mu = coefficients(normal_prior), 
-                                    Sigma = vcov(normal_prior))
-  other_beta_chain[, b] <- mvrnorm(n = 1, mu = coefficients(other_prior), 
-                                   Sigma = vcov(other_prior))
-  MCI_beta_chain[, b] <- mvrnorm(n = 1, mu = coefficients(MCI_prior), 
-                                 Sigma = vcov(MCI_prior))
+  Unimpaired_beta_chain[, b] <- 
+    mvrnorm(n = 1, mu = coefficients(Unimpaired_prior), 
+            Sigma = vcov(Unimpaired_prior))
+  Other_beta_chain[, b] <- 
+    mvrnorm(n = 1, mu = coefficients(Other_prior), Sigma = vcov(Other_prior))
+  MCI_beta_chain[, b] <- 
+    mvrnorm(n = 1, mu = coefficients(MCI_prior), Sigma = vcov(MCI_prior))
   
-  #---- ****group: Unimpaired vs. Impaired ----
+  #---- ****group membership ----
+  group = 1
+  for(model in c("Unimpaired", "Other", "MCI")){
+    subset_index <- which(analytical_sample$Group == 0)
+    preds <- get(paste0())
+    
+    analytical_sample[subset_index, paste0("p_", model)] <- 
+      expit(as.matrix(analytical_sample[subset_index, other_preds]) %*% 
+              as.matrix(other_beta_chain[, b]))
+    
+    analytical_sample[subset_index, "Group"] <- 
+      rbernoulli(n = length(subset_index), 
+                 p = analytical_sample[subset_index, "p_Other"])*2
+    
+    group = group + 1
+  }
   analytical_sample[, "p_Unimpaired"] <- 
     expit(as.matrix(analytical_sample[, normal_preds]) %*% 
             as.matrix(normal_beta_chain[, b]))
