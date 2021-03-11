@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "clusterPower")
+p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "locfit")
 
 #---- read in data ----
 #---- **ADAMS ----
@@ -32,8 +32,10 @@ analytical_sample <- ADAMS_subset %>% dplyr::select("HHIDPN", all_of(vars)) %>%
          "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0)) %>% 
   #use complete data for now
   na.omit() %>% 
+  #add intercept
+  mutate("(Intercept)" = 1) %>%
   #pre-allocate columns
-  mutate("Group" = NA, "p_Unimpaired" = NA, "p_Other" = NA, "p_MCI" = NA)
+  mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
 
 # #Sanity check
 # table(analytical_sample$ETHNIC_label, analytical_sample$Black, useNA = "ifany")
@@ -60,19 +62,44 @@ other_beta_chain <-
 MCI_beta_chain <- 
   matrix(nrow = length(coefficients(MCI_prior)) , ncol = B)
 
+latent_class_chain <- matrix(nrow = 4, ncol = B)
+
 #---- **priors ----
 
 #---- **sampling ----
 for(b in 1:B){
   #---- ****latent class betas ----
-  normal_beta_chain[, B] <- mvrnorm(n = 1, mu = coefficients(normal_prior), 
+  normal_beta_chain[, b] <- mvrnorm(n = 1, mu = coefficients(normal_prior), 
                                     Sigma = vcov(normal_prior))
-  other_beta_chain[, B] <- mvrnorm(n = 1, mu = coefficients(other_prior), 
+  other_beta_chain[, b] <- mvrnorm(n = 1, mu = coefficients(other_prior), 
                                    Sigma = vcov(other_prior))
-  MCI_beta_chain[, B] <- mvrnorm(n = 1, mu = coefficients(MCI_prior), 
+  MCI_beta_chain[, b] <- mvrnorm(n = 1, mu = coefficients(MCI_prior), 
                                  Sigma = vcov(MCI_prior))
   
-  #---- ****latent class membership ----
+  #---- ****group: Unimpaired vs. Impaired ----
+  analytical_sample[, "p_Unimpaired"] <- 
+    expit(as.matrix(analytical_sample[, normal_preds]) %*% 
+            as.matrix(normal_beta_chain[, b]))
+  
+  analytical_sample[, "Group"] <- 
+    rbernoulli(n = nrow(analytical_sample), 
+               p = analytical_sample[, "p_Unimpaired"])*1
+  
+  #---- ****group: Other vs. MCI/Dementia ----
+  subset_index <- which(analytical_sample$Group == 0)
+  
+  analytical_sample[subset_index, "p_Other"] <- 
+    expit(as.matrix(analytical_sample[subset_index, other_preds]) %*% 
+            as.matrix(other_beta_chain[, b]))
+  
+  analytical_sample[subset_index, "Group"] <- 
+    rbernoulli(n = length(subset_index), 
+               p = analytical_sample[subset_index, "p_Other"])*2
+  
+  #---- ****group: MCI vs. Dementia ----
+  
+  
+  #---- ****group: summary ----
 }
 
 
