@@ -3,7 +3,8 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "locfit")
+p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "locfit", 
+       "wesanderson", "RColorBrewer")
 
 #---- read in data ----
 #---- **ADAMS ----
@@ -110,6 +111,8 @@ for(b in 1:B){
 }
 
 #---- **plots ----
+extended_pallette14 <- colorRampPalette(wes_palette("Darjeeling1"))(14)
+
 #---- **** beta chains ----
 beta_plot_data <- 
   do.call(cbind, list(t(Unimpaired_beta_chain), t(Other_beta_chain), 
@@ -117,11 +120,20 @@ beta_plot_data <-
   mutate("run" = seq(1:B)) %>% 
   pivot_longer(-c("run"), names_to = c("Group", "Predictor"), 
                names_sep = ":", values_to = "beta")
-  
-ggplot(data = df, aes(x = factor(Year), y = Value, colour = School)) +       
-  geom_line(aes(group = School))
-  
-  
-  
-  
-  
+
+beta_chain_plot <- 
+  ggplot(data = beta_plot_data, 
+         aes(x = as.factor(run), y = beta, colour = Predictor)) +       
+  geom_line(aes(group = Predictor)) + 
+  facet_grid(rows = vars(factor(Group, 
+                                levels = c("Unimpaired", "MCI", "Other")))) + 
+  theme_bw() + xlab("Run") + 
+  scale_color_manual(values = rev(extended_pallette14))
+
+ggsave(filename = "beta_chain.jpeg", plot = beta_chain_plot, 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+       width = 14, height = 6, units = "in", device = "jpeg")
+
+
+
+
