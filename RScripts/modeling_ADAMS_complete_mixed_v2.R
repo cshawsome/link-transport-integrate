@@ -25,7 +25,9 @@ analytical_sample <- ADAMS_subset %>% dplyr::select("HHIDPN", all_of(vars)) %>%
   mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
          "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0)) %>% 
   #use complete data for now
-  na.omit()
+  na.omit() %>% 
+  #pre-allocate columns
+  mutate("Group" = NA, "p_Unimpaired" = NA, "p_Other" = NA, "p_MCI" = NA)
 
 # #Sanity check
 # table(analytical_sample$ETHNIC_label, analytical_sample$Black, useNA = "ifany")
