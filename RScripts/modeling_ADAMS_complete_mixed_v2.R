@@ -49,7 +49,9 @@ analytical_sample <- ADAMS_subset %>%
 #---- all-way contingency table ----
 #We have one small cell-- Hispanics who have had a stroke
 cross_class_label <- table(analytical_sample$ETHNIC_label, 
-                           analytical_sample$Astroke) %>% as.data.frame()
+                           analytical_sample$Astroke) %>% as.data.frame() %>% 
+  mutate("Stroke" = ifelse(Var2 == 0, "No Stroke", "Stroke")) %>% 
+  unite("Cell Label", c("Var1", "Stroke"), sep = " | ")
 
 #---- Bayes Stuff ----
 #---- **parameters ----
@@ -69,6 +71,12 @@ MCI_beta_chain <-
 
 latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
   set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
+
+pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
+  set_colnames(apply(expand.grid(seq(1, B), 
+                                 c("Unimpaired", "Other", "MCI", "Dementia")), 
+                     1, paste, collapse = ":")) %>% 
+  set_rownames(cross_class_label$`Cell Label`)
 
 #---- **priors ----
 #uninformative
@@ -108,6 +116,10 @@ for(b in 1:B){
   #---- ****group: summary ----
   latent_class_chain[, b] <- 
     table(analytical_sample$Group)/sum(table(analytical_sample$Group))
+  
+  #---- ****p(contingency table cell) ----
+  
+  pi_chain[, b] <- alpha_0 + 
 }
 
 #---- **plots ----
