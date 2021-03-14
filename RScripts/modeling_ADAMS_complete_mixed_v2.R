@@ -117,12 +117,20 @@ for(b in 1:B){
     table(analytical_sample$Group)/sum(table(analytical_sample$Group))
   
   #---- ****p(contingency table cell) ----
+  for(i in 1:4){
+    subset <- analytical_sample %>% filter(Group == i) 
+    posterior_counts <- alpha_0 + 
+      table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
+      dplyr::select("Freq") %>% unlist()
+    
+    pi_chain[, paste0(b, ":", i)] <- rdirichlet(1, alpha = posterior_counts)
+  }
   
-  pi_chain[, b] <- alpha_0 + 
 }
 
 #---- **plots ----
 extended_pallette14 <- colorRampPalette(wes_palette("Darjeeling1"))(14)
+extended_pallette6 <- colorRampPalette(wes_palette("Darjeeling1"))(6)
 
 #---- ****beta chains ----
 beta_plot_data <- 
@@ -160,11 +168,33 @@ latent_class_chain_plot <-
   geom_line(aes(group = Group)) + 
   theme_minimal() + xlab("Run") + ylab("Proportion of Sample") +  
   scale_color_manual(values = rev(wes_palette("Darjeeling1")))  
-  
+
 ggsave(filename = "latent_class_chain.jpeg", plot = latent_class_chain_plot, 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
        width = 14, height = 3, units = "in", device = "jpeg")
 
+#---- ****pi chain ----
+pi_chain_data <- pi_chain %>% as.data.frame() %>% rownames_to_column("Cell") %>% 
+  pivot_longer(-c("Cell"), names_to = c("Run", "Group"), names_sep = ":", 
+               values_to = "probability") %>% 
+  mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
+                                   Group == 2 ~ "Other", Group == 3 ~ "MCI", 
+                                   Group == 4 ~ "Dementia")) %>% 
+  mutate_if(is.character, as.factor) 
+
+pi_chain_plot <- ggplot(data = pi_chain_data, 
+                        aes(x = as.factor(Run), y = probability, 
+                            colour = Cell)) +       
+  geom_line(aes(group = Cell)) + 
+  theme_minimal() + xlab("Run") + ylab("Probability of cell membership") +  
+  scale_color_manual(values = rev(extended_pallette6)) + 
+  facet_grid(rows = vars(factor(Group_label, 
+                                levels = c("Unimpaired", "MCI", "Dementia", 
+                                           "Other")))) + theme_bw() 
+
+ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+       width = 14, height = 5, units = "in", device = "jpeg")
 
 
 
