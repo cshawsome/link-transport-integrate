@@ -51,7 +51,7 @@ synthetic_sample <- ADAMS_subset %>%
 cross_class_label <- table(synthetic_sample$ETHNIC_label, 
                            synthetic_sample$Astroke) %>% as.data.frame() %>% 
   mutate("Stroke" = ifelse(Var2 == 0, "No Stroke", "Stroke")) %>% 
-  unite("Cell Label", c("Var1", "Stroke"), sep = " | ")
+  unite("Cell Label", c("Var1", "Stroke"), sep = " | ", remove = FALSE)
 
 #---- Bayes Stuff ----
 #---- **parameters ----
@@ -76,6 +76,11 @@ pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>%
   set_colnames(apply(expand.grid(seq(1, B), seq(1:4)), 1, paste, 
                      collapse = ":")) %>% 
   set_rownames(cross_class_label$`Cell Label`)
+
+#---- **other pre-allocation ----
+contingency_table <- cross_class_label %>% dplyr::select("Var1", "Var2") %>% 
+  cbind(as.data.frame(matrix(0, nrow = nrow(cross_class_label) , ncol = 4)) %>% 
+          set_colnames(paste0("Freq", seq(1, 4))))
 
 #---- **priors ----
 #uninformative
@@ -116,14 +121,19 @@ for(b in 1:B){
   latent_class_chain[, b] <- 
     table(synthetic_sample$Group)/sum(table(synthetic_sample$Group))
   
-  #---- ****p(contingency table cell) ----
   for(i in 1:4){
     subset <- synthetic_sample %>% filter(Group == i) 
     posterior_counts <- alpha_0 + 
       table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
       dplyr::select("Freq") %>% unlist()
     
+    #---- ****p(contingency table cell) ----
     pi_chain[, paste0(b, ":", i)] <- rdirichlet(1, alpha = posterior_counts)
+    
+    #---- ****contingency table count ----
+    contingency_table[, paste0("Freq", i)] <- 
+      rmultinom(n = 1, size = nrow(subset), 
+                prob = pi_chain[, paste0(b, ":", i)])
   }
   
 }
