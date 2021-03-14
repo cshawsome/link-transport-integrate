@@ -73,9 +73,8 @@ latent_class_chain <- matrix(nrow = 4, ncol = B) %>%
   set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
 
 pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
-  set_colnames(apply(expand.grid(seq(1, B), 
-                                 c("Unimpaired", "Other", "MCI", "Dementia")), 
-                     1, paste, collapse = ":")) %>% 
+  set_colnames(apply(expand.grid(seq(1, B), seq(1:4)), 1, paste, 
+                     collapse = ":")) %>% 
   set_rownames(cross_class_label$`Cell Label`)
 
 #---- **priors ----
