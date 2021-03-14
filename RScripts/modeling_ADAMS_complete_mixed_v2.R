@@ -28,7 +28,7 @@ MCI_preds <- names(coefficients(MCI_prior))
 #based on analysis in priors_latent_classes.R
 vars <- unique(c(Unimpaired_preds, Other_preds, MCI_preds, "ETHNIC_label"))
 
-analytical_sample <- ADAMS_subset %>% 
+synthetic_sample <- ADAMS_subset %>% 
   mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
          "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
          #Add intercept
@@ -48,8 +48,8 @@ analytical_sample <- ADAMS_subset %>%
 
 #---- all-way contingency table ----
 #We have one small cell-- Hispanics who have had a stroke
-cross_class_label <- table(analytical_sample$ETHNIC_label, 
-                           analytical_sample$Astroke) %>% as.data.frame() %>% 
+cross_class_label <- table(synthetic_sample$ETHNIC_label, 
+                           synthetic_sample$Astroke) %>% as.data.frame() %>% 
   mutate("Stroke" = ifelse(Var2 == 0, "No Stroke", "Stroke")) %>% 
   unite("Cell Label", c("Var1", "Stroke"), sep = " | ")
 
@@ -94,31 +94,31 @@ for(b in 1:B){
   
   #---- ****group membership ----
   group = 1
-  analytical_sample[, "Group"] <- 0
+  synthetic_sample[, "Group"] <- 0
   for(model in c("Unimpaired", "Other", "MCI")){
-    subset_index <- which(analytical_sample$Group == 0)
+    subset_index <- which(synthetic_sample$Group == 0)
     
-    analytical_sample[subset_index, paste0("p_", model)] <- 
-      expit(as.matrix(analytical_sample[subset_index, 
-                                        get(paste0(model, "_preds"))]) %*% 
+    synthetic_sample[subset_index, paste0("p_", model)] <- 
+      expit(as.matrix(synthetic_sample[subset_index, 
+                                       get(paste0(model, "_preds"))]) %*% 
               as.matrix(get(paste0(model, "_beta_chain"))[, b]))
     
-    analytical_sample[subset_index, "Group"] <- 
+    synthetic_sample[subset_index, "Group"] <- 
       rbernoulli(n = length(subset_index), 
-                 p = analytical_sample[subset_index, paste0("p_", model)])*group
+                 p = synthetic_sample[subset_index, paste0("p_", model)])*group
     
     group = group + 1
   }
   
-  analytical_sample[which(analytical_sample$Group == 0), "Group"] <- 4
+  synthetic_sample[which(synthetic_sample$Group == 0), "Group"] <- 4
   
   #---- ****group: summary ----
   latent_class_chain[, b] <- 
-    table(analytical_sample$Group)/sum(table(analytical_sample$Group))
+    table(synthetic_sample$Group)/sum(table(synthetic_sample$Group))
   
   #---- ****p(contingency table cell) ----
   for(i in 1:4){
-    subset <- analytical_sample %>% filter(Group == i) 
+    subset <- synthetic_sample %>% filter(Group == i) 
     posterior_counts <- alpha_0 + 
       table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
       dplyr::select("Freq") %>% unlist()
