@@ -77,9 +77,20 @@ latent_class_chain <- matrix(nrow = 4, ncol = B) %>%
   set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
 
 pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
-  set_colnames(apply(expand.grid(seq(1, B), seq(1:4)), 1, paste, 
+  set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste, 
                      collapse = ":")) %>% 
   set_rownames(cross_class_label$`Cell Label`)
+
+Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>% 
+  set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste, 
+                     collapse = ":")) %>% 
+  set_rownames(Z)
+
+mu_chain <- 
+  matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>% 
+  set_colnames(apply(
+    expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste, 
+                     collapse = ":")) %>% set_rownames(Z)
 
 # #---- **other pre-allocation ----
 # contingency_table <- cross_class_label %>% dplyr::select("Var1", "Var2") %>% 
@@ -132,11 +143,11 @@ for(b in 1:B){
       dplyr::select("Freq") %>% unlist()
     
     #---- ****p(contingency table cell) ----
-    pi_chain[, paste0(b, ":", i)] <- rdirichlet(1, alpha = posterior_counts)
+    pi_chain[, paste0(i, ":", b)] <- rdirichlet(1, alpha = posterior_counts)
     
     #---- ****contingency table count ----
     contingency_table <- rmultinom(n = 1, size = nrow(subset), 
-                                   prob = pi_chain[, paste0(b, ":", i)])
+                                   prob = pi_chain[, paste0(i, ":", b)])
     
     #---- ****make U matrix ----
     U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
@@ -154,7 +165,7 @@ for(b in 1:B){
     
     #---- ****mu hat ----
     continuous_covariates <- subset %>% 
-      dplyr::select(all_of(continuous_vars)) %>% as.matrix
+      dplyr::select(all_of(Z)) %>% as.matrix
     
     mu_hat <- UtU_inv %*% t(U) %*% continuous_covariates
     
@@ -164,7 +175,8 @@ for(b in 1:B){
     #---- ****draw Sigma | Y ----
     sig_Y <- riwish(v = nrow(subset) - nrow(contingency_table), 
                     S = solve(t(eps_hat) %*% eps_hat))
-  
+    
+    Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
   }
   
 }
