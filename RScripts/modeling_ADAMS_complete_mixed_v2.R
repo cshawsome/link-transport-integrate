@@ -60,7 +60,7 @@ cross_class_label <- table(synthetic_sample$ETHNIC_label,
 #---- Bayes Stuff ----
 #---- **parameters ----
 #number of runs
-B = 2
+B = 10
 
 #categorical vars contrasts matrix
 A = do.call(cbind, list(
@@ -92,10 +92,10 @@ pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>%
                      collapse = ":")) %>% 
   set_rownames(cross_class_label$`Cell Label`)
 
-# Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>% 
-#   set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste, 
-#                      collapse = ":")) %>% 
-#   set_rownames(Z)
+Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
+  set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste,
+                     collapse = ":")) %>%
+  set_rownames(Z)
 # 
 # mu_chain <- 
 #   matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>% 
@@ -172,19 +172,20 @@ for(b in 1:B){
       U[index:(index - 1 + contingency_table[j, ]), j] <- 1
     }
     
-    UtU_inv <- diag(1/contingency_table[, 1])
+    UtU <- diag(contingency_table[, 1])
     
     #---- ****mu hat ----
     continuous_covariates <- subset %>% 
       dplyr::select(all_of(Z)) %>% as.matrix
     
-    mu_hat <- UtU_inv %*% t(U) %*% continuous_covariates
+    beta_hat <- solve(t(A) %*% UtU %*% A) %*% 
+      t(A) %*% t(U) %*% continuous_covariates
     
     #---- ****epsilon hat ----
-    eps_hat <- continuous_covariates - U %*% mu_hat
+    eps_hat <- continuous_covariates - U %*% A %*% beta_hat
     
     #---- ****draw Sigma | Y ----
-    sig_Y <- riwish(v = nrow(subset) - nrow(contingency_table), 
+    sig_Y <- riwish(v = nrow(subset) - nrow(beta_hat), 
                     S = solve(t(eps_hat) %*% eps_hat))
     
     Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
@@ -239,7 +240,7 @@ ggsave(filename = "latent_class_chain.jpeg", plot = latent_class_chain_plot,
 
 #---- ****pi chain ----
 pi_chain_data <- pi_chain %>% as.data.frame() %>% rownames_to_column("Cell") %>% 
-  pivot_longer(-c("Cell"), names_to = c("Run", "Group"), names_sep = ":", 
+  pivot_longer(-c("Cell"), names_to = c("Group", "Run"), names_sep = ":", 
                values_to = "probability") %>% 
   mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
                                    Group == 2 ~ "Other", Group == 3 ~ "MCI", 
@@ -257,6 +258,29 @@ pi_chain_plot <- ggplot(data = pi_chain_data,
                                            "Other")))) + theme_bw() 
 
 ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+       width = 14, height = 5, units = "in", device = "jpeg")
+
+#---- ****Sigma chain ----
+Sigma_chain_data <- Sigma_chain %>% as.data.frame() %>% 
+  rownames_to_column("Z") %>% 
+  pivot_longer(-c("Z"), names_to = c("Group", "Run"), names_sep = ":", 
+               values_to = "variance") %>% 
+  mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
+                                   Group == 2 ~ "Other", Group == 3 ~ "MCI", 
+                                   Group == 4 ~ "Dementia")) %>% 
+  mutate_if(is.character, as.factor) 
+
+Sigma_chain_plot <- ggplot(data = Sigma_chain_data, 
+                           aes(x = as.factor(Run), y = variance, colour = Z)) +       
+  geom_line(aes(group = Z)) + 
+  theme_minimal() + xlab("Run") + ylab("Variance") +  
+  scale_color_manual(values = rev(extended_pallette14)) + 
+  facet_grid(rows = vars(factor(Group_label, 
+                                levels = c("Unimpaired", "MCI", "Dementia", 
+                                           "Other")))) + theme_bw() 
+
+ggsave(filename = "Sigma_chain.jpeg", plot = pi_chain_plot, 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
        width = 14, height = 5, units = "in", device = "jpeg")
 
