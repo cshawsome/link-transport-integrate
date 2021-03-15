@@ -74,13 +74,13 @@ A = do.call(cbind, list(
   rep(c(1, -1), 3)))
 
 #---- **chain storage ----
-Unimpaired_beta_chain <- 
+Unimpaired_gamma_chain <- 
   matrix(nrow = length(coefficients(Unimpaired_prior)), ncol = B) %>% 
   set_rownames(paste0("Unimpaired:", Unimpaired_preds))
-Other_beta_chain <- 
+Other_gamma_chain <- 
   matrix(nrow = length(coefficients(Other_prior)), ncol = B) %>% 
   set_rownames(paste0("Other:", Other_preds))
-MCI_beta_chain <- 
+MCI_gamma_chain <- 
   matrix(nrow = length(coefficients(MCI_prior)), ncol = B) %>% 
   set_rownames(paste0("MCI:", MCI_preds))
 
@@ -114,13 +114,13 @@ alpha_0 <- rep(1, nrow(cross_class_label))
 
 #---- **sampling ----
 for(b in 1:B){
-  #---- ****latent class betas ----
-  Unimpaired_beta_chain[, b] <- 
+  #---- ****latent class gammas ----
+  Unimpaired_gamma_chain[, b] <- 
     mvrnorm(n = 1, mu = coefficients(Unimpaired_prior), 
             Sigma = vcov(Unimpaired_prior))
-  Other_beta_chain[, b] <- 
+  Other_gamma_chain[, b] <- 
     mvrnorm(n = 1, mu = coefficients(Other_prior), Sigma = vcov(Other_prior))
-  MCI_beta_chain[, b] <- 
+  MCI_gamma_chain[, b] <- 
     mvrnorm(n = 1, mu = coefficients(MCI_prior), Sigma = vcov(MCI_prior))
   
   #---- ****group membership ----
@@ -132,7 +132,7 @@ for(b in 1:B){
     synthetic_sample[subset_index, paste0("p_", model)] <- 
       expit(as.matrix(synthetic_sample[subset_index, 
                                        get(paste0(model, "_preds"))]) %*% 
-              as.matrix(get(paste0(model, "_beta_chain"))[, b]))
+              as.matrix(get(paste0(model, "_gamma_chain"))[, b]))
     
     synthetic_sample[subset_index, "Group"] <- 
       rbernoulli(n = length(subset_index), 
@@ -197,24 +197,24 @@ for(b in 1:B){
 extended_pallette14 <- colorRampPalette(wes_palette("Darjeeling1"))(14)
 extended_pallette6 <- colorRampPalette(wes_palette("Darjeeling1"))(6)
 
-#---- ****beta chains ----
-beta_plot_data <- 
-  do.call(cbind, list(t(Unimpaired_beta_chain), t(Other_beta_chain), 
-                      t(MCI_beta_chain))) %>% as.data.frame() %>%
+#---- ****gamma chains ----
+gamma_plot_data <- 
+  do.call(cbind, list(t(Unimpaired_gamma_chain), t(Other_gamma_chain), 
+                      t(MCI_gamma_chain))) %>% as.data.frame() %>%
   mutate("run" = seq(1:B)) %>% 
   pivot_longer(-c("run"), names_to = c("Group", "Predictor"), 
-               names_sep = ":", values_to = "beta")
+               names_sep = ":", values_to = "gamma")
 
-beta_chain_plot <- 
-  ggplot(data = beta_plot_data, 
-         aes(x = as.factor(run), y = beta, colour = Predictor)) +       
+gamma_chain_plot <- 
+  ggplot(data = gamma_plot_data, 
+         aes(x = as.factor(run), y = gamma, colour = Predictor)) +       
   geom_line(aes(group = Predictor)) + 
   facet_grid(rows = vars(factor(Group, 
                                 levels = c("Unimpaired", "MCI", "Other")))) + 
   theme_bw() + xlab("Run") + 
   scale_color_manual(values = rev(extended_pallette14))
 
-ggsave(filename = "beta_chain.jpeg", plot = beta_chain_plot, 
+ggsave(filename = "gamma_chain.jpeg", plot = gamma_chain_plot, 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
        width = 14, height = 6, units = "in", device = "jpeg")
 
