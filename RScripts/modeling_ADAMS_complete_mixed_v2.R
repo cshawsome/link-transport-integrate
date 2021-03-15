@@ -62,6 +62,17 @@ cross_class_label <- table(synthetic_sample$ETHNIC_label,
 #number of runs
 B = 2
 
+#categorical vars contrasts matrix
+A = do.call(cbind, list(
+  #intercept
+  rep(1, nrow(cross_class_label)),
+  #race/ethnicity first main effect contrast
+  c(rep(1, 2), rep(0, 2), rep(-1, 2)),
+  #race/ethnicity second main effect contrast
+  c(rep(0, 2), rep(1, 2), rep(-1, 2)),
+  #stroke main effect contrast
+  rep(c(1, -1), 3)))
+
 #---- **chain storage ----
 Unimpaired_beta_chain <- 
   matrix(nrow = length(coefficients(Unimpaired_prior)), ncol = B) %>% 
@@ -81,16 +92,16 @@ pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>%
                      collapse = ":")) %>% 
   set_rownames(cross_class_label$`Cell Label`)
 
-Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>% 
-  set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste, 
-                     collapse = ":")) %>% 
-  set_rownames(Z)
-
-mu_chain <- 
-  matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>% 
-  set_colnames(apply(
-    expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste, 
-                     collapse = ":")) %>% set_rownames(Z)
+# Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>% 
+#   set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste, 
+#                      collapse = ":")) %>% 
+#   set_rownames(Z)
+# 
+# mu_chain <- 
+#   matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>% 
+#   set_colnames(apply(
+#     expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste, 
+#                      collapse = ":")) %>% set_rownames(Z)
 
 # #---- **other pre-allocation ----
 # contingency_table <- cross_class_label %>% dplyr::select("Var1", "Var2") %>% 
