@@ -96,12 +96,12 @@ Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
   set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste,
                      collapse = ":")) %>%
   set_rownames(Z)
- 
-# mu_chain <- 
-#   matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>% 
-#   set_colnames(apply(
-#     expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste, 
-#                      collapse = ":")) %>% set_rownames(Z)
+
+mu_chain <-
+  matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>%
+  set_colnames(apply(
+    expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste,
+    collapse = ":")) %>% set_rownames(Z)
 
 # #---- **other pre-allocation ----
 # contingency_table <- cross_class_label %>% dplyr::select("Var1", "Var2") %>% 
@@ -178,8 +178,9 @@ for(b in 1:B){
     continuous_covariates <- subset %>% 
       dplyr::select(all_of(Z)) %>% as.matrix
     
-    beta_hat <- solve(t(A) %*% UtU %*% A) %*% 
-      t(A) %*% t(U) %*% continuous_covariates
+    V <- solve(t(A) %*% UtU %*% A)
+    
+    beta_hat <-  V %*% t(A) %*% t(U) %*% continuous_covariates
     
     #---- ****epsilon hat ----
     eps_hat <- continuous_covariates - U %*% A %*% beta_hat
@@ -189,6 +190,16 @@ for(b in 1:B){
                     S = solve(t(eps_hat) %*% eps_hat))
     
     Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
+    
+    #---- ****draw beta | Sigma, Y ----
+    Sigma_kron_V <- kronecker(sig_Y, V, FUN = "*", make.dimnames = TRUE)
+    beta_Sigma_Y <- 
+      mvrnorm(n = 1, mu = as.vector(beta_hat), Sigma = Sigma_kron_V)
+    
+    #---- ****compute mu ----
+    mu_chain[, paste0(i, ":", seq(1, nrow(cross_class_label)), ":", b)] <- 
+      t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = length(Z), 
+                     byrow = FALSE))
   }
   
 }
@@ -281,6 +292,29 @@ Sigma_chain_plot <- ggplot(data = Sigma_chain_data,
                                            "Other")))) + theme_bw() 
 
 ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+       width = 14, height = 5, units = "in", device = "jpeg")
+
+#---- ****mu chain ----
+mu_chain_data <- mu_chain %>% as.data.frame() %>% 
+  rownames_to_column("Z") %>% 
+  pivot_longer(-c("Z"), names_to = c("Group", "Cell", "Run"), names_sep = ":", 
+               values_to = "mu") %>% 
+  mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
+                                   Group == 2 ~ "Other", Group == 3 ~ "MCI", 
+                                   Group == 4 ~ "Dementia")) %>% 
+  mutate_if(is.character, as.factor) 
+
+mu_chain_plot <- ggplot(data = mu_chain_data, 
+                        aes(x = as.factor(Run), y = mu, colour = Z)) +       
+  geom_line(aes(group = Z)) + 
+  theme_minimal() + xlab("Run") + ylab("mu") +  
+  scale_color_manual(values = rev(extended_pallette14)) + 
+  facet_grid(rows = vars(factor(Group_label, 
+                                levels = c("Unimpaired", "MCI", "Dementia", 
+                                           "Other")))) + theme_bw() 
+
+ggsave(filename = "mu_chain.jpeg", plot = Sigma_chain_plot, 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
        width = 14, height = 5, units = "in", device = "jpeg")
 
