@@ -96,7 +96,7 @@ Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
   set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste,
                      collapse = ":")) %>%
   set_rownames(Z)
-# 
+ 
 # mu_chain <- 
 #   matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>% 
 #   set_colnames(apply(
@@ -174,7 +174,7 @@ for(b in 1:B){
     
     UtU <- diag(contingency_table[, 1])
     
-    #---- ****mu hat ----
+    #---- ****beta hat ----
     continuous_covariates <- subset %>% 
       dplyr::select(all_of(Z)) %>% as.matrix
     
@@ -280,7 +280,7 @@ Sigma_chain_plot <- ggplot(data = Sigma_chain_data,
                                 levels = c("Unimpaired", "MCI", "Dementia", 
                                            "Other")))) + theme_bw() 
 
-ggsave(filename = "Sigma_chain.jpeg", plot = pi_chain_plot, 
+ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
        width = 14, height = 5, units = "in", device = "jpeg")
 
