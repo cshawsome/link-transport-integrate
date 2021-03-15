@@ -3,8 +3,8 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "locfit", 
-       "wesanderson", "RColorBrewer")
+p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
+       "locfit", "wesanderson", "RColorBrewer")
 
 #---- read in data ----
 #---- **ADAMS ----
@@ -38,6 +38,10 @@ synthetic_sample <- ADAMS_subset %>%
   na.omit() %>% 
   #pre-allocate columns
   mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
+
+#Continuous vars (notation from Schafer 1997)
+Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+       "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
 
 # #Sanity check
 # table(analytical_sample$ETHNIC_label, analytical_sample$Black, useNA = "ifany")
@@ -77,10 +81,10 @@ pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>%
                      collapse = ":")) %>% 
   set_rownames(cross_class_label$`Cell Label`)
 
-#---- **other pre-allocation ----
-contingency_table <- cross_class_label %>% dplyr::select("Var1", "Var2") %>% 
-  cbind(as.data.frame(matrix(0, nrow = nrow(cross_class_label) , ncol = 4)) %>% 
-          set_colnames(paste0("Freq", seq(1, 4))))
+# #---- **other pre-allocation ----
+# contingency_table <- cross_class_label %>% dplyr::select("Var1", "Var2") %>% 
+#   cbind(as.data.frame(matrix(0, nrow = nrow(cross_class_label) , ncol = 4)) %>% 
+#           set_colnames(paste0("Freq", seq(1, 4))))
 
 #---- **priors ----
 #uninformative
@@ -131,9 +135,36 @@ for(b in 1:B){
     pi_chain[, paste0(b, ":", i)] <- rdirichlet(1, alpha = posterior_counts)
     
     #---- ****contingency table count ----
-    contingency_table[, paste0("Freq", i)] <- 
-      rmultinom(n = 1, size = nrow(subset), 
-                prob = pi_chain[, paste0(b, ":", i)])
+    contingency_table <- rmultinom(n = 1, size = nrow(subset), 
+                                   prob = pi_chain[, paste0(b, ":", i)])
+    
+    #---- ****make U matrix ----
+    U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
+    
+    for(j in 1:nrow(contingency_table)){
+      if(j == 1){
+        index = 1
+      } else{
+        index = sum(contingency_table[1:(j - 1), ]) + 1
+      }
+      U[index:(index - 1 + contingency_table[j, ]), j] <- 1
+    }
+    
+    UtU_inv <- diag(1/contingency_table[, 1])
+    
+    #---- ****mu hat ----
+    continuous_covariates <- subset %>% 
+      dplyr::select(all_of(continuous_vars)) %>% as.matrix
+    
+    mu_hat <- UtU_inv %*% t(U) %*% continuous_covariates
+    
+    #---- ****epsilon hat ----
+    eps_hat <- continuous_covariates - U %*% mu_hat
+    
+    #---- ****draw Sigma | Y ----
+    sig_Y <- riwish(v = nrow(subset) - nrow(contingency_table), 
+                    S = solve(t(eps_hat) %*% eps_hat))
+  
   }
   
 }
