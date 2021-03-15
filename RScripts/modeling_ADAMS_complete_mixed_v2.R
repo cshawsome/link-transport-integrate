@@ -218,7 +218,8 @@ gamma_plot_data <-
 
 gamma_chain_plot <- 
   ggplot(data = gamma_plot_data, 
-         aes(x = as.factor(run), y = gamma, colour = Predictor)) +       
+         aes(x = reorder(run, sort(as.numeric(run))), y = gamma, 
+             colour = Predictor)) +       
   geom_line(aes(group = Predictor)) + 
   facet_grid(rows = vars(factor(Group, 
                                 levels = c("Unimpaired", "MCI", "Other")))) + 
@@ -239,11 +240,11 @@ latent_class_data$Group <- fct_relevel(latent_class_data$Group,
                                        paste0(unique(latent_class_data$Group)))
 
 latent_class_chain_plot <- 
-  ggplot(data = latent_class_data, 
-         aes(x = as.factor(run), y = prob, colour = Group)) +       
-  geom_line(aes(group = Group)) + 
-  theme_minimal() + xlab("Run") + ylab("Proportion of Sample") +  
-  scale_color_manual(values = rev(wes_palette("Darjeeling1")))  
+  ggplot(data = latent_class_data, aes(x = run, y = prob, colour = Group)) +       
+  geom_line(aes(group = Group)) + theme_minimal() + xlab("Run") + 
+  ylab("Proportion of Sample") +  
+  scale_color_manual(values = rev(wes_palette("Darjeeling1"))) + 
+  scale_x_continuous(breaks = seq(1, B))
 
 ggsave(filename = "latent_class_chain.jpeg", plot = latent_class_chain_plot, 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
@@ -256,14 +257,15 @@ pi_chain_data <- pi_chain %>% as.data.frame() %>% rownames_to_column("Cell") %>%
   mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
                                    Group == 2 ~ "Other", Group == 3 ~ "MCI", 
                                    Group == 4 ~ "Dementia")) %>% 
+  mutate_at("Run", as.numeric) %>%
   mutate_if(is.character, as.factor) 
 
 pi_chain_plot <- ggplot(data = pi_chain_data, 
-                        aes(x = as.factor(Run), y = probability, 
-                            colour = Cell)) +       
+                        aes(x = Run, y = probability, colour = Cell)) +       
   geom_line(aes(group = Cell)) + 
   theme_minimal() + xlab("Run") + ylab("Probability of cell membership") +  
   scale_color_manual(values = rev(extended_pallette6)) + 
+  scale_x_continuous(breaks = seq(1, B)) + 
   facet_grid(rows = vars(factor(Group_label, 
                                 levels = c("Unimpaired", "MCI", "Dementia", 
                                            "Other")))) + theme_bw() 
@@ -279,14 +281,16 @@ Sigma_chain_data <- Sigma_chain %>% as.data.frame() %>%
                values_to = "variance") %>% 
   mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
                                    Group == 2 ~ "Other", Group == 3 ~ "MCI", 
-                                   Group == 4 ~ "Dementia")) %>% 
+                                   Group == 4 ~ "Dementia")) %>%
+  mutate_at("Run", as.numeric) %>%
   mutate_if(is.character, as.factor) 
 
 Sigma_chain_plot <- ggplot(data = Sigma_chain_data, 
-                           aes(x = as.factor(Run), y = variance, colour = Z)) +       
+                           aes(x = Run, y = variance, colour = Z)) +       
   geom_line(aes(group = Z)) + 
   theme_minimal() + xlab("Run") + ylab("Variance") +  
   scale_color_manual(values = rev(extended_pallette14)) + 
+  scale_x_continuous(breaks = seq(1, B)) + 
   facet_grid(rows = vars(factor(Group_label, 
                                 levels = c("Unimpaired", "MCI", "Dementia", 
                                            "Other")))) + theme_bw() 
@@ -303,13 +307,15 @@ mu_chain_data <- mu_chain %>% as.data.frame() %>%
   mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
                                    Group == 2 ~ "Other", Group == 3 ~ "MCI", 
                                    Group == 4 ~ "Dementia")) %>% 
+  mutate_at("Run", as.numeric) %>%
   mutate_if(is.character, as.factor) 
 
 mu_chain_plot <- ggplot(data = mu_chain_data, 
-                        aes(x = as.factor(Run), y = mu, colour = Z)) +       
+                        aes(x = Run, y = mu, colour = Z)) +       
   geom_line(aes(group = Z)) + 
   theme_minimal() + xlab("Run") + ylab("mu") +  
-  scale_color_manual(values = rev(extended_pallette14)) + 
+  scale_color_manual(values = rev(extended_pallette14)) +
+  scale_x_continuous(breaks = seq(1, B)) + 
   facet_grid(rows = vars(factor(Group_label, 
                                 levels = c("Unimpaired", "MCI", "Dementia", 
                                            "Other")))) + theme_bw() 
