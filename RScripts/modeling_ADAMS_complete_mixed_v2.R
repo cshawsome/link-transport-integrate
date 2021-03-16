@@ -238,7 +238,12 @@ for(b in 1:B){
   }
 }
 
-#---- post-processing ----
+#---- **post-processing ----
+#Update race/ethnicity label to match new synthetic data
+synthetic_sample %<>% 
+  mutate("ETHNIC_label" = case_when(Black == 1 ~ "Black", 
+                                    Hispanic == 1 ~ "Hispanic", 
+                                    TRUE ~ "White"))
 
 #---- **plots ----
 extended_pallette14 <- colorRampPalette(wes_palette("Darjeeling1"))(14)
