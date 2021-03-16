@@ -208,6 +208,7 @@ for(b in 1:B){
       set_colnames(c("Count", W))
     
     for(j in 1:nrow(contingency_table)){
+      if(contingency_table[j, "Count"] == 0){next}
       if(j == 1){
         index = 1
       } else{
