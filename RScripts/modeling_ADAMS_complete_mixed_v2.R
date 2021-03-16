@@ -217,8 +217,13 @@ for(b in 1:B){
       #Z (continuous data)
       subset[index:(index - 1 + contingency_table[j, "Count"]), 
              colnames(sig_Y)] <- 
-        mvrnorm(n = contingency_table[j, "Count"], 
-                mu = mu_chain[, paste0(i, ":", j, ":", b)], Sigma = sig_Y)
+        ifelse(index == (index - 1 + contingency_table[j, "Count"]), 
+               t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
+                                   mu = mu_chain[, paste0(i, ":", j, ":", b)], 
+                                   Sigma = sig_Y))), 
+               mvrnorm(n = contingency_table[j, "Count"],
+                       mu = mu_chain[, paste0(i, ":", j, ":", b)], 
+                       Sigma = sig_Y))
       
       #W (categorical data)
       subset[index:(index - 1 + contingency_table[j, "Count"]), 
