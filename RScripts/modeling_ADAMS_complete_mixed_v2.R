@@ -42,6 +42,8 @@ synthetic_sample <- ADAMS_subset %>%
 #Continuous vars (notation from Schafer 1997)
 Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
        "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
+#Categorical vars (notation from Schafer 1997)
+W <- c("Black", "Hispanic", "Astroke")
 
 # #Sanity check
 # table(analytical_sample$ETHNIC_label, analytical_sample$Black, useNA = "ifany")
@@ -205,21 +207,38 @@ for(b in 1:B){
     
     #---- ****draw data ----
     #reformat contingency table
+    contingency_table %<>% cbind(do.call(cbind, list(
+      #Black              #Hispanic           #Stroke
+      rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>% 
+      set_colnames(c("Count", W))
+    
     for(j in 1:nrow(contingency_table)){
       if(j == 1){
         index = 1
       } else{
-        index = sum(contingency_table[1:(j - 1), ]) + 1
+        index = sum(contingency_table[1:(j - 1), "Count"]) + 1
       }
-      subset[index:(index - 1 + contingency_table[j, ]), colnames(sig_Y)] <- 
-        mvrnorm(n = contingency_table[cell, 1], 
-                mu = mu_chain[, paste0(i, ":", cell, ":", b)], Sigma = sig_Y)
+      #Z (continuous data)
+      subset[index:(index - 1 + contingency_table[j, "Count"]), 
+             colnames(sig_Y)] <- 
+        mvrnorm(n = contingency_table[j, "Count"], 
+                mu = mu_chain[, paste0(i, ":", j, ":", b)], Sigma = sig_Y)
       
+      #W (categorical data)
+      subset[index:(index - 1 + contingency_table[j, "Count"]), 
+             colnames(contingency_table)[-1]] <- 
+        matrix(rep(contingency_table[j, colnames(contingency_table)[-1]], 
+                   contingency_table[j, "Count"]), 
+               ncol = 3, byrow = TRUE)
     }
     
+    #---- ****replace synthetic data ----
+    synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN), 
+                     c(W, Z)] <- subset[, c(W, Z)]
   }
-  
 }
+
+#---- post-processing ----
 
 #---- **plots ----
 extended_pallette14 <- colorRampPalette(wes_palette("Darjeeling1"))(14)
