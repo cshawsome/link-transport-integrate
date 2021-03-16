@@ -237,14 +237,13 @@ for(b in 1:B){
     synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN), 
                      c(W, Z)] <- subset[, c(W, Z)]
   }
+  #---- **post-processing ----
+  #Update race/ethnicity label to match new synthetic data
+  synthetic_sample %<>% 
+    mutate("ETHNIC_label" = case_when(Black == 1 ~ "Black", 
+                                      Hispanic == 1 ~ "Hispanic", 
+                                      TRUE ~ "White"))
 }
-
-#---- **post-processing ----
-#Update race/ethnicity label to match new synthetic data
-synthetic_sample %<>% 
-  mutate("ETHNIC_label" = case_when(Black == 1 ~ "Black", 
-                                    Hispanic == 1 ~ "Hispanic", 
-                                    TRUE ~ "White"))
 
 #---- **plots ----
 extended_pallette14 <- colorRampPalette(wes_palette("Darjeeling1"))(14)
