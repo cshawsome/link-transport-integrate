@@ -202,6 +202,21 @@ for(b in 1:B){
     mu_chain[, paste0(i, ":", seq(1, nrow(cross_class_label)), ":", b)] <- 
       t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = length(Z), 
                      byrow = FALSE))
+    
+    #---- ****draw data ----
+    #reformat contingency table
+    for(j in 1:nrow(contingency_table)){
+      if(j == 1){
+        index = 1
+      } else{
+        index = sum(contingency_table[1:(j - 1), ]) + 1
+      }
+      subset[index:(index - 1 + contingency_table[j, ]), colnames(sig_Y)] <- 
+        mvrnorm(n = contingency_table[cell, 1], 
+                mu = mu_chain[, paste0(i, ":", cell, ":", b)], Sigma = sig_Y)
+      
+    }
+    
   }
   
 }
