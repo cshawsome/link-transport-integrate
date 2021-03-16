@@ -39,11 +39,11 @@ synthetic_sample <- ADAMS_subset %>%
   #pre-allocate columns
   mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
 
+#Categorical vars (notation from Schafer 1997)
+W <- c("Black", "Hispanic", "Astroke")
 #Continuous vars (notation from Schafer 1997)
 Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
        "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
-#Categorical vars (notation from Schafer 1997)
-W <- c("Black", "Hispanic", "Astroke")
 
 # #Sanity check
 # table(analytical_sample$ETHNIC_label, analytical_sample$Black, useNA = "ifany")
@@ -106,11 +106,6 @@ mu_chain <-
   set_colnames(apply(
     expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste,
     collapse = ":")) %>% set_rownames(Z)
-
-# #---- **other pre-allocation ----
-# contingency_table <- cross_class_label %>% dplyr::select("Var1", "Var2") %>% 
-#   cbind(as.data.frame(matrix(0, nrow = nrow(cross_class_label) , ncol = 4)) %>% 
-#           set_colnames(paste0("Freq", seq(1, 4))))
 
 #---- **priors ----
 #uninformative
