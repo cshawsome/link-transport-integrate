@@ -73,6 +73,8 @@ A = do.call(cbind, list(
   #stroke main effect contrast
   rep(c(1, -1), 3)))
 
+Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
+
 #---- **chain storage ----
 Unimpaired_gamma_chain <- 
   matrix(nrow = length(coefficients(Unimpaired_prior)), ncol = B) %>% 
@@ -187,7 +189,7 @@ for(b in 1:B){
     
     #---- ****draw Sigma | Y ----
     sig_Y <- riwish(v = nrow(subset) - nrow(beta_hat), 
-                    S = solve(t(eps_hat) %*% eps_hat))
+                    S = solve(t(eps_hat) %*% eps_hat))*Sigma_multiplier[i]
     
     Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
     
