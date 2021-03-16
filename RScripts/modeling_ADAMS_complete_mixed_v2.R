@@ -75,7 +75,8 @@ A = do.call(cbind, list(
   #stroke main effect contrast
   rep(c(1, -1), 3)))
 
-Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
+#Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
+Sigma_multiplier <- rep(1, 4)
 
 #---- **chain storage ----
 Unimpaired_gamma_chain <- 
@@ -215,15 +216,19 @@ for(b in 1:B){
         index = sum(contingency_table[1:(j - 1), "Count"]) + 1
       }
       #Z (continuous data)
-      subset[index:(index - 1 + contingency_table[j, "Count"]), 
-             colnames(sig_Y)] <- 
-        ifelse(index == (index - 1 + contingency_table[j, "Count"]), 
-               t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
-                                   mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                                   Sigma = sig_Y))), 
-               mvrnorm(n = contingency_table[j, "Count"],
-                       mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                       Sigma = sig_Y))
+      if(index == (index - 1 + contingency_table[j, "Count"])){
+        subset[index:(index - 1 + contingency_table[j, "Count"]), 
+               colnames(sig_Y)] <- 
+          t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
+                              mu = mu_chain[, paste0(i, ":", j, ":", b)], 
+                              Sigma = sig_Y)))
+      } else{
+        subset[index:(index - 1 + contingency_table[j, "Count"]), 
+               colnames(sig_Y)] <- 
+          mvrnorm(n = contingency_table[j, "Count"],
+                  mu = mu_chain[, paste0(i, ":", j, ":", b)], 
+                  Sigma = sig_Y)
+      }
       
       #W (categorical data)
       subset[index:(index - 1 + contingency_table[j, "Count"]), 
