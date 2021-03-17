@@ -164,6 +164,7 @@ for(b in 1:B){
     U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
     
     for(j in 1:nrow(contingency_table)){
+      if(contingency_table[j, ] == 0){next}
       if(j == 1){
         index = 1
       } else{
@@ -183,7 +184,7 @@ for(b in 1:B){
     beta_hat <-  V %*% t(A) %*% t(U) %*% continuous_covariates
     
     #---- ****epsilon hat ----
-    eps_hat <- continuous_covariates - U %*% A %*% beta_hat
+    eps_hat <- continuous_covariates - (U %*% A %*% beta_hat)
     
     #---- ****draw Sigma | Y ----
     sig_Y <- riwish(v = nrow(subset) - nrow(beta_hat), 
@@ -216,7 +217,7 @@ for(b in 1:B){
         index = sum(contingency_table[1:(j - 1), "Count"]) + 1
       }
       #Z (continuous data)
-      if(index == (index - 1 + contingency_table[j, "Count"])){
+      if(contingency_table[j, "Count"] == 1){
         subset[index:(index - 1 + contingency_table[j, "Count"]), 
                colnames(sig_Y)] <- 
           t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
