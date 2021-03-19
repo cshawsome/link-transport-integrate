@@ -62,7 +62,7 @@ cross_class_label <- table(synthetic_sample$ETHNIC_label,
 #---- Bayes Stuff ----
 #---- **parameters ----
 #number of runs
-B = 10
+B = 100
 
 #categorical vars contrasts matrix
 A = do.call(cbind, list(
@@ -75,8 +75,7 @@ A = do.call(cbind, list(
   #stroke main effect contrast
   rep(c(1, -1), 3)))
 
-#Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
-Sigma_multiplier <- rep(1, 4)
+Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
 
 #---- **chain storage ----
 Unimpaired_gamma_chain <- 
@@ -112,6 +111,8 @@ mu_chain <-
 #uninformative
 alpha_0 <- rep(1, nrow(cross_class_label))
 
+#---- START TIME ----
+start <- Sys.time()
 #---- **sampling ----
 for(b in 1:B){
   #---- ****latent class gammas ----
@@ -250,6 +251,9 @@ for(b in 1:B){
                                       Hispanic == 1 ~ "Hispanic", 
                                       TRUE ~ "White"))
 }
+
+#---- END TIME ----
+stop <- Sys.time() - start
 
 #---- **plots ----
 extended_pallette14 <- colorRampPalette(wes_palette("Darjeeling1"))(14)
