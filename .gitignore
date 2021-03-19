@@ -3,5 +3,5 @@
 .RData
 .Ruserdata
 
-#ignore model objects
-priors/*.rds
+#can't store this info on github
+priors/*
