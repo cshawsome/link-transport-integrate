@@ -62,18 +62,21 @@ cross_class_label <- table(synthetic_sample$ETHNIC_label,
 #---- Bayes Stuff ----
 #---- **parameters ----
 #number of runs
-B = 100
+B = 1000
 
 #categorical vars contrasts matrix
-A = do.call(cbind, list(
+A_both = do.call(cbind, list(
   #intercept
   rep(1, nrow(cross_class_label)),
-  #race/ethnicity first main effect contrast
-  c(rep(1, 2), rep(0, 2), rep(-1, 2)),
-  #race/ethnicity second main effect contrast
-  c(rep(0, 2), rep(1, 2), rep(-1, 2)),
-  #stroke main effect contrast
-  rep(c(1, -1), 3)))
+  #race/ethnicity main effect: Black
+  rep(c(1, 0, 0), 2),
+  #race/ethnicity main effect: Hispanic
+  rep(c(0, 1, 0), 2),
+  #stroke main effect
+  rep(c(0, 1), each = 3)))
+
+A_race <- A_both[, 1:3]
+A_stroke <- A_both[, c(1, 4)]
 
 Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
 
@@ -109,7 +112,9 @@ mu_chain <-
 
 #---- **priors ----
 #uninformative
-alpha_0 <- rep(1, nrow(cross_class_label))
+alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
+  set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count", 
+                 "1_prior_count", "2_prior_count"))
 
 #---- START TIME ----
 start <- Sys.time()
@@ -150,12 +155,13 @@ for(b in 1:B){
   
   for(i in 1:4){
     subset <- synthetic_sample %>% filter(Group == i) 
-    posterior_counts <- alpha_0 + 
+    posterior_counts <- 5*alpha_0[, paste0(i, "_prior_count")] + 
       table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
       dplyr::select("Freq") %>% unlist()
     
     #---- ****p(contingency table cell) ----
-    pi_chain[, paste0(i, ":", b)] <- rdirichlet(1, alpha = posterior_counts)
+    pi_chain[, paste0(i, ":", b)] <- 
+      rdirichlet(1, alpha = as.numeric(unlist(posterior_counts)))
     
     #---- ****contingency table count ----
     contingency_table <- rmultinom(n = 1, size = nrow(subset), 
@@ -179,6 +185,14 @@ for(b in 1:B){
     #---- ****beta hat ----
     continuous_covariates <- subset %>% 
       dplyr::select(all_of(Z)) %>% as.matrix
+    
+    for(effect in c("both", "race", "stroke")){
+      tempA <- get(paste0("A_", effect))
+      if(det(t(tempA) %*% UtU %*% tempA) != 0){
+        A <- tempA
+        break
+      }
+    }
     
     V <- solve(t(A) %*% UtU %*% A)
     
@@ -241,7 +255,7 @@ for(b in 1:B){
     }
     
     #---- ****replace synthetic data ----
-    synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN), 
+    synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN),
                      c(W, Z)] <- subset[, c(W, Z)]
   }
   #---- **post-processing ----
@@ -265,7 +279,8 @@ gamma_plot_data <-
                       t(MCI_gamma_chain))) %>% as.data.frame() %>%
   mutate("run" = seq(1:B)) %>% 
   pivot_longer(-c("run"), names_to = c("Group", "Predictor"), 
-               names_sep = ":", values_to = "gamma")
+               names_sep = ":", values_to = "gamma") %>% 
+  filter(Predictor != "(Intercept)")
 
 gamma_chain_plot <- 
   ggplot(data = gamma_plot_data, 
@@ -275,6 +290,7 @@ gamma_chain_plot <-
   facet_grid(rows = vars(factor(Group, 
                                 levels = c("Unimpaired", "MCI", "Other")))) + 
   theme_bw() + xlab("Run") + 
+  
   scale_color_manual(values = rev(extended_pallette14))
 
 ggsave(filename = "gamma_chain.jpeg", plot = gamma_chain_plot, 
