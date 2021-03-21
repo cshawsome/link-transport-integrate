@@ -3,7 +3,9 @@ if (!require("pacman")){
   install.packages("pacman", repos = 'http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "here", "wesanderson", "RColorBrewer")
+p_load("tidyverse", "magrittr", "here", "wesanderson", "RColorBrewer", 
+       "devtools")
+install_github("thomasp85/patchwork")
 
 #---- read in data ----
 synthetic_ADAMS <- 
@@ -55,7 +57,7 @@ merged_data %<>%
 # table(merged_data$`ADAMSA:group_class`)
 # table(merged_data$`synthetic:group_class`)
 
-#---- plots: dementia classes ----
+#---- plots: overall dementia classes ----
 dementia_class_plot_data <- 
   merged_data %>% dplyr::select(contains("group_class")) %>% 
   pivot_longer(everything(), names_to = c("Data", "Var"), 
@@ -77,8 +79,32 @@ dementia_class_plot <-
   ylim(c(0, 1)) + labs(fill = "Data") + 
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
-ggsave(filename = "dementia_class_overall.jpeg", plot = last_plot(), 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA/", 
-       width = 5, height = 5, units = "in", device = "jpeg")
+#---- plots: person-level dementia classes ----
+person_level_dem_plot_data <- merged_data %>% 
+  dplyr::select(contains("group_class"))
+
+#releveling factors
+person_level_dem_plot_data$`ADAMSA:group_class` <- 
+  fct_relevel(person_level_dem_plot_data$`ADAMSA:group_class`, 
+              c("Unimpaired", "MCI", "Dementia", "Other"))
+person_level_dem_plot_data$`synthetic:group_class` <- 
+  fct_relevel(person_level_dem_plot_data$`synthetic:group_class`, 
+              c("Unimpaired", "MCI", "Dementia", "Other"))
+
+person_level_dem_plot <- 
+  ggplot(data = person_level_dem_plot_data, 
+         aes(x = `ADAMSA:group_class`, y = `synthetic:group_class`, 
+             color = `synthetic:group_class`)) + 
+  geom_point(position = "jitter", alpha = 0.75) + theme_minimal() + 
+  ylab("Synthetic Group") + xlab("ADAMSA Group") + 
+  guides(color = guide_legend(title = "Synthetic Group")) + 
+  scale_color_manual(values = rev(wes_palette("Darjeeling1")))
+
+#---- **patchwork plot ----
+person_level_dem_plot + dementia_class_plot
+
+ggsave(filename = "group_class.jpeg", plot = last_plot(), 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       width = 14, height = 7, units = "in", device = "jpeg")
 
 
