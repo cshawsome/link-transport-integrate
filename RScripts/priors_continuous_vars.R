@@ -8,9 +8,14 @@ p_load("tidyverse", "magrittr", "broom", "openxlsx", "sjPlot", "here")
 options(scipen = 999)
 
 #---- read in data ----
+#Continuous vars (notation from Schafer 1997)
+Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+       "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
+
 ADAMS_subset <- 
   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                  "data/cleaned/ADAMS_subset_mixed.csv")) 
+                  "data/cleaned/ADAMS_subset_mixed.csv")) %>% 
+  dplyr::select()
 
 #---- data cleaning: dem dx ----
 ADAMS_subset %<>% 
@@ -23,5 +28,8 @@ ADAMS_subset %<>%
 # #Sanity check
 # table(ADAMS_subset$Adem_dx_cat, ADAMS_subset$Adem_dx_cat_collapse,
 #       useNA = "ifany")
+
+#---- Sigma priors ----
+test <- ADAMS_subset %>% filter(Adem_dx_cat_collapse == "Normal")
 
 
