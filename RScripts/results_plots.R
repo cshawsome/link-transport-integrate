@@ -36,9 +36,9 @@ ADAMS_subset %<>%
 merged_data <- left_join(synthetic_ADAMS, ADAMS_subset)
 
 #---- data cleaning: dem group ----
-#data check
-table(merged_data$`ADAMSA:Adem_dx_cat`, useNA = "ifany")
-table(merged_data$`synthetic:Group`, useNA = "ifany")
+# #data check
+# table(merged_data$`ADAMSA:Adem_dx_cat`, useNA = "ifany")
+# table(merged_data$`synthetic:Group`, useNA = "ifany")
 
 merged_data %<>% 
   mutate("ADAMSA:group_class" = 
