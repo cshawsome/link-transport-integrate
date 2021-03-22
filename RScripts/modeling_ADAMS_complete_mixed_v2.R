@@ -78,7 +78,8 @@ A_both = do.call(cbind, list(
 A_race <- A_both[, 1:3]
 A_stroke <- A_both[, c(1, 4)]
 
-Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
+#Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
+Sigma_multiplier <- rep(1, 4)
 
 #---- **chain storage ----
 Unimpaired_gamma_chain <- 
@@ -111,9 +112,13 @@ mu_chain <-
     collapse = ":")) %>% set_rownames(Z)
 
 #---- **priors ----
-#uninformative
+# #uninformative
+# alpha_0 <- as.data.frame(matrix(1, nrow = 6, ncol = 4)) %>% 
+#   set_colnames(paste0(seq(1, 4), "_prior_count"))
+
+#from HRS
 alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
-  set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count", 
+  set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
                  "1_prior_count", "2_prior_count"))
 
 #---- START TIME ----
@@ -155,7 +160,7 @@ for(b in 1:B){
   
   for(i in 1:4){
     subset <- synthetic_sample %>% filter(Group == i) 
-    posterior_counts <- 5*alpha_0[, paste0(i, "_prior_count")] + 
+    posterior_counts <- alpha_0[, paste0(i, "_prior_count")] + 
       table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
       dplyr::select("Freq") %>% unlist()
     
