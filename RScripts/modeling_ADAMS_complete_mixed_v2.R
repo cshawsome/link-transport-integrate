@@ -113,13 +113,19 @@ mu_chain <-
 
 #---- **priors ----
 # #uninformative
-# alpha_0 <- as.data.frame(matrix(1, nrow = 6, ncol = 4)) %>% 
+# alpha_0 <- as.data.frame(matrix(1, nrow = 6, ncol = 4)) %>%
 #   set_colnames(paste0(seq(1, 4), "_prior_count"))
 
-#from HRS
+# #from HRS
+# alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
+#   set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
+#                  "1_prior_count", "2_prior_count"))
+
+#weighted HRS
 alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
   set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
-                 "1_prior_count", "2_prior_count"))
+                 "1_prior_count", "2_prior_count")) %>%
+  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.25*x)
 
 #---- START TIME ----
 start <- Sys.time()
