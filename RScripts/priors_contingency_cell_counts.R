@@ -17,12 +17,14 @@ ADAMS_subset <-
 # 2000 | G | 5
 rand_waves <- 5
 rand_variables <- c("hhidpn", "raracem", "rahispan", 
+                    paste0("r", rand_waves, "agey_e"), 
                     paste0("r", rand_waves, "stroke"))
 
 RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                         "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
                  col_select = all_of(rand_variables)) %>% 
-  mutate_at("hhidpn", as.character)
+  mutate_at("hhidpn", as.character) %>% 
+  filter(r5agey_e >= 70)
 
 colnames(RAND)[1] <- "HHIDPN" #For merging
 
