@@ -57,7 +57,106 @@ merged_data %<>%
 # table(merged_data$`ADAMSA:group_class`)
 # table(merged_data$`synthetic:group_class`)
 
-#---- plots: overall dementia classes ----
+#---- plots: categorical vars ----
+#---- **race/ethnicity ----
+race_ethnicity_data <- 
+  merged_data %>% dplyr::select(contains("ETHNIC_label")) %>% 
+  pivot_longer(everything(), names_to = c("Data", "Var"), 
+               names_pattern = "(.*):(.*)") %>% 
+  count(Data, value) %>%
+  group_by(Data) %>%
+  mutate(n = n/sum(n))
+
+race_ethnicity_plot <- 
+  ggplot(data = race_ethnicity_data) + 
+  geom_bar(mapping = aes(x = factor(value), y = n, fill = factor(Data)), 
+           stat = "identity", position = "dodge") + 
+  theme_minimal() + xlab("Race/Ethnicity") + ylab("Proportion") + 
+  ylim(c(0, 1)) + labs(fill = "Data") + theme(legend.position = "none") +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+#---- **stroke ----
+stroke_data <- 
+  merged_data %>% dplyr::select(contains("Astroke")) %>% 
+  pivot_longer(everything(), names_to = c("Data", "Var"), 
+               names_pattern = "(.*):(.*)") %>% 
+  count(Data, value) %>%
+  group_by(Data) %>%
+  mutate(n = n/sum(n))
+
+stroke_plot <- 
+  ggplot(data = stroke_data) + 
+  geom_bar(mapping = aes(x = factor(value), y = n, fill = factor(Data)), 
+           stat = "identity", position = "dodge") + 
+  theme_minimal() + xlab("Stroke") + ylab("Proportion") + 
+  ylim(c(0, 1)) + labs(fill = "Data") + 
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+#---- **stroke x race/ethnicity ----
+stroke_race_ethnicity_data <- 
+  merged_data %>% dplyr::select(contains(c("Astroke", "ETHNIC_label"))) %>% 
+  mutate_if(is.numeric, as.character) %>%
+  pivot_longer(everything(), names_to = c("Data", ".value"), 
+               names_pattern = "(.*):(.*)") %>% 
+  count(Data, Astroke, ETHNIC_label) %>%
+  group_by(Data, ETHNIC_label) %>%
+  mutate(n = n/sum(n))
+
+stroke_race_ethnicity_plot <- 
+  ggplot(data = stroke_race_ethnicity_data) + 
+  geom_bar(mapping = aes(x = factor(Astroke), y = n, 
+                         fill = factor(ETHNIC_label)), 
+           stat = "identity", position = "dodge") + 
+  theme_minimal() + xlab("Stroke") + ylab("Proportion") + 
+  ylim(c(0, 1)) + labs(fill = "Race/Ethnicity") + 
+  facet_grid(cols = vars(Data)) + 
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+#---- **patchwork plot ----
+race_ethnicity_plot + stroke_plot + stroke_race_ethnicity_plot
+
+ggsave(filename = "race_ethnicity_stroke.jpeg", plot = last_plot(), 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
+                     "ADAMSA/"), width = 14, height = 5, units = "in", 
+       device = "jpeg")
+
+#---- plots: continuous vars ----
+continuous_vars <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", 
+                     "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
+
+for(var in continuous_vars){
+  plot_data <- merged_data %>% dplyr::select(contains(var)) %>% 
+    pivot_longer(everything(), names_to = c("Data", "Var"), 
+                 names_pattern = "(.*):(.*)")
+  
+  plot <- ggplot(data = plot_data, aes(x = value, color = Data)) + 
+    geom_density() + theme_minimal() + xlab(var) + 
+    scale_color_manual(values = rev(wes_palette("Darjeeling1")))
+  
+  if(var != continuous_vars[length(continuous_vars)]){
+    plot <- plot + theme(legend.position = "none") 
+  }
+  
+  assign(paste0(var, "_plot"), plot)
+}
+
+#---- **patchwork plot ----
+continuous_var_plot_names <- paste0(continuous_vars, "_plot")
+
+((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
+  get(continuous_var_plot_names[3])) /
+  (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
+     get(continuous_var_plot_names[6])))) / 
+  (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
+        get(continuous_var_plot_names[9]))) / 
+  get(continuous_var_plot_names[10])
+
+ggsave(filename = "continuous_vars.jpeg", plot = last_plot(), 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
+                     "ADAMSA/"), width = 12, height = 12, units = "in", 
+       device = "jpeg")
+
+#---- plots: dementia classes ----
 dementia_class_plot_data <- 
   merged_data %>% dplyr::select(contains("group_class")) %>% 
   pivot_longer(everything(), names_to = c("Data", "Var"), 
@@ -79,32 +178,8 @@ dementia_class_plot <-
   ylim(c(0, 1)) + labs(fill = "Data") + 
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
-#---- plots: person-level dementia classes ----
-person_level_dem_plot_data <- merged_data %>% 
-  dplyr::select(contains("group_class"))
-
-#releveling factors
-person_level_dem_plot_data$`ADAMSA:group_class` <- 
-  fct_relevel(person_level_dem_plot_data$`ADAMSA:group_class`, 
-              c("Unimpaired", "MCI", "Dementia", "Other"))
-person_level_dem_plot_data$`synthetic:group_class` <- 
-  fct_relevel(person_level_dem_plot_data$`synthetic:group_class`, 
-              c("Unimpaired", "MCI", "Dementia", "Other"))
-
-person_level_dem_plot <- 
-  ggplot(data = person_level_dem_plot_data, 
-         aes(x = `ADAMSA:group_class`, y = `synthetic:group_class`, 
-             color = `synthetic:group_class`)) + 
-  geom_point(position = "jitter", alpha = 0.75) + theme_minimal() + 
-  ylab("Synthetic Group") + xlab("ADAMSA Group") + 
-  guides(color = guide_legend(title = "Synthetic Group")) + 
-  scale_color_manual(values = rev(wes_palette("Darjeeling1")))
-
-#---- **patchwork plot ----
-person_level_dem_plot + dementia_class_plot
-
 ggsave(filename = "group_class.jpeg", plot = last_plot(), 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
-       width = 14, height = 7, units = "in", device = "jpeg")
+       width = 5, height = 5, units = "in", device = "jpeg")
 
 
