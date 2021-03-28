@@ -67,7 +67,7 @@ B = 1000
 #categorical vars contrasts matrix
 A_both = do.call(cbind, list(
   #intercept
-  rep(1, nrow(cross_class_label)),
+  rep(1, 6),
   #race/ethnicity main effect: Black
   rep(c(1, 0, 0), 2),
   #race/ethnicity main effect: Hispanic
@@ -78,8 +78,8 @@ A_both = do.call(cbind, list(
 A_race <- A_both[, 1:3]
 A_stroke <- A_both[, c(1, 4)]
 
-#Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
-Sigma_multiplier <- rep(1, 4)
+Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
+#Sigma_multiplier <- rep(1, 4)
 
 #---- **chain storage ----
 Unimpaired_gamma_chain <- 
@@ -204,7 +204,7 @@ for(b in 1:B){
         break
       }
     }
-    
+
     V <- solve(t(A) %*% UtU %*% A)
     
     beta_hat <-  V %*% t(A) %*% t(U) %*% continuous_covariates
