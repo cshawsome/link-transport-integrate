@@ -64,13 +64,13 @@ synthetic_sample <- arrange(synthetic_sample,
                             Astroke, desc(Black), desc(Hispanic))
 
 # #---- bounds on continuous data ----
-# bounds <- synthetic_sample %>% 
+# bounds <- synthetic_sample %>%
 #   summarize_at(.vars = all_of(Z), .funs = list("min" = min, "max" = max))
 
 #---- Bayes Stuff ----
 #---- **parameters ----
 #number of runs
-B = 100
+B = 5
 
 #categorical vars contrasts matrix
 A = do.call(cbind, list(
@@ -215,8 +215,13 @@ for(b in 1:B){
         (continuous_covariates[, c] - means[c])/sds[c]
     }
     
+    #---- ****pool UtU if needed ----
     if(det(t(A) %*% UtU %*% A) == 0){
-      UtU <- UtU + get(paste0("UtU_", (i-1)))
+      if(exists(paste0("UtU_", (i-1)))){
+        UtU <- UtU + get(paste0("UtU_", (i-1)))
+      } else{
+        UtU <- UtU + get(paste0("UtU_", (i+1))) 
+      }
     }
     
     V <- solve(t(A) %*% UtU %*% A)
@@ -297,16 +302,16 @@ for(b in 1:B){
   
   # #---- ****continuous covariates ----
   # for(var in Z){
-  #   min_index <- which(synthetic_sample[, var] < 
+  #   min_index <- which(synthetic_sample[, var] <
   #                        as.numeric(bounds[, paste0(var, "_min")]))
-  #   max_index <- which(synthetic_sample[, var] > 
+  #   max_index <- which(synthetic_sample[, var] >
   #                        as.numeric(bounds[, paste0(var, "_max")]))
   #   if(length(min_index > 0)){
-  #     synthetic_sample[min_index, var] <- 
+  #     synthetic_sample[min_index, var] <-
   #       as.numeric(bounds[, paste0(var, "_min")])
   #   }
   #   if(length(max_index > 0)){
-  #     synthetic_sample[max_index, var] <- 
+  #     synthetic_sample[max_index, var] <-
   #       as.numeric(bounds[, paste0(var, "_max")])
   #   }
   # }
