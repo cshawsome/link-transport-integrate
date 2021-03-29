@@ -218,7 +218,7 @@ for(b in 1:B){
     
     #---- ****draw Sigma | Y ----
     sig_Y <- riwish(v = nrow(subset) - nrow(beta_hat), 
-                    S = solve(t(eps_hat) %*% eps_hat))*Sigma_multiplier[i]
+                    S = t(eps_hat) %*% eps_hat)*Sigma_multiplier[i]
     
     Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
     
