@@ -59,6 +59,10 @@ cross_class_label <- table(synthetic_sample$ETHNIC_label,
   mutate("Stroke" = ifelse(Var2 == 0, "No Stroke", "Stroke")) %>% 
   unite("Cell Label", c("Var1", "Stroke"), sep = " | ", remove = FALSE)
 
+#---- arrange data ----
+synthetic_sample <- arrange(synthetic_sample, 
+                            Astroke, desc(Black), desc(Hispanic))
+
 #---- Bayes Stuff ----
 #---- **parameters ----
 #number of runs
