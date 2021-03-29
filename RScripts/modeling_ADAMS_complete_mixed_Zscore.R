@@ -298,9 +298,21 @@ for(b in 1:B){
                                       Hispanic == 1 ~ "Hispanic", 
                                       TRUE ~ "White"))
   
-  #---- ****age ----
-  
-  
+  #---- ****continuous covariates ----
+  for(var in Z){
+    min_index <- which(synthetic_sample[, var] < 
+                         as.numeric(bounds[, paste0(var, "_min")]))
+    max_index <- which(synthetic_sample[, var] > 
+                         as.numeric(bounds[, paste0(var, "_max")]))
+    if(length(min_index > 0)){
+      synthetic_sample[min_index, var] <- 
+        as.numeric(bounds[, paste0(var, "_min")])
+    }
+    if(length(max_index > 0)){
+      synthetic_sample[max_index, var] <- 
+        as.numeric(bounds[, paste0(var, "_max")])
+    }
+  }
 }
 
 #---- END TIME ----
