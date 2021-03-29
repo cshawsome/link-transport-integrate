@@ -63,9 +63,9 @@ cross_class_label <- table(synthetic_sample$ETHNIC_label,
 synthetic_sample <- arrange(synthetic_sample, 
                             Astroke, desc(Black), desc(Hispanic))
 
-#---- bounds on continuous data ----
-bounds <- synthetic_sample %>% 
-  summarize_at(.vars = all_of(Z), .funs = list("min" = min, "max" = max))
+# #---- bounds on continuous data ----
+# bounds <- synthetic_sample %>% 
+#   summarize_at(.vars = all_of(Z), .funs = list("min" = min, "max" = max))
 
 #---- Bayes Stuff ----
 #---- **parameters ----
@@ -73,7 +73,7 @@ bounds <- synthetic_sample %>%
 B = 100
 
 #categorical vars contrasts matrix
-A_both = do.call(cbind, list(
+A = do.call(cbind, list(
   #intercept
   rep(1, 6),
   #race/ethnicity main effect: Black
@@ -82,9 +82,6 @@ A_both = do.call(cbind, list(
   rep(c(0, 1, 0), 2),
   #stroke main effect
   rep(c(0, 1), each = 3)))
-
-A_race <- A_both[, 1:3]
-A_stroke <- A_both[, c(1, 4)]
 
 #Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
 Sigma_multiplier <- rep(1, 4)
@@ -201,6 +198,10 @@ for(b in 1:B){
     
     UtU <- diag(contingency_table[, 1])
     
+    if(i %in% c(2, 3)){
+      assign(paste0("UtU_", i), UtU)
+    }
+    
     #---- ****beta hat ----
     continuous_covariates <- subset %>% 
       dplyr::select(all_of(Z)) %>% as.matrix
@@ -214,12 +215,8 @@ for(b in 1:B){
         (continuous_covariates[, c] - means[c])/sds[c]
     }
     
-    for(effect in c("both", "race", "stroke")){
-      tempA <- get(paste0("A_", effect))
-      if(det(t(tempA) %*% UtU %*% tempA) != 0){
-        A <- tempA
-        break
-      }
+    if(det(t(A) %*% UtU %*% A) == 0){
+      UtU <- UtU + get(paste0("UtU_", (i-1)))
     }
     
     V <- solve(t(A) %*% UtU %*% A)
