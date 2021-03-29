@@ -59,10 +59,14 @@ cross_class_label <- table(synthetic_sample$ETHNIC_label,
   mutate("Stroke" = ifelse(Var2 == 0, "No Stroke", "Stroke")) %>% 
   unite("Cell Label", c("Var1", "Stroke"), sep = " | ", remove = FALSE)
 
+#---- arrange data ----
+synthetic_sample <- arrange(synthetic_sample, 
+                            Astroke, desc(Black), desc(Hispanic))
+
 #---- Bayes Stuff ----
 #---- **parameters ----
 #number of runs
-B = 1000
+B = 50
 
 #categorical vars contrasts matrix
 A_both = do.call(cbind, list(
@@ -78,8 +82,8 @@ A_both = do.call(cbind, list(
 A_race <- A_both[, 1:3]
 A_stroke <- A_both[, c(1, 4)]
 
-Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
-#Sigma_multiplier <- rep(1, 4)
+#Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
+Sigma_multiplier <- rep(1, 4)
 
 #---- **chain storage ----
 Unimpaired_gamma_chain <- 
@@ -214,7 +218,7 @@ for(b in 1:B){
     
     #---- ****draw Sigma | Y ----
     sig_Y <- riwish(v = nrow(subset) - nrow(beta_hat), 
-                    S = solve(t(eps_hat) %*% eps_hat))*Sigma_multiplier[i]
+                    S = (t(eps_hat) %*% eps_hat))*Sigma_multiplier[i]
     
     Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
     
