@@ -63,10 +63,14 @@ cross_class_label <- table(synthetic_sample$ETHNIC_label,
 synthetic_sample <- arrange(synthetic_sample, 
                             Astroke, desc(Black), desc(Hispanic))
 
+#---- bounds on continuous data ----
+bounds <- synthetic_sample %>% 
+  summarize_at(.vars = all_of(Z), .funs = list("min" = min, "max" = max))
+
 #---- Bayes Stuff ----
 #---- **parameters ----
 #number of runs
-B = 1000
+B = 5
 
 #categorical vars contrasts matrix
 A_both = do.call(cbind, list(
@@ -202,8 +206,13 @@ for(b in 1:B){
       dplyr::select(all_of(Z)) %>% as.matrix
     
     #---- ******Z-score ----
-    continuous_covariates <- 
-      apply(continuous_covariates, 2, function(x) (x - mean(x))/sd(x))
+    means <- colMeans(continuous_covariates)
+    sds <- apply(continuous_covariates, 2, sd)
+    
+    for(c in 1:ncol(continuous_covariates)){
+      continuous_covariates[, c] <- 
+        (continuous_covariates[, c] - means[c])/sds[c]
+    }
     
     for(effect in c("both", "race", "stroke")){
       tempA <- get(paste0("A_", effect))
@@ -212,7 +221,7 @@ for(b in 1:B){
         break
       }
     }
-
+    
     V <- solve(t(A) %*% UtU %*% A)
     
     beta_hat <-  V %*% t(A) %*% t(U) %*% continuous_covariates
@@ -274,18 +283,24 @@ for(b in 1:B){
     }
     
     #---- ******transform Z score ----
-    test <- apply(subset[, Z], 2, function(x) x*sd(x) + mean(x))
+    for(c in 1:length(Z)){
+      subset[, Z[c]] <- subset[, Z[c]]*sds[c] + means[c]
+    }
     
     #---- ****replace synthetic data ----
     synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN),
                      c(W, Z)] <- subset[, c(W, Z)]
   }
   #---- **post-processing ----
-  #Update race/ethnicity label to match new synthetic data
+  #---- ****race/ethnicity ----
   synthetic_sample %<>% 
     mutate("ETHNIC_label" = case_when(Black == 1 ~ "Black", 
                                       Hispanic == 1 ~ "Hispanic", 
                                       TRUE ~ "White"))
+  
+  #---- ****age ----
+  
+  
 }
 
 #---- END TIME ----
