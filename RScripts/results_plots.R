@@ -163,7 +163,7 @@ dementia_class_plot_data <-
                names_pattern = "(.*):(.*)") %>% 
   count(Data, value) %>%
   group_by(Data) %>%
-  mutate(n = n/sum(n))
+  mutate(prop = n/sum(n))
 
 #releveling factors
 dementia_class_plot_data$value <- 
@@ -172,7 +172,7 @@ dementia_class_plot_data$value <-
 
 dementia_class_plot <- 
   ggplot(data = dementia_class_plot_data) + 
-  geom_bar(mapping = aes(x = factor(value), y = n, fill = factor(Data)), 
+  geom_bar(mapping = aes(x = factor(value), y = prop, fill = factor(Data)), 
            stat = "identity", position = "dodge") + 
   theme_minimal() + xlab("Impairment Class") + ylab("Proportion") + 
   ylim(c(0, 1)) + labs(fill = "Data") + 
@@ -181,5 +181,48 @@ dementia_class_plot <-
 ggsave(filename = "group_class.jpeg", plot = last_plot(), 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
        width = 5, height = 5, units = "in", device = "jpeg")
+
+#---- plots: dementia classes x race ----
+dementia_class_by_race_plot_data <- 
+  merged_data %>% dplyr::select(contains(c("group_class", "ETHNIC_label"))) %>% 
+  pivot_longer(everything(), names_to = c("Data", ".value"), 
+               names_pattern = "(.*):(.*)") %>% 
+  count(Data, group_class, ETHNIC_label) %>%
+  group_by(Data, ETHNIC_label) %>%
+  mutate(prop = n/sum(n))
+
+#releveling factors
+dementia_class_by_race_plot_data$group_class <- 
+  fct_relevel(dementia_class_by_race_plot_data$group_class, 
+              c("Unimpaired", "MCI", "Dementia", "Other"))
+
+dementia_class_by_race_plot_n <- 
+  ggplot(data = dementia_class_by_race_plot_data) + 
+  geom_bar(mapping = aes(x = factor(group_class), y = n, fill = factor(Data)), 
+           stat = "identity", position = "dodge") + 
+  theme_minimal() + xlab("Impairment Class") + ylab("Count") + 
+  labs(fill = "Data") + facet_grid(cols = vars(ETHNIC_label)) + 
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+ggsave(filename = "group_class_by_race_n.jpeg", plot = last_plot(), 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       width = 10, height = 7, units = "in", device = "jpeg")
+
+dementia_class_by_race_plot_p <- 
+  ggplot(data = dementia_class_by_race_plot_data) + 
+  geom_bar(mapping = aes(x = factor(group_class), y = prop, fill = factor(Data)), 
+           stat = "identity", position = "dodge") + 
+  theme_minimal() + xlab("Impairment Class") + ylab("Proportion") + 
+  ylim(c(0, 1)) + labs(fill = "Data") + facet_grid(cols = vars(ETHNIC_label)) + 
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+
+ggsave(filename = "group_class_by_race_p.jpeg", plot = last_plot(), 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       width = 10, height = 7, units = "in", device = "jpeg")
+
+#---- sensitivity/specificity ----
+#---- **overall ----
+#---- **race-stratified ----
+
 
 
