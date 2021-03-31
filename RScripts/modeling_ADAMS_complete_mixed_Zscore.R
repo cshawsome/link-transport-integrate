@@ -70,7 +70,7 @@ synthetic_sample <- arrange(synthetic_sample,
 #---- Bayes Stuff ----
 #---- **parameters ----
 #number of runs
-B = 5
+B = 100
 
 #categorical vars contrasts matrix
 A = do.call(cbind, list(
@@ -83,8 +83,8 @@ A = do.call(cbind, list(
   #stroke main effect
   rep(c(0, 1), each = 3)))
 
-#Sigma_multiplier <- c(1, 1.3, 1.3, 1.7)
-Sigma_multiplier <- rep(1, 4)
+Sigma_multiplier <- c(1, 1.025, 1.025, 1.05)
+#Sigma_multiplier <- rep(1, 4)
 
 #---- **chain storage ----
 Unimpaired_gamma_chain <- 
@@ -232,7 +232,7 @@ for(b in 1:B){
     eps_hat <- continuous_covariates - (U %*% A %*% beta_hat)
     
     #---- ****draw Sigma | Y ----
-    sig_Y <- riwish(v = nrow(subset) - nrow(beta_hat), 
+    sig_Y <- riwish(v = 1.18*(nrow(subset) - nrow(beta_hat)), 
                     S = t(eps_hat) %*% eps_hat)*Sigma_multiplier[i]
     
     Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
