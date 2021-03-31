@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "magrittr", "here", "wesanderson", "RColorBrewer", 
-       "devtools")
+       "devtools", "scales")
 install_github("thomasp85/patchwork")
 
 #---- read in data ----
@@ -144,11 +144,11 @@ for(var in continuous_vars){
 continuous_var_plot_names <- paste0(continuous_vars, "_plot")
 
 ((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
-  get(continuous_var_plot_names[3])) /
-  (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
-     get(continuous_var_plot_names[6])))) / 
-  (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
-        get(continuous_var_plot_names[9]))) / 
+      get(continuous_var_plot_names[3])) /
+     (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
+        get(continuous_var_plot_names[6])))) / 
+    (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
+       get(continuous_var_plot_names[9]))) / 
   get(continuous_var_plot_names[10])
 
 ggsave(filename = "continuous_vars.jpeg", plot = last_plot(), 
@@ -157,6 +157,7 @@ ggsave(filename = "continuous_vars.jpeg", plot = last_plot(),
        device = "jpeg")
 
 #---- plots: dementia classes ----
+#---- **overall ----
 dementia_class_plot_data <- 
   merged_data %>% dplyr::select(contains("group_class")) %>% 
   pivot_longer(everything(), names_to = c("Data", "Var"), 
@@ -182,7 +183,7 @@ ggsave(filename = "group_class.jpeg", plot = last_plot(),
        path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
        width = 5, height = 5, units = "in", device = "jpeg")
 
-#---- plots: dementia classes x race ----
+#---- **race-stratified ----
 dementia_class_by_race_plot_data <- 
   merged_data %>% dplyr::select(contains(c("group_class", "ETHNIC_label"))) %>% 
   pivot_longer(everything(), names_to = c("Data", ".value"), 
@@ -220,9 +221,65 @@ ggsave(filename = "group_class_by_race_p.jpeg", plot = last_plot(),
        path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
        width = 10, height = 7, units = "in", device = "jpeg")
 
-#---- sensitivity/specificity ----
+#---- plot: %change by category ----
 #---- **overall ----
-#---- **race-stratified ----
+synthetic_counts <- dementia_class_plot_data %>% filter(Data == "synthetic")  
+ADAMS_counts <- dementia_class_plot_data %>% filter(Data == "ADAMSA")
 
+overall_change_data <- 
+  tibble("change" = (synthetic_counts$n - ADAMS_counts$n)/ADAMS_counts$n, 
+         "group" = synthetic_counts$value) %>% arrange(desc(change))
+
+#releveling factors by %change
+overall_change_data$group <- 
+  fct_relevel(overall_change_data$group, 
+              paste0(unique(overall_change_data$group)))
+
+overall_change <- 
+  ggplot(data = overall_change_data, aes(x = group, y = change)) + 
+  geom_bar(stat = "identity", width = 0.7, 
+           color = rev(wes_palette("Darjeeling1"))[1],
+           fill = rev(wes_palette("Darjeeling1"))[1],
+           position = position_dodge(width = 0.4)) + ylab("% change") + 
+  theme_minimal()
+
+ggsave(filename = "group_percent_change_overall.jpeg", plot = last_plot(), 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       width = 7, height = 5, units = "in", device = "jpeg")
+
+#---- **race-stratified ----
+synthetic_counts_by_race <- dementia_class_by_race_plot_data %>% 
+  filter(Data == "synthetic")  
+ADAMS_counts_by_race <- dementia_class_by_race_plot_data %>% 
+  filter(Data == "ADAMSA")
+
+overall_change_by_race_data <- 
+  tibble("change" = (synthetic_counts_by_race$n - ADAMS_counts_by_race$n)/
+           ADAMS_counts_by_race$n, 
+         "group" = synthetic_counts_by_race$group_class, 
+         "race_ethnicity" = synthetic_counts_by_race$ETHNIC_label) %>% 
+  unite("group_by_race", c(group, race_ethnicity), sep = "\n", 
+        remove = FALSE) %>%
+  arrange(desc(change))
+
+#releveling factors by %change
+overall_change_by_race_data$group_by_race <- 
+  fct_relevel(overall_change_by_race_data$group_by_race, 
+              paste0(unique(overall_change_by_race_data$group_by_race)))
+
+overall_change_by_race <- 
+  ggplot(data = overall_change_by_race_data, 
+         aes(x = group_by_race, y = change, 
+             color = race_ethnicity, fill = race_ethnicity)) + 
+  geom_bar(stat = "identity", width = 0.7, 
+           position = position_dodge(width = 0.4)) + ylab("% change") + 
+  xlab("Group:Race") + 
+  scale_color_manual(values = rev(wes_palette("Darjeeling1"))) +
+  scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
+  theme_minimal() + theme(text = element_text(size = 7)) 
+
+ggsave(filename = "group_percent_change_by_race.jpeg", plot = last_plot(), 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       width = 7, height = 5, units = "in", device = "jpeg")
 
 
