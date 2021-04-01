@@ -166,7 +166,8 @@ other_model_data <- ADAMS_subset %>% dplyr::select(all_of(vars)) %>%
 sort(colSums(is.na(other_model_data)))
 
 #---- **model 25 ----
-other_model_25 <- glm(AOther ~ AAGE + ANMSETOT + ANIMMCR + ANDELCOR,
+other_model_25 <- glm(AOther ~ AAGE + ANMSETOT + ANIMMCR + ANDELCOR + 
+                        ETHNIC_label,
                       family = "binomial", data = other_model_data)
 
 summary(other_model_25)
@@ -212,7 +213,8 @@ MCI_model_data <- ADAMS_subset %>% dplyr::select(all_of(vars)) %>%
 sort(colSums(is.na(MCI_model_data)))
 
 #---- **model 25 ----
-MCI_model_25 <- glm(AMCI ~ Aiadla + ANMSETOT + Astroke + Abmi + ANIMMCR, 
+MCI_model_25 <- glm(AMCI ~ Aiadla + ANMSETOT + Astroke + Abmi + ANIMMCR + 
+                      ETHNIC_label, 
                     family = "binomial", data = MCI_model_data)
 
 summary(MCI_model_25)
