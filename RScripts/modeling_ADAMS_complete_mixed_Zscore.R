@@ -21,8 +21,14 @@ Unimpaired_preds <- names(coefficients(Unimpaired_prior))
 Unimpaired_preds[which(Unimpaired_preds == "ETHNIC_labelBlack")] <- "Black"
 Unimpaired_preds[which(Unimpaired_preds == "ETHNIC_labelHispanic")] <- 
   "Hispanic"
+
 Other_preds <- names(coefficients(Other_prior))
+Other_preds[which(Other_preds == "ETHNIC_labelBlack")] <- "Black"
+Other_preds[which(Other_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
+
 MCI_preds <- names(coefficients(MCI_prior))
+MCI_preds[which(MCI_preds == "ETHNIC_labelBlack")] <- "Black"
+MCI_preds[which(MCI_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
@@ -130,7 +136,7 @@ mu_chain <-
 alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
   set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
                  "1_prior_count", "2_prior_count")) %>%
-  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.25*x)
+  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.075*x)
 
 #---- START TIME ----
 start <- Sys.time()
