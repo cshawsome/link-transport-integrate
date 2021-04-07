@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "broom", "haven", "labelled")
+p_load("tidyverse", "magrittr", "broom", "haven", "labelled", "wesanderson")
 
 #---- source scripts ----
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
@@ -37,9 +37,9 @@ for(wave in c("a", "b", "c", "d")){
 
 #---- **HCAP neuropsych ----
 HCAP_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/HCAP/HC16/", 
-                    "HC16da/HC16HP_R.da")
+                         "HC16da/HC16HP_R.da")
 HCAP_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/HCAP/HC16/", 
-                    "HC16sta/HC16HP_R.dct")
+                         "HC16sta/HC16HP_R.dct")
 
 HCAP <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE")
 cog_test_labels <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
@@ -435,7 +435,7 @@ high_scores[high_scores > 30] <- 30
 high_scores[high_scores < 0] <- 0
 
 med_scores <- rnorm(n = floor(med_score_prop*samp_size), 
-                     mean = med_score_mean, sd = med_score_SD)
+                    mean = med_score_mean, sd = med_score_SD)
 med_scores[med_scores > 30] <- 30
 med_scores[med_scores < 0] <- 0
 
@@ -558,7 +558,7 @@ ggsave(filename = "HCAP_edu_by_MMSE.jpeg", plot = last_plot(),
 #---- **read in demdx data ----
 for(wave in c("a", "b", "c", "d")){
   demdx_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                              "ADAMS/adams1", wave, "/adams1", wave, "da/", 
+                            "ADAMS/adams1", wave, "/adams1", wave, "da/", 
                             "ADAMS1", str_to_upper(wave), "D_R.da")
   demdx_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                             "ADAMS/adams1", wave, "/adams1", wave, "sta/", 
@@ -606,7 +606,7 @@ for(wave in c("a", "b", "c", "d")){
                   dplyr::select(-c("dem_dx")) %>% 
                   set_colnames(c("HHIDPN", 
                                  paste0(str_to_upper(wave), "dem_dx_cat"))), 
-                         by = "HHIDPN")
+                by = "HHIDPN")
   }
 }
 
@@ -725,7 +725,7 @@ plot_data <- ADAMS_subset %>%
 
 ggplot(data = plot_data %>% filter(dem_dx_new_cat != "Other"), 
        aes(x = NMSETOT, color = factor(dem_dx_new_cat), 
-                             fill = factor(dem_dx_new_cat))) + 
+           fill = factor(dem_dx_new_cat))) + 
   geom_histogram(alpha = 0.4, position = "identity") + theme_minimal() + 
   xlab("MMSE") + theme(text = element_text(size = 14)) + 
   guides(fill = guide_legend(title = "Dementia Dx"), 
@@ -754,6 +754,37 @@ ggsave(filename = "ADAMS_MMSE_by_dem_and_other.jpeg", plot = last_plot(),
                      "preliminary_analyses/",
                      "HCAP_synthetic/figures/"), width = 15, height = 5, 
        units = "in")
+
+#---- **for poster ----
+ggplot(data = plot_data %>% filter(wave == "A"), 
+       aes(x = NMSETOT, color = factor(dem_dx_new_cat), 
+           fill = factor(dem_dx_new_cat))) + 
+  geom_histogram(alpha = 1, position = "identity") + theme_minimal() + 
+  xlab("Total Cognition") + theme(text = element_text(size = 14)) + 
+  scale_color_manual(values = rep("black", 4)) + 
+  scale_fill_manual(values = rep("black", 4)) + 
+  theme(legend.position = "none") 
+
+ggsave(filename = "ADAMS_MMSE_all.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "presentations/admitted_students_day2021"), 
+       width = 7, height = 5, units = "in")
+
+ggplot(data = plot_data %>% filter(wave == "A"), 
+       aes(x = NMSETOT, color = factor(dem_dx_new_cat), 
+           fill = factor(dem_dx_new_cat))) + 
+  geom_histogram(alpha = 0.4, position = "identity") + theme_minimal() + 
+  xlab("Total Cognition") + theme(text = element_text(size = 14)) + 
+  scale_color_manual(values = c("#ff0000", "#fdab00", "#00a389", "#28bed9")) + 
+  scale_fill_manual(values = c("#ff0000", "#fdab00", "#00a389", "#28bed9")) + 
+  theme(legend.position = "none") 
+
+ggsave(filename = "ADAMS_MMSE_by_class.jpeg", plot = last_plot(), 
+       device = "jpeg",
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                     "presentations/admitted_students_day2021"), 
+       width = 7, height = 5, units = "in")
 
 #---- **plot: RAND cog score x dem dx ----
 plot_data <- ADAMS_subset %>% 
@@ -806,9 +837,9 @@ ggsave(filename = "HRS_total_cog_by_dem_and_other.jpeg", plot = last_plot(),
 
 #---- **plot: MMSE x closest RAND cog score ----
 corA <- round(cor(ADAMS_subset$ANMSETOT_Zscore, ADAMS_subset$ARANDcogtot_Zscore, 
-            use = "complete.obs"), 2)
+                  use = "complete.obs"), 2)
 corB <- round(cor(ADAMS_subset$BNMSETOT_Zscore, ADAMS_subset$BRANDcogtot_Zscore, 
-            use = "complete.obs"), 2)
+                  use = "complete.obs"), 2)
 corC <- round(cor(ADAMS_subset$CNMSETOT_Zscore, ADAMS_subset$CRANDcogtot_Zscore, 
                   use = "complete.obs"), 2)
 corD <- round(cor(ADAMS_subset$DNMSETOT_Zscore, ADAMS_subset$DRANDcogtot_Zscore, 
@@ -900,8 +931,8 @@ ggsave(filename = "person-level_ADAMS_obs_pred_MMSE.jpeg", plot = last_plot(),
 
 
 
-  
-  
+
+
 
 
 
