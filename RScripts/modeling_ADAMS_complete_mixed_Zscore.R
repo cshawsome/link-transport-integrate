@@ -218,15 +218,6 @@ for(b in 1:B){
     continuous_covariates <- subset %>% 
       dplyr::select(all_of(Z)) %>% as.matrix
     
-    #---- ******Z-score ----
-    means <- colMeans(continuous_covariates)
-    sds <- apply(continuous_covariates, 2, sd)
-    
-    for(c in 1:ncol(continuous_covariates)){
-      continuous_covariates[, c] <- 
-        (continuous_covariates[, c] - means[c])/sds[c]
-    }
-    
     #---- ****pool UtU if needed ----
     if(det(t(A) %*% UtU %*% A) == 0){
       if(exists(paste0("UtU_", (i-1)))){
