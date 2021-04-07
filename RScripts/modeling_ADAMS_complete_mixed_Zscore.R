@@ -287,11 +287,6 @@ for(b in 1:B){
                ncol = 3, byrow = TRUE)
     }
     
-    #---- ******transform Z score ----
-    for(c in 1:length(Z)){
-      subset[, Z[c]] <- subset[, Z[c]]*sds[c] + means[c]
-    }
-    
     #---- ****replace synthetic data ----
     synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN),
                      c(W, Z)] <- subset[, c(W, Z)]
@@ -302,22 +297,6 @@ for(b in 1:B){
     mutate("ETHNIC_label" = case_when(Black == 1 ~ "Black", 
                                       Hispanic == 1 ~ "Hispanic", 
                                       TRUE ~ "White"))
-  
-  # #---- ****continuous covariates ----
-  # for(var in Z){
-  #   min_index <- which(synthetic_sample[, var] <
-  #                        as.numeric(bounds[, paste0(var, "_min")]))
-  #   max_index <- which(synthetic_sample[, var] >
-  #                        as.numeric(bounds[, paste0(var, "_max")]))
-  #   if(length(min_index > 0)){
-  #     synthetic_sample[min_index, var] <-
-  #       as.numeric(bounds[, paste0(var, "_min")])
-  #   }
-  #   if(length(max_index > 0)){
-  #     synthetic_sample[max_index, var] <-
-  #       as.numeric(bounds[, paste0(var, "_max")])
-  #   }
-  # }
 }
 
 #---- END TIME ----
