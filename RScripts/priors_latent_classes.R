@@ -34,6 +34,9 @@ ADAMS_subset %<>%
 # levels(ADAMS_subset$AACURRWK_label)
 # levels(ADAMS_subset$DRINKcat_label)
 
+#---- Z-score ----
+ADAMS_subset %<>% mutate_if(is.numeric, scale)
+
 #---- dem class indicators ----
 ADAMS_subset %<>% 
   #Normal vs. Impaired
@@ -74,10 +77,11 @@ normal_model_data <- ADAMS_subset %>% dplyr::select(all_of(vars)) %>%
 #try not to lose more than 25% of the sample (about 214 people; n = 642)
 #sensitivity: do not lose more than 50% of the sample (about n = 428)
 #---- **var missingness ----
-sort(colSums(is.na(normal_model_data)))
+sort(colSums(is.na(normal_model_data) %>% 
+               set_colnames(colnames(normal_model_data))))
 
 #---- **model 25 ----
-normal_model_25 <- glm(ANormal ~ AAGE + ETHNIC_label +  ANMSETOT + ANSER7T +
+normal_model_25 <- glm(ANormal ~ AAGE + ETHNIC_label + ANMSETOT + ANSER7T +
                          ANIMMCR + ANRECYES + ANWM1TOT + proxy_cog,
                        family = "binomial", data = normal_model_data)
 
