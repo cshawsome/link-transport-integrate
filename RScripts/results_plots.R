@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "magrittr", "here", "wesanderson", "RColorBrewer", 
-       "devtools", "scales")
+       "devtools", "scales", "plyr")
 install_github("thomasp85/patchwork")
 
 #---- read in data ----
@@ -60,7 +60,9 @@ ADAMS_subset %<>%
 ADAMS_Z %<>% 
   set_colnames(c("HHIDPN", paste0("ADAMSAZ:", colnames(ADAMS_Z))[-1]))
 
-merged_data <- left_join(synthetic_ADAMS, ADAMS_subset)
+merged_data <- 
+  join_all(list(ADAMS_subset, ADAMS_Z, synthetic_ADAMS, synthetic_transformed), 
+           by = "HHIDPN", type = "left")
 
 #---- data cleaning: dem group ----
 # #data check
@@ -69,16 +71,16 @@ merged_data <- left_join(synthetic_ADAMS, ADAMS_subset)
 
 merged_data %<>% 
   mutate("ADAMSA:group_class" = 
-           case_when(`ADAMSA:Adem_dx_cat` %in% 
+           case_when(`ADAMSAX:Adem_dx_cat` %in% 
                        c("Dementia", "Probable/Possible AD", 
                          "Probable/Possible Vascular Dementia") ~ "Dementia",
-                     `ADAMSA:Adem_dx_cat` == "Normal" ~ "Unimpaired",
-                     TRUE ~ `ADAMSA:Adem_dx_cat`), 
+                     `ADAMSAX:Adem_dx_cat` == "Normal" ~ "Unimpaired",
+                     TRUE ~ `ADAMSAX:Adem_dx_cat`), 
          "synthetic:group_class" = 
-           case_when(`synthetic:Group` == 1 ~ "Unimpaired", 
-                     `synthetic:Group` == 2 ~ "Other", 
-                     `synthetic:Group` == 3 ~ "MCI", 
-                     `synthetic:Group` == 4 ~ "Dementia"))
+           case_when(`syntheticZ:Group` == 1 ~ "Unimpaired", 
+                     `syntheticZ:Group` == 2 ~ "Other", 
+                     `syntheticZ:Group` == 3 ~ "MCI", 
+                     `syntheticZ:Group` == 4 ~ "Dementia"))
 
 # #Sanity check
 # table(merged_data$`ADAMSA:group_class`)
@@ -90,7 +92,7 @@ race_ethnicity_data <-
   merged_data %>% dplyr::select(contains("ETHNIC_label")) %>% 
   pivot_longer(everything(), names_to = c("Data", "Var"), 
                names_pattern = "(.*):(.*)") %>% 
-  count(Data, value) %>%
+  dplyr::count(Data, value) %>%
   group_by(Data) %>%
   mutate(n = n/sum(n))
 
@@ -107,7 +109,7 @@ stroke_data <-
   merged_data %>% dplyr::select(contains("Astroke")) %>% 
   pivot_longer(everything(), names_to = c("Data", "Var"), 
                names_pattern = "(.*):(.*)") %>% 
-  count(Data, value) %>%
+  dplyr::count(Data, value) %>%
   group_by(Data) %>%
   mutate(n = n/sum(n))
 
@@ -125,7 +127,7 @@ stroke_race_ethnicity_data <-
   mutate_if(is.numeric, as.character) %>%
   pivot_longer(everything(), names_to = c("Data", ".value"), 
                names_pattern = "(.*):(.*)") %>% 
-  count(Data, Astroke, ETHNIC_label) %>%
+  dplyr::count(Data, Astroke, ETHNIC_label) %>%
   group_by(Data, ETHNIC_label) %>%
   mutate(n = n/sum(n))
 
@@ -148,9 +150,6 @@ ggsave(filename = "race_ethnicity_stroke.jpeg", plot = last_plot(),
        device = "jpeg")
 
 #---- plots: continuous vars ----
-continuous_vars <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", 
-                     "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
-
 for(var in continuous_vars){
   plot_data <- merged_data %>% dplyr::select(contains(var)) %>% 
     pivot_longer(everything(), names_to = c("Data", "Var"), 
