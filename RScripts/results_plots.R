@@ -25,13 +25,40 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
   filter(HHIDPN %in% synthetic_ADAMS$HHIDPN) %>% 
   dplyr::select(all_of(ADAMS_columns))
 
+#---- Z Scores ----
+cont_vars <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+               "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
+
+ADAMS_Z <- ADAMS_subset %>% 
+  dplyr::select(c("HHIDPN", all_of(cont_vars))) %>% 
+  mutate_if(is.numeric, scale) 
+
+synthetic_transformed <- synthetic_ADAMS %>% 
+  dplyr::select(c("HHIDPN", all_of(cont_vars)))
+
+means <- ADAMS_subset %>% dplyr::select(all_of(cont_vars)) %>% colMeans()
+sds <- ADAMS_subset %>% dplyr::select(all_of(cont_vars)) %>% apply(2, sd)
+
+for(var in names(means)){
+  synthetic_transformed[, var] <- 
+    synthetic_transformed[, var]*sds[var] + means[var]
+}
+
 #---- merge datasets ----
 #format column names
 synthetic_ADAMS %<>% 
-  set_colnames(c("HHIDPN", paste0("synthetic:", colnames(synthetic_ADAMS))[-1]))
+  set_colnames(c("HHIDPN", 
+                 paste0("syntheticZ:", colnames(synthetic_ADAMS))[-1]))
+
+synthetic_transformed %<>% 
+  set_colnames(c("HHIDPN", 
+                 paste0("syntheticX:", colnames(synthetic_transformed))[-1]))
 
 ADAMS_subset %<>% 
-  set_colnames(c("HHIDPN", paste0("ADAMSA:", colnames(ADAMS_subset))[-1]))
+  set_colnames(c("HHIDPN", paste0("ADAMSAX:", colnames(ADAMS_subset))[-1]))
+
+ADAMS_Z %<>% 
+  set_colnames(c("HHIDPN", paste0("ADAMSAZ:", colnames(ADAMS_Z))[-1]))
 
 merged_data <- left_join(synthetic_ADAMS, ADAMS_subset)
 

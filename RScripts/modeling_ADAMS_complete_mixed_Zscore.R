@@ -82,7 +82,7 @@ synthetic_sample <- arrange(synthetic_sample,
 #---- Bayes Stuff ----
 #---- **parameters ----
 #number of runs
-B = 10
+B = 100
 
 #categorical vars contrasts matrix
 A = do.call(cbind, list(
