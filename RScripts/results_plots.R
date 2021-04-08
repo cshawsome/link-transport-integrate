@@ -150,24 +150,33 @@ ggsave(filename = "race_ethnicity_stroke.jpeg", plot = last_plot(),
        device = "jpeg")
 
 #---- plots: continuous vars ----
-for(var in continuous_vars){
+for(var in cont_vars){
   plot_data <- merged_data %>% dplyr::select(contains(var)) %>% 
     pivot_longer(everything(), names_to = c("Data", "Var"), 
                  names_pattern = "(.*):(.*)")
   
-  plot <- ggplot(data = plot_data, aes(x = value, color = Data)) + 
+  plotX <- ggplot(data = plot_data %>% 
+                    filter(Data %in% c("ADAMSAX", "syntheticX")), 
+                  aes(x = value, color = Data)) + 
     geom_density() + theme_minimal() + xlab(var) + 
     scale_color_manual(values = rev(wes_palette("Darjeeling1")))
   
-  if(var != continuous_vars[length(continuous_vars)]){
+  plotZ <- ggplot(data = plot_data %>% 
+                    filter(Data %in% c("ADAMSAZ", "syntheticZ")), 
+                  aes(x = value, color = Data)) + 
+    geom_density() + theme_minimal() + xlab(var) + 
+    scale_color_manual(values = rev(wes_palette("Darjeeling1")))
+  
+  if(var != cont_vars[length(cont_vars)]){
     plot <- plot + theme(legend.position = "none") 
   }
   
-  assign(paste0(var, "_plot"), plot)
+  assign(paste0(var, "_plotX"), plotX)
+  assign(paste0(var, "_plotZ"), plotZ)
 }
 
 #---- **patchwork plot ----
-continuous_var_plot_names <- paste0(continuous_vars, "_plot")
+continuous_var_plot_names <- paste0(cont_vars, "_plotX")
 
 ((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
       get(continuous_var_plot_names[3])) /
@@ -177,7 +186,22 @@ continuous_var_plot_names <- paste0(continuous_vars, "_plot")
        get(continuous_var_plot_names[9]))) / 
   get(continuous_var_plot_names[10])
 
-ggsave(filename = "continuous_vars.jpeg", plot = last_plot(), 
+ggsave(filename = "continuous_varsX.jpeg", plot = last_plot(), 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
+                     "ADAMSA/"), width = 12, height = 12, units = "in", 
+       device = "jpeg")
+
+continuous_var_plot_names <- paste0(cont_vars, "_plotZ")
+
+((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
+      get(continuous_var_plot_names[3])) /
+     (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
+        get(continuous_var_plot_names[6])))) / 
+    (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
+       get(continuous_var_plot_names[9]))) / 
+  get(continuous_var_plot_names[10])
+
+ggsave(filename = "continuous_varsZ.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
                      "ADAMSA/"), width = 12, height = 12, units = "in", 
        device = "jpeg")
@@ -188,7 +212,7 @@ dementia_class_plot_data <-
   merged_data %>% dplyr::select(contains("group_class")) %>% 
   pivot_longer(everything(), names_to = c("Data", "Var"), 
                names_pattern = "(.*):(.*)") %>% 
-  count(Data, value) %>%
+  dplyr::count(Data, value) %>%
   group_by(Data) %>%
   mutate(prop = n/sum(n))
 
@@ -214,7 +238,10 @@ dementia_class_by_race_plot_data <-
   merged_data %>% dplyr::select(contains(c("group_class", "ETHNIC_label"))) %>% 
   pivot_longer(everything(), names_to = c("Data", ".value"), 
                names_pattern = "(.*):(.*)") %>% 
-  count(Data, group_class, ETHNIC_label) %>%
+  mutate("Data" = case_when(Data == "ADAMSAX" ~ "ADAMSA", 
+                            Data == "syntheticZ" ~ "synthetic", 
+                            TRUE ~ Data)) %>%
+  dplyr::count(Data, group_class, ETHNIC_label) %>%
   group_by(Data, ETHNIC_label) %>%
   mutate(prop = n/sum(n))
 
