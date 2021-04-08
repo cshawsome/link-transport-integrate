@@ -235,14 +235,13 @@ ggsave(filename = "group_class.jpeg", plot = last_plot(),
 
 #---- **race-stratified ----
 dementia_class_by_race_plot_data <- 
-  merged_data %>% dplyr::select(contains(c("group_class", "ETHNIC_label"))) %>% 
+  merged_data %>% dplyr::select(contains(c("group_class", "ETHNIC_label"))) %>%
+  set_colnames(c("ADAMSA:group_class", "synthetic:group_class", 
+                 "ADAMSA:ETHNIC_label", "synthetic:ETHNIC_label")) %>%
   pivot_longer(everything(), names_to = c("Data", ".value"), 
                names_pattern = "(.*):(.*)") %>% 
-  mutate("Data" = case_when(Data == "ADAMSAX" ~ "ADAMSA", 
-                            Data == "syntheticZ" ~ "synthetic", 
-                            TRUE ~ Data)) %>%
   dplyr::count(Data, group_class, ETHNIC_label) %>%
-  group_by(Data, ETHNIC_label) %>%
+  dplyr::group_by(Data, ETHNIC_label) %>%
   mutate(prop = n/sum(n))
 
 #releveling factors
@@ -280,7 +279,7 @@ synthetic_counts <- dementia_class_plot_data %>% filter(Data == "synthetic")
 ADAMS_counts <- dementia_class_plot_data %>% filter(Data == "ADAMSA")
 
 overall_change_data <- 
-  tibble("change" = (synthetic_counts$n - ADAMS_counts$n)/ADAMS_counts$n, 
+  tibble("change" = ((synthetic_counts$n - ADAMS_counts$n)/ADAMS_counts$n)*100, 
          "group" = synthetic_counts$value) %>% arrange(desc(change))
 
 #releveling factors by %change
@@ -307,8 +306,8 @@ ADAMS_counts_by_race <- dementia_class_by_race_plot_data %>%
   filter(Data == "ADAMSA")
 
 overall_change_by_race_data <- 
-  tibble("change" = (synthetic_counts_by_race$n - ADAMS_counts_by_race$n)/
-           ADAMS_counts_by_race$n, 
+  tibble("change" = ((synthetic_counts_by_race$n - ADAMS_counts_by_race$n)/
+           ADAMS_counts_by_race$n)*100, 
          "group" = synthetic_counts_by_race$group_class, 
          "race_ethnicity" = synthetic_counts_by_race$ETHNIC_label) %>% 
   unite("group_by_race", c(group, race_ethnicity), sep = "\n", 
