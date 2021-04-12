@@ -73,5 +73,5 @@ eps_hat <- continuous_covariates - (U %*% A %*% beta_hat)
 Sigma_hat <- (t(eps_hat) %*% eps_hat)/(nrow(ADAMS_subset) - ncol(beta_hat))
 
 #---- save ----
-saveRDS(Sigma_hat, file = here::here("priors", "Sigma"))
+saveRDS(Sigma_hat, file = here::here("priors", "Sigma.rds"))
 
