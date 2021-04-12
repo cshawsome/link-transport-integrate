@@ -19,25 +19,59 @@ group <- c("Adem_dx_cat")
 ADAMS_subset <- 
   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                   "data/cleaned/ADAMS_subset_mixed.csv")) %>% 
-  dplyr::select(c("HHIDPN", all_of(group), all_of(W), all_of(Z)))
+  dplyr::select(c("HHIDPN", all_of(group), all_of(W), all_of(Z))) %>% 
+  na.omit() %>% 
+  mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
+         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
+         #Add intercept
+         "(Intercept)" = 1) %>% 
+  filter(Adem_dx_cat == "Normal")
+  
+#---- arrange data ----
+ADAMS_subset %<>% arrange(Astroke, desc(Black), desc(Hispanic))
 
-#---- data cleaning: dem dx ----
-ADAMS_subset %<>% 
-  mutate("Adem_dx_cat_collapse" = 
-           case_when(Adem_dx_cat %in% 
-                       c("Dementia", "Probable/Possible AD", "Probable Dementia", 
-                         "Probable/Possible Vascular Dementia") ~ "Dementia", 
-                     TRUE ~ Adem_dx_cat))
+#---- A (contrasts) ----
+#categorical vars contrasts matrix
+A = do.call(cbind, list(
+  #intercept
+  rep(1, 6),
+  #race/ethnicity main effect: Black
+  rep(c(1, 0, 0), 2),
+  #race/ethnicity main effect: Hispanic
+  rep(c(0, 1, 0), 2),
+  #stroke main effect
+  rep(c(0, 1), each = 3)))
 
-# #Sanity check
-# table(ADAMS_subset$Adem_dx_cat, ADAMS_subset$Adem_dx_cat_collapse,
-#       useNA = "ifany")
+#---- U (contingency cell) ----
+contingency_table <- table(ADAMS_subset$ETHNIC_label, 
+                           ADAMS_subset$Astroke) %>% as.data.frame()
 
-#---- Sigma priors ----
-test <- ADAMS_subset %>% filter(Adem_dx_cat_collapse == "Normal")
+U <- matrix(0, nrow = nrow(ADAMS_subset), ncol = nrow(contingency_table))
 
-test_sigma <- var(test %>% dplyr::select(all_of(Z)) %>% na.omit() %>% 
-                    as.matrix())
+for(j in 1:nrow(contingency_table)){
+  if(contingency_table[j, "Freq"] == 0){next}
+  if(j == 1){
+    index = 1
+  } else{
+    index = sum(contingency_table[1:(j - 1), "Freq"]) + 1
+  }
+  U[index:(index - 1 + contingency_table[j, "Freq"]), j] <- 1
+}
 
-test_random <- riwish(v = nrow(test_sigma), S = test_sigma)
+UtU <- diag(contingency_table[, "Freq"])
+
+#---- beta hat ----
+continuous_covariates <- ADAMS_subset %>% 
+  dplyr::select(all_of(Z)) %>% as.matrix
+
+V <- solve(t(A) %*% UtU %*% A)
+
+beta_hat <-  V %*% t(A) %*% t(U) %*% continuous_covariates
+
+#---- Sigma prior (based on normal group) ----
+eps_hat <- continuous_covariates - (U %*% A %*% beta_hat)
+Sigma_hat <- (t(eps_hat) %*% eps_hat)/(nrow(ADAMS_subset) - ncol(beta_hat))
+
+#---- save ----
+saveRDS(Sigma_hat, file = here::here("priors", "Sigma"))
 
