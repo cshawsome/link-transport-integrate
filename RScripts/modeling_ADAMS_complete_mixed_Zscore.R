@@ -54,8 +54,8 @@ synthetic_sample <- ADAMS_subset %>%
 #Categorical vars (notation from Schafer 1997)
 W <- c("Black", "Hispanic", "Astroke")
 #Continuous vars (notation from Schafer 1997)
-Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
-       "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
+Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", 
+       "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
 
 # #Sanity check
 # table(analytical_sample$ETHNIC_label, analytical_sample$Black, useNA = "ifany")
@@ -80,9 +80,9 @@ synthetic_sample <- arrange(synthetic_sample,
 #   summarize_at(.vars = all_of(Z), .funs = list("min" = min, "max" = max))
 
 #---- Bayes Stuff ----
-#---- **parameters ----
+#---- **simulation parameters ----
 #number of runs
-B = 100
+B = 1000
 
 #categorical vars contrasts matrix
 A = do.call(cbind, list(
@@ -143,6 +143,11 @@ alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
   set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
                  "1_prior_count", "2_prior_count")) %>%
   mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.075*x)
+
+#DOF for inverse wishart
+nu_0 <- 75
+#location for inverse wishart 
+Sigma_prior <- readRDS(here::here("priors", "Sigma.rds"))
 
 #---- START TIME ----
 start <- Sys.time()
@@ -235,8 +240,9 @@ for(b in 1:B){
     eps_hat <- continuous_covariates - (U %*% A %*% beta_hat)
     
     #---- ****draw Sigma | Y ----
-    sig_Y <- riwish(v = 1.18*(nrow(subset) - nrow(beta_hat)), 
-                    S = t(eps_hat) %*% eps_hat)*Sigma_multiplier[i]
+    sig_Y <- riwish(v = (nrow(subset) - nrow(beta_hat) + nu_0), 
+                    S = ((t(eps_hat) %*% eps_hat)) + Sigma_prior)*
+      Sigma_multiplier[i]
     
     Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
     
@@ -364,7 +370,7 @@ pi_chain_plot <- ggplot(data = pi_chain_data,
                         aes(x = Run, y = probability, colour = Cell)) +       
   geom_line(aes(group = Cell)) + 
   theme_minimal() + xlab("Run") + ylab("Probability of cell membership") +  
-  scale_color_manual(values = rev(extended_pallette6)) + 
+  scale_color_manual(values = extended_pallette6) + 
   scale_x_continuous(breaks = seq(0, B, by = 100)) +
   facet_grid(rows = vars(factor(Group_label, 
                                 levels = c("Unimpaired", "MCI", "Dementia", 
