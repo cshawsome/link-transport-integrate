@@ -25,8 +25,16 @@ ADAMS_subset <-
          "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
          #Add intercept
          "(Intercept)" = 1) %>% 
-  filter(Adem_dx_cat == "Normal")
-  
+  mutate("group_class" = 
+           case_when(Adem_dx_cat %in% 
+                       c("Dementia", "Probable/Possible AD", 
+                         "Probable/Possible Vascular Dementia") ~ "Dementia",
+                     Adem_dx_cat == "Normal" ~ "Unimpaired",
+                     TRUE ~ Adem_dx_cat))
+
+# #Sanity check
+# table(ADAMS_subset$Adem_dx_cat, ADAMS_subset$group_class, useNA = "ifany")
+
 #---- arrange data ----
 ADAMS_subset %<>% arrange(Astroke, desc(Black), desc(Hispanic))
 
@@ -42,36 +50,50 @@ A = do.call(cbind, list(
   #stroke main effect
   rep(c(0, 1), each = 3)))
 
-#---- U (contingency cell) ----
-contingency_table <- table(ADAMS_subset$ETHNIC_label, 
-                           ADAMS_subset$Astroke) %>% as.data.frame()
+#---- pre-allocate ----
+priors_beta <- matrix(nrow = (10*4) , ncol = 4)
+i = 1
 
-U <- matrix(0, nrow = nrow(ADAMS_subset), ncol = nrow(contingency_table))
-
-for(j in 1:nrow(contingency_table)){
-  if(contingency_table[j, "Freq"] == 0){next}
-  if(j == 1){
-    index = 1
-  } else{
-    index = sum(contingency_table[1:(j - 1), "Freq"]) + 1
+for(group in c("Unimpaired", "Other", "MCI", "Dementia")){
+  #---- filter data ----
+  subset <- ADAMS_subset %>% filter(group_class == group)
+  
+  #---- U (contingency cell) ----
+  contingency_table <- table(subset$ETHNIC_label, 
+                             subset$Astroke) %>% as.data.frame()
+  
+  U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
+  
+  for(j in 1:nrow(contingency_table)){
+    if(contingency_table[j, "Freq"] == 0){next}
+    if(j == 1){
+      index = 1
+    } else{
+      index = sum(contingency_table[1:(j - 1), "Freq"]) + 1
+    }
+    U[index:(index - 1 + contingency_table[j, "Freq"]), j] <- 1
   }
-  U[index:(index - 1 + contingency_table[j, "Freq"]), j] <- 1
+  
+  UtU <- diag(contingency_table[, "Freq"])
+  
+  #---- beta hat ----
+  continuous_covariates <- subset %>% dplyr::select(all_of(Z)) %>% as.matrix
+  
+  V <- solve(t(A) %*% UtU %*% A)
+  
+  beta_hat <- V %*% t(A) %*% t(U) %*% continuous_covariates
+  priors_beta[, i] <- as.vector(beta_hat)
+  
+  if(group == "Unimpaired"){
+    #---- Sigma prior (based on normal group) ----
+    eps_hat <- continuous_covariates - (U %*% A %*% beta_hat)
+    Sigma_hat <- (t(eps_hat) %*% eps_hat)/(nrow(ADAMS_subset) - ncol(beta_hat))
+  }
+  i = i + 1
 }
-
-UtU <- diag(contingency_table[, "Freq"])
-
-#---- beta hat ----
-continuous_covariates <- ADAMS_subset %>% 
-  dplyr::select(all_of(Z)) %>% as.matrix
-
-V <- solve(t(A) %*% UtU %*% A)
-
-beta_hat <-  V %*% t(A) %*% t(U) %*% continuous_covariates
-
-#---- Sigma prior (based on normal group) ----
-eps_hat <- continuous_covariates - (U %*% A %*% beta_hat)
-Sigma_hat <- (t(eps_hat) %*% eps_hat)/(nrow(ADAMS_subset) - ncol(beta_hat))
 
 #---- save ----
 saveRDS(Sigma_hat, file = here::here("priors", "Sigma.rds"))
+saveRDS(priors_beta, file = here::here("priors", "beta.rds"))
+  
 
