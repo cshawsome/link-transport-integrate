@@ -18,17 +18,11 @@ Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT",
 group <- c("Adem_dx_cat")
 
 #---- **ADAMS ----
-analytical_sample <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                                 "data/cleaned/ADAMS_subset_mixed.csv"), 
                          col_types = cols(HHIDPN = col_character())) %>% 
   dplyr::select(c("HHIDPN", all_of(group), all_of(W), all_of(Z))) %>% 
-  na.omit() %>% 
-  #don't standardize this
-  mutate_at("Astroke", as.character) %>%
-  #Z-score continuous
-  mutate_if(is.numeric, scale) %>%
-  #transform to correct type
-  mutate_at("Astroke", as.numeric) %>%
+  na.omit() %>%
   mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
          "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
          #Add intercept
@@ -39,6 +33,14 @@ analytical_sample <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
                          "Probable/Possible Vascular Dementia") ~ "Dementia",
                      Adem_dx_cat == "Normal" ~ "Unimpaired",
                      TRUE ~ Adem_dx_cat))
+
+analytical_sample <- ADAMS_subset  %>% 
+  #don't standardize this
+  mutate_at("Astroke", as.character) %>%
+  #Z-score continuous
+  mutate_if(is.numeric, scale) %>%
+  #transform to correct type
+  mutate_at("Astroke", as.numeric) 
 
 #---- all-way contingency table ----
 cross_class_label <- table(analytical_sample$ETHNIC_label, 
@@ -60,7 +62,7 @@ CrossTable(normal_model_data$ETHNIC_label, useNA = "ifany")
 
 #How many of each race/ethnicity classified as cognitively normal
 CrossTable(normal_model_data$ETHNIC_label, normal_model_data$Aunimpaired, 
-      useNA = "ifany", prop.chisq = FALSE)
+           useNA = "ifany", prop.chisq = FALSE)
 
 #---- plots ----
 #---- **race x age ----
@@ -104,7 +106,7 @@ race_by_proxy_cog_dens <-
   scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
   theme_minimal() + xlab("Proxy Cognition") + ylab("Density") + 
   guides(fill = guide_legend(title = "Race/Ethnicity")) 
-  
+
 #---- **patchwork plot ----
 (race_by_age_bar + race_by_age_dens)/(race_by_MMSE_bar + race_by_MMSE_dens)/
   race_by_proxy_cog_dens
@@ -113,6 +115,72 @@ ggsave(filename = "unimpaired_two_way_by_race.jpeg", plot = last_plot(),
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                      "prelim_analyses/latent_class_unimpaired/"), 
        width = 10, height = 8, units = "in", device = "jpeg")
+
+#---- mixture plots ----
+merged_data <- left_join(ADAMS_subset, analytical_sample, by = "HHIDPN")
+
+for(var in Z){
+  plot_data <- merged_data %>% 
+    dplyr::select(contains(c(var, "group_class"))) %>% 
+    pivot_longer(everything(), names_to = c(".value", "type"), 
+                 names_pattern = "(.*).(.)") %>% 
+    set_colnames(c("type", "value", "group")) 
+  plot_data[, "value"] <- unlist(plot_data[, "value"])
+  plot_data[which(plot_data$type == "y"), "type"] <- "z"
+  
+  plotX <- ggplot(data = plot_data %>% 
+                    filter(type == "x"), 
+                  aes(x = value, color = group, fill = group)) + 
+    geom_density(alpha = 0.5) + theme_minimal() + xlab(var) + 
+    scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)]) + 
+    scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)])
+  
+  plotZ <- ggplot(data = plot_data %>% 
+                    filter(type == "z"), 
+                  aes(x = value, color = group, fill = group)) + 
+    geom_density(alpha = 0.5) + theme_minimal() + xlab(var) + 
+    scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)]) + 
+    scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)])
+  
+  if(var != Z[length(Z)]){
+    plotZ <- plotZ + theme(legend.position = "none") 
+    plotX <- plotX + theme(legend.position = "none") 
+  }
+  
+  assign(paste0(var, "_plotX"), plotX)
+  assign(paste0(var, "_plotZ"), plotZ)
+}
+
+#---- **patchwork plot ----
+continuous_var_plot_names <- paste0(Z, "_plotX")
+
+((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
+      get(continuous_var_plot_names[3])) /
+     (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
+        get(continuous_var_plot_names[6])))) / 
+    (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
+       get(continuous_var_plot_names[9]))) / 
+  get(continuous_var_plot_names[10])
+
+ggsave(filename = "ADAMS_mix_X.jpeg", plot = last_plot(), 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                     "prelim_analyses/ADAMSA"), width = 12, height = 12, 
+       units = "in", device = "jpeg")
+
+continuous_var_plot_names <- paste0(Z, "_plotZ")
+
+((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
+      get(continuous_var_plot_names[3])) /
+     (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
+        get(continuous_var_plot_names[6])))) / 
+    (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
+       get(continuous_var_plot_names[9]))) / 
+  get(continuous_var_plot_names[10])
+
+ggsave(filename = "ADAMS_mix_Z.jpeg", plot = last_plot(), 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                     "prelim_analyses/ADAMSA"), width = 12, height = 12, 
+       units = "in", device = "jpeg")
 
 #---- OLD CODE ----
 #---- plots ----
