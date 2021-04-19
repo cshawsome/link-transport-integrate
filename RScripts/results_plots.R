@@ -168,7 +168,8 @@ for(var in cont_vars){
     scale_color_manual(values = rev(wes_palette("Darjeeling1")))
   
   if(var != cont_vars[length(cont_vars)]){
-    plot <- plot + theme(legend.position = "none") 
+    plotX <- plotX + theme(legend.position = "none") 
+    plotZ <- plotZ + theme(legend.position = "none") 
   }
   
   assign(paste0(var, "_plotX"), plotX)
