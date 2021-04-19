@@ -8,18 +8,37 @@ p_load("tidyverse", "DirichletReg", "magrittr", "wesanderson", "devtools",
 install_github("thomasp85/patchwork")
 
 #---- read in data ----
-#---- **ADAMS ----
-ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/cleaned/ADAMS_subset_mixed.csv"), 
-                         col_types = cols(HHIDPN = col_character()))
-
-#---- select variables ----
 #based on analysis in priors_latent_classes.R
-vars <- c("AAGE", "ETHNIC_label", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", 
-          "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Astroke", "Abmi")
+#Categorical vars (notation from Schafer 1997)
+W <- c("ETHNIC_label", "Astroke")
+#Continuous vars (notation from Schafer 1997)
+Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+       "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
 
-analytical_sample <- ADAMS_subset %>% 
-  dplyr::select("HHIDPN", all_of(vars)) 
+group <- c("Adem_dx_cat")
+
+#---- **ADAMS ----
+analytical_sample <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                "data/cleaned/ADAMS_subset_mixed.csv"), 
+                         col_types = cols(HHIDPN = col_character())) %>% 
+  dplyr::select(c("HHIDPN", all_of(group), all_of(W), all_of(Z))) %>% 
+  na.omit() %>% 
+  #don't standardize this
+  mutate_at("Astroke", as.character) %>%
+  #Z-score continuous
+  mutate_if(is.numeric, scale) %>%
+  #transform to correct type
+  mutate_at("Astroke", as.numeric) %>%
+  mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
+         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
+         #Add intercept
+         "(Intercept)" = 1) %>% 
+  mutate("group_class" = 
+           case_when(Adem_dx_cat %in% 
+                       c("Dementia", "Probable/Possible AD", 
+                         "Probable/Possible Vascular Dementia") ~ "Dementia",
+                     Adem_dx_cat == "Normal" ~ "Unimpaired",
+                     TRUE ~ Adem_dx_cat))
 
 #---- all-way contingency table ----
 cross_class_label <- table(analytical_sample$ETHNIC_label, 
