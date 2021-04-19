@@ -142,7 +142,11 @@ alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
   mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.075*x)
 
 #DOF for inverse wishart
-nu_0 <- 125
+nu_0 <- 100
+
+#weights for beta
+w1 <- 0 #weight on data
+w2 <- 1 #weight on prior
 
 #location for inverse wishart 
 beta_prior <- readRDS(here::here("priors", "beta.rds"))
@@ -250,7 +254,8 @@ for(b in 1:B){
     #---- ****draw beta | Sigma, Y ----
     Sigma_kron_V <- kronecker(sig_Y, V, FUN = "*", make.dimnames = TRUE)
     beta_Sigma_Y <- 
-      mvrnorm(n = 1, mu = as.vector(beta_hat), Sigma = Sigma_kron_V)
+      mvrnorm(n = 1, mu = w1*as.vector(beta_hat) + w2*beta_prior[, i], 
+              Sigma = Sigma_kron_V)
     
     #---- ****compute mu ----
     mu_chain[, paste0(i, ":", seq(1, nrow(cross_class_label)), ":", b)] <- 
