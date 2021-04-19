@@ -95,9 +95,6 @@ A = do.call(cbind, list(
   #stroke main effect
   rep(c(0, 1), each = 3)))
 
-Sigma_multiplier <- c(1, 1.025, 1.025, 1.05)
-#Sigma_multiplier <- rep(1, 4)
-
 #---- **chain storage ----
 Unimpaired_gamma_chain <- 
   matrix(nrow = length(coefficients(Unimpaired_prior)), ncol = B) %>% 
@@ -145,9 +142,13 @@ alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
   mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.075*x)
 
 #DOF for inverse wishart
-nu_0 <- 75
+nu_0 <- 125
+
 #location for inverse wishart 
+beta_prior <- readRDS(here::here("priors", "beta.rds"))
 Sigma_prior <- readRDS(here::here("priors", "Sigma.rds"))
+
+Sigma_multiplier <- c(1, 1.75, 1.75, 1.5)
 
 #---- START TIME ----
 start <- Sys.time()
