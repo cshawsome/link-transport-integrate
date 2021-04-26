@@ -86,8 +86,9 @@ for(group in c("Unimpaired", "Other", "MCI", "Dementia")){
   #---- beta hat ----
   continuous_covariates <- subset %>% dplyr::select(all_of(Z)) %>% as.matrix
   
-  V <- solve(t(A) %*% UtU %*% A)
-  priors_V[, i] <- as.vector(V)
+  V_inv <- t(A) %*% UtU %*% A
+  V <- solve(V_inv)
+  priors_V[, i] <- as.vector(V_inv)
   
   beta_hat <- V %*% t(A) %*% t(U) %*% continuous_covariates
   priors_beta[, i] <- as.vector(beta_hat)
@@ -103,6 +104,6 @@ for(group in c("Unimpaired", "Other", "MCI", "Dementia")){
 #---- save ----
 saveRDS(Sigma_hat, file = here::here("priors", "Sigma.rds"))
 saveRDS(priors_beta, file = here::here("priors", "beta.rds"))
-saveRDS(priors_V, file = here::here("priors", "V.rds"))
+saveRDS(priors_V, file = here::here("priors", "V_inv.rds"))
   
 
