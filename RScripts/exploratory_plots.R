@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "wesanderson", "devtools", 
-       "gmodels")
+       "gmodels", "rje")
 install_github("thomasp85/patchwork")
 
 #---- read in data ----
@@ -34,13 +34,14 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
                      Adem_dx_cat == "Normal" ~ "Unimpaired",
                      TRUE ~ Adem_dx_cat))
 
-analytical_sample <- ADAMS_subset  %>% 
-  #don't standardize this
-  mutate_at("Astroke", as.character) %>%
-  #Z-score continuous
-  mutate_if(is.numeric, scale) %>%
-  #transform to correct type
-  mutate_at("Astroke", as.numeric) 
+analytical_sample <- ADAMS_subset 
+#Transform to [0, 1]
+analytical_sample[, Z] <- 
+  apply(analytical_sample[, Z], 2, function(x) x/(max(x) + 1))
+
+#Transform for Real
+analytical_sample[, Z] <- 
+  apply(analytical_sample[, Z], 2, function(x) logit(x))
 
 #---- all-way contingency table ----
 cross_class_label <- table(analytical_sample$ETHNIC_label, 
