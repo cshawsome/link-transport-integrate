@@ -103,7 +103,7 @@ Sigma_scale <- matrix(1, ncol = 4, nrow = 10)
 alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
   set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
                  "1_prior_count", "2_prior_count")) %>%
-  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.10*x)
+  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.25*x)
 
 #location for inverse wishart 
 beta_prior <- readRDS(here::here("priors", "beta.rds"))
@@ -150,6 +150,11 @@ mu_chain <-
   set_colnames(apply(
     expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste,
     collapse = ":")) %>% set_rownames(Z)
+
+varY_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
+  set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste,
+                     collapse = ":")) %>%
+  set_rownames(Z)
 
 #---- START TIME ----
 start <- Sys.time()
@@ -277,19 +282,22 @@ for(b in 1:B){
         index = sum(contingency_table[1:(j - 1), "Count"]) + 1
       }
       #Z (continuous data)
+      varY <- cov(continuous_covariates)
       if(contingency_table[j, "Count"] == 1){
         subset[index:(index - 1 + contingency_table[j, "Count"]), 
                colnames(sig_Y)] <- 
           t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
                               mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                              Sigma = diag(1, nrow(mu_chain)))))
+                              Sigma = varY)))
       } else{
         subset[index:(index - 1 + contingency_table[j, "Count"]), 
                colnames(sig_Y)] <- 
           mvrnorm(n = contingency_table[j, "Count"],
                   mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                  Sigma = diag(1, nrow(mu_chain)))
+                  Sigma = varY)
       }
+      
+      varY_chain[, paste0(i, ":", b)] <- diag(varY)
       
       #W (categorical data)
       subset[index:(index - 1 + contingency_table[j, "Count"]), 
