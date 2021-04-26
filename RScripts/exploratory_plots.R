@@ -1,4 +1,3 @@
-#test change
 #---- Package loading + options ----
 if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
