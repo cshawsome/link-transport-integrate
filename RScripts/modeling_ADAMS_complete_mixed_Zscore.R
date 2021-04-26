@@ -81,13 +81,13 @@ B = 1000
 
 #---- **hyperparameters ----
 #DOF for inverse wishart
-nu_0 <- 150
+nu_0 <- 200
 
 #scaling for inverse Wishart
-kappa_0 <- c(1, 1, 1, 1)
+kappa_0 <- c(10, 10, 10, 10)
 
 #scaling matrix: one for each continuous var x latent class
-Sigma_scale <- matrix(1, ncol = 4, nrow = 10) 
+var_scale <- matrix(1, ncol = 4, nrow = 10) 
 
 #---- **priors ----
 # #uninformative
@@ -443,6 +443,32 @@ mu_chain_plot <- ggplot(data = mu_chain_data,
 ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
        width = 7, height = 5, units = "in", device = "jpeg")
+
+#---- ****varY chain ----
+varY_chain_data <- varY_chain %>% as.data.frame() %>% 
+  rownames_to_column("Z") %>% 
+  pivot_longer(-c("Z"), names_to = c("Group", "Run"), names_sep = ":", 
+               values_to = "variance") %>% 
+  mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
+                                   Group == 2 ~ "Other", Group == 3 ~ "MCI", 
+                                   Group == 4 ~ "Dementia")) %>%
+  mutate_at("Run", as.numeric) %>%
+  mutate_if(is.character, as.factor) 
+
+varY_chain_plot <- ggplot(data = varY_chain_data, 
+                          aes(x = Run, y = variance, colour = Z)) +       
+  geom_line(aes(group = Z)) + 
+  theme_minimal() + xlab("Run") + ylab("Variance") +  
+  scale_color_manual(values = rev(extended_pallette14)) + 
+  scale_x_continuous(breaks = seq(0, B, by = 100)) + 
+  facet_grid(rows = vars(factor(Group_label, 
+                                levels = c("Unimpaired", "MCI", "Dementia", 
+                                           "Other")))) + theme_bw() 
+
+ggsave(filename = "varY_chain.jpeg", plot = varY_chain_plot, 
+       path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+       width = 7, height = 5, units = "in", device = "jpeg")
+
 
 #---- save datasets ----
 write_csv(synthetic_sample, 
