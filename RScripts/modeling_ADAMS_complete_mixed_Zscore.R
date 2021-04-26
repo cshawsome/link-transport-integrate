@@ -84,7 +84,7 @@ B = 1000
 nu_0 <- 150
 
 #scaling for inverse Wishart
-kappa_0 <- c(0.9, 1, 1, 1)
+kappa_0 <- c(1, 1, 1, 1)
 
 #scaling matrix: one for each continuous var x latent class
 Sigma_scale <- matrix(1, ncol = 4, nrow = 10) 
@@ -103,7 +103,7 @@ Sigma_scale <- matrix(1, ncol = 4, nrow = 10)
 alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
   set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
                  "1_prior_count", "2_prior_count")) %>%
-  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.005*x)
+  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.10*x)
 
 #location for inverse wishart 
 beta_prior <- readRDS(here::here("priors", "beta.rds"))
@@ -221,10 +221,6 @@ for(b in 1:B){
       assign(paste0("UtU_", i), UtU)
     }
     
-    #---- ****beta hat ----
-    continuous_covariates <- subset %>% 
-      dplyr::select(all_of(Z)) %>% as.matrix
-    
     #---- ****pool UtU if needed ----
     if(det(t(A) %*% UtU %*% A) == 0){
       if(exists(paste0("UtU_", (i-1)))){
@@ -235,6 +231,9 @@ for(b in 1:B){
     }
     
     #---- ****Mm ----
+    continuous_covariates <- subset %>% 
+      dplyr::select(all_of(Z)) %>% as.matrix
+    
     V_inv <- t(A) %*% UtU %*% A 
     V_0_inv <- matrix(V_inv_prior[, i], nrow = nrow(V_inv), ncol = ncol(V_inv))
     beta_0 <- matrix(beta_prior[, i], nrow = nrow(V_inv), 
@@ -283,13 +282,13 @@ for(b in 1:B){
                colnames(sig_Y)] <- 
           t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
                               mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                              Sigma = sig_Y)))
+                              Sigma = diag(1, nrow(mu_chain)))))
       } else{
         subset[index:(index - 1 + contingency_table[j, "Count"]), 
                colnames(sig_Y)] <- 
           mvrnorm(n = contingency_table[j, "Count"],
                   mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                  Sigma = sig_Y)
+                  Sigma = diag(1, nrow(mu_chain)))
       }
       
       #W (categorical data)
