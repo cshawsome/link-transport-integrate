@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "wesanderson", "RColorBrewer")
+       "locfit", "MBSP", "wesanderson", "RColorBrewer")
 
 #---- read in data ----
 #---- **ADAMS ----
@@ -75,14 +75,40 @@ cross_class_label <- table(synthetic_sample$ETHNIC_label,
 synthetic_sample <- arrange(synthetic_sample, 
                             Astroke, desc(Black), desc(Hispanic))
 
-# #---- bounds on continuous data ----
-# bounds <- synthetic_sample %>%
-#   summarize_at(.vars = all_of(Z), .funs = list("min" = min, "max" = max))
-
 #---- Bayes Stuff ----
-#---- **simulation parameters ----
-#number of runs
+#---- **simulation runs ----
 B = 1000
+
+#---- **hyperparameters ----
+#DOF for inverse wishart
+nu_0 <- 150
+
+#scaling for inverse Wishart
+kappa_0 <- c(0.9, 1, 1, 1)
+
+#scaling matrix: one for each continuous var x latent class
+Sigma_scale <- matrix(1, ncol = 4, nrow = 10) 
+
+#---- **priors ----
+# #uninformative
+# alpha_0 <- as.data.frame(matrix(1, nrow = 6, ncol = 4)) %>%
+#   set_colnames(paste0(seq(1, 4), "_prior_count"))
+
+# #from HRS
+# alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
+#   set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
+#                  "1_prior_count", "2_prior_count"))
+
+#weighted HRS
+alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
+  set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
+                 "1_prior_count", "2_prior_count")) %>%
+  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.005*x)
+
+#location for inverse wishart 
+beta_prior <- readRDS(here::here("priors", "beta.rds"))
+V_inv_prior <- readRDS(here::here("priors", "V_inv.rds"))
+Sigma_prior <- readRDS(here::here("priors", "Sigma.rds"))
 
 #categorical vars contrasts matrix
 A = do.call(cbind, list(
@@ -124,35 +150,6 @@ mu_chain <-
   set_colnames(apply(
     expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste,
     collapse = ":")) %>% set_rownames(Z)
-
-#---- **priors ----
-# #uninformative
-# alpha_0 <- as.data.frame(matrix(1, nrow = 6, ncol = 4)) %>%
-#   set_colnames(paste0(seq(1, 4), "_prior_count"))
-
-# #from HRS
-# alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
-#   set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
-#                  "1_prior_count", "2_prior_count"))
-
-#weighted HRS
-alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
-  set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
-                 "1_prior_count", "2_prior_count")) %>%
-  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.075*x)
-
-#DOF for inverse wishart
-nu_0 <- 100
-
-#weights for beta
-w1 <- 0 #weight on data
-w2 <- 1 #weight on prior
-
-#location for inverse wishart 
-beta_prior <- readRDS(here::here("priors", "beta.rds"))
-Sigma_prior <- readRDS(here::here("priors", "Sigma.rds"))
-
-Sigma_multiplier <- c(1, 1.75, 1.75, 1.5)
 
 #---- START TIME ----
 start <- Sys.time()
@@ -237,25 +234,29 @@ for(b in 1:B){
       }
     }
     
-    V <- solve(t(A) %*% UtU %*% A)
+    #---- ****Mm ----
+    V_inv <- t(A) %*% UtU %*% A 
+    V_0_inv <- matrix(V_inv_prior[, i], nrow = nrow(V_inv), ncol = ncol(V_inv))
+    beta_0 <- matrix(beta_prior[, i], nrow = nrow(V_inv), 
+                     ncol = ncol(continuous_covariates))
     
-    beta_hat <-  V %*% t(A) %*% t(U) %*% continuous_covariates
+    M <- solve(V_inv + kappa_0[i]*V_0_inv)
+    m <-  t(A) %*% t(U) %*% continuous_covariates - 
+      kappa_0[i]*V_0_inv %*% beta_0
     
-    #---- ****epsilon hat ----
-    eps_hat <- continuous_covariates - (U %*% A %*% beta_hat)
+    Mm <- M %*% m
     
     #---- ****draw Sigma | Y ----
-    sig_Y <- riwish(v = (nrow(subset) - nrow(beta_hat) + nu_0), 
-                    S = ((t(eps_hat) %*% eps_hat)) + Sigma_prior)*
-      Sigma_multiplier[i]
+    ZtZ <- t(continuous_covariates) %*% continuous_covariates
+    third_term <- kappa_0[i]*t(beta_0) %*% V_0_inv %*% beta_0
+    
+    sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
+                    S = Sigma_prior + ZtZ + third_term)
     
     Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
     
     #---- ****draw beta | Sigma, Y ----
-    Sigma_kron_V <- kronecker(sig_Y, V, FUN = "*", make.dimnames = TRUE)
-    beta_Sigma_Y <- 
-      mvrnorm(n = 1, mu = w1*as.vector(beta_hat) + w2*beta_prior[, i], 
-              Sigma = Sigma_kron_V)
+    beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y)
     
     #---- ****compute mu ----
     mu_chain[, paste0(i, ":", seq(1, nrow(cross_class_label)), ":", b)] <- 
