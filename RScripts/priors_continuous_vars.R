@@ -112,8 +112,8 @@ for(group in c("Unimpaired", "Other", "MCI", "Dementia")){
 }
 
 #---- save ----
-saveRDS(Sigma_hat, file = here::here("priors", "Sigma.rds"))
-saveRDS(priors_beta, file = here::here("priors", "beta.rds"))
-saveRDS(priors_V, file = here::here("priors", "V_inv.rds"))
+saveRDS(Sigma_hat, file = here::here("priors", "Sigma_R.rds"))
+saveRDS(priors_beta, file = here::here("priors", "beta_R.rds"))
+saveRDS(priors_V, file = here::here("priors", "V_inv_R.rds"))
   
 
