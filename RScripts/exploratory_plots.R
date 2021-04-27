@@ -37,11 +37,19 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
 analytical_sample <- ADAMS_subset 
 #Transform to [0, 1]
 analytical_sample[, Z] <- 
-  apply(analytical_sample[, Z], 2, function(x) x/(max(x) + 1))
+  apply(analytical_sample[, Z], 2, function(x) (x + 1)/(max(x) + 2))
+
+# #Sanity check
+# apply(analytical_sample[, Z], 2, max)
+# apply(analytical_sample[, Z], 2, min)
 
 #Transform for Real
 analytical_sample[, Z] <- 
   apply(analytical_sample[, Z], 2, function(x) logit(x))
+
+# #Sanity check
+# apply(analytical_sample[, Z], 2, max)
+# apply(analytical_sample[, Z], 2, min)
 
 #---- all-way contingency table ----
 cross_class_label <- table(analytical_sample$ETHNIC_label, 
