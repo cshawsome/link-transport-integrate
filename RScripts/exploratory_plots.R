@@ -135,7 +135,7 @@ for(var in Z){
                  names_pattern = "(.*).(.)") %>% 
     set_colnames(c("type", "value", "group")) 
   plot_data[, "value"] <- unlist(plot_data[, "value"])
-  plot_data[which(plot_data$type == "y"), "type"] <- "z"
+  plot_data[which(plot_data$type == "y"), "type"] <- "r"
   
   plotX <- ggplot(data = plot_data %>% 
                     filter(type == "x"), 
@@ -144,23 +144,38 @@ for(var in Z){
     scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)]) + 
     scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)])
   
-  plotZ <- ggplot(data = plot_data %>% 
-                    filter(type == "z"), 
+  plotR <- ggplot(data = plot_data %>% 
+                    filter(type == "r"), 
                   aes(x = value, color = group, fill = group)) + 
     geom_density(alpha = 0.5) + theme_minimal() + xlab(var) + 
     scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)]) + 
     scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)])
   
   if(var != Z[length(Z)]){
-    plotZ <- plotZ + theme(legend.position = "none") 
+    plotR <- plotR + theme(legend.position = "none") 
     plotX <- plotX + theme(legend.position = "none") 
   }
   
   assign(paste0(var, "_plotX"), plotX)
-  assign(paste0(var, "_plotZ"), plotZ)
+  assign(paste0(var, "_plotR"), plotR)
 }
 
 #---- **patchwork plot ----
+continuous_var_plot_names <- paste0(Z, "_plotR")
+
+((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
+      get(continuous_var_plot_names[3])) /
+     (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
+        get(continuous_var_plot_names[6])))) / 
+    (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
+       get(continuous_var_plot_names[9]))) / 
+  get(continuous_var_plot_names[10])
+
+ggsave(filename = "ADAMS_mix_R.jpeg", plot = last_plot(), 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                     "prelim_analyses/ADAMSA"), width = 12, height = 12, 
+       units = "in", device = "jpeg")
+
 continuous_var_plot_names <- paste0(Z, "_plotX")
 
 ((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
@@ -172,21 +187,6 @@ continuous_var_plot_names <- paste0(Z, "_plotX")
   get(continuous_var_plot_names[10])
 
 ggsave(filename = "ADAMS_mix_X.jpeg", plot = last_plot(), 
-       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                     "prelim_analyses/ADAMSA"), width = 12, height = 12, 
-       units = "in", device = "jpeg")
-
-continuous_var_plot_names <- paste0(Z, "_plotZ")
-
-((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
-      get(continuous_var_plot_names[3])) /
-     (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
-        get(continuous_var_plot_names[6])))) / 
-    (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
-       get(continuous_var_plot_names[9]))) / 
-  get(continuous_var_plot_names[10])
-
-ggsave(filename = "ADAMS_mix_Z.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                      "prelim_analyses/ADAMSA"), width = 12, height = 12, 
        units = "in", device = "jpeg")
