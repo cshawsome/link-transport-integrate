@@ -21,12 +21,6 @@ ADAMS_subset <-
                   "data/cleaned/ADAMS_subset_mixed.csv")) %>% 
   dplyr::select(c("HHIDPN", all_of(group), all_of(W), all_of(Z))) %>% 
   na.omit() %>% 
-  #don't standardize this
-  mutate_at("Astroke", as.character) %>%
-  #Z-score continuous
-  mutate_if(is.numeric, scale) %>%
-  #transform to correct type
-  mutate_at("Astroke", as.numeric) %>%
   mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
          "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
          #Add intercept
@@ -40,6 +34,22 @@ ADAMS_subset <-
 
 # #Sanity check
 # table(ADAMS_subset$Adem_dx_cat, ADAMS_subset$group_class, useNA = "ifany")
+
+#---- double transform ----
+#Transform to [0, 1]
+ADAMS_subset[, Z] <- 
+  apply(ADAMS_subset[, Z], 2, function(x) (x + 1)/(max(x) + 2))
+
+# #Sanity check
+# apply(ADAMS_subset[, Z], 2, max)
+# apply(ADAMS_subset[, Z], 2, min)
+
+#Transform for Real
+ADAMS_subset[, Z] <- apply(ADAMS_subset[, Z], 2, function(x) logit(x))
+
+# #Sanity check
+# apply(ADAMS_subset[, Z], 2, max)
+# apply(ADAMS_subset[, Z], 2, min)
 
 #---- arrange data ----
 ADAMS_subset %<>% arrange(Astroke, desc(Black), desc(Hispanic))
