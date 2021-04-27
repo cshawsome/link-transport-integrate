@@ -34,8 +34,30 @@ ADAMS_subset %<>%
 # levels(ADAMS_subset$AACURRWK_label)
 # levels(ADAMS_subset$DRINKcat_label)
 
-#---- Z-score ----
-ADAMS_subset %<>% mutate_if(is.numeric, scale)
+#---- double transform ----
+Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+       "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
+
+#Transform to [0, 1]
+ADAMS_subset[, Z] <- 
+  apply(ADAMS_subset[, Z], 2, function(x) (x + 1)/(max(x, na.rm = TRUE) + 2))
+
+# #Sanity check
+# apply(ADAMS_subset[, Z], 2, function(x) max(x, na.rm = TRUE))
+# apply(ADAMS_subset[, Z], 2, function(x) min(x, na.rm = TRUE))
+
+#Transform for Real
+for(var in Z){
+  for(i in 1:nrow(ADAMS_subset)){
+    if(!is.na(ADAMS_subset[i, var])){
+      ADAMS_subset[i, var] <- logit(ADAMS_subset[i, var])
+    }
+  }
+}
+
+# #Sanity check
+# apply(ADAMS_subset[, Z], 2, function(x) max(x, na.rm = TRUE))
+# apply(ADAMS_subset[, Z], 2, function(x) min(x, na.rm = TRUE))
 
 #---- dem class indicators ----
 ADAMS_subset %<>% 
@@ -267,12 +289,12 @@ tab_model(normal_model_50, other_model_50, MCI_model_50, digits = 3,
                         "dem_class_nested_regressions_50.html")) 
 
 #---- save model objects ----
-saveRDS(normal_model_25, here::here("priors", "normal_model_25.rds"))
-saveRDS(other_model_25, here::here("priors", "other_model_25.rds"))
-saveRDS(MCI_model_25, here::here("priors", "MCI_model_25.rds"))
-saveRDS(normal_model_50, here::here("priors", "normal_model_50.rds"))
-saveRDS(other_model_50, here::here("priors", "other_model_50.rds"))
-saveRDS(MCI_model_50, here::here("priors", "MCI_model_50.rds"))
+saveRDS(normal_model_25, here::here("priors", "normal_model_25_R.rds"))
+saveRDS(other_model_25, here::here("priors", "other_model_25_R.rds"))
+saveRDS(MCI_model_25, here::here("priors", "MCI_model_25_R.rds"))
+saveRDS(normal_model_50, here::here("priors", "normal_model_50_R.rds"))
+saveRDS(other_model_50, here::here("priors", "other_model_50_R.rds"))
+saveRDS(MCI_model_50, here::here("priors", "MCI_model_50_R.rds"))
 
 #---- save output .xlsx ----
 # table_list <- list("Normal vs. Impaired" = tidy_normal_model, 
