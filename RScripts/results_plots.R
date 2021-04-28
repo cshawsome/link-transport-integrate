@@ -147,8 +147,8 @@ race_ethnicity_plot + stroke_plot + stroke_race_ethnicity_plot
 
 ggsave(filename = "race_ethnicity_stroke.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
-                     "ADAMSA/"), width = 14, height = 5, units = "in", 
-       device = "jpeg")
+                     "ADAMSA/standard_normal"), width = 14, height = 5, 
+       units = "in", device = "jpeg")
 
 #---- plots: continuous vars ----
 for(var in cont_vars){
@@ -190,8 +190,8 @@ continuous_var_plot_names <- paste0(cont_vars, "_plotX")
 
 ggsave(filename = "continuous_varsX.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
-                     "ADAMSA/"), width = 12, height = 12, units = "in", 
-       device = "jpeg")
+                     "ADAMSA/standard_normal"), width = 12, height = 12, 
+       units = "in", device = "jpeg")
 
 continuous_var_plot_names <- paste0(cont_vars, "_plotZ")
 
@@ -205,8 +205,8 @@ continuous_var_plot_names <- paste0(cont_vars, "_plotZ")
 
 ggsave(filename = "continuous_varsZ.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
-                     "ADAMSA/"), width = 12, height = 12, units = "in", 
-       device = "jpeg")
+                     "ADAMSA/standard_normal"), width = 12, height = 12, 
+       units = "in", device = "jpeg")
 
 #---- plots: dementia classes ----
 #---- **overall ----
@@ -232,7 +232,8 @@ dementia_class_plot <-
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
 ggsave(filename = "group_class.jpeg", plot = last_plot(), 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/",
+                     "ADAMSA/standard_normal"), 
        width = 5, height = 5, units = "in", device = "jpeg")
 
 #---- **race-stratified ----
@@ -260,7 +261,8 @@ dementia_class_by_race_plot_n <-
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
 ggsave(filename = "group_class_by_race_n.jpeg", plot = last_plot(), 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/",
+                     "ADAMSA/standard_normal"), 
        width = 10, height = 7, units = "in", device = "jpeg")
 
 dementia_class_by_race_plot_p <- 
@@ -272,7 +274,8 @@ dementia_class_by_race_plot_p <-
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
 ggsave(filename = "group_class_by_race_p.jpeg", plot = last_plot(), 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/",
+                     "ADAMSA/standard_normal"), 
        width = 10, height = 7, units = "in", device = "jpeg")
 
 #---- plot: %change by category ----
@@ -298,7 +301,8 @@ overall_change <-
   theme_minimal()
 
 ggsave(filename = "group_percent_change_overall.jpeg", plot = last_plot(), 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/",
+                     "ADAMSA/standard_normal"), 
        width = 7, height = 5, units = "in", device = "jpeg")
 
 #---- **race-stratified ----
@@ -333,7 +337,8 @@ overall_change_by_race <-
   theme_minimal() + theme(text = element_text(size = 7)) 
 
 ggsave(filename = "group_percent_change_by_race.jpeg", plot = last_plot(), 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/",
+                     "ADAMSA/standard_normal"), 
        width = 7, height = 5, units = "in", device = "jpeg")
 
 
