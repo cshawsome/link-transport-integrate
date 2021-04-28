@@ -88,17 +88,17 @@ synthetic_sample <- arrange(synthetic_sample,
 
 #---- Bayes Stuff ----
 #---- **simulation runs ----
-B = 1000
+B = 10
 
 #---- **hyperparameters ----
 #DOF for inverse wishart
-nu_0 <- 150
+nu_0 <- 75
 
 #scaling for inverse Wishart
-kappa_0 <- c(0.9, 1, 1, 1)
+kappa_0 <- c(1, 1, 1, 1)
 
-#scaling matrix: one for each continuous var x latent class
-Sigma_scale <- matrix(1, ncol = 4, nrow = 10) 
+# #scaling matrix: one for each continuous var x latent class
+# Sigma_scale <- matrix(1, ncol = 4, nrow = 10) 
 
 #---- **priors ----
 # #uninformative
@@ -117,9 +117,9 @@ alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
   mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.005*x)
 
 #location for inverse wishart 
-beta_prior <- readRDS(here::here("priors", "beta.rds"))
-V_inv_prior <- readRDS(here::here("priors", "V_inv.rds"))
-Sigma_prior <- readRDS(here::here("priors", "Sigma.rds"))
+beta_prior <- readRDS(here::here("priors", "beta_R.rds"))
+V_inv_prior <- readRDS(here::here("priors", "V_inv_R.rds"))
+Sigma_prior <- readRDS(here::here("priors", "Sigma_R.rds"))
 
 #categorical vars contrasts matrix
 A = do.call(cbind, list(
