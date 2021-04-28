@@ -4,13 +4,14 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "magrittr", "here", "wesanderson", "RColorBrewer", 
-       "devtools", "scales", "plyr")
+       "devtools", "scales", "plyr", "rje")
 install_github("thomasp85/patchwork")
 
 #---- read in data ----
 synthetic_ADAMS <- 
   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                  "analyses/results/ADAMSA/ADAMSA_synthetic.csv"), 
+                  "analyses/results/ADAMSA/double_transform/", 
+                  "ADAMSA_synthetic.csv"), 
            col_types = cols(HHIDPN = col_character()))
 
 ADAMS_columns <- c(colnames(synthetic_ADAMS)[
@@ -25,30 +26,48 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
   filter(HHIDPN %in% synthetic_ADAMS$HHIDPN) %>% 
   dplyr::select(all_of(ADAMS_columns))
 
-#---- Z Scores ----
+#---- double_transform ----
 cont_vars <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
                "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
 
-ADAMS_Z <- ADAMS_subset %>% 
-  dplyr::select(c("HHIDPN", all_of(cont_vars))) %>% 
-  mutate_if(is.numeric, scale) 
+ADAMS_transform <- ADAMS_subset %>% 
+  dplyr::select(c("HHIDPN", all_of(cont_vars))) 
+
+ADAMS_transform[, cont_vars] <- 
+  apply(ADAMS_transform[, cont_vars], 2, function(x) (x + 1)/(max(x) + 2))
+
+# #Sanity check
+# apply(ADAMS_transform[, cont_vars], 2, max)
+# apply(ADAMS_transform[, cont_vars], 2, min)
+
+#Transform for Real
+ADAMS_transform[, cont_vars] <- 
+  apply(ADAMS_transform[, cont_vars], 2, function(x) logit(x))
+
+# #Sanity check
+# apply(ADAMS_transform[, cont_vars], 2, max)
+# apply(ADAMS_transform[, cont_vars], 2, min)
 
 synthetic_transformed <- synthetic_ADAMS %>% 
   dplyr::select(c("HHIDPN", all_of(cont_vars)))
 
-means <- ADAMS_subset %>% dplyr::select(all_of(cont_vars)) %>% colMeans()
-sds <- ADAMS_subset %>% dplyr::select(all_of(cont_vars)) %>% apply(2, sd)
+#Transform to [0, 1]
+synthetic_transformed[, cont_vars] <- 
+  apply(synthetic_transformed[, cont_vars], 2, function(x) expit(x))
 
-for(var in names(means)){
+max <- ADAMS_subset %>% dplyr::select(all_of(cont_vars)) %>% apply(., 2, max)
+
+for(var in names(max)){
   synthetic_transformed[, var] <- 
-    synthetic_transformed[, var]*sds[var] + means[var]
+    synthetic_transformed[, var]*(max[var] + 2) - 1
 }
 
 #---- merge datasets ----
 #format column names
 synthetic_ADAMS %<>% 
   set_colnames(c("HHIDPN", 
-                 paste0("syntheticZ:", colnames(synthetic_ADAMS))[-1]))
+                 paste0("syntheticTransformed:", 
+                        colnames(synthetic_ADAMS))[-1]))
 
 synthetic_transformed %<>% 
   set_colnames(c("HHIDPN", 
@@ -57,12 +76,13 @@ synthetic_transformed %<>%
 ADAMS_subset %<>% 
   set_colnames(c("HHIDPN", paste0("ADAMSAX:", colnames(ADAMS_subset))[-1]))
 
-ADAMS_Z %<>% 
-  set_colnames(c("HHIDPN", paste0("ADAMSAZ:", colnames(ADAMS_Z))[-1]))
+ADAMS_transform %<>% 
+  set_colnames(c("HHIDPN", paste0("ADAMSATransformed:", 
+                                  colnames(ADAMS_transform))[-1]))
 
 merged_data <- 
-  join_all(list(ADAMS_subset, ADAMS_Z, synthetic_ADAMS, synthetic_transformed), 
-           by = "HHIDPN", type = "left")
+  join_all(list(ADAMS_subset, ADAMS_transform, synthetic_ADAMS, 
+                synthetic_transformed), by = "HHIDPN", type = "left")
 
 #---- data cleaning: dem group ----
 # #data check
@@ -77,10 +97,10 @@ merged_data %<>%
                      `ADAMSAX:Adem_dx_cat` == "Normal" ~ "Unimpaired",
                      TRUE ~ `ADAMSAX:Adem_dx_cat`), 
          "synthetic:group_class" = 
-           case_when(`syntheticZ:Group` == 1 ~ "Unimpaired", 
-                     `syntheticZ:Group` == 2 ~ "Other", 
-                     `syntheticZ:Group` == 3 ~ "MCI", 
-                     `syntheticZ:Group` == 4 ~ "Dementia"))
+           case_when(`syntheticTransformed:Group` == 1 ~ "Unimpaired", 
+                     `syntheticTransformed:Group` == 2 ~ "Other", 
+                     `syntheticTransformed:Group` == 3 ~ "MCI", 
+                     `syntheticTransformed:Group` == 4 ~ "Dementia"))
 
 # #Sanity check
 # table(merged_data$`ADAMSA:group_class`)
@@ -146,8 +166,8 @@ race_ethnicity_plot + stroke_plot + stroke_race_ethnicity_plot
 
 ggsave(filename = "race_ethnicity_stroke.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
-                     "ADAMSA/"), width = 14, height = 5, units = "in", 
-       device = "jpeg")
+                     "ADAMSA/double_transform"), width = 14, height = 5, 
+       units = "in", device = "jpeg")
 
 #---- plots: continuous vars ----
 for(var in cont_vars){
@@ -162,7 +182,8 @@ for(var in cont_vars){
     scale_color_manual(values = rev(wes_palette("Darjeeling1")))
   
   plotZ <- ggplot(data = plot_data %>% 
-                    filter(Data %in% c("ADAMSAZ", "syntheticZ")), 
+                    filter(Data %in% 
+                             c("ADAMSATransformed", "syntheticTransformed")), 
                   aes(x = value, color = Data)) + 
     geom_density() + theme_minimal() + xlab(var) + 
     scale_color_manual(values = rev(wes_palette("Darjeeling1")))
@@ -189,8 +210,8 @@ continuous_var_plot_names <- paste0(cont_vars, "_plotX")
 
 ggsave(filename = "continuous_varsX.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
-                     "ADAMSA/"), width = 12, height = 12, units = "in", 
-       device = "jpeg")
+                     "ADAMSA/double_transform"), width = 12, height = 12, 
+       units = "in", device = "jpeg")
 
 continuous_var_plot_names <- paste0(cont_vars, "_plotZ")
 
@@ -202,10 +223,10 @@ continuous_var_plot_names <- paste0(cont_vars, "_plotZ")
        get(continuous_var_plot_names[9]))) / 
   get(continuous_var_plot_names[10])
 
-ggsave(filename = "continuous_varsZ.jpeg", plot = last_plot(), 
+ggsave(filename = "continuous_varsTransform.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
-                     "ADAMSA/"), width = 12, height = 12, units = "in", 
-       device = "jpeg")
+                     "ADAMSA/double_transform"), width = 12, height = 12, 
+       units = "in", device = "jpeg")
 
 #---- plots: dementia classes ----
 #---- **overall ----
@@ -231,7 +252,8 @@ dementia_class_plot <-
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
 ggsave(filename = "group_class.jpeg", plot = last_plot(), 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
+                     "ADAMSA/double_transform"), 
        width = 5, height = 5, units = "in", device = "jpeg")
 
 #---- **race-stratified ----
@@ -259,7 +281,8 @@ dementia_class_by_race_plot_n <-
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
 ggsave(filename = "group_class_by_race_n.jpeg", plot = last_plot(), 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
+                     "ADAMSA/double_transform"), 
        width = 10, height = 7, units = "in", device = "jpeg")
 
 dementia_class_by_race_plot_p <- 
@@ -271,7 +294,8 @@ dementia_class_by_race_plot_p <-
   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
 
 ggsave(filename = "group_class_by_race_p.jpeg", plot = last_plot(), 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
+                     "ADAMSA/double_transform"), 
        width = 10, height = 7, units = "in", device = "jpeg")
 
 #---- plot: %change by category ----
@@ -297,7 +321,8 @@ overall_change <-
   theme_minimal()
 
 ggsave(filename = "group_percent_change_overall.jpeg", plot = last_plot(), 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
+                     "ADAMSA/double_transform"), 
        width = 7, height = 5, units = "in", device = "jpeg")
 
 #---- **race-stratified ----
@@ -332,7 +357,8 @@ overall_change_by_race <-
   theme_minimal() + theme(text = element_text(size = 7)) 
 
 ggsave(filename = "group_percent_change_by_race.jpeg", plot = last_plot(), 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/results/ADAMSA", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/results/", 
+                     "ADAMSA/double_transform"), 
        width = 7, height = 5, units = "in", device = "jpeg")
 
 
