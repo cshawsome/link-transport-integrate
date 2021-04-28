@@ -10,7 +10,8 @@ install_github("thomasp85/patchwork")
 #---- read in data ----
 synthetic_ADAMS <- 
   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                  "analyses/results/ADAMSA/ADAMSA_synthetic.csv"), 
+                  "analyses/results/ADAMSA/standard_normal/",
+                  "ADAMSA_synthetic.csv"), 
            col_types = cols(HHIDPN = col_character()))
 
 ADAMS_columns <- c(colnames(synthetic_ADAMS)[
