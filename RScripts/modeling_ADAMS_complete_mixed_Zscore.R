@@ -4,19 +4,13 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "MBSP", "wesanderson", "RColorBrewer")
+       "locfit", "rje", "MBSP", "wesanderson", "RColorBrewer")
 
 #---- read in data ----
 #---- **ADAMS ----
 ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                                 "data/cleaned/ADAMS_subset_mixed.csv"), 
-                         col_types = cols(HHIDPN = col_character(), 
-                                          #Do not standardize these
-                                          Astroke = col_character())) %>% 
-  #Z-score continuous
-  mutate_if(is.numeric, scale) %>%
-  #transform to correct type
-  mutate_at("Astroke", as.numeric)
+                         col_types = cols(HHIDPN = col_character()))
 
 #---- **models for priors ----
 Unimpaired_prior <- readRDS(here::here("priors", "normal_model_25_R.rds"))
@@ -63,6 +57,23 @@ Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES",
 #       useNA = "ifany")
 # 
 # colSums(is.na(analytical_sample))
+
+#---- double-transform ----
+#Transform to [0, 1]
+synthetic_sample[, Z] <- 
+  apply(synthetic_sample[, Z], 2, function(x) (x + 1)/(max(x) + 2))
+
+# #Sanity check
+# apply(synthetic_sample[, Z], 2, max)
+# apply(synthetic_sample[, Z], 2, min)
+
+#Transform for Real
+synthetic_sample[, Z] <- 
+  apply(synthetic_sample[, Z], 2, function(x) logit(x))
+
+# #Sanity check
+# apply(synthetic_sample[, Z], 2, max)
+# apply(synthetic_sample[, Z], 2, min)
 
 #---- all-way contingency table ----
 #We have one small cell-- Hispanics who have had a stroke
