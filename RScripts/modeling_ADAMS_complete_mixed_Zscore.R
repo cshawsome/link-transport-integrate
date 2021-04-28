@@ -19,9 +19,9 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
   mutate_at("Astroke", as.numeric)
 
 #---- **models for priors ----
-Unimpaired_prior <- readRDS(here::here("priors", "normal_model_25.rds"))
-Other_prior <- readRDS(here::here("priors", "other_model_25.rds"))
-MCI_prior <- readRDS(here::here("priors", "MCI_model_25.rds"))
+Unimpaired_prior <- readRDS(here::here("priors", "normal_model_25_R.rds"))
+Other_prior <- readRDS(here::here("priors", "other_model_25_R.rds"))
+MCI_prior <- readRDS(here::here("priors", "MCI_model_25_R.rds"))
 
 Unimpaired_preds <- names(coefficients(Unimpaired_prior))
 Unimpaired_preds[which(Unimpaired_preds == "ETHNIC_labelBlack")] <- "Black"
