@@ -151,11 +151,6 @@ mu_chain <-
     expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste,
     collapse = ":")) %>% set_rownames(Z)
 
-varY_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
-  set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste,
-                     collapse = ":")) %>%
-  set_rownames(Z)
-
 #---- START TIME ----
 start <- Sys.time()
 #---- **sampling ----
@@ -282,22 +277,19 @@ for(b in 1:B){
         index = sum(contingency_table[1:(j - 1), "Count"]) + 1
       }
       #Z (continuous data)
-      varY <- cov(continuous_covariates)
       if(contingency_table[j, "Count"] == 1){
         subset[index:(index - 1 + contingency_table[j, "Count"]), 
                colnames(sig_Y)] <- 
           t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
                               mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                              Sigma = varY)))
+                              Sigma = sig_Y)))
       } else{
         subset[index:(index - 1 + contingency_table[j, "Count"]), 
                colnames(sig_Y)] <- 
           mvrnorm(n = contingency_table[j, "Count"],
                   mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                  Sigma = varY)
+                  Sigma = sig_Y)
       }
-      
-      varY_chain[, paste0(i, ":", b)] <- diag(varY)
       
       #W (categorical data)
       subset[index:(index - 1 + contingency_table[j, "Count"]), 
@@ -444,31 +436,30 @@ ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot,
        path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
        width = 7, height = 5, units = "in", device = "jpeg")
 
-#---- ****varY chain ----
-varY_chain_data <- varY_chain %>% as.data.frame() %>% 
-  rownames_to_column("Z") %>% 
-  pivot_longer(-c("Z"), names_to = c("Group", "Run"), names_sep = ":", 
-               values_to = "variance") %>% 
-  mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
-                                   Group == 2 ~ "Other", Group == 3 ~ "MCI", 
-                                   Group == 4 ~ "Dementia")) %>%
-  mutate_at("Run", as.numeric) %>%
-  mutate_if(is.character, as.factor) 
-
-varY_chain_plot <- ggplot(data = varY_chain_data, 
-                          aes(x = Run, y = variance, colour = Z)) +       
-  geom_line(aes(group = Z)) + 
-  theme_minimal() + xlab("Run") + ylab("Variance") +  
-  scale_color_manual(values = rev(extended_pallette14)) + 
-  scale_x_continuous(breaks = seq(0, B, by = 100)) + 
-  facet_grid(rows = vars(factor(Group_label, 
-                                levels = c("Unimpaired", "MCI", "Dementia", 
-                                           "Other")))) + theme_bw() 
-
-ggsave(filename = "varY_chain.jpeg", plot = varY_chain_plot, 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
-       width = 7, height = 5, units = "in", device = "jpeg")
-
+# #---- ****varY chain ----
+# varY_chain_data <- varY_chain %>% as.data.frame() %>% 
+#   rownames_to_column("Z") %>% 
+#   pivot_longer(-c("Z"), names_to = c("Group", "Run"), names_sep = ":", 
+#                values_to = "variance") %>% 
+#   mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
+#                                    Group == 2 ~ "Other", Group == 3 ~ "MCI", 
+#                                    Group == 4 ~ "Dementia")) %>%
+#   mutate_at("Run", as.numeric) %>%
+#   mutate_if(is.character, as.factor) 
+# 
+# varY_chain_plot <- ggplot(data = varY_chain_data, 
+#                           aes(x = Run, y = variance, colour = Z)) +       
+#   geom_line(aes(group = Z)) + 
+#   theme_minimal() + xlab("Run") + ylab("Variance") +  
+#   scale_color_manual(values = rev(extended_pallette14)) + 
+#   scale_x_continuous(breaks = seq(0, B, by = 100)) + 
+#   facet_grid(rows = vars(factor(Group_label, 
+#                                 levels = c("Unimpaired", "MCI", "Dementia", 
+#                                            "Other")))) + theme_bw() 
+# 
+# ggsave(filename = "varY_chain.jpeg", plot = varY_chain_plot, 
+#        path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+#        width = 7, height = 5, units = "in", device = "jpeg")
 
 #---- save datasets ----
 write_csv(synthetic_sample, 
