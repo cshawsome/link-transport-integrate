@@ -88,7 +88,7 @@ synthetic_sample <- arrange(synthetic_sample,
 
 #---- Bayes Stuff ----
 #---- **simulation runs ----
-B = 10
+B = 1000
 
 #---- **hyperparameters ----
 #DOF for inverse wishart
