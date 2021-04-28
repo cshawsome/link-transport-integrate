@@ -339,7 +339,8 @@ gamma_chain_plot <-
   scale_color_manual(values = rev(extended_pallette14))
 
 ggsave(filename = "gamma_chain.jpeg", plot = gamma_chain_plot, 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+                     "standard_normal"), 
        width = 7, height = 6, units = "in", device = "jpeg")
 
 #---- ****latent class chain ----
@@ -359,7 +360,8 @@ latent_class_chain_plot <-
   scale_x_continuous(breaks = seq(0, B, by = 100)) 
 
 ggsave(filename = "latent_class_chain.jpeg", plot = latent_class_chain_plot, 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+                     "standard_normal"), 
        width = 7, height = 3, units = "in", device = "jpeg")
 
 #---- ****pi chain ----
@@ -383,7 +385,8 @@ pi_chain_plot <- ggplot(data = pi_chain_data,
                                            "Other")))) + theme_bw() 
 
 ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+                     "standard_normal"), 
        width = 7, height = 5, units = "in", device = "jpeg")
 
 #---- ****Sigma chain ----
@@ -408,7 +411,8 @@ Sigma_chain_plot <- ggplot(data = Sigma_chain_data,
                                            "Other")))) + theme_bw() 
 
 ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+                     "standard_normal"), 
        width = 7, height = 5, units = "in", device = "jpeg")
 
 #---- ****mu chain ----
@@ -434,7 +438,8 @@ mu_chain_plot <- ggplot(data = mu_chain_data,
   facet_grid(rows = vars(factor(Z))) + theme_bw() 
 
 ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
-       path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
+                     "standard_normal"), 
        width = 7, height = 14, units = "in", device = "jpeg")
 
 # #---- ****varY chain ----
@@ -465,27 +470,32 @@ ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot,
 #---- save datasets ----
 write_csv(synthetic_sample, 
           file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                        "ADAMSA/ADAMSA_synthetic.csv"))
+                        "ADAMSA/standard_normal/ADAMSA_synthetic.csv"))
 
 write_csv(gamma_plot_data, 
           file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                        "ADAMSA/diagnostics_data/ADAMSA_gamma_plot_data.csv"))
+                        "ADAMSA/standard_normal/diagnostics_data/", 
+                        "ADAMSA_gamma_plot_data.csv"))
 
 write_csv(latent_class_data, 
           file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                        "ADAMSA/diagnostics_data/ADAMSA_latent_class_data.csv"))
+                        "ADAMSA/standard_normal/diagnostics_data/", 
+                        "ADAMSA_latent_class_data.csv"))
 
 write_csv(pi_chain_data, 
           file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                        "ADAMSA/diagnostics_data/ADAMSA_pi_chain_data.csv"))
+                        "ADAMSA/standard_normal/diagnostics_data/", 
+                        "ADAMSA_pi_chain_data.csv"))
 
 write_csv(Sigma_chain_data, 
           file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                        "ADAMSA/diagnostics_data/ADAMSA_Sigma_chain_data.csv"))
+                        "ADAMSA/standard_normal/diagnostics_data/", 
+                        "ADAMSA_Sigma_chain_data.csv"))
 
 write_csv(mu_chain_data, 
           file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                        "ADAMSA/diagnostics_data/ADAMSA_mu_chain_data.csv"))
+                        "ADAMSA/standard_normal/diagnostics_data/", 
+                        "ADAMSA_mu_chain_data.csv"))
 
 
 
