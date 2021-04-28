@@ -162,6 +162,11 @@ mu_chain <-
     expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste,
     collapse = ":")) %>% set_rownames(Z)
 
+varY_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
+  set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste,
+                     collapse = ":")) %>%
+  set_rownames(Z)
+
 #---- START TIME ----
 start <- Sys.time()
 #---- **sampling ----
