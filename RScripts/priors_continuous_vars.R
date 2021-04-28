@@ -95,8 +95,8 @@ for(group in c("Unimpaired", "Other", "MCI", "Dementia")){
   
   if(group == "Unimpaired"){
     #---- Sigma prior (based on normal group) ----
-    eps_hat <- continuous_covariates - (U %*% A %*% beta_hat)
-    Sigma_hat <- (t(eps_hat) %*% eps_hat)/(nrow(ADAMS_subset) - ncol(beta_hat))
+    Sigma_hat <- 
+      nrow(subset)/(nrow(subset) - ncol(A))*cov(continuous_covariates)
   }
   i = i + 1
 }
