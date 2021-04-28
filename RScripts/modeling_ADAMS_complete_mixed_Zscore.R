@@ -84,10 +84,10 @@ B = 1000
 nu_0 <- 200
 
 #scaling for inverse Wishart
-kappa_0 <- c(10, 10, 10, 10)
+kappa_0 <- c(2, 2, 2, 2)
 
-#scaling matrix: one for each continuous var x latent class
-var_scale <- matrix(1, ncol = 4, nrow = 10) 
+# #scaling matrix: one for each continuous var x latent class
+# var_scale <- matrix(1, ncol = 4, nrow = 10)
 
 #---- **priors ----
 # #uninformative
@@ -423,18 +423,19 @@ mu_chain_data <- mu_chain %>% as.data.frame() %>%
   mutate_if(is.character, as.factor) 
 
 mu_chain_plot <- ggplot(data = mu_chain_data, 
-                        aes(x = Run, y = mu, colour = Z)) +       
-  geom_line(aes(group = Z)) + 
+                        aes(x = Run, y = mu, colour = Group_label)) +       
+  geom_line(aes(group = Group_label), alpha = 0.75) + 
   theme_minimal() + xlab("Run") + ylab("mu") +  
-  scale_color_manual(values = rev(extended_pallette14)) +
+  scale_color_manual(values = c(wes_palette("Darjeeling1")[1], 
+                                wes_palette("Darjeeling1")[3], 
+                                wes_palette("Darjeeling1")[5], 
+                                wes_palette("Darjeeling1")[2])) +
   scale_x_continuous(breaks = seq(0, B, by = 100)) + 
-  facet_grid(rows = vars(factor(Group_label, 
-                                levels = c("Unimpaired", "MCI", "Dementia", 
-                                           "Other")))) + theme_bw() 
+  facet_grid(rows = vars(factor(Z))) + theme_bw() 
 
 ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
        path = "/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
-       width = 7, height = 5, units = "in", device = "jpeg")
+       width = 7, height = 14, units = "in", device = "jpeg")
 
 # #---- ****varY chain ----
 # varY_chain_data <- varY_chain %>% as.data.frame() %>% 
