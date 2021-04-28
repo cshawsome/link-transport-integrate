@@ -481,7 +481,7 @@ write_csv(Sigma_chain_data,
 
 write_csv(mu_chain_data, 
           file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                        "ADAMSA/couble_transform/diagnostics_data/", 
+                        "ADAMSA/double_transform/diagnostics_data/", 
                         "ADAMSA_mu_chain_data.csv"))
 
 
