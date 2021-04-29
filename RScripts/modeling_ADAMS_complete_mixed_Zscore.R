@@ -84,10 +84,18 @@ B = 1000
 nu_0 <- 200
 
 #scaling for inverse Wishart
-kappa_0 <- c(2, 2, 2, 2)
+kappa_0 <- c(5, 5, 5, 5)
 
-# #scaling matrix: one for each continuous var x latent class
-# var_scale <- matrix(1, ncol = 4, nrow = 10)
+#scaling matrix: one for each continuous var x latent class
+var_scale <- cbind(
+  #Unimpaired
+  rep(1, 10),
+  #Other
+  rep(1, 10),
+  #MCI
+  rep(1, 10),
+  #Dementia
+  rep(1, 10)) 
 
 #---- **priors ----
 # #uninformative
@@ -282,13 +290,15 @@ for(b in 1:B){
                colnames(sig_Y)] <- 
           t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
                               mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                              Sigma = sig_Y)))
+                              Sigma = diag(sqrt(var_scale[, i])) %*% sig_Y %*% 
+                                diag(sqrt(var_scale[, i])))))
       } else{
         subset[index:(index - 1 + contingency_table[j, "Count"]), 
                colnames(sig_Y)] <- 
           mvrnorm(n = contingency_table[j, "Count"],
                   mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                  Sigma = sig_Y)
+                  Sigma = diag(sqrt(var_scale[, i])) %*% sig_Y %*% 
+                    diag(sqrt(var_scale[, i])))
       }
       
       #W (categorical data)
