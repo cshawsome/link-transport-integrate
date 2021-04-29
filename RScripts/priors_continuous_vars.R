@@ -43,6 +43,10 @@ ADAMS_subset[, Z] <-
 # #Sanity check
 # apply(ADAMS_subset[, Z], 2, max)
 # apply(ADAMS_subset[, Z], 2, min)
+# ##check age
+# 71/112; 111/112
+# ##check ser7
+# 1/7; 6/7
 
 #Transform for Real
 ADAMS_subset[, Z] <- apply(ADAMS_subset[, Z], 2, function(x) logit(x))
@@ -50,6 +54,9 @@ ADAMS_subset[, Z] <- apply(ADAMS_subset[, Z], 2, function(x) logit(x))
 # #Sanity check
 # apply(ADAMS_subset[, Z], 2, max)
 # apply(ADAMS_subset[, Z], 2, min)
+# ##check back-transform for age
+# (expit(4.7095)*112) - 1
+# (expit(0.5491078)*112) - 1
 
 #---- arrange data ----
 ADAMS_subset %<>% arrange(Astroke, desc(Black), desc(Hispanic))
