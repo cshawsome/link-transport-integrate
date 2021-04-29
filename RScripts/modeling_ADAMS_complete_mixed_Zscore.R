@@ -88,14 +88,14 @@ synthetic_sample <- arrange(synthetic_sample,
 
 #---- Bayes Stuff ----
 #---- **simulation runs ----
-B = 1000
+B = 10
 
 #---- **hyperparameters ----
 #DOF for inverse wishart
 nu_0 <- 200
 
 #scaling for inverse Wishart
-kappa_0 <- c(1, 1, 1, 1)
+kappa_0 <- c(5, 5, 5, 5)
 
 # #scaling matrix: one for each continuous var x latent class
 # Sigma_scale <- matrix(1, ncol = 4, nrow = 10) 
