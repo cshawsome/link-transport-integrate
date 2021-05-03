@@ -10,7 +10,10 @@ install_github("thomasp85/patchwork")
 #---- read in data ----
 #based on analysis in priors_latent_classes.R
 #Categorical vars (notation from Schafer 1997)
-W <- c("ETHNIC_label", "Astroke")
+W <- cbind(c("ETHNIC_label", "Astroke"), 
+           c("Race/Ethnicity", "Stroke")) %>% 
+  set_colnames(c("var", "label"))
+
 #Continuous vars (notation from Schafer 1997)
 Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
              "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
@@ -25,7 +28,8 @@ group <- c("Adem_dx_cat")
 ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                                 "data/cleaned/ADAMS_subset_mixed.csv"), 
                          col_types = cols(HHIDPN = col_character())) %>% 
-  dplyr::select(c("HHIDPN", all_of(group), all_of(W), all_of(Z))) %>% 
+  dplyr::select(c("HHIDPN", all_of(group), 
+                  all_of(W[, "var"]), all_of(Z[, "var"]))) %>% 
   na.omit() %>%
   mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
          "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
