@@ -57,88 +57,78 @@ cross_class_label <- table(analytical_sample$ETHNIC_label,
 # #How many are missing from this table?-- only 144! 
 # sum(cross_class_label$Freq)
 
-#---- summary stats ----
-#Looking at the same sample as the impaired vs. unimpaired model
-normal_model_data <- ADAMS_subset %>% 
-  dplyr::select(c("AAGE", "ETHNIC_label", "ANMSETOT", "ANSER7T", 
-                  "ANIMMCR", "ANRECYES", "ANWM1TOT", 
-                  "proxy_cog", "Adem_dx_cat")) %>% na.omit() %>% 
-  mutate("Aunimpaired" = ifelse(Adem_dx_cat == "Normal", 1, 0))
-
-#How many of each race/ethnicity in the sample
-CrossTable(normal_model_data$ETHNIC_label, useNA = "ifany")
-
-#How many of each race/ethnicity classified as cognitively normal
-CrossTable(normal_model_data$ETHNIC_label, normal_model_data$Aunimpaired, 
-           useNA = "ifany", prop.chisq = FALSE)
+# #---- summary stats ----
+# #Looking at the same sample as the impaired vs. unimpaired model
+# normal_model_data <- ADAMS_subset %>% 
+#   dplyr::select(c("AAGE", "ETHNIC_label", "ANMSETOT", "ANSER7T", 
+#                   "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+#                   "proxy_cog", "Adem_dx_cat")) %>% na.omit() %>% 
+#   mutate("Aunimpaired" = ifelse(Adem_dx_cat == "Normal", 1, 0))
+# 
+# #How many of each race/ethnicity in the sample
+# CrossTable(normal_model_data$ETHNIC_label, useNA = "ifany")
+# 
+# #How many of each race/ethnicity classified as cognitively normal
+# CrossTable(normal_model_data$ETHNIC_label, normal_model_data$Aunimpaired, 
+#            useNA = "ifany", prop.chisq = FALSE)
 
 #---- plots ----
-#---- **race x age ----
-race_by_age_bar <- 
-  ggplot(data = normal_model_data) + 
-  geom_bar(mapping = aes(x = factor(AAGE), y = ..count../sum(..count..), 
-                         fill = factor(ETHNIC_label)), 
-           position = "dodge") +
-  theme_minimal() + xlab("Age") + ylab("Proportion") +
-  guides(fill = guide_legend(title = "Race/Ethnicity")) +
-  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
-
-race_by_age_dens <-
-  ggplot(data = normal_model_data, aes(x = AAGE, fill = ETHNIC_label)) + 
-  geom_density(color = NA, alpha = 0.4, position = 'identity') +
-  scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
-  theme_minimal() + xlab("Age") + ylab("Density") + 
-  guides(fill = guide_legend(title = "Race/Ethnicity")) 
-
-#---- **race x MMSE ----
-race_by_MMSE_bar <-
-  ggplot(data = normal_model_data) +
-  geom_bar(mapping = aes(x = factor(ANMSETOT), y = ..count../sum(..count..),
-                         fill = factor(ETHNIC_label)),
-           position = "dodge") +
-  theme_minimal() + xlab("MMSE") + ylab("Proportion") +
-  guides(fill = guide_legend(title = "Race/Ethnicity")) +
-  scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
-
-race_by_MMSE_dens <-
-  ggplot(data = normal_model_data, aes(x = ANMSETOT, fill = ETHNIC_label)) + 
-  geom_density(color = NA, alpha = 0.4, position = 'identity') +
-  scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
-  theme_minimal() + xlab("MMSE") + ylab("Density") + 
-  guides(fill = guide_legend(title = "Race/Ethnicity")) 
-
-#---- **race x proxy cognition ----
-race_by_proxy_cog_dens <-
-  ggplot(data = normal_model_data, aes(x = proxy_cog, fill = ETHNIC_label)) + 
-  geom_density(color = NA, alpha = 0.4, position = 'identity') +
-  scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
-  theme_minimal() + xlab("Proxy Cognition") + ylab("Density") + 
-  guides(fill = guide_legend(title = "Race/Ethnicity")) 
-
-#---- **patchwork plot ----
-(race_by_age_bar + race_by_age_dens)/(race_by_MMSE_bar + race_by_MMSE_dens)/
-  race_by_proxy_cog_dens
-
-ggsave(filename = "unimpaired_two_way_by_race.jpeg", plot = last_plot(), 
-       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                     "prelim_analyses/latent_class_unimpaired/"), 
-       width = 10, height = 8, units = "in", device = "jpeg")
-
-#---- continuous plots ----
-for(var in Z){
-  plot_data <- ADAMS_subset %>% dplyr::select(contains(var))
-  
-  plotAgg <- ggplot(data = plot_data, aes(x = unlist(plot_data))) + 
-    geom_density(color = "black", fill = "black") + theme_minimal() + 
-    xlab(var) + theme(legend.position = "none")
-  
-  assign(paste0(var, "_plotAgg"), plotAgg)
-}
+# #---- **race x age ----
+# race_by_age_bar <- 
+#   ggplot(data = normal_model_data) + 
+#   geom_bar(mapping = aes(x = factor(AAGE), y = ..count../sum(..count..), 
+#                          fill = factor(ETHNIC_label)), 
+#            position = "dodge") +
+#   theme_minimal() + xlab("Age") + ylab("Proportion") +
+#   guides(fill = guide_legend(title = "Race/Ethnicity")) +
+#   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+# 
+# race_by_age_dens <-
+#   ggplot(data = normal_model_data, aes(x = AAGE, fill = ETHNIC_label)) + 
+#   geom_density(color = NA, alpha = 0.4, position = 'identity') +
+#   scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
+#   theme_minimal() + xlab("Age") + ylab("Density") + 
+#   guides(fill = guide_legend(title = "Race/Ethnicity")) 
+# 
+# #---- **race x MMSE ----
+# race_by_MMSE_bar <-
+#   ggplot(data = normal_model_data) +
+#   geom_bar(mapping = aes(x = factor(ANMSETOT), y = ..count../sum(..count..),
+#                          fill = factor(ETHNIC_label)),
+#            position = "dodge") +
+#   theme_minimal() + xlab("MMSE") + ylab("Proportion") +
+#   guides(fill = guide_legend(title = "Race/Ethnicity")) +
+#   scale_fill_manual(values = rev(wes_palette("Darjeeling1")))
+# 
+# race_by_MMSE_dens <-
+#   ggplot(data = normal_model_data, aes(x = ANMSETOT, fill = ETHNIC_label)) + 
+#   geom_density(color = NA, alpha = 0.4, position = 'identity') +
+#   scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
+#   theme_minimal() + xlab("MMSE") + ylab("Density") + 
+#   guides(fill = guide_legend(title = "Race/Ethnicity")) 
+# 
+# #---- **race x proxy cognition ----
+# race_by_proxy_cog_dens <-
+#   ggplot(data = normal_model_data, aes(x = proxy_cog, fill = ETHNIC_label)) + 
+#   geom_density(color = NA, alpha = 0.4, position = 'identity') +
+#   scale_fill_manual(values = rev(wes_palette("Darjeeling1"))) + 
+#   theme_minimal() + xlab("Proxy Cognition") + ylab("Density") + 
+#   guides(fill = guide_legend(title = "Race/Ethnicity")) 
+# 
+# #---- **patchwork plot ----
+# (race_by_age_bar + race_by_age_dens)/(race_by_MMSE_bar + race_by_MMSE_dens)/
+#   race_by_proxy_cog_dens
+# 
+# ggsave(filename = "unimpaired_two_way_by_race.jpeg", plot = last_plot(), 
+#        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+#                      "prelim_analyses/latent_class_unimpaired/"), 
+#        width = 10, height = 8, units = "in", device = "jpeg")
 
 #---- mixture plots ----
 merged_data <- left_join(ADAMS_subset, analytical_sample, by = "HHIDPN")
 
-for(var in Z){
+for(var in Z[, "var"]){
+  label <- Z[which(Z[, "var"] == var), "label"]
   plot_data <- merged_data %>% 
     dplyr::select(contains(c(var, "group_class"))) %>% 
     pivot_longer(everything(), names_to = c(".value", "type"), 
@@ -150,18 +140,18 @@ for(var in Z){
   plotX <- ggplot(data = plot_data %>% 
                     filter(type == "x"), 
                   aes(x = value, color = group, fill = group)) + 
-    geom_density(alpha = 0.5) + theme_minimal() + xlab(var) + 
+    geom_density(alpha = 0.5) + theme_minimal() + xlab(label) + 
     scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)]) + 
     scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)])
   
   plotZ <- ggplot(data = plot_data %>% 
                     filter(type == "z"), 
                   aes(x = value, color = group, fill = group)) + 
-    geom_density(alpha = 0.5) + theme_minimal() + xlab(var) + 
+    geom_density(alpha = 0.5) + theme_minimal() + xlab(label) + 
     scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)]) + 
     scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)])
   
-  if(var != Z[length(Z)]){
+  if(var != Z[nrow(Z), "var"]){
     plotZ <- plotZ + theme(legend.position = "none") 
     plotX <- plotX + theme(legend.position = "none") 
   }
@@ -197,6 +187,43 @@ continuous_var_plot_names <- paste0(Z, "_plotZ")
   get(continuous_var_plot_names[10])
 
 ggsave(filename = "ADAMS_mix_Z.jpeg", plot = last_plot(), 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                     "prelim_analyses/ADAMSA"), width = 12, height = 12, 
+       units = "in", device = "jpeg")
+
+#---- continuous plots ----
+for(var in Z[, "var"]){
+  label <- Z[which(Z[, "var"] == var), "label"]
+  plot_data <- merged_data %>% 
+    dplyr::select(contains(c(var, "group_class"))) %>% 
+    pivot_longer(everything(), names_to = c(".value", "type"), 
+                 names_pattern = "(.*).(.)") %>% 
+    set_colnames(c("type", "value", "group")) 
+  plot_data[, "value"] <- unlist(plot_data[, "value"])
+  plot_data[which(plot_data$type == "y"), "type"] <- "z"
+  
+  plotX <- ggplot(data = plot_data %>% 
+                    filter(type == "x"), 
+                  aes(x = value, color = group, fill = group)) + 
+    geom_density() + theme_minimal() + xlab(label) + 
+    scale_color_manual(values = rep("black", 4)) + 
+    scale_fill_manual(values = rep("black", 4)) + 
+    theme(legend.position = "none")
+  
+  assign(paste0(var, "_plotX"), plotX)
+}
+
+continuous_var_plot_names <- paste0(Z[, "var"], "_plotX")
+
+((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
+      get(continuous_var_plot_names[3])) /
+     (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
+        get(continuous_var_plot_names[6])))) / 
+    (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
+       get(continuous_var_plot_names[9]))) / 
+  get(continuous_var_plot_names[10])
+
+ggsave(filename = "ADAMS_X.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                      "prelim_analyses/ADAMSA"), width = 12, height = 12, 
        units = "in", device = "jpeg")
