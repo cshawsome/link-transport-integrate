@@ -12,8 +12,12 @@ install_github("thomasp85/patchwork")
 #Categorical vars (notation from Schafer 1997)
 W <- c("ETHNIC_label", "Astroke")
 #Continuous vars (notation from Schafer 1997)
-Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
-       "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
+Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+             "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
+           c("Age", "Total MMSE", "Serial 7s", "Immediate Word Recall", 
+             "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
+             "Delayed Word Recall", "IADLs", "BMI")) %>% 
+  set_colnames(c("var", "label"))
 
 group <- c("Adem_dx_cat")
 
@@ -115,6 +119,17 @@ ggsave(filename = "unimpaired_two_way_by_race.jpeg", plot = last_plot(),
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                      "prelim_analyses/latent_class_unimpaired/"), 
        width = 10, height = 8, units = "in", device = "jpeg")
+
+#---- continuous plots ----
+for(var in Z){
+  plot_data <- ADAMS_subset %>% dplyr::select(contains(var))
+  
+  plotAgg <- ggplot(data = plot_data, aes(x = unlist(plot_data))) + 
+    geom_density(color = "black", fill = "black") + theme_minimal() + 
+    xlab(var) + theme(legend.position = "none")
+  
+  assign(paste0(var, "_plotAgg"), plotAgg)
+}
 
 #---- mixture plots ----
 merged_data <- left_join(ADAMS_subset, analytical_sample, by = "HHIDPN")
