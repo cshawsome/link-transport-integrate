@@ -97,9 +97,7 @@ generate_data <- function(){
 }
 
 #---- multiruns ----
-burn = 10
-copies = 20
-runs = burn + copies
+runs = 20
 
 synthetic <- replicate(runs, generate_data()) 
 synthetic <- synthetic[, (burn + 1):runs] %>%
