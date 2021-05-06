@@ -124,6 +124,35 @@ cross_class_label <- table(analytical_sample$ETHNIC_label,
 #                      "prelim_analyses/latent_class_unimpaired/"), 
 #        width = 10, height = 8, units = "in", device = "jpeg")
 
+#---- continuous plots ----
+for(var in Z[, "var"]){
+  label <- Z[which(Z[, "var"] == var), "label"]
+  plot_data <- ADAMS_subset %>% 
+    dplyr::select(all_of(var)) %>% 
+    set_colnames(c("variable"))
+  
+  plotX <- ggplot(data = plot_data) + 
+    geom_density(aes(x = variable), color = "black", fill = "black") + 
+    theme_minimal() + xlab(label) 
+  
+  assign(paste0(var, "_plotX"), plotX)
+}
+
+continuous_var_plot_names <- paste0(Z[, "var"], "_plotX")
+
+((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
+      get(continuous_var_plot_names[3])) /
+     (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
+        get(continuous_var_plot_names[6])))) / 
+    (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
+       get(continuous_var_plot_names[9]))) / 
+  get(continuous_var_plot_names[10])
+
+ggsave(filename = "ADAMS_all_X.jpeg", plot = last_plot(), 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                     "prelim_analyses/ADAMSA"), width = 12, height = 12, 
+       units = "in", device = "jpeg")
+
 #---- mixture plots ----
 merged_data <- left_join(ADAMS_subset, analytical_sample, by = "HHIDPN")
 
@@ -187,43 +216,6 @@ continuous_var_plot_names <- paste0(Z, "_plotZ")
   get(continuous_var_plot_names[10])
 
 ggsave(filename = "ADAMS_mix_Z.jpeg", plot = last_plot(), 
-       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                     "prelim_analyses/ADAMSA"), width = 12, height = 12, 
-       units = "in", device = "jpeg")
-
-#---- continuous plots ----
-for(var in Z[, "var"]){
-  label <- Z[which(Z[, "var"] == var), "label"]
-  plot_data <- merged_data %>% 
-    dplyr::select(contains(c(var, "group_class"))) %>% 
-    pivot_longer(everything(), names_to = c(".value", "type"), 
-                 names_pattern = "(.*).(.)") %>% 
-    set_colnames(c("type", "value", "group")) 
-  plot_data[, "value"] <- unlist(plot_data[, "value"])
-  plot_data[which(plot_data$type == "y"), "type"] <- "z"
-  
-  plotX <- ggplot(data = plot_data %>% 
-                    filter(type == "x"), 
-                  aes(x = value, color = group, fill = group)) + 
-    geom_density() + theme_minimal() + xlab(label) + 
-    scale_color_manual(values = rep("black", 4)) + 
-    scale_fill_manual(values = rep("black", 4)) + 
-    theme(legend.position = "none")
-  
-  assign(paste0(var, "_plotX"), plotX)
-}
-
-continuous_var_plot_names <- paste0(Z[, "var"], "_plotX")
-
-((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
-      get(continuous_var_plot_names[3])) /
-     (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
-        get(continuous_var_plot_names[6])))) / 
-    (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
-       get(continuous_var_plot_names[9]))) / 
-  get(continuous_var_plot_names[10])
-
-ggsave(filename = "ADAMS_X.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                      "prelim_analyses/ADAMSA"), width = 12, height = 12, 
        units = "in", device = "jpeg")
