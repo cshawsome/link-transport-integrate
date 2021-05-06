@@ -83,19 +83,21 @@ B = 1000
 #DOF for inverse wishart
 nu_0 <- 200
 
-#scaling for inverse Wishart
-kappa_0 <- c(5, 5, 5, 5)
+#scaling for inverse Wishart as variance of Beta
+kappa_0 <- c(1, 2, 2, 2)
 
 #scaling matrix: one for each continuous var x latent class
+#var order: "AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", 
+# "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"
 var_scale <- cbind(
-  #Unimpaired
+  #Unimpaired-- reference group (scale the rest)
   rep(1, 10),
-  #Other
-  rep(1, 10),
-  #MCI
-  rep(1, 10),
-  #Dementia
-  rep(1, 10)) 
+  #Other: Age, MMSE
+  c(2, 2.20, rep(1, 8)),
+  #MCI: Age, MMSE
+  c(2, 2.20, rep(1, 8)),
+  #Dementia: Age, MMSE
+  c(2, 0.35, rep(1, 8))) 
 
 #---- **priors ----
 # #uninformative
@@ -111,7 +113,7 @@ var_scale <- cbind(
 alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
   set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
                  "1_prior_count", "2_prior_count")) %>%
-  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.25*x)
+  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.30*x)
 
 #location for inverse wishart 
 beta_prior <- readRDS(here::here("priors", "beta.rds"))
