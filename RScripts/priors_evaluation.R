@@ -26,7 +26,8 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
                      Adem_dx_cat == "Normal" ~ "Unimpaired",
                      TRUE ~ Adem_dx_cat)) 
 
-#---- **models for priors ----
+#---- priors ----
+#---- **latent classes ----
 Unimpaired_prior <- readRDS(here::here("priors", "normal_model_25.rds"))
 Other_prior <- readRDS(here::here("priors", "other_model_25.rds"))
 MCI_prior <- readRDS(here::here("priors", "MCI_model_25.rds"))
@@ -43,6 +44,12 @@ Other_preds[which(Other_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
 MCI_preds <- names(coefficients(MCI_prior))
 MCI_preds[which(MCI_preds == "ETHNIC_labelBlack")] <- "Black"
 MCI_preds[which(MCI_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
+
+#---- **contingency cells ----
+alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
+  set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
+                 "1_prior_count", "2_prior_count")) %>%
+  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.30*x)
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
@@ -91,29 +98,44 @@ generate_data <- function(){
   }
   synthetic_sample[which(synthetic_sample$Group == 0), "Group"] <- 4
   
-  #---- 
+  #pre-allocate
+  contingency_table <- matrix(rep(0, 6), ncol = 1)
+    
+  for(i in 1:4){
+    #---- **contingency cells ----
+    subset <- synthetic_sample %>% filter(Group == i) 
+    prior_counts <- alpha_0[, paste0(i, "_prior_count")] 
+    
+    #---- ****p(contingency table cell) ----
+    pi <- rdirichlet(1, alpha = as.numeric(unlist(prior_counts)))
+    
+    #---- ****contingency table count ----
+    contingency_table <- contingency_table + 
+      rmultinom(n = 1, size = nrow(subset), prob = pi)
+  }
   
-  return(synthetic_sample$Group)
+  #---- **return ----
+  return(list("Group" = synthetic_sample$Group, 
+              "contingency_table" = contingency_table))
 }
 
 #---- multiruns ----
 runs = 20
 
-synthetic <- replicate(runs, generate_data()) 
-synthetic <- synthetic[, (burn + 1):runs] %>%
-  set_colnames(seq(1, copies)) %>% 
-  as.data.frame() %>%
-  pivot_longer(everything())
+synthetic <- replicate(runs, generate_data(), simplify = FALSE) 
 
-#---- **synthetic plot ----
-synthetic %<>% 
+#---- plots ----
+#---- **dem class ----
+dem_sub <- lapply(synthetic, "[[", "Group") %>% do.call(cbind, .) %>% 
+  set_colnames(seq(1, runs)) %>% as.data.frame() %>%
+  pivot_longer(everything()) %>% 
   mutate("Group_label" = case_when(value == 1 ~ "Unimpaired", 
                                    value == 2 ~ "Other", 
                                    value == 3 ~ "MCI", 
                                    TRUE ~ "Dementia"))
 
 synthetic_dementia_plot_data <- 
-  synthetic %>% dplyr::count(name, Group_label) %>%
+  dem_sub %>% dplyr::count(name, Group_label) %>%
   group_by(name) %>%
   mutate(prop = n/sum(n)) %>% 
   mutate_at("name", as.numeric)
@@ -132,21 +154,21 @@ synthetic_dementia_class_plot <-
   scale_fill_manual(values = wes_palette("Darjeeling1")[c(2, 3, 1, 5)]) + 
   #gganimate
   transition_states(name, transition_length = 1, state_length = 1) +
-  labs(title = "Synthetic {frame_time}", 
+  labs(title = "Synthetic {round(frame_time)}", 
        x = "Impairment Class", y = "Proportion") + transition_time(name) + 
   ease_aes('linear')
 
 animate(synthetic_dementia_class_plot, 
-        duration = max(synthetic_dementia_plot_data$name), fps = 5, 
+        duration = max(synthetic_dementia_plot_data$name), fps = 1, 
         height = 4, width = 4, units = "in", res = 150, 
         renderer = gifski_renderer())
 
 anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                   "priors/synthetic_dem_class.gif"), 
+                            "priors/synthetic_dem_class.gif"), 
           animation = last_animation(), 
           renderer = gifski_renderer())
 
-#---- **ADAMS plot ----
+#---- ***ADAMS ----
 ADAMS_dementia_plot_data <- as.data.frame(table(ADAMS_subset$group_class)) %>% 
   mutate("prop" = Freq/sum(Freq))
 
@@ -166,6 +188,60 @@ ADAMS_dementia_class_plot <-
 
 ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
                          "ADAMS_dem_class.png"), device = "jpeg", 
+       width = 4, height = 4, units = "in")
+
+#---- **categorical ----
+cats <- table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke) %>% 
+  as.data.frame()
+
+cat_sub <- lapply(synthetic, "[[", "contingency_table") %>% 
+  do.call(cbind, .) %>% set_colnames(seq(1, runs)) %>% as.data.frame() %>% 
+  mutate("Race_Eth" = cats$Var1, "Stroke" = cats$Var2) %>%
+  pivot_longer(seq(1, runs)) 
+
+synthetic_race_plot_data <- 
+  cat_sub %>% group_by(name, Race_Eth) %>% summarize_at("value", sum) %>%
+  mutate(prop = value/sum(value)) %>% mutate_at("name", as.integer)
+
+synthetic_race_plot <- 
+  ggplot(data = synthetic_race_plot_data) + 
+  geom_bar(mapping = aes(x = factor(Race_Eth), y = prop, 
+                         fill = factor(Race_Eth)), 
+                         stat = "identity", position = "dodge") + 
+  theme_minimal() + 
+  ylim(c(0, 1)) + theme(legend.position = "none")  + 
+  scale_fill_manual(values = wes_palette("Darjeeling2")) + 
+  #gganimate
+  transition_states(name, transition_length = 1, state_length = 1) +
+  labs(title = "Synthetic {round(frame_time)}", 
+       x = "Race/Ethnicity", y = "Proportion") + transition_time(name) + 
+  ease_aes('linear')
+
+animate(synthetic_race_plot, 
+        duration = max(synthetic_dementia_plot_data$name), fps = 1, 
+        height = 4, width = 4, units = "in", res = 150, 
+        renderer = gifski_renderer())
+
+anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                            "priors/synthetic_race.gif"), 
+          animation = last_animation(), 
+          renderer = gifski_renderer())
+
+#---- ***ADAMS ----
+ADAMS_race_plot_data <- as.data.frame(table(ADAMS_subset$ETHNIC_label)) %>% 
+  mutate("prop" = Freq/sum(Freq))
+
+ADAMS_race_plot <- 
+  ggplot(data = ADAMS_race_plot_data) + 
+  geom_bar(mapping = aes(x = factor(Var1), y = prop, fill = factor(Var1)), 
+           stat = "identity", position = "dodge") + 
+  theme_minimal() + xlab("Race/Ethnicity") + ylab("Proportion") + 
+  ylim(c(0, 1)) + theme(legend.position = "none")  + 
+  scale_fill_manual(values = wes_palette("Darjeeling2")) + 
+  ggtitle("ADAMS")
+
+ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
+                         "ADAMS_race.png"), device = "jpeg", 
        width = 4, height = 4, units = "in")
 
 #---- **sample code ----
