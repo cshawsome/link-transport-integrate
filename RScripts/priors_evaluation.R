@@ -291,17 +291,18 @@ ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/",
        width = 4, height = 4, units = "in")
 
 #---- **categorical: race x stroke ----
-synthetic_stroke_plot_data <- 
-  cat_sub %>% group_by(name, Stroke) %>% summarize_at("value", sum) %>%
+synthetic_race_stroke_plot_data <- 
+  cat_sub %>% group_by(name, Race_Eth, Stroke) %>% 
+  summarize_at("value", sum) %>%
+  group_by(name, Stroke) %>%
   mutate(prop = value/sum(value)) %>% mutate_at("name", as.integer)
 
-synthetic_stroke_plot <- 
-  ggplot(data = synthetic_stroke_plot_data) + 
+synthetic_race_stroke_plot <- 
+  ggplot(data = synthetic_race_stroke_plot_data) + 
   geom_bar(mapping = aes(x = factor(Stroke), y = prop, 
-                         fill = factor(Stroke)), 
+                         fill = factor(Race_Eth)), 
            stat = "identity", position = "dodge") + 
-  theme_minimal() + 
-  ylim(c(0, 1)) + theme(legend.position = "none")  + 
+  theme_minimal() + ylim(c(0, 1)) +
   scale_fill_manual(values = wes_palette("Darjeeling2")) + 
   #gganimate
   transition_states(name, transition_length = 1, state_length = 1) +
@@ -309,18 +310,19 @@ synthetic_stroke_plot <-
        x = "Stroke", y = "Proportion") + transition_time(name) + 
   ease_aes('linear')
 
-animate(synthetic_stroke_plot, 
-        duration = max(synthetic_stroke_plot_data$name), fps = 1, 
+animate(synthetic_race_stroke_plot, 
+        duration = max(synthetic_race_stroke_plot_data$name), fps = 1, 
         height = 4, width = 4, units = "in", res = 150, 
         renderer = gifski_renderer())
 
 anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                            "priors/synthetic_stroke.gif"), 
+                            "priors/synthetic_race_stroke.gif"), 
           animation = last_animation(), 
           renderer = gifski_renderer())
 
 #---- ***ADAMS ----
-ADAMS_stroke_plot_data <- as.data.frame(table(ADAMS_subset$Astroke)) %>% 
+ADAMS_race_stroke_plot_data <- 
+  as.data.frame(table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke)) %>% 
   mutate("prop" = Freq/sum(Freq))
 
 ADAMS_stroke_plot <- 
