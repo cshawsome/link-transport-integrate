@@ -190,7 +190,7 @@ ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/",
                          "ADAMS_dem_class.png"), device = "jpeg", 
        width = 4, height = 4, units = "in")
 
-#---- **categorical ----
+#---- **categorical: race ----
 cats <- table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke) %>% 
   as.data.frame()
 
@@ -218,7 +218,7 @@ synthetic_race_plot <-
   ease_aes('linear')
 
 animate(synthetic_race_plot, 
-        duration = max(synthetic_dementia_plot_data$name), fps = 1, 
+        duration = max(synthetic_race_plot_data$name), fps = 1, 
         height = 4, width = 4, units = "in", res = 150, 
         renderer = gifski_renderer())
 
@@ -242,5 +242,97 @@ ADAMS_race_plot <-
 
 ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
                          "ADAMS_race.png"), device = "jpeg", 
+       width = 4, height = 4, units = "in")
+
+#---- **categorical: stroke ----
+synthetic_stroke_plot_data <- 
+  cat_sub %>% group_by(name, Stroke) %>% summarize_at("value", sum) %>%
+  mutate(prop = value/sum(value)) %>% mutate_at("name", as.integer)
+
+synthetic_stroke_plot <- 
+  ggplot(data = synthetic_stroke_plot_data) + 
+  geom_bar(mapping = aes(x = factor(Stroke), y = prop, 
+                         fill = factor(Stroke)), 
+           stat = "identity", position = "dodge") + 
+  theme_minimal() + 
+  ylim(c(0, 1)) + theme(legend.position = "none")  + 
+  scale_fill_manual(values = wes_palette("Darjeeling2")) + 
+  #gganimate
+  transition_states(name, transition_length = 1, state_length = 1) +
+  labs(title = "Synthetic {round(frame_time)}", 
+       x = "Stroke", y = "Proportion") + transition_time(name) + 
+  ease_aes('linear')
+
+animate(synthetic_stroke_plot, 
+        duration = max(synthetic_stroke_plot_data$name), fps = 1, 
+        height = 4, width = 4, units = "in", res = 150, 
+        renderer = gifski_renderer())
+
+anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                            "priors/synthetic_stroke.gif"), 
+          animation = last_animation(), 
+          renderer = gifski_renderer())
+
+#---- ***ADAMS ----
+ADAMS_stroke_plot_data <- as.data.frame(table(ADAMS_subset$Astroke)) %>% 
+  mutate("prop" = Freq/sum(Freq))
+
+ADAMS_stroke_plot <- 
+  ggplot(data = ADAMS_stroke_plot_data) + 
+  geom_bar(mapping = aes(x = factor(Var1), y = prop, fill = factor(Var1)), 
+           stat = "identity", position = "dodge") + 
+  theme_minimal() + xlab("Stroke") + ylab("Proportion") + 
+  ylim(c(0, 1)) + theme(legend.position = "none")  + 
+  scale_fill_manual(values = wes_palette("Darjeeling2")) + 
+  ggtitle("ADAMS")
+
+ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
+                         "ADAMS_stroke.png"), device = "jpeg", 
+       width = 4, height = 4, units = "in")
+
+#---- **categorical: race x stroke ----
+synthetic_stroke_plot_data <- 
+  cat_sub %>% group_by(name, Stroke) %>% summarize_at("value", sum) %>%
+  mutate(prop = value/sum(value)) %>% mutate_at("name", as.integer)
+
+synthetic_stroke_plot <- 
+  ggplot(data = synthetic_stroke_plot_data) + 
+  geom_bar(mapping = aes(x = factor(Stroke), y = prop, 
+                         fill = factor(Stroke)), 
+           stat = "identity", position = "dodge") + 
+  theme_minimal() + 
+  ylim(c(0, 1)) + theme(legend.position = "none")  + 
+  scale_fill_manual(values = wes_palette("Darjeeling2")) + 
+  #gganimate
+  transition_states(name, transition_length = 1, state_length = 1) +
+  labs(title = "Synthetic {round(frame_time)}", 
+       x = "Stroke", y = "Proportion") + transition_time(name) + 
+  ease_aes('linear')
+
+animate(synthetic_stroke_plot, 
+        duration = max(synthetic_stroke_plot_data$name), fps = 1, 
+        height = 4, width = 4, units = "in", res = 150, 
+        renderer = gifski_renderer())
+
+anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                            "priors/synthetic_stroke.gif"), 
+          animation = last_animation(), 
+          renderer = gifski_renderer())
+
+#---- ***ADAMS ----
+ADAMS_stroke_plot_data <- as.data.frame(table(ADAMS_subset$Astroke)) %>% 
+  mutate("prop" = Freq/sum(Freq))
+
+ADAMS_stroke_plot <- 
+  ggplot(data = ADAMS_stroke_plot_data) + 
+  geom_bar(mapping = aes(x = factor(Var1), y = prop, fill = factor(Var1)), 
+           stat = "identity", position = "dodge") + 
+  theme_minimal() + xlab("Stroke") + ylab("Proportion") + 
+  ylim(c(0, 1)) + theme(legend.position = "none")  + 
+  scale_fill_manual(values = wes_palette("Darjeeling2")) + 
+  ggtitle("ADAMS")
+
+ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
+                         "ADAMS_stroke.png"), device = "jpeg", 
        width = 4, height = 4, units = "in")
 
