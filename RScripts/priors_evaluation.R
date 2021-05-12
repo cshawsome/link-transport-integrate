@@ -107,13 +107,15 @@ generate_data <- function(){
   for(i in 1:4){
     #---- **contingency cells ----
     subset <- synthetic_sample %>% filter(Group == i) 
-    prior_counts <- alpha_0[, paste0(i, "_prior_count")] 
+    prior_counts <- 
+      alpha_0_dist[, sample(seq(1, ncol(alpha_0_dist)), size = 1)]*
+      true_props[paste0(i), "prop"] 
     
     #---- ****p(contingency table cell) ----
     pi <- rdirichlet(1, alpha = as.numeric(unlist(prior_counts)))
     
     #---- ****contingency table count ----
-    contingency_table <- contingency_table + 
+    contingency_table[, i] <- contingency_table[, i] + 
       rmultinom(n = 1, size = nrow(subset), prob = pi)
   }
   
@@ -164,6 +166,54 @@ for(class in unique(synthetic_dementia_plot_data$Group_label)){
          height = 3, width = 5, units = "in")
 }
 
+#---- **class-specific categorical ----
+ADAMS_categorical_plot_data <- 
+  as.data.frame(table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke, 
+                      ADAMS_subset$group_class)) %>% 
+  mutate("Var2_label" = case_when(Var2 == 0 ~ "No Stroke", 
+                                  TRUE ~ "Stroke")) %>% 
+  unite("cat", c("Var1", "Var2_label"), sep = " + ") %>% 
+  set_colnames(c("cat", "Var2", "Group_label", "Truth"))
+
+categorical_sub <- lapply(synthetic, "[[", "contingency_table") %>% 
+  do.call(cbind, .) %>% as.data.frame() %>% 
+  set_colnames(apply(expand_grid(seq(1, runs), seq(1, 4)), 1, 
+                     paste0, collapse = ":")) %>%
+  mutate("cat" = c("Black + No Stroke", "Hispanic + No Stroke", 
+                   "White + No Stroke", "Black + Stroke", "Hispanic + Stroke", 
+                   "White + Stroke")) %>% 
+  pivot_longer(-c("cat"), names_to = c("Run", "Group"), names_sep = ":", 
+               values_to = "count") %>% 
+  mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
+                                   Group == 2 ~ "Other", 
+                                   Group == 3 ~ "MCI", 
+                                   TRUE ~ "Dementia")) %>% 
+  mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
+                             Group_label == "Other" ~ "#28bed9", 
+                             Group_label == "MCI" ~ "#fdab00", 
+                             TRUE ~ "#ff0000")) %>% 
+  left_join(., ADAMS_categorical_plot_data, by = c("cat", "Group_label"))
+
+for(group in unique(categorical_sub$Group_label)){
+  subset <- categorical_sub %>% filter(Group_label == group)
+  for(category in unique(categorical_sub$cat)){
+    smaller_subset <- subset %>% filter(cat == category)
+    ggplot(data = smaller_subset , aes(x = count)) + 
+      geom_histogram(fill = "black", color = "black") + theme_minimal() + 
+      xlab("Count") + ggtitle(category) + 
+      geom_vline(xintercept = smaller_subset$Truth, 
+                 color = smaller_subset$color, size = 2)
+    
+    ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                             "priors/cell_counts/group_specific/", 
+                             tolower(group), "/", tolower(group), "_",  
+                             category, ".jpeg"), 
+           width = 5, height = 3, units = "in")
+  }
+}
+
+#---- OLD ----
+
 # synthetic_dementia_class_plot <- geom_bar(mapping = aes(x = factor(Group_label, 
 #                                     levels = c("Unimpaired", "MCI", 
 #                                                "Dementia", "Other")), y = prop, 
@@ -211,152 +261,152 @@ ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/",
                          "ADAMS_dem_class.png"), device = "jpeg", 
        width = 4, height = 4, units = "in")
 
-#---- **categorical: race ----
-cats <- table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke) %>% 
-  as.data.frame()
-
-cat_sub <- lapply(synthetic, "[[", "contingency_table") %>% 
-  do.call(cbind, .) %>% set_colnames(seq(1, runs)) %>% as.data.frame() %>% 
-  mutate("Race_Eth" = cats$Var1, "Stroke" = cats$Var2) %>%
-  pivot_longer(seq(1, runs)) 
-
-synthetic_race_plot_data <- 
-  cat_sub %>% group_by(name, Race_Eth) %>% summarize_at("value", sum) %>%
-  mutate(prop = value/sum(value)) %>% mutate_at("name", as.integer)
-
-synthetic_race_plot <- 
-  ggplot(data = synthetic_race_plot_data) + 
-  geom_bar(mapping = aes(x = factor(Race_Eth), y = prop, 
-                         fill = factor(Race_Eth)), 
-           stat = "identity", position = "dodge") + 
-  theme_minimal() + 
-  ylim(c(0, 1)) + theme(legend.position = "none")  + 
-  scale_fill_manual(values = wes_palette("Darjeeling2")) + 
-  #gganimate
-  transition_states(name, transition_length = 1, state_length = 1) +
-  labs(title = "Synthetic {round(frame_time)}", 
-       x = "Race/Ethnicity", y = "Proportion") + transition_time(name) + 
-  ease_aes('linear')
-
-animate(synthetic_race_plot, 
-        duration = max(synthetic_race_plot_data$name), fps = 10, 
-        height = 4, width = 4, units = "in", res = 150, 
-        renderer = gifski_renderer())
-
-anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                            "priors/synthetic_race.gif"), 
-          animation = last_animation(), 
-          renderer = gifski_renderer())
-
-#---- ***ADAMS ----
-ADAMS_race_plot_data <- as.data.frame(table(ADAMS_subset$ETHNIC_label)) %>% 
-  mutate("prop" = Freq/sum(Freq))
-
-ADAMS_race_plot <- 
-  ggplot(data = ADAMS_race_plot_data) + 
-  geom_bar(mapping = aes(x = factor(Var1), y = prop, fill = factor(Var1)), 
-           stat = "identity", position = "dodge") + 
-  theme_minimal() + xlab("Race/Ethnicity") + ylab("Proportion") + 
-  ylim(c(0, 1)) + theme(legend.position = "none")  + 
-  scale_fill_manual(values = wes_palette("Darjeeling2")) + 
-  ggtitle("ADAMS")
-
-ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
-                         "ADAMS_race.png"), device = "jpeg", 
-       width = 4, height = 4, units = "in")
-
-#---- **categorical: stroke ----
-synthetic_stroke_plot_data <- 
-  cat_sub %>% group_by(name, Stroke) %>% summarize_at("value", sum) %>%
-  mutate(prop = value/sum(value)) %>% mutate_at("name", as.integer)
-
-synthetic_stroke_plot <- 
-  ggplot(data = synthetic_stroke_plot_data) + 
-  geom_bar(mapping = aes(x = factor(Stroke), y = prop, 
-                         fill = factor(Stroke)), 
-           stat = "identity", position = "dodge") + 
-  theme_minimal() + 
-  ylim(c(0, 1)) + theme(legend.position = "none")  + 
-  scale_fill_manual(values = wes_palette("Darjeeling2")) + 
-  #gganimate
-  transition_states(name, transition_length = 1, state_length = 1) +
-  labs(title = "Synthetic {round(frame_time)}", 
-       x = "Stroke", y = "Proportion") + transition_time(name) + 
-  ease_aes('linear')
-
-animate(synthetic_stroke_plot, 
-        duration = max(synthetic_stroke_plot_data$name), fps = 1, 
-        height = 4, width = 4, units = "in", res = 150, 
-        renderer = gifski_renderer())
-
-anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                            "priors/synthetic_stroke.gif"), 
-          animation = last_animation(), 
-          renderer = gifski_renderer())
-
-#---- ***ADAMS ----
-ADAMS_stroke_plot_data <- as.data.frame(table(ADAMS_subset$Astroke)) %>% 
-  mutate("prop" = Freq/sum(Freq))
-
-ADAMS_stroke_plot <- 
-  ggplot(data = ADAMS_stroke_plot_data) + 
-  geom_bar(mapping = aes(x = factor(Var1), y = prop, fill = factor(Var1)), 
-           stat = "identity", position = "dodge") + 
-  theme_minimal() + xlab("Stroke") + ylab("Proportion") + 
-  ylim(c(0, 1)) + theme(legend.position = "none")  + 
-  scale_fill_manual(values = wes_palette("Darjeeling2")) + 
-  ggtitle("ADAMS")
-
-ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
-                         "ADAMS_stroke.png"), device = "jpeg", 
-       width = 4, height = 4, units = "in")
-
-#---- **categorical: race x stroke ----
-synthetic_race_stroke_plot_data <- 
-  cat_sub %>% group_by(name, Race_Eth, Stroke) %>% 
-  summarize_at("value", sum) %>%
-  group_by(name, Stroke) %>%
-  mutate(prop = value/sum(value)) %>% mutate_at("name", as.integer)
-
-synthetic_race_stroke_plot <- 
-  ggplot(data = synthetic_race_stroke_plot_data) + 
-  geom_bar(mapping = aes(x = factor(Stroke), y = prop, 
-                         fill = factor(Race_Eth)), 
-           stat = "identity", position = "dodge") + 
-  theme_minimal() + ylim(c(0, 1)) + theme(legend.position = "none") +
-  scale_fill_manual(values = wes_palette("Darjeeling2")) + 
-  #gganimate
-  transition_states(name, transition_length = 1, state_length = 1) +
-  labs(title = "Synthetic {round(frame_time)}", 
-       x = "Stroke", y = "Proportion") + transition_time(name) + 
-  ease_aes('linear')
-
-animate(synthetic_race_stroke_plot, 
-        duration = max(synthetic_race_stroke_plot_data$name), fps = 1, 
-        height = 4, width = 4, units = "in", res = 150, 
-        renderer = gifski_renderer())
-
-anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                            "priors/synthetic_race_stroke.gif"), 
-          animation = last_animation(), 
-          renderer = gifski_renderer())
-
-#---- ***ADAMS ----
-ADAMS_race_stroke_plot_data <- 
-  as.data.frame(table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke)) %>% 
-  group_by(Var2) %>%
-  mutate("prop" = Freq/sum(Freq))
-
-ADAMS_race_stroke_plot <- 
-  ggplot(data = ADAMS_race_stroke_plot_data) + 
-  geom_bar(mapping = aes(x = factor(Var2), y = prop, fill = factor(Var1)), 
-           stat = "identity", position = "dodge") + 
-  theme_minimal() + xlab("Stroke") + ylab("Proportion") + 
-  ylim(c(0, 1)) + 
-  scale_fill_manual(values = wes_palette("Darjeeling2"), 
-                    name = "Race/Ethnicity") + ggtitle("ADAMS")
-
-ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
-                         "ADAMS_race_stroke.png"), device = "jpeg", 
-       width = 4, height = 4, units = "in")
+# #---- **categorical: race ----
+# cats <- table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke) %>% 
+#   as.data.frame()
+# 
+# cat_sub <- lapply(synthetic, "[[", "contingency_table") %>% 
+#   do.call(cbind, .) %>% set_colnames(seq(1, runs)) %>% as.data.frame() %>% 
+#   mutate("Race_Eth" = cats$Var1, "Stroke" = cats$Var2) %>%
+#   pivot_longer(seq(1, runs)) 
+# 
+# synthetic_race_plot_data <- 
+#   cat_sub %>% group_by(name, Race_Eth) %>% summarize_at("value", sum) %>%
+#   mutate(prop = value/sum(value)) %>% mutate_at("name", as.integer)
+# 
+# synthetic_race_plot <- 
+#   ggplot(data = synthetic_race_plot_data) + 
+#   geom_bar(mapping = aes(x = factor(Race_Eth), y = prop, 
+#                          fill = factor(Race_Eth)), 
+#            stat = "identity", position = "dodge") + 
+#   theme_minimal() + 
+#   ylim(c(0, 1)) + theme(legend.position = "none")  + 
+#   scale_fill_manual(values = wes_palette("Darjeeling2")) + 
+#   #gganimate
+#   transition_states(name, transition_length = 1, state_length = 1) +
+#   labs(title = "Synthetic {round(frame_time)}", 
+#        x = "Race/Ethnicity", y = "Proportion") + transition_time(name) + 
+#   ease_aes('linear')
+# 
+# animate(synthetic_race_plot, 
+#         duration = max(synthetic_race_plot_data$name), fps = 10, 
+#         height = 4, width = 4, units = "in", res = 150, 
+#         renderer = gifski_renderer())
+# 
+# anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+#                             "priors/synthetic_race.gif"), 
+#           animation = last_animation(), 
+#           renderer = gifski_renderer())
+# 
+# #---- ***ADAMS ----
+# ADAMS_race_plot_data <- as.data.frame(table(ADAMS_subset$ETHNIC_label)) %>% 
+#   mutate("prop" = Freq/sum(Freq))
+# 
+# ADAMS_race_plot <- 
+#   ggplot(data = ADAMS_race_plot_data) + 
+#   geom_bar(mapping = aes(x = factor(Var1), y = prop, fill = factor(Var1)), 
+#            stat = "identity", position = "dodge") + 
+#   theme_minimal() + xlab("Race/Ethnicity") + ylab("Proportion") + 
+#   ylim(c(0, 1)) + theme(legend.position = "none")  + 
+#   scale_fill_manual(values = wes_palette("Darjeeling2")) + 
+#   ggtitle("ADAMS")
+# 
+# ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
+#                          "ADAMS_race.png"), device = "jpeg", 
+#        width = 4, height = 4, units = "in")
+# 
+# #---- **categorical: stroke ----
+# synthetic_stroke_plot_data <- 
+#   cat_sub %>% group_by(name, Stroke) %>% summarize_at("value", sum) %>%
+#   mutate(prop = value/sum(value)) %>% mutate_at("name", as.integer)
+# 
+# synthetic_stroke_plot <- 
+#   ggplot(data = synthetic_stroke_plot_data) + 
+#   geom_bar(mapping = aes(x = factor(Stroke), y = prop, 
+#                          fill = factor(Stroke)), 
+#            stat = "identity", position = "dodge") + 
+#   theme_minimal() + 
+#   ylim(c(0, 1)) + theme(legend.position = "none")  + 
+#   scale_fill_manual(values = wes_palette("Darjeeling2")) + 
+#   #gganimate
+#   transition_states(name, transition_length = 1, state_length = 1) +
+#   labs(title = "Synthetic {round(frame_time)}", 
+#        x = "Stroke", y = "Proportion") + transition_time(name) + 
+#   ease_aes('linear')
+# 
+# animate(synthetic_stroke_plot, 
+#         duration = max(synthetic_stroke_plot_data$name), fps = 1, 
+#         height = 4, width = 4, units = "in", res = 150, 
+#         renderer = gifski_renderer())
+# 
+# anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+#                             "priors/synthetic_stroke.gif"), 
+#           animation = last_animation(), 
+#           renderer = gifski_renderer())
+# 
+# #---- ***ADAMS ----
+# ADAMS_stroke_plot_data <- as.data.frame(table(ADAMS_subset$Astroke)) %>% 
+#   mutate("prop" = Freq/sum(Freq))
+# 
+# ADAMS_stroke_plot <- 
+#   ggplot(data = ADAMS_stroke_plot_data) + 
+#   geom_bar(mapping = aes(x = factor(Var1), y = prop, fill = factor(Var1)), 
+#            stat = "identity", position = "dodge") + 
+#   theme_minimal() + xlab("Stroke") + ylab("Proportion") + 
+#   ylim(c(0, 1)) + theme(legend.position = "none")  + 
+#   scale_fill_manual(values = wes_palette("Darjeeling2")) + 
+#   ggtitle("ADAMS")
+# 
+# ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
+#                          "ADAMS_stroke.png"), device = "jpeg", 
+#        width = 4, height = 4, units = "in")
+# 
+# #---- **categorical: race x stroke ----
+# synthetic_race_stroke_plot_data <- 
+#   cat_sub %>% group_by(name, Race_Eth, Stroke) %>% 
+#   summarize_at("value", sum) %>%
+#   group_by(name, Stroke) %>%
+#   mutate(prop = value/sum(value)) %>% mutate_at("name", as.integer)
+# 
+# synthetic_race_stroke_plot <- 
+#   ggplot(data = synthetic_race_stroke_plot_data) + 
+#   geom_bar(mapping = aes(x = factor(Stroke), y = prop, 
+#                          fill = factor(Race_Eth)), 
+#            stat = "identity", position = "dodge") + 
+#   theme_minimal() + ylim(c(0, 1)) + theme(legend.position = "none") +
+#   scale_fill_manual(values = wes_palette("Darjeeling2")) + 
+#   #gganimate
+#   transition_states(name, transition_length = 1, state_length = 1) +
+#   labs(title = "Synthetic {round(frame_time)}", 
+#        x = "Stroke", y = "Proportion") + transition_time(name) + 
+#   ease_aes('linear')
+# 
+# animate(synthetic_race_stroke_plot, 
+#         duration = max(synthetic_race_stroke_plot_data$name), fps = 1, 
+#         height = 4, width = 4, units = "in", res = 150, 
+#         renderer = gifski_renderer())
+# 
+# anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+#                             "priors/synthetic_race_stroke.gif"), 
+#           animation = last_animation(), 
+#           renderer = gifski_renderer())
+# 
+# #---- ***ADAMS ----
+# ADAMS_race_stroke_plot_data <- 
+#   as.data.frame(table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke)) %>% 
+#   group_by(Var2) %>%
+#   mutate("prop" = Freq/sum(Freq))
+# 
+# ADAMS_race_stroke_plot <- 
+#   ggplot(data = ADAMS_race_stroke_plot_data) + 
+#   geom_bar(mapping = aes(x = factor(Var2), y = prop, fill = factor(Var1)), 
+#            stat = "identity", position = "dodge") + 
+#   theme_minimal() + xlab("Stroke") + ylab("Proportion") + 
+#   ylim(c(0, 1)) + 
+#   scale_fill_manual(values = wes_palette("Darjeeling2"), 
+#                     name = "Race/Ethnicity") + ggtitle("ADAMS")
+# 
+# ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
+#                          "ADAMS_race_stroke.png"), device = "jpeg", 
+#        width = 4, height = 4, units = "in")
 
