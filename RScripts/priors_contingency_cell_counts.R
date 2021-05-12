@@ -52,22 +52,47 @@ RAND %<>%
                                  (raracem == 1 & hispanic == 0) ~ "White", 
                                  (raracem == 2 & hispanic == 0) ~ "Black", 
                                  (raracem == 3 & hispanic == 0) ~ "Other", 
-                                 TRUE ~ "Unknown")) 
+                                 TRUE ~ "Unknown")) %>% 
+  filter(!Ethnicity %in% c("Unknown", "Other") & !is.na(r5stroke))
 
 #---- cross-class race/ethnicity x stroke ----
-cross_class_data <- RAND %>% filter(!Ethnicity %in% c("Unknown", "Other"))
-prior_counts <- 
-  as.data.frame(table(cross_class_data$Ethnicity, cross_class_data$r5stroke))
+data_counts <- as.data.frame(table(ADAMS_subset$ETHNIC_label, 
+                                   ADAMS_subset$r5stroke)) %>% 
+  mutate("percent" = round((Freq/sum(Freq))*100, 1))
 
-#---- stratify priors by latent class ----
-for(class in names(dem_class_props)){
-  prior_counts %<>% 
-    mutate("{{class}}_prior_count" := 
-             Freq*dem_class_props[{{class}}])
+#---- bootstrap counts ----
+B = 10000
+bootstrap_counts <- matrix(nrow = 6, ncol = B)
+for(b in 1:B){
+  sample <- sample_n(ADAMS_subset, size = nrow(ADAMS_subset), replace = TRUE) 
+  #sub_sample <- sample_frac(sample, size = 0.3, replace = FALSE)
+  bootstrap_counts[, b] <- 
+    as.data.frame(table(sample$ETHNIC_label, sample$r5stroke))$Freq
 }
 
-#---- save output ----
-prior_counts %>% write_csv(file = here("priors", "contingency_cell_counts.csv"))
+bootstrap_percents <- 
+  round(bootstrap_counts/colSums(bootstrap_counts)*100, 1) %>% 
+  as.data.frame() %>%
+  mutate("truth" = data_counts$percent, 
+         "cat" = c("Black + No Stroke", "Hispanic + No Stroke", 
+                   "White + No Stroke", "Black + Stroke", "Hispanic + Stroke", 
+                   "White + Stroke")) %>% pivot_longer(-c("truth", "cat"))
+
+#---- **plots ----
+for(category in unique(bootstrap_percents$cat)){
+  subset <- bootstrap_percents %>% filter(cat == category)
+  ggplot(data = subset , aes(x = value)) + 
+    geom_histogram(fill = "black", color = "black") + theme_minimal() + 
+    xlab("Percent") + ggtitle(category) + 
+    geom_vline(xintercept = subset$truth, color = "#f2caaa", size = 2)
+  
+  ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                           "priors/cell_counts/RAND/", category, ".jpeg"), 
+         width = 5, height = 3, units = "in")
+}
+
+bootstrap_counts %>% as.data.frame() %>%
+  write_csv(file = here::here("priors", "bootstrap_cell_counts.csv"))
 
 
 
