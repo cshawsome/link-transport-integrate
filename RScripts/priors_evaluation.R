@@ -72,7 +72,12 @@ Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES",
        "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
 
 generate_data <- function(){
-  #---- **latent class ----
+  #---- true class props ----
+  true_props <- as.data.frame(table(ADAMS_subset$group_class)) %>% 
+    mutate("prop" = Freq/nrow(ADAMS_subset)) %>% 
+    set_rownames(c("4", "3", "2", "1"))
+  
+  #---- latent class ----
   group = 1
   synthetic_sample[, "Group"] <- 0
   
@@ -96,7 +101,8 @@ generate_data <- function(){
   synthetic_sample[which(synthetic_sample$Group == 0), "Group"] <- 4
   
   #pre-allocate
-  contingency_table <- matrix(rep(0, 6), ncol = 1)
+  contingency_table <- matrix(0, ncol = 4, nrow = 6) %>% 
+    set_colnames(seq(1, 4))
   
   for(i in 1:4){
     #---- **contingency cells ----
