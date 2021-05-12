@@ -49,7 +49,7 @@ MCI_preds[which(MCI_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
 alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
   set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
                  "1_prior_count", "2_prior_count")) %>%
-  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.30*x)
+  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 1.00*x)
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
@@ -100,7 +100,7 @@ generate_data <- function(){
   
   #pre-allocate
   contingency_table <- matrix(rep(0, 6), ncol = 1)
-    
+  
   for(i in 1:4){
     #---- **contingency cells ----
     subset <- synthetic_sample %>% filter(Group == i) 
@@ -120,12 +120,15 @@ generate_data <- function(){
 }
 
 #---- multiruns ----
-runs = 20
+runs = 10000
 
 synthetic <- replicate(runs, generate_data(), simplify = FALSE) 
 
 #---- plots ----
 #---- **dem class ----
+ADAMS_dementia_plot_data <- as.data.frame(table(ADAMS_subset$group_class)) %>% 
+  mutate("prop" = Freq/sum(Freq))
+
 dem_sub <- lapply(synthetic, "[[", "Group") %>% do.call(cbind, .) %>% 
   set_colnames(seq(1, runs)) %>% as.data.frame() %>%
   pivot_longer(everything()) %>% 
@@ -138,39 +141,54 @@ synthetic_dementia_plot_data <-
   dem_sub %>% dplyr::count(name, Group_label) %>%
   group_by(name) %>%
   mutate(prop = n/sum(n)) %>% 
-  mutate_at("name", as.numeric)
+  mutate_at("name", as.numeric) %>% 
+  mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
+                             Group_label == "Other" ~ "#28bed9", 
+                             Group_label == "MCI" ~ "#fdab00", 
+                             TRUE ~ "#ff0000"))
 
-synthetic_dementia_class_plot <- 
-  ggplot(data = synthetic_dementia_plot_data) + 
-  geom_bar(mapping = aes(x = factor(Group_label, 
-                                    levels = c("Unimpaired", "MCI", 
-                                               "Dementia", "Other")), y = prop, 
-                         fill = factor(Group_label, 
-                                       levels = c("Unimpaired", "MCI", 
-                                                  "Dementia", "Other"))), 
-           stat = "identity", position = "dodge") + 
-  theme_minimal() + 
-  ylim(c(0, 1)) + theme(legend.position = "none")  + 
-  scale_fill_manual(values = wes_palette("Darjeeling1")[c(2, 3, 1, 5)]) + 
-  #gganimate
-  transition_states(name, transition_length = 1, state_length = 1) +
-  labs(title = "Synthetic {round(frame_time)}", 
-       x = "Impairment Class", y = "Proportion") + transition_time(name) + 
-  ease_aes('linear')
+for(class in unique(synthetic_dementia_plot_data$Group_label)){
+  subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
+  ggplot(data = subset) + 
+    geom_histogram(aes(x = prop), 
+                   color = unique(subset$color), fill = unique(subset$color)) + 
+    theme_minimal() + ggtitle(class) + xlab("Proportion") + ylab("Count") +
+    geom_vline(xintercept = ADAMS_dementia_plot_data[
+      which(ADAMS_dementia_plot_data$Var1 == class), "prop"], size = 2)
+  
+  ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                           "priors/impairment_classes/", class, ".jpeg"), 
+         height = 3, width = 5, units = "in")
+}
 
-animate(synthetic_dementia_class_plot, 
-        duration = max(synthetic_dementia_plot_data$name), fps = 1, 
-        height = 4, width = 4, units = "in", res = 150, 
-        renderer = gifski_renderer())
-
-anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                            "priors/synthetic_dem_class.gif"), 
-          animation = last_animation(), 
-          renderer = gifski_renderer())
+# synthetic_dementia_class_plot <- geom_bar(mapping = aes(x = factor(Group_label, 
+#                                     levels = c("Unimpaired", "MCI", 
+#                                                "Dementia", "Other")), y = prop, 
+#                          fill = factor(Group_label, 
+#                                        levels = c("Unimpaired", "MCI", 
+#                                                   "Dementia", "Other"))), 
+#            stat = "identity", position = "dodge") + 
+#   theme_minimal() + 
+#   ylim(c(0, 1)) + theme(legend.position = "none")  + 
+#   scale_fill_manual(values = wes_palette("Darjeeling1")[c(2, 3, 1, 5)]) + 
+#   #gganimate
+#   transition_states(name, transition_length = 1, state_length = 1) +
+#   labs(title = "Synthetic {round(frame_time)}", 
+#        x = "Impairment Class", y = "Proportion") + transition_time(name) + 
+#   ease_aes('linear')
+# 
+# animate(synthetic_dementia_class_plot, 
+#         duration = max(synthetic_dementia_plot_data$name), fps = 1, 
+#         height = 4, width = 4, units = "in", res = 150, 
+#         renderer = gifski_renderer())
+# 
+# anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+#                             "priors/synthetic_dem_class.gif"), 
+#           animation = last_animation(), 
+#           renderer = gifski_renderer())
 
 #---- ***ADAMS ----
-ADAMS_dementia_plot_data <- as.data.frame(table(ADAMS_subset$group_class)) %>% 
-  mutate("prop" = Freq/sum(Freq))
+
 
 ADAMS_dementia_class_plot <- 
   ggplot(data = ADAMS_dementia_plot_data) + 
@@ -207,7 +225,7 @@ synthetic_race_plot <-
   ggplot(data = synthetic_race_plot_data) + 
   geom_bar(mapping = aes(x = factor(Race_Eth), y = prop, 
                          fill = factor(Race_Eth)), 
-                         stat = "identity", position = "dodge") + 
+           stat = "identity", position = "dodge") + 
   theme_minimal() + 
   ylim(c(0, 1)) + theme(legend.position = "none")  + 
   scale_fill_manual(values = wes_palette("Darjeeling2")) + 
@@ -218,7 +236,7 @@ synthetic_race_plot <-
   ease_aes('linear')
 
 animate(synthetic_race_plot, 
-        duration = max(synthetic_race_plot_data$name), fps = 1, 
+        duration = max(synthetic_race_plot_data$name), fps = 10, 
         height = 4, width = 4, units = "in", res = 150, 
         renderer = gifski_renderer())
 
