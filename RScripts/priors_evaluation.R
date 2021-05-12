@@ -48,6 +48,17 @@ MCI_preds[which(MCI_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
 #---- **contingency cells ----
 alpha_0_dist <- read_csv(here::here("priors", "bootstrap_cell_counts.csv")) 
 
+#--- **beta and sigma ----
+beta_prior <- readRDS(here::here("priors", "beta.rds"))
+V_inv_prior <- readRDS(here::here("priors", "V_inv.rds"))
+Sigma_prior <- readRDS(here::here("priors", "Sigma.rds"))
+
+#---- **hyperparameters ----
+#DOF for inverse wishart
+nu_0 <- 200
+#scaling for inverse wishart as variance of Beta
+kappa_0 <- 1
+
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
 vars <- unique(c(Unimpaired_preds, Other_preds, MCI_preds, "ETHNIC_label"))
@@ -117,6 +128,109 @@ generate_data <- function(){
     #---- ****contingency table count ----
     contingency_table[, i] <- contingency_table[, i] + 
       rmultinom(n = 1, size = nrow(subset), prob = pi)
+    
+    #---- ****make U matrix ----
+    U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
+    
+    for(j in 1:nrow(contingency_table)){
+      if(contingency_table[j, i] == 0){next}
+      if(j == 1){
+        index = 1
+      } else{
+        index = sum(contingency_table[1:(j - 1), i]) + 1
+      }
+      U[index:(index - 1 + contingency_table[j, i]), j] <- 1
+    }
+    
+    UtU <- diag(contingency_table[, i])
+    
+    # if(i %in% c(2, 3)){
+    #   assign(paste0("UtU_", i), UtU)
+    # }
+    # 
+    # #---- ****pool UtU if needed ----
+    # if(det(t(A) %*% UtU %*% A) == 0){
+    #   if(exists(paste0("UtU_", (i-1)))){
+    #     UtU <- UtU + get(paste0("UtU_", (i-1)))
+    #   } else{
+    #     UtU <- UtU + get(paste0("UtU_", (i+1))) 
+    #   }
+    # }
+    # 
+    #---- ****Mm ----
+    continuous_covariates <- subset %>% 
+      dplyr::select(all_of(Z)) %>% as.matrix
+    
+    V_inv <- t(A) %*% UtU %*% A 
+    V_0_inv <- matrix(V_inv_prior[, i], nrow = nrow(V_inv), ncol = ncol(V_inv))
+    beta_0 <- matrix(beta_prior[, i], nrow = nrow(V_inv), 
+                     ncol = ncol(continuous_covariates))
+    
+    M <- solve(V_inv + kappa_0[i]*V_0_inv)
+    m <-  t(A) %*% t(U) %*% continuous_covariates - 
+      kappa_0[i]*V_0_inv %*% beta_0
+    
+    Mm <- M %*% m
+    
+    #---- ****draw Sigma | Y ----
+    ZtZ <- t(continuous_covariates) %*% continuous_covariates
+    third_term <- kappa_0[i]*t(beta_0) %*% V_0_inv %*% beta_0
+    
+    sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
+                    S = Sigma_prior + ZtZ + third_term)
+    
+    Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
+    
+    #---- ****draw beta | Sigma, Y ----
+    beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y)
+    
+    #---- ****compute mu ----
+    mu_chain[, paste0(i, ":", seq(1, nrow(cross_class_label)), ":", b)] <- 
+      t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = length(Z), 
+                     byrow = FALSE))
+    
+    #---- ****draw data ----
+    #reformat contingency table
+    contingency_table %<>% cbind(do.call(cbind, list(
+      #Black              #Hispanic           #Stroke
+      rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>% 
+      set_colnames(c("Count", W))
+    
+    for(j in 1:nrow(contingency_table)){
+      if(contingency_table[j, "Count"] == 0){next}
+      if(j == 1){
+        index = 1
+      } else{
+        index = sum(contingency_table[1:(j - 1), "Count"]) + 1
+      }
+      #Z (continuous data)
+      if(contingency_table[j, "Count"] == 1){
+        subset[index:(index - 1 + contingency_table[j, "Count"]), 
+               colnames(sig_Y)] <- 
+          t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
+                              mu = mu_chain[, paste0(i, ":", j, ":", b)], 
+                              Sigma = diag(sqrt(var_scale[, i])) %*% sig_Y %*% 
+                                diag(sqrt(var_scale[, i])))))
+      } else{
+        subset[index:(index - 1 + contingency_table[j, "Count"]), 
+               colnames(sig_Y)] <- 
+          mvrnorm(n = contingency_table[j, "Count"],
+                  mu = mu_chain[, paste0(i, ":", j, ":", b)], 
+                  Sigma = diag(sqrt(var_scale[, i])) %*% sig_Y %*% 
+                    diag(sqrt(var_scale[, i])))
+      }
+      
+      #W (categorical data)
+      subset[index:(index - 1 + contingency_table[j, "Count"]), 
+             colnames(contingency_table)[-1]] <- 
+        matrix(rep(contingency_table[j, colnames(contingency_table)[-1]], 
+                   contingency_table[j, "Count"]), 
+               ncol = 3, byrow = TRUE)
+    }
+    
+    #---- ****replace synthetic data ----
+    synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN),
+                     c(W, Z)] <- subset[, c(W, Z)]
   }
   
   #---- **return ----
@@ -126,7 +240,6 @@ generate_data <- function(){
 
 #---- multiruns ----
 runs = 1000
-
 synthetic <- replicate(runs, generate_data(), simplify = FALSE) 
 
 #---- plots ----
