@@ -46,10 +46,7 @@ MCI_preds[which(MCI_preds == "ETHNIC_labelBlack")] <- "Black"
 MCI_preds[which(MCI_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
 
 #---- **contingency cells ----
-alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
-  set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
-                 "1_prior_count", "2_prior_count")) %>%
-  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 1.00*x)
+alpha_0_dist <- read_csv(here::here("priors", "bootstrap_cell_counts.csv")) 
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
@@ -120,7 +117,7 @@ generate_data <- function(){
 }
 
 #---- multiruns ----
-runs = 10000
+runs = 1000
 
 synthetic <- replicate(runs, generate_data(), simplify = FALSE) 
 
