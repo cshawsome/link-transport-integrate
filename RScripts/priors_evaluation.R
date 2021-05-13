@@ -18,6 +18,7 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
   mutate("group_class" = 
            case_when(Adem_dx_cat %in% 
                        c("Dementia", "Probable/Possible AD", 
+                         "Probable Dementia", 
                          "Probable/Possible Vascular Dementia") ~ "Dementia",
                      Adem_dx_cat == "Normal" ~ "Unimpaired",
                      TRUE ~ Adem_dx_cat)) %>% 
@@ -88,7 +89,7 @@ ADAMS_subset %<>% dplyr::select("HHIDPN", all_of(vars), "group_class") %>%
   #use complete data for now
   na.omit()
 
-ADAMS_means <- colMeans()
+ADAMS_means <- colMeans(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])))
 ADAMS_sds <- apply(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
   
 #---- contrasts matrix ----
@@ -233,8 +234,10 @@ generate_data <- function(){
 }
 
 #---- multiruns ----
-runs = 2
+start <- Sys.time()
+runs = 10000
 synthetic <- replicate(runs, generate_data(), simplify = FALSE) 
+stop <- Sys.time() - start
 
 #---- plots ----
 #---- **dem class ----
@@ -321,15 +324,22 @@ for(group in unique(categorical_sub$Group_label)){
 
 #---- **class-specific continuous ----
 for(class in unique(ADAMS_subset$group_class)){
-  ADAMS_data <- ADAMS_subset %>% dplyr::select(all_of(Z[, "var"]))
+  ADAMS_data <- ADAMS_subset %>% 
+    dplyr::select(c(all_of(Z[, "var"]), "group_class")) %>% 
+    filter(group_class == class)
   
   continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
+  
   for(i in 1:length(continuous_list)){
     continuous_list[[i]] <- continuous_list[[i]] %>% mutate("run" = i)
   }
   continuous_list %<>% do.call(rbind, .) %>% as.data.frame()
   
   for(var in Z[, "var"]){
+    data <- continuous_list[, c(var, "run")]
+    #unstandardize
+    data[, var] <- data[, var]*ADAMS_sds[var] + ADAMS_means[var]
+    
     continuous_plot <- ggplot(data = continuous_list, 
                               aes(x = continuous_list[, var]), fill = "black", 
                               color = "black") + 
