@@ -34,7 +34,8 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
          "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
          #Add intercept
          "(Intercept)" = 1) %>% 
-  dplyr::select(c(all_of(W), all_of(Z[, "var"]), "group_class")) %>% na.omit()
+  dplyr::select(c(all_of(W), all_of(Z[, "var"]), "group_class"), 
+                "ETHNIC_label") %>% na.omit()
 
 dem_class_props <- table(ADAMS_subset$group_class)/nrow(ADAMS_subset) 
 
@@ -69,7 +70,7 @@ dem_class_props <- table(ADAMS_subset$group_class)/nrow(ADAMS_subset)
 
 #---- cross-class race/ethnicity x stroke ----
 data_counts <- as.data.frame(table(ADAMS_subset$ETHNIC_label, 
-                                   ADAMS_subset$r5stroke)) %>% 
+                                   ADAMS_subset$Astroke)) %>% 
   mutate("percent" = round((Freq/sum(Freq))*100, 1))
 
 #---- bootstrap counts ----
