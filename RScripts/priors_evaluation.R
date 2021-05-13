@@ -15,16 +15,16 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
                          col_types = cols(HHIDPN = col_character(), 
                                           #Do not standardize these
                                           Astroke = col_character())) %>% 
-  #Z-score continuous
-  mutate_if(is.numeric, scale) %>%
-  #transform to correct type
-  mutate_at("Astroke", as.numeric) %>% 
   mutate("group_class" = 
            case_when(Adem_dx_cat %in% 
                        c("Dementia", "Probable/Possible AD", 
                          "Probable/Possible Vascular Dementia") ~ "Dementia",
                      Adem_dx_cat == "Normal" ~ "Unimpaired",
-                     TRUE ~ Adem_dx_cat)) 
+                     TRUE ~ Adem_dx_cat)) %>% 
+  mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
+         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
+         #Add intercept
+         "(Intercept)" = 1) 
 
 #---- priors ----
 #---- **latent classes ----
@@ -63,19 +63,6 @@ kappa_0 <- 1
 #based on analysis in priors_latent_classes.R
 vars <- unique(c(Unimpaired_preds, Other_preds, MCI_preds, "ETHNIC_label"))
 
-synthetic_sample <- ADAMS_subset %>% 
-  mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
-         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
-         #Add intercept
-         "(Intercept)" = 1) %>% 
-  dplyr::select("HHIDPN", all_of(vars), "group_class") %>% 
-  #use complete data for now
-  na.omit() %>% 
-  #pre-allocate columns
-  mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
-
-ADAMS_subset <- synthetic_sample
-
 #Categorical vars (notation from Schafer 1997)
 W <- c("Black", "Hispanic", "Astroke")
 #Continuous vars (notation from Schafer 1997)
@@ -86,6 +73,24 @@ Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT",
              "Delayed Word Recall", "IADLs", "BMI")) %>% 
   set_colnames(c("var", "label"))
 
+synthetic_sample <- ADAMS_subset %>% 
+  dplyr::select("HHIDPN", all_of(vars), "group_class") %>% 
+  #use complete data for now
+  na.omit() %>% 
+  #Z-score continuous
+  mutate_at(all_of(Z[, "var"]), scale) %>%
+  #transform to correct type
+  mutate_at("Astroke", as.numeric) %>% 
+  #pre-allocate columns
+  mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
+
+ADAMS_subset %<>% dplyr::select("HHIDPN", all_of(vars), "group_class") %>% 
+  #use complete data for now
+  na.omit()
+
+ADAMS_means <- colMeans()
+ADAMS_sds <- apply(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
+  
 #---- contrasts matrix ----
 A = do.call(cbind, list(
   #intercept
@@ -194,8 +199,8 @@ generate_data <- function(){
     #reformat contingency table
     table <- contingency_table[, i] %>% as.data.frame() %>% 
       cbind(do.call(cbind, list(
-      #Black              #Hispanic           #Stroke
-      rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>% 
+        #Black              #Hispanic           #Stroke
+        rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>% 
       set_colnames(c("Count", W))
     
     for(j in 1:nrow(table)){
@@ -317,20 +322,37 @@ for(group in unique(categorical_sub$Group_label)){
 #---- **class-specific continuous ----
 for(class in unique(ADAMS_subset$group_class)){
   ADAMS_data <- ADAMS_subset %>% dplyr::select(all_of(Z[, "var"]))
+  
   continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
   for(i in 1:length(continuous_list)){
     continuous_list[[i]] <- continuous_list[[i]] %>% mutate("run" = i)
   }
   continuous_list %<>% do.call(rbind, .) %>% as.data.frame()
   
-  continuous_plot <- ggplot(data = continuous_list) + 
-    geom_density(mapping = aes(x = factor(Group_label,
-                                      levels = c("Unimpaired", "MCI",
-                                                 "Dementia", "Other")), y = prop,
-                           fill = factor(Group_label,
-                                         levels = c("Unimpaired", "MCI",
-                                                    "Dementia", "Other"))),
-             stat = "identity", position = "dodge") +
+  for(var in Z[, "var"]){
+    continuous_plot <- ggplot(data = continuous_list, 
+                              aes(x = continuous_list[, var]), fill = "black", 
+                              color = "black") + 
+      geom_density() + theme_minimal() + 
+      xlab(Z[which(Z[, "var"] == var), "label"])
+  }
+  
+  
+  
+  
+  ggplot(data = plot_data %>% 
+           filter(type == "x"), 
+         aes(x = value, color = group, fill = group)) + 
+    geom_density(alpha = 0.5) + theme_minimal() + xlab(label) + 
+    scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)]) + 
+    scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)])
+  geom_density(mapping = aes(x = factor(Group_label,
+                                        levels = c("Unimpaired", "MCI",
+                                                   "Dementia", "Other")), y = prop,
+                             fill = factor(Group_label,
+                                           levels = c("Unimpaired", "MCI",
+                                                      "Dementia", "Other"))),
+               stat = "identity", position = "dodge") +
     theme_minimal() +
     ylim(c(0, 1)) + theme(legend.position = "none")  +
     scale_fill_manual(values = wes_palette("Darjeeling1")[c(2, 3, 1, 5)]) +
@@ -339,12 +361,12 @@ for(class in unique(ADAMS_subset$group_class)){
     labs(title = "Synthetic {round(frame_time)}",
          x = "Impairment Class", y = "Proportion") + transition_time(name) +
     ease_aes('linear')
-
+  
   animate(synthetic_dementia_class_plot,
           duration = max(synthetic_dementia_plot_data$name), fps = 1,
           height = 4, width = 4, units = "in", res = 150,
           renderer = gifski_renderer())
-
+  
   anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/",
                               "priors/synthetic_dem_class.gif"),
             animation = last_animation(),
