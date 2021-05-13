@@ -79,8 +79,12 @@ ADAMS_subset <- synthetic_sample
 #Categorical vars (notation from Schafer 1997)
 W <- c("Black", "Hispanic", "Astroke")
 #Continuous vars (notation from Schafer 1997)
-Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", 
-       "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
+Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+             "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
+           c("Age", "Total MMSE", "Serial 7s", "Immediate Word Recall", 
+             "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
+             "Delayed Word Recall", "IADLs", "BMI")) %>% 
+  set_colnames(c("var", "label"))
 
 #---- contrasts matrix ----
 A = do.call(cbind, list(
@@ -183,7 +187,7 @@ generate_data <- function(){
     
     #---- **compute mu ----
     mu[, paste0(i, ":", seq(1, 6))] <- 
-      t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = length(Z), 
+      t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = nrow(Z), 
                      byrow = FALSE))
     
     #---- **draw data ----
@@ -213,7 +217,7 @@ generate_data <- function(){
                   Sigma = sig_Y)
       }
     }
-    assign(paste0("Z_", i), subset[, all_of(Z)])
+    assign(paste0("Z_", i), subset[, all_of(Z[, "var"])])
   }
   
   #---- **return ----
@@ -308,6 +312,45 @@ for(group in unique(categorical_sub$Group_label)){
                              category, ".jpeg"), 
            width = 5, height = 3, units = "in")
   }
+}
+
+#---- **class-specific continuous ----
+for(class in unique(ADAMS_subset$group_class)){
+  ADAMS_data <- ADAMS_subset %>% dplyr::select(all_of(Z[, "var"]))
+  continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
+  for(i in 1:length(continuous_list)){
+    continuous_list[[i]] <- continuous_list[[i]] %>% mutate("run" = i)
+  }
+  continuous_list %<>% do.call(rbind, .) %>% as.data.frame()
+  
+  continuous_plot <- ggplot(data = continuous_list) + 
+    geom_density(mapping = aes(x = factor(Group_label,
+                                      levels = c("Unimpaired", "MCI",
+                                                 "Dementia", "Other")), y = prop,
+                           fill = factor(Group_label,
+                                         levels = c("Unimpaired", "MCI",
+                                                    "Dementia", "Other"))),
+             stat = "identity", position = "dodge") +
+    theme_minimal() +
+    ylim(c(0, 1)) + theme(legend.position = "none")  +
+    scale_fill_manual(values = wes_palette("Darjeeling1")[c(2, 3, 1, 5)]) +
+    #gganimate
+    transition_states(name, transition_length = 1, state_length = 1) +
+    labs(title = "Synthetic {round(frame_time)}",
+         x = "Impairment Class", y = "Proportion") + transition_time(name) +
+    ease_aes('linear')
+
+  animate(synthetic_dementia_class_plot,
+          duration = max(synthetic_dementia_plot_data$name), fps = 1,
+          height = 4, width = 4, units = "in", res = 150,
+          renderer = gifski_renderer())
+
+  anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/",
+                              "priors/synthetic_dem_class.gif"),
+            animation = last_animation(),
+            renderer = gifski_renderer())
+  
+  
 }
 
 #---- OLD ----
