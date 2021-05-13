@@ -8,52 +8,64 @@ p_load("tidyverse", "magrittr", "haven", "labelled")
 options(scipen = 999)
 
 #---- read in data ----
-ADAMS_subset <- 
-  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                  "data/cleaned/ADAMS_subset_mixed.csv")) 
+#Categorical vars (notation from Schafer 1997)
+W <- c("Black", "Hispanic", "Astroke")
+#Continuous vars (notation from Schafer 1997)
+Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+             "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
+           c("Age", "Total MMSE", "Serial 7s", "Immediate Word Recall", 
+             "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
+             "Delayed Word Recall", "IADLs", "BMI")) %>% 
+  set_colnames(c("var", "label"))
 
-#---- **RAND ----
-# Year | HRS | RAND
-# 2000 | G | 5
-rand_waves <- 5
-rand_variables <- c("hhidpn", "raracem", "rahispan", 
-                    paste0("r", rand_waves, "agey_e"), 
-                    paste0("r", rand_waves, "stroke"))
 
-RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                        "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
-                 col_select = all_of(rand_variables)) %>% 
-  mutate_at("hhidpn", as.character) %>% 
-  filter(r5agey_e >= 70)
-
-colnames(RAND)[1] <- "HHIDPN" #For merging
-
-#Remove labeled data format
-val_labels(RAND) <- NULL
-
-#---- data cleaning: dem dx ----
-ADAMS_subset %<>% 
-  mutate("Adem_dx_cat_collapse" = 
+ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                "data/cleaned/ADAMS_subset_mixed.csv"), 
+                         col_types = cols(HHIDPN = col_character(), 
+                                          #Do not standardize these
+                                          Astroke = col_character())) %>% 
+  mutate("group_class" = 
            case_when(Adem_dx_cat %in% 
-                       c("Dementia", "Probable/Possible AD", "Probable Dementia", 
-                         "Probable/Possible Vascular Dementia") ~ "Dementia", 
-                     TRUE ~ Adem_dx_cat))
+                       c("Dementia", "Probable/Possible AD", 
+                         "Probable/Possible Vascular Dementia") ~ "Dementia",
+                     Adem_dx_cat == "Normal" ~ "Unimpaired",
+                     TRUE ~ Adem_dx_cat)) %>% 
+  mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
+         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
+         #Add intercept
+         "(Intercept)" = 1) %>% 
+  dplyr::select(c(all_of(W), all_of(Z[, "var"]), "group_class")) %>% na.omit()
 
-# #Sanity check
-# table(ADAMS_subset$Adem_dx_cat, ADAMS_subset$Adem_dx_cat_collapse, 
-#       useNA = "ifany")
+dem_class_props <- table(ADAMS_subset$group_class)/nrow(ADAMS_subset) 
 
-dem_class_props <- table(ADAMS_subset$Adem_dx_cat_collapse)/nrow(ADAMS_subset) 
+# #---- **RAND ----
+# # Year | HRS | RAND
+# # 2000 | G | 5
+# rand_waves <- 5
+# rand_variables <- c("hhidpn", "raracem", "rahispan", 
+#                     paste0("r", rand_waves, "agey_e"), 
+#                     paste0("r", rand_waves, "stroke"))
+# 
+# RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+#                         "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
+#                  col_select = all_of(rand_variables)) %>% 
+#   mutate_at("hhidpn", as.character) %>% 
+#   filter(r5agey_e >= 70)
+# 
+# colnames(RAND)[1] <- "HHIDPN" #For merging
+# 
+# #Remove labeled data format
+# val_labels(RAND) <- NULL
 
-#---- data cleaning: race-ethnicity ----
-RAND %<>% 
-  mutate("hispanic" = ifelse(rahispan == 0 | is.na(rahispan), 0, 1)) %>% 
-  mutate("Ethnicity" = case_when(hispanic == 1 ~ "Hispanic",
-                                 (raracem == 1 & hispanic == 0) ~ "White", 
-                                 (raracem == 2 & hispanic == 0) ~ "Black", 
-                                 (raracem == 3 & hispanic == 0) ~ "Other", 
-                                 TRUE ~ "Unknown")) %>% 
-  filter(!Ethnicity %in% c("Unknown", "Other") & !is.na(r5stroke))
+# #---- data cleaning: race-ethnicity ----
+# RAND %<>% 
+#   mutate("hispanic" = ifelse(rahispan == 0 | is.na(rahispan), 0, 1)) %>% 
+#   mutate("Ethnicity" = case_when(hispanic == 1 ~ "Hispanic",
+#                                  (raracem == 1 & hispanic == 0) ~ "White", 
+#                                  (raracem == 2 & hispanic == 0) ~ "Black", 
+#                                  (raracem == 3 & hispanic == 0) ~ "Other", 
+#                                  TRUE ~ "Unknown")) %>% 
+#   filter(!Ethnicity %in% c("Unknown", "Other") & !is.na(r5stroke))
 
 #---- cross-class race/ethnicity x stroke ----
 data_counts <- as.data.frame(table(ADAMS_subset$ETHNIC_label, 
