@@ -331,20 +331,29 @@ for(class in unique(ADAMS_subset$group_class)){
   continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
   
   for(i in 1:length(continuous_list)){
-    continuous_list[[i]] <- continuous_list[[i]] %>% mutate("run" = i)
+    continuous_list[[i]] <- continuous_list[[i]] %>% 
+      mutate("run" = i, "type" = "synthetic") %>% 
+      rbind(., ADAMS_data %>% dplyr::select(-"group_class") %>% 
+              mutate("run" = 0, "type" = "ADAMS"))
   }
+  
   continuous_list %<>% do.call(rbind, .) %>% as.data.frame()
   
   for(var in Z[, "var"]){
-    data <- continuous_list[, c(var, "run")]
+    data <- continuous_list[, c(var, "run", "type")]
     #unstandardize
-    data[, var] <- data[, var]*ADAMS_sds[var] + ADAMS_means[var]
+    synthetic_subset <- data %>% filter(type == "synthetic")
+    data[which(data$type == "synthetic"), var] <- 
+      synthetic_subset[, var]*ADAMS_sds[var] + ADAMS_means[var]
     
-    continuous_plot <- ggplot(data = continuous_list, 
-                              aes(x = continuous_list[, var]), fill = "black", 
-                              color = "black") + 
-      geom_density() + theme_minimal() + 
-      xlab(Z[which(Z[, "var"] == var), "label"])
+    continuous_plot <- ggplot() + 
+      geom_density(color = as.factor(data$type)) + 
+      geom_density(data = ADAMS_data, aes(x = unlist(ADAMS_data[, var]))) +
+      theme_minimal() + xlab(Z[which(Z[, "var"] == var), "label"]) + 
+      transition_states(data$run, transition_length = 1, state_length = 1) +
+      labs(title = "Synthetic {round(frame_time)}",
+           x = var, y = "density") + transition_time(name) +
+      ease_aes('linear')
   }
   
   
