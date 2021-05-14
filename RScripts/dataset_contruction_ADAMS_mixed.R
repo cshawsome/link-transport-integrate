@@ -223,10 +223,16 @@ ADAMS_subset %<>%
   mutate(ETHNIC_label = as.factor(case_when(ETHNIC == 1 ~ "White", 
                                             ETHNIC == 2 ~ "Black", 
                                             ETHNIC == 3 ~ "Hispanic"))) %>% 
-  mutate(ETHNIC_label = fct_relevel(ETHNIC_label, "White"))
+  mutate(ETHNIC_label = fct_relevel(ETHNIC_label, "White")) %>% 
+  mutate("White" = ifelse(ETHNIC_label == "White", 1, 0), 
+         "Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
+         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0))
 
 # #Sanity check
 # levels(ADAMS_subset$ETHNIC_label)
+# table(ADAMS_subset$ETHNIC_label, ADAMS_subset$White, useNA = "ifany")
+# table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Black, useNA = "ifany")
+# table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Hispanic, useNA = "ifany")
 
 #---- **education ----
 #table(ADAMS_subset$EDYRS, useNA = "ifany")
