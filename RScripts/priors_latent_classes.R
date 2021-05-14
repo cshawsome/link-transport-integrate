@@ -10,7 +10,17 @@ options(scipen = 999)
 #---- read in data ----
 ADAMS_subset <- 
   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                  "data/cleaned/ADAMS_subset_mixed.csv")) %>% 
+                  "data/cleaned/ADAMS_subset_mixed.csv"), 
+           col_types = cols("AYEAR" = col_character(), 
+                            "Astroke" = col_character(), 
+                            "Ahibpe" = col_character(), 
+                            "Adiabe" = col_character(), 
+                            "Ahearte" = col_character(), 
+                            "Acancre" = col_character(), 
+                            "Asmoken" = col_character(), 
+                            "White" = col_character(), 
+                            "Black" = col_character(), 
+                            "Hispanic" = col_character())) %>% 
   mutate_if(is.character, as.factor)
 
 #Set factor levels
