@@ -128,12 +128,24 @@ for(wave in c("A", "B", "C", "D")){
               ADAMS_demdx[, dem_dx_var] == 31 ~ "Normal")
 }
 
+#Further collapsing categories
+for(wave in c("A", "B", "C", "D")){
+  ADAMS_demdx[, paste0(wave, "dem_dx_cat")] <- 
+    case_when(ADAMS_demdx[, paste0(wave, "dem_dx_cat")] %in% 
+                c("Probable/Possible AD", 
+                  "Probable/Possible Vascular Dementia", 
+                  "Probable Dementia", "Dementia") ~ "Dementia",
+              ADAMS_demdx[, paste0(wave, "dem_dx_cat")] == "Other" ~ "Other", 
+              ADAMS_demdx[, paste0(wave, "dem_dx_cat")] == "MCI" ~ "MCI", 
+              ADAMS_demdx[, paste0(wave, "dem_dx_cat")] == "Normal" ~ "Normal")
+}
+
 # #Sanity check
 # for(wave in c("A", "B", "C", "D")){
 #   dem_dx_var <- paste0(wave, "DFDX1")
 #   print(paste0("Wave ", wave))
-#   print(table(ADAMS_demdx[, dem_dx_var], 
-#               ADAMS_demdx[, paste0(wave, "dem_dx_cat")], 
+#   print(table(ADAMS_demdx[, dem_dx_var],
+#               ADAMS_demdx[, paste0(wave, "dem_dx_cat")],
 #               useNA = "ifany"))
 # }
 
