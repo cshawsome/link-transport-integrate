@@ -293,7 +293,7 @@ for(wave in c("A", "B")){
   ADAMS_subset %<>% 
     mutate(!!paste0(wave, "ACURRWK_label") := 
              case_when(!!sym(paste0(wave, "ACURRWK")) == 1 ~ "Working",
-                       !!sym(paste0(wave, "ACURRWK"))  == 2 ~ "Retired", 
+                       !!sym(paste0(wave, "ACURRWK")) == 2 ~ "Retired", 
                        !!sym(paste0(wave, "ACURRWK")) == 3 ~ "Semi-retired", 
                        !!sym(paste0(wave, "ACURRWK")) == 4 ~ "Disabled", 
                        !!sym(paste0(wave, "ACURRWK")) == 5 ~ "Unemployed")) %>% 
@@ -538,14 +538,6 @@ ADAMS_subset %<>% mutate("log_AAGE" = log(AAGE))
 #---- **education ----
 # #Variable check
 # hist(ADAMS_subset$EDYRS)
-
-#---- transform: neuropsych ----
-#We want to use normal approximations to these variables 
-
-#---- **MMSE ----
-# #Variable check-- this one is going to be skewed no matter what and it's one of 
-# # the variables that is going to help define our dementia classes
-# hist(ADAMS_subset$ANMSETOT)
 
 #---- save dataset ----
 write_csv(ADAMS_subset, file = paste0("/Users/CrystalShaw/Box/Dissertation/", 
