@@ -158,10 +158,8 @@ other_model_data <- ADAMS_subset %>% dplyr::select(all_of(vars)) %>%
 
 #check missingness-- add variables to model by level of missingness
 #try not to lose more than 25% of the sample (about 137 people; n = 412)
-#sensitivity: try not to lose more than 50% of the sample (about n = 275)
 #---- **var missingness ----
-sort(colSums(is.na(other_model_data)) %>% 
-       set_names(colnames(other_model_data)))
+sort(colSums(is.na(other_model_data)) %>% set_names(colnames(other_model_data)))
 
 #---- **model 25 ----
 other_model_25 <- glm(AOther ~ AAGE + ANMSETOT + ANDELCOR + ANIMMCR, 
@@ -188,9 +186,8 @@ MCI_model_data <- ADAMS_subset %>% dplyr::select(all_of(vars)) %>%
 
 #check missingness-- add variables to model by level of missingness
 #try not to lose more than 25% of the sample (about 100 people)
-#sensitivity: try not to lose more than 50% of the sample (about 200 people)
 #---- **var missingness ----
-sort(colSums(is.na(MCI_model_data)))
+sort(colSums(is.na(MCI_model_data)) %>% set_names(colnames(MCI_model_data)))
 
 #---- **model 25 ----
 MCI_model_25 <- glm(AMCI ~ Aiadla + ANMSETOT + Astroke + Abmi + ANIMMCR, 
