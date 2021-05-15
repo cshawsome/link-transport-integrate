@@ -51,7 +51,13 @@ bootstrap_models <- function(){
 bootstrap_runs <- replicate(2, bootstrap_models(), simplify = FALSE)
 
 #---- format output ----
-
-
+for(est in c("betas", "cov")){
+  for(group in c("normal", "other", "mci")){
+    lapply(bootstrap_runs, "[[", paste0(group, "_", est)) %>% 
+      do.call(rbind, .) %>% t() %>% as.data.frame() %>% 
+      write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                       "latent_class_", group, "_", est, ".csv"))
+  }
+}
 
 
