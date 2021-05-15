@@ -91,8 +91,8 @@ sort(colSums(is.na(normal_model_data) %>%
                set_colnames(colnames(normal_model_data))))
 
 #---- **model 25 ----
-normal_model_25 <- glm(ANormal ~ AAGE + ETHNIC_label + ANMSETOT + ANSER7T +
-                         ANIMMCR + ANRECYES + ANWM1TOT + proxy_cog,
+normal_model_25 <- glm(ANormal ~ AAGE + ETHNIC_label + ANMSETOT + ANSER7T + 
+                         ANIMMCR + ANRECYES + ANWM1TOT + proxy_cog, 
                        family = "binomial", data = normal_model_data)
 
 summary(normal_model_25)
@@ -107,64 +107,47 @@ tidy_normal_model_25 <- tidy(normal_model_25, exponentiate = TRUE,
 #show results
 tidy_normal_model_25
 
-#---- ****Sanity checking ORs for race (race only) ----
-normal_model_25_check1 <- glm(ANormal ~ AAGE + ETHNIC_label,
-                              family = "binomial", data = normal_model_data)
+# #---- ****Sanity checking ORs for race (race only) ----
+# normal_model_25_check1 <- glm(ANormal ~ AAGE + ETHNIC_label,
+#                               family = "binomial", data = normal_model_data)
+# 
+# summary(normal_model_25_check1)
+# 
+# #H_0 is that model fits
+# p_val_normal_model_25_check1 <- 
+#   1 - pchisq(normal_model_25_check1$deviance, 
+#              normal_model_25_check1$df.residual)
+# 
+# tidy_normal_model_25_check1 <- tidy(normal_model_25_check1, exponentiate = TRUE, 
+#                                     conf.int = TRUE, conf.level = 0.95) %>% 
+#   mutate_if(is.numeric, round, 4) %>% as.data.frame()
+# #show results
+# tidy_normal_model_25_check1
+# 
+# #---- ****Sanity checking ORs for race (race + MMSE) ----
+# normal_model_25_check2 <- glm(ANormal ~ AAGE + ETHNIC_label + ANMSETOT,
+#                               family = "binomial", data = normal_model_data)
+# 
+# summary(normal_model_25_check2)
+# 
+# #H_0 is that model fits
+# p_val_normal_model_25_check2 <- 
+#   1 - pchisq(normal_model_25_check2$deviance, 
+#              normal_model_25_check2$df.residual)
+# 
+# tidy_normal_model_25_check2 <- tidy(normal_model_25_check2, exponentiate = TRUE, 
+#                                     conf.int = TRUE, conf.level = 0.95) %>% 
+#   mutate_if(is.numeric, round, 4) %>% as.data.frame()
+# #show results
+# tidy_normal_model_25_check2
 
-summary(normal_model_25_check1)
-
-#H_0 is that model fits
-p_val_normal_model_25_check1 <- 
-  1 - pchisq(normal_model_25_check1$deviance, 
-             normal_model_25_check1$df.residual)
-
-tidy_normal_model_25_check1 <- tidy(normal_model_25_check1, exponentiate = TRUE, 
-                                    conf.int = TRUE, conf.level = 0.95) %>% 
-  mutate_if(is.numeric, round, 4) %>% as.data.frame()
-#show results
-tidy_normal_model_25_check1
-
-#---- ****Sanity checking ORs for race (race + MMSE) ----
-normal_model_25_check2 <- glm(ANormal ~ AAGE + ETHNIC_label + ANMSETOT,
-                              family = "binomial", data = normal_model_data)
-
-summary(normal_model_25_check2)
-
-#H_0 is that model fits
-p_val_normal_model_25_check2 <- 
-  1 - pchisq(normal_model_25_check2$deviance, 
-             normal_model_25_check2$df.residual)
-
-tidy_normal_model_25_check2 <- tidy(normal_model_25_check2, exponentiate = TRUE, 
-                                    conf.int = TRUE, conf.level = 0.95) %>% 
-  mutate_if(is.numeric, round, 4) %>% as.data.frame()
-#show results
-tidy_normal_model_25_check2
-
-#---- sjPlot ----
-tab_model(normal_model_25_check1, normal_model_25_check2, digits = 3, 
-          title = "Checking Race/Ethnicity --> Impairment Classification", 
-          show.loglik = TRUE, show.dev = TRUE,
-          file = paste0("/Users/CrystalShaw/Box/Dissertation/",
-                        "/tables/priors/", 
-                        "dem_class_nested_regressions_25_check.html")) 
-
-#---- **model 50 ----
-normal_model_50 <- glm(ANormal ~ AAGE + ETHNIC_label +  ANMSETOT + ANSER7T +
-                         ANIMMCR + ANRECYES + ANWM1TOT + proxy_cog,
-                       family = "binomial", data = normal_model_data)
-
-summary(normal_model_50)
-
-#H_0 is that model fits
-p_val_normal_model_50 <- 
-  1 - pchisq(normal_model_25$deviance, normal_model_25$df.residual)
-
-tidy_normal_model_50 <- tidy(normal_model_50, exponentiate = TRUE, 
-                             conf.int = TRUE, conf.level = 0.95) %>% 
-  mutate_if(is.numeric, round, 4) %>% as.data.frame()
-#show results
-tidy_normal_model_50
+# #---- sjPlot ----
+# tab_model(normal_model_25_check1, normal_model_25_check2, digits = 3, 
+#           title = "Checking Race/Ethnicity --> Impairment Classification", 
+#           show.loglik = TRUE, show.dev = TRUE,
+#           file = paste0("/Users/CrystalShaw/Box/Dissertation/",
+#                         "/tables/priors/", 
+#                         "dem_class_nested_regressions_25_check.html")) 
 
 #---- var select: Other vs. Dementia/MCI ----
 other_model_data <- ADAMS_subset %>% dplyr::select(all_of(vars)) %>% 
