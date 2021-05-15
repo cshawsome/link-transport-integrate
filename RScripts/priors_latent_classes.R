@@ -160,12 +160,11 @@ other_model_data <- ADAMS_subset %>% dplyr::select(all_of(vars)) %>%
 #try not to lose more than 25% of the sample (about 137 people; n = 412)
 #sensitivity: try not to lose more than 50% of the sample (about n = 275)
 #---- **var missingness ----
-sort(colSums(is.na(other_model_data)))
+sort(colSums(is.na(other_model_data)) %>% 
+       set_names(colnames(other_model_data)))
 
 #---- **model 25 ----
-other_model_25 <- glm(AOther ~ AAGE + ANMSETOT + ANIMMCR + ANDELCOR, 
-                      # + 
-                      #   ETHNIC_label,
+other_model_25 <- glm(AOther ~ AAGE + ANMSETOT + ANDELCOR + ANIMMCR, 
                       family = "binomial", data = other_model_data)
 
 summary(other_model_25)
@@ -179,23 +178,6 @@ tidy_other_model_25 <- tidy(other_model_25, exponentiate = TRUE,
   mutate_if(is.numeric, round, 4) %>% as.data.frame()
 #show results
 tidy_other_model_25
-
-#---- **model 50 ----
-other_model_50 <- glm(AOther ~ AAGE + ANMSETOT + ANIMMCR + ANDELCOR + 
-                        proxy_cog,
-                      family = "binomial", data = other_model_data)
-
-summary(other_model_50)
-
-#H_0 is that model fits
-p_val_other_model_50 <- 
-  1 - pchisq(other_model_50$deviance, other_model_50$df.residual)
-
-tidy_other_model_50 <- tidy(other_model_50, exponentiate = TRUE, 
-                            conf.int = TRUE, conf.level = 0.95) %>% 
-  mutate_if(is.numeric, round, 4) %>% as.data.frame()
-#show results
-tidy_other_model_50
 
 #---- var select: MCI vs. Dementia ----
 MCI_model_data <- ADAMS_subset %>% dplyr::select(all_of(vars)) %>% 
