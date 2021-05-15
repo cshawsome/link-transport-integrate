@@ -213,10 +213,3 @@ tab_model(normal_model_25, other_model_25, MCI_model_25, digits = 3,
                         "/tables/priors/", 
                         "dem_class_nested_regressions_25.html")) 
 
-#---- save model objects ----
-saveRDS(normal_model_25, here::here("priors", "normal_model_25.rds"))
-saveRDS(other_model_25, here::here("priors", "other_model_25.rds"))
-saveRDS(MCI_model_25, here::here("priors", "MCI_model_25.rds"))
-saveRDS(normal_model_50, here::here("priors", "normal_model_50.rds"))
-saveRDS(other_model_50, here::here("priors", "other_model_50.rds"))
-saveRDS(MCI_model_50, here::here("priors", "MCI_model_50.rds"))
