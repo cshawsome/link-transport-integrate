@@ -48,7 +48,7 @@ bootstrap_models <- function(){
               "mci_cov" = as.vector(vcov(mci_model))))
 }
 
-bootstrap_runs <- replicate(2, bootstrap_models(), simplify = FALSE)
+bootstrap_runs <- replicate(10000, bootstrap_models(), simplify = FALSE)
 
 #---- format output ----
 for(est in c("betas", "cov")){
