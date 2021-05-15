@@ -211,5 +211,27 @@ tab_model(normal_model_25, other_model_25, MCI_model_25, digits = 3,
           show.dev = TRUE,
           file = paste0("/Users/CrystalShaw/Box/Dissertation/",
                         "/tables/priors/", 
-                        "dem_class_nested_regressions_25.html")) 
+                        "dem_class_nested_regressions_25.html"))
+
+#---- select important predictors ----
+ADAMS_subset %<>% mutate("(Intercept)" = 1)
+vars <- c("HHIDPN", c(names(coefficients(normal_model_25)), 
+                      names(coefficients(other_model_25)), 
+                      names(coefficients(MCI_model_25))), 
+          "White", "ANormal", "AOther", "AMCI", "Adem_dx_cat", "ETHNIC_label")
+vars[which(vars == "ETHNIC_labelBlack")] <- "Black"
+vars[which(vars == "ETHNIC_labelHispanic")] <- "Hispanic"
+vars[which(vars == "Astroke1")] <- "Astroke"
+
+ADAMS_subset %<>% dplyr::select(all_of(vars)) %>% na.omit()
+
+#---- split sample ----
+train <- sample_frac(ADAMS_subset, size = 0.70, replace = FALSE)
+test <- ADAMS_subset %>% filter(!HHIDPN %in% train$HHIDPN)
+
+write_csv(train, file = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                               "/data/cleaned/ADAMS/ADAMS_train.csv"))
+write_csv(test, file = paste0("/Users/CrystalShaw/Box/Dissertation/",
+                              "/data/cleaned/ADAMS/ADAMS_test.csv"))
+
 
