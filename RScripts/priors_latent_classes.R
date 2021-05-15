@@ -191,8 +191,6 @@ sort(colSums(is.na(MCI_model_data)) %>% set_names(colnames(MCI_model_data)))
 
 #---- **model 25 ----
 MCI_model_25 <- glm(AMCI ~ Aiadla + ANMSETOT + Astroke + Abmi + ANIMMCR, 
-                    # + 
-                    #   ETHNIC_label,
                     family = "binomial", data = MCI_model_data)
 
 summary(MCI_model_25)
@@ -207,23 +205,6 @@ tidy_MCI_model_25 <- tidy(MCI_model_25, exponentiate = TRUE, conf.int = TRUE,
 #show results
 tidy_MCI_model_25
 
-#---- **model 50 ----
-MCI_model_50 <- glm(AMCI ~ Aiadla + ANMSETOT + Astroke + Abmi + ANIMMCR + 
-                      ANWM2TOT, 
-                    family = "binomial", data = MCI_model_data)
-
-summary(MCI_model_50)
-
-#H_0 is that model fits
-p_val_MCI_model_50 <- 
-  1 - pchisq(MCI_model_50$deviance, MCI_model_50$df.residual)
-
-tidy_MCI_model_50 <- tidy(MCI_model_50, exponentiate = TRUE, conf.int = TRUE, 
-                          conf.level = 0.95) %>% 
-  mutate_if(is.numeric, round, 4) %>% as.data.frame()
-#show results
-tidy_MCI_model_50
-
 #---- sjPlot ----
 tab_model(normal_model_25, other_model_25, MCI_model_25, digits = 3, 
           title = "Up to 25% sample dropped", show.loglik = TRUE,
@@ -232,14 +213,6 @@ tab_model(normal_model_25, other_model_25, MCI_model_25, digits = 3,
                         "/tables/priors/", 
                         "dem_class_nested_regressions_25.html")) 
 
-
-tab_model(normal_model_50, other_model_50, MCI_model_50, digits = 3, 
-          title = "Up to 50% sample dropped", show.loglik = TRUE,
-          show.dev = TRUE,
-          file = paste0("/Users/CrystalShaw/Box/Dissertation/",
-                        "/tables/priors/", 
-                        "dem_class_nested_regressions_50.html")) 
-
 #---- save model objects ----
 saveRDS(normal_model_25, here::here("priors", "normal_model_25.rds"))
 saveRDS(other_model_25, here::here("priors", "other_model_25.rds"))
@@ -247,11 +220,3 @@ saveRDS(MCI_model_25, here::here("priors", "MCI_model_25.rds"))
 saveRDS(normal_model_50, here::here("priors", "normal_model_50.rds"))
 saveRDS(other_model_50, here::here("priors", "other_model_50.rds"))
 saveRDS(MCI_model_50, here::here("priors", "MCI_model_50.rds"))
-
-#---- save output .xlsx ----
-# table_list <- list("Normal vs. Impaired" = tidy_normal_model, 
-#                    "Other vs. MCI or Dementia" = tidy_other_model, 
-#                    "MCI vs. Dementia" = tidy_MCI_model)
-# write.xlsx(table_list, file = paste0("/Users/CrystalShaw/Box/Dissertation/",
-#                                      "/tables/priors/", 
-#                                      "dem_class_nested_regressions.xlsx"))
