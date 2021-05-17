@@ -13,21 +13,21 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
 
 #---- predictors ----
 #normal model predictors
-norm_preds <- c("AAGE", "Black", "Hispanic", "ANMSETOT", "ANSER7T", "ANIMMCR", 
-                "ANRECYES", "ANWM1TOT", "proxy_cog")
+normal_preds <- c("AAGE", "Black", "Hispanic", "ANMSETOT", "ANSER7T", "ANIMMCR", 
+                  "ANRECYES", "ANWM1TOT", "proxy_cog")
 
 #other model predictors
 other_preds <- c("AAGE", "ANMSETOT", "ANIMMCR", "ANDELCOR")
 
 #mci model predictors
-MCI_preds <- c("ANMSETOT", "ANIMMCR", "Aiadla", "Astroke", "Abmi")
+mci_preds <- c("ANMSETOT", "ANIMMCR", "Aiadla", "Astroke", "Abmi")
 
 #---- model ----
 bootstrap_models <- function(){
   subsample <- sample_frac(ADAMS_subset, size = 0.5, replace = TRUE)
   
   normal_model <- 
-    glm(formula(paste("ANormal ~ ", paste(norm_preds, collapse = " + "), 
+    glm(formula(paste("ANormal ~ ", paste(normal_preds, collapse = " + "), 
                       collapse = "")), family = "binomial", data = subsample)
   
   other_model <- 
@@ -36,7 +36,7 @@ bootstrap_models <- function(){
           filter(ANormal == 0))
   
   mci_model <- 
-    glm(formula(paste("AMCI ~ ", paste(MCI_preds, collapse = " + "), 
+    glm(formula(paste("AMCI ~ ", paste(mci_preds, collapse = " + "), 
                       collapse = "")), family = "binomial", data = subsample %>% 
           filter(ANormal == 0 & AOther == 0)) 
   
@@ -55,6 +55,7 @@ for(est in c("betas", "cov")){
   for(group in c("normal", "other", "mci")){
     lapply(bootstrap_runs, "[[", paste0(group, "_", est)) %>% 
       do.call(rbind, .) %>% t() %>% as.data.frame() %>% 
+      mutate("preds" = c("(Intercept)", get(paste0(group, "_preds")))) %>%
       write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
                        "latent_class_", group, "_", est, ".csv"))
   }
