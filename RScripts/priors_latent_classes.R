@@ -53,9 +53,14 @@ bootstrap_runs <- replicate(10000, bootstrap_models(), simplify = FALSE)
 #---- format output ----
 for(est in c("betas", "cov")){
   for(group in c("normal", "other", "mci")){
-    lapply(bootstrap_runs, "[[", paste0(group, "_", est)) %>% 
-      do.call(rbind, .) %>% t() %>% as.data.frame() %>% 
-      mutate("preds" = c("(Intercept)", get(paste0(group, "_preds")))) %>%
+    data <- lapply(bootstrap_runs, "[[", paste0(group, "_", est)) %>% 
+      do.call(rbind, .) %>% t() %>% as.data.frame() 
+    
+    if(est == "betas"){
+      data %<>% mutate("preds" = c("(Intercept)", get(paste0(group, "_preds"))))
+    }
+    
+    data %>% 
       write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
                        "latent_class_", group, "_", est, ".csv"))
   }
