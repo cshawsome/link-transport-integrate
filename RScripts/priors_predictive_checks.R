@@ -11,27 +11,18 @@ library(gganimate)
 #---- read in data ----
 #---- **ADAMS ----
 ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/cleaned/ADAMS_subset_mixed.csv"), 
-                         col_types = cols(HHIDPN = col_character(), 
-                                          #Do not standardize these
-                                          Astroke = col_character())) %>% 
-  mutate("group_class" = 
-           case_when(Adem_dx_cat %in% 
-                       c("Dementia", "Probable/Possible AD", 
-                         "Probable Dementia", 
-                         "Probable/Possible Vascular Dementia") ~ "Dementia",
-                     Adem_dx_cat == "Normal" ~ "Unimpaired",
-                     TRUE ~ Adem_dx_cat)) %>% 
-  mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
-         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
-         #Add intercept
-         "(Intercept)" = 1) 
+                                "data/cleaned/ADAMS/ADAMS_train.csv"))
 
 #---- priors ----
 #---- **latent classes ----
-Unimpaired_prior <- readRDS(here::here("priors", "normal_model_25.rds"))
-Other_prior <- readRDS(here::here("priors", "other_model_25.rds"))
-MCI_prior <- readRDS(here::here("priors", "MCI_model_25.rds"))
+for(group in c("normal", "mci", "other")){
+  assign(paste0(group, "_betas"), 
+         read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                         "latent_class_", group, "_betas.csv")))
+  assign(paste0(group, "_cov"), 
+         read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                         "latent_class_", group, "_cov.csv")))
+}
 
 Unimpaired_preds <- names(coefficients(Unimpaired_prior))
 Unimpaired_preds[which(Unimpaired_preds == "ETHNIC_labelBlack")] <- "Black"
@@ -91,7 +82,7 @@ ADAMS_subset %<>% dplyr::select("HHIDPN", all_of(vars), "group_class") %>%
 
 ADAMS_means <- colMeans(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])))
 ADAMS_sds <- apply(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
-  
+
 #---- contrasts matrix ----
 A = do.call(cbind, list(
   #intercept
