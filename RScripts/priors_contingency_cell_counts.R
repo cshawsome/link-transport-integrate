@@ -31,7 +31,8 @@ for(group in unique(ADAMS_subset$Adem_dx_cat)){
   assign(paste0(group, "_data_counts"), 
          as.data.frame(table(subset$ETHNIC_label, 
                              subset$Astroke)) %>% 
-           mutate("percent" = round((Freq/sum(Freq))*100, 1)))
+           mutate("percent" = round((Freq/sum(Freq))*100, 1)) %>% 
+           unite("cell", c("Var1", "Var2"), sep = ":")) 
 }
 
 #---- bootstrap counts ----
@@ -69,26 +70,37 @@ for(b in 1:B){
 #                    "White + No Stroke", "Black + Stroke", "Hispanic + Stroke", 
 #                    "White + Stroke")) %>% pivot_longer(-c("truth", "cat"))
 
-bootstrap_counts_plot_data <- bootstrap_counts %>% as.data.frame() %>%
-  mutate("truth" = data_counts$Freq, 
-         "cat" = c("Black + No Stroke", "Hispanic + No Stroke", 
-                   "White + No Stroke", "Black + Stroke", "Hispanic + Stroke", 
-                   "White + Stroke")) %>% pivot_longer(-c("truth", "cat"))
+bootstrap_counts_plot_data <- bootstrap_counts %>% mutate("truth" = 0) 
+
+for(group in unique(ADAMS_subset$Adem_dx_cat)){
+  true_counts <- get(paste0(group, "_data_counts"))
+  bootstrap_counts[
+    which(bootstrap_counts$group == group & 
+            bootstrap_counts$cell %in% counts$cell), "truth"] <- 
+    true_counts$Freq
+  
+}
+
+bootstrap_counts %<>% 
+  mutate("cat" = rep(c("Black + No Stroke", "Hispanic + No Stroke", 
+                       "White + No Stroke", "Black + Stroke", 
+                       "Hispanic + Stroke", "White + Stroke"), 4)) %>% 
+  pivot_longer(-c("group", "cell", "truth", "cat"))
 
 #---- **plots ----
-#percent
-for(category in unique(bootstrap_percents$cat)){
-  subset <- bootstrap_percents %>% filter(cat == category)
-  ggplot(data = subset , aes(x = value)) + 
-    geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-    xlab("Percent") + ggtitle(category) + 
-    geom_vline(xintercept = subset$truth, color = "#f2caaa", size = 2)
-  
-  ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                           "priors/cell_counts/overall/", category, 
-                           "_percent.jpeg"), 
-         width = 5, height = 3, units = "in")
-}
+# #percent
+# for(category in unique(bootstrap_percents$cat)){
+#   subset <- bootstrap_percents %>% filter(cat == category)
+#   ggplot(data = subset , aes(x = value)) + 
+#     geom_histogram(fill = "black", color = "black") + theme_minimal() + 
+#     xlab("Percent") + ggtitle(category) + 
+#     geom_vline(xintercept = subset$truth, color = "#f2caaa", size = 2)
+#   
+#   ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+#                            "priors/cell_counts/overall/", category, 
+#                            "_percent.jpeg"), 
+#          width = 5, height = 3, units = "in")
+# }
 
 #count
 for(category in unique(bootstrap_percents$cat)){
