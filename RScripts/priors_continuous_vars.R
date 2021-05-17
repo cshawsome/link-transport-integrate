@@ -18,28 +18,7 @@ group <- c("Adem_dx_cat")
 
 ADAMS_subset <- 
   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                  "data/cleaned/ADAMS_subset_mixed.csv")) %>% 
-  dplyr::select(c("HHIDPN", all_of(group), all_of(W), all_of(Z))) %>% 
-  na.omit() %>% 
-  #don't standardize this
-  mutate_at("Astroke", as.character) %>%
-  #Z-score continuous
-  mutate_if(is.numeric, scale) %>%
-  #transform to correct type
-  mutate_at("Astroke", as.numeric) %>%
-  mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
-         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
-         #Add intercept
-         "(Intercept)" = 1) %>% 
-  mutate("group_class" = 
-           case_when(Adem_dx_cat %in% 
-                       c("Dementia", "Probable/Possible AD", 
-                         "Probable/Possible Vascular Dementia") ~ "Dementia",
-                     Adem_dx_cat == "Normal" ~ "Unimpaired",
-                     TRUE ~ Adem_dx_cat))
-
-# #Sanity check
-# table(ADAMS_subset$Adem_dx_cat, ADAMS_subset$group_class, useNA = "ifany")
+                  "data/cleaned/ADAMS/ADAMS_train.csv")) 
 
 #---- arrange data ----
 ADAMS_subset %<>% arrange(Astroke, desc(Black), desc(Hispanic))
@@ -57,53 +36,69 @@ A = do.call(cbind, list(
   rep(c(0, 1), each = 3)))
 
 #---- pre-allocate ----
-priors_beta <- matrix(nrow = (10*4) , ncol = 4)
-priors_V <- matrix(nrow = (4*4), ncol = 4)
-i = 1
+cells <- 
+  as.data.frame(table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke)) %>% 
+  unite("cell", c("Var1", "Var2"), sep = ":")
 
-for(group in c("Unimpaired", "Other", "MCI", "Dementia")){
-  #---- filter data ----
-  subset <- ADAMS_subset %>% filter(group_class == group)
+B = 10000
+priors_beta <- as.data.frame(matrix(nrow = (10*4*4) , ncol = B)) %>% 
+  set_colnames(seq(1, B)) %>% 
+  mutate("group" = rep(unique(ADAMS_subset$Adem_dx_cat), each = 40)) 
+priors_V_inv <- as.data.frame(matrix(nrow = (4*4*4), ncol = B)) %>% 
+  set_colnames(seq(1, B)) %>% 
+  mutate("group" = rep(unique(ADAMS_subset$Adem_dx_cat), each = 16)) 
+priors_Sigma <- as.data.frame(matrix(nrow = (10*10*4), ncol = B)) %>% 
+  set_colnames(seq(1, B)) %>% 
+  mutate("group" = rep(unique(ADAMS_subset$Adem_dx_cat), each = 100)) 
+
+for(b in 1:B){
+  sample <- sample_n(ADAMS_subset, size = nrow(ADAMS_subset), replace = TRUE)
   
-  #---- U (contingency cell) ----
-  contingency_table <- table(subset$ETHNIC_label, 
-                             subset$Astroke) %>% as.data.frame()
-  
-  U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
-  
-  for(j in 1:nrow(contingency_table)){
-    if(contingency_table[j, "Freq"] == 0){next}
-    if(j == 1){
-      index = 1
-    } else{
-      index = sum(contingency_table[1:(j - 1), "Freq"]) + 1
+  for(group in unique(ADAMS_subset$Adem_dx_cat)){
+    #---- filter data ----
+    subset <- sample %>% filter(Adem_dx_cat == group) %>% 
+      arrange(Astroke, desc(Black), desc(Hispanic))
+    
+    #---- U (contingency cell) ----
+    contingency_table <- 
+      as.data.frame(table(subset$ETHNIC_label, subset$Astroke)) 
+    
+    U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
+    
+    for(j in 1:nrow(contingency_table)){
+      if(contingency_table[j, "Freq"] == 0){next}
+      if(j == 1){
+        index = 1
+      } else{
+        index = sum(contingency_table[1:(j - 1), "Freq"]) + 1
+      }
+      U[index:(index - 1 + contingency_table[j, "Freq"]), j] <- 1
     }
-    U[index:(index - 1 + contingency_table[j, "Freq"]), j] <- 1
+    
+    UtU <- diag(contingency_table[, "Freq"])
+    
+    #---- beta hat ----
+    continuous_covariates <- subset %>% dplyr::select(all_of(Z)) %>% as.matrix
+    
+    V_inv <- t(A) %*% UtU %*% A
+    V <- solve(V_inv)
+    priors_V_inv[which(priors_V_inv$group == group), b] <- as.vector(V_inv)
+    
+    beta_hat <- V %*% t(A) %*% t(U) %*% continuous_covariates
+    priors_beta[which(priors_beta$group == group), b] <- as.vector(beta_hat)
+    
+    residual <- continuous_covariates - U %*% A %*% beta_hat
+    priors_Sigma[which(priors_Sigma$group == group), b] <- 
+      as.vector(t(residual) %*% residual)
   }
-  
-  UtU <- diag(contingency_table[, "Freq"])
-  
-  #---- beta hat ----
-  continuous_covariates <- subset %>% dplyr::select(all_of(Z)) %>% as.matrix
-  
-  V_inv <- t(A) %*% UtU %*% A
-  V <- solve(V_inv)
-  priors_V[, i] <- as.vector(V_inv)
-  
-  beta_hat <- V %*% t(A) %*% t(U) %*% continuous_covariates
-  priors_beta[, i] <- as.vector(beta_hat)
-  
-  if(group == "Unimpaired"){
-    #---- Sigma prior (based on normal group) ----
-    Sigma_hat <- 
-      nrow(subset)/(nrow(subset) - ncol(A))*cov(continuous_covariates)
-  }
-  i = i + 1
 }
 
 #---- save ----
-saveRDS(Sigma_hat, file = here::here("priors", "Sigma.rds"))
-saveRDS(priors_beta, file = here::here("priors", "beta.rds"))
-saveRDS(priors_V, file = here::here("priors", "V_inv.rds"))
-  
+write_csv(priors_beta, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
+                              "priors/priors_beta.csv"))
+write_csv(priors_V_inv, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
+                               "priors/priors_V_inv.csv"))
+write_csv(priors_Sigma, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
+                               "priors/priors_Sigma.csv"))
+
 
