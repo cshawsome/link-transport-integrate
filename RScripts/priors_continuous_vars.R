@@ -85,7 +85,7 @@ for(b in 1:B){
       U[index:(index - 1 + as.numeric(contingency_table[j, "Freq"])), j] <- 1
     }
     
-    UtU <- diag(contingency_table[, "Freq"])
+    UtU <- diag(unlist(contingency_table[, "Freq"]))
     
     #---- beta hat ----
     continuous_covariates <- subset %>% dplyr::select(all_of(Z)) %>% as.matrix
