@@ -60,8 +60,18 @@ for(b in 1:B){
       arrange(Astroke, desc(Black), desc(Hispanic))
     
     #---- U (contingency cell) ----
-    contingency_table <- 
-      as.data.frame(table(subset$ETHNIC_label, subset$Astroke)) 
+    contingency_table_temp <- 
+      as.data.frame(table(subset$ETHNIC_label, subset$Astroke)) %>% 
+      unite("cell", c("Var1", "Var2"), sep = ":")
+    
+    if(nrow(contingency_table_temp) < 6){
+      contingency_table <- tibble("cells" = cells$cell, "Freq" = 0)
+      contingency_table[which(contingency_table_temp$cell %in% 
+                          contingency_table$cells), "Freq"] <- 
+        contingency_table_temp$Freq
+    } else{
+      contingency_table <- contingency_table_temp
+    }
     
     U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
     
