@@ -82,7 +82,7 @@ for(b in 1:B){
       } else{
         index = sum(contingency_table[1:(j - 1), "Freq"]) + 1
       }
-      U[index:(index - 1 + contingency_table[j, "Freq"]), j] <- 1
+      U[index:(index - 1 + as.numeric(contingency_table[j, "Freq"])), j] <- 1
     }
     
     UtU <- diag(contingency_table[, "Freq"])
