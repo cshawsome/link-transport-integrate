@@ -3,11 +3,14 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "haven", "labelled")
+p_load("tidyverse", "magrittr", "here")
 
 options(scipen = 999)
 
 #---- read in data ----
+ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                "data/cleaned/ADAMS/ADAMS_train.csv"))
+
 #Categorical vars (notation from Schafer 1997)
 W <- c("Black", "Hispanic", "Astroke")
 #Continuous vars (notation from Schafer 1997)
@@ -18,78 +21,53 @@ Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT",
              "Delayed Word Recall", "IADLs", "BMI")) %>% 
   set_colnames(c("var", "label"))
 
-
-ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/cleaned/ADAMS_subset_mixed.csv"), 
-                         col_types = cols(HHIDPN = col_character(), 
-                                          #Do not standardize these
-                                          Astroke = col_character())) %>% 
-  mutate("group_class" = 
-           case_when(Adem_dx_cat %in% 
-                       c("Dementia", "Probable/Possible AD", 
-                         "Probable/Possible Vascular Dementia") ~ "Dementia",
-                     Adem_dx_cat == "Normal" ~ "Unimpaired",
-                     TRUE ~ Adem_dx_cat)) %>% 
-  mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
-         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
-         #Add intercept
-         "(Intercept)" = 1) %>% 
-  dplyr::select(c(all_of(W), all_of(Z[, "var"]), "group_class"), 
-                "ETHNIC_label") %>% na.omit()
-
-dem_class_props <- table(ADAMS_subset$group_class)/nrow(ADAMS_subset) 
-
-# #---- **RAND ----
-# # Year | HRS | RAND
-# # 2000 | G | 5
-# rand_waves <- 5
-# rand_variables <- c("hhidpn", "raracem", "rahispan", 
-#                     paste0("r", rand_waves, "agey_e"), 
-#                     paste0("r", rand_waves, "stroke"))
-# 
-# RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-#                         "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
-#                  col_select = all_of(rand_variables)) %>% 
-#   mutate_at("hhidpn", as.character) %>% 
-#   filter(r5agey_e >= 70)
-# 
-# colnames(RAND)[1] <- "HHIDPN" #For merging
-# 
-# #Remove labeled data format
-# val_labels(RAND) <- NULL
-
-# #---- data cleaning: race-ethnicity ----
-# RAND %<>% 
-#   mutate("hispanic" = ifelse(rahispan == 0 | is.na(rahispan), 0, 1)) %>% 
-#   mutate("Ethnicity" = case_when(hispanic == 1 ~ "Hispanic",
-#                                  (raracem == 1 & hispanic == 0) ~ "White", 
-#                                  (raracem == 2 & hispanic == 0) ~ "Black", 
-#                                  (raracem == 3 & hispanic == 0) ~ "Other", 
-#                                  TRUE ~ "Unknown")) %>% 
-#   filter(!Ethnicity %in% c("Unknown", "Other") & !is.na(r5stroke))
-
 #---- cross-class race/ethnicity x stroke ----
-data_counts <- as.data.frame(table(ADAMS_subset$ETHNIC_label, 
-                                   ADAMS_subset$Astroke)) %>% 
+overall_data_counts <- as.data.frame(table(ADAMS_subset$ETHNIC_label, 
+                                           ADAMS_subset$Astroke)) %>% 
   mutate("percent" = round((Freq/sum(Freq))*100, 1))
+
+for(group in unique(ADAMS_subset$Adem_dx_cat)){
+  subset <- ADAMS_subset %>% filter(Adem_dx_cat == group)
+  assign(paste0(group, "_data_counts"), 
+         as.data.frame(table(subset$ETHNIC_label, 
+                             subset$Astroke)) %>% 
+           mutate("percent" = round((Freq/sum(Freq))*100, 1)))
+}
 
 #---- bootstrap counts ----
 B = 10000
-bootstrap_counts <- matrix(nrow = 6, ncol = B)
+bootstrap_counts <- matrix(0, nrow = 6*4, ncol = (B + 2)) %>% 
+  as.data.frame() %>% set_colnames(c(seq(1, B), "group", "cell"))
+bootstrap_counts[, "group"] <- rep(unique(ADAMS_subset$Adem_dx_cat), each = 6)
+
+cells <- 
+  as.data.frame(table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke)) %>% 
+  unite("cell", c("Var1", "Var2"), sep = ":")
+
+bootstrap_counts[, "cell"] <- rep(cells$cell, 4)
+
 for(b in 1:B){
-  sample <- sample_n(ADAMS_subset, size = nrow(ADAMS_subset), replace = TRUE) 
-  #sub_sample <- sample_frac(sample, size = 0.3, replace = FALSE)
-  bootstrap_counts[, b] <- 
-    as.data.frame(table(sample$ETHNIC_label, sample$Astroke))$Freq
+  sample <- sample_n(ADAMS_subset, size = nrow(ADAMS_subset), replace = TRUE)
+  for(group in unique(ADAMS_subset$Adem_dx_cat)){
+    sub_sample <- sample %>% filter(Adem_dx_cat == group) 
+    
+    counts <- 
+      as.data.frame(table(sub_sample$ETHNIC_label, sub_sample$Astroke)) %>% 
+      unite("cell", c("Var1", "Var2"), sep = ":")
+    
+    bootstrap_counts[
+      which(bootstrap_counts$group == group & 
+              bootstrap_counts$cell %in% counts$cell), b] <- counts$Freq
+  }
 }
 
-bootstrap_percents <- 
-  round(bootstrap_counts/colSums(bootstrap_counts)*100, 1) %>% 
-  as.data.frame() %>%
-  mutate("truth" = data_counts$percent, 
-         "cat" = c("Black + No Stroke", "Hispanic + No Stroke", 
-                   "White + No Stroke", "Black + Stroke", "Hispanic + Stroke", 
-                   "White + Stroke")) %>% pivot_longer(-c("truth", "cat"))
+# bootstrap_percents <- 
+#   round(bootstrap_counts/colSums(bootstrap_counts)*100, 1) %>% 
+#   as.data.frame() %>%
+#   mutate("truth" = data_counts$percent, 
+#          "cat" = c("Black + No Stroke", "Hispanic + No Stroke", 
+#                    "White + No Stroke", "Black + Stroke", "Hispanic + Stroke", 
+#                    "White + Stroke")) %>% pivot_longer(-c("truth", "cat"))
 
 bootstrap_counts_plot_data <- bootstrap_counts %>% as.data.frame() %>%
   mutate("truth" = data_counts$Freq, 
