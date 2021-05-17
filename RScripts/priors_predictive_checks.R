@@ -22,20 +22,9 @@ for(group in c("normal", "mci", "other")){
   assign(paste0(group, "_cov"), 
          read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
                          "latent_class_", group, "_cov.csv")))
+  
+  assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
 }
-
-Unimpaired_preds <- names(coefficients(Unimpaired_prior))
-Unimpaired_preds[which(Unimpaired_preds == "ETHNIC_labelBlack")] <- "Black"
-Unimpaired_preds[which(Unimpaired_preds == "ETHNIC_labelHispanic")] <- 
-  "Hispanic"
-
-Other_preds <- names(coefficients(Other_prior))
-Other_preds[which(Other_preds == "ETHNIC_labelBlack")] <- "Black"
-Other_preds[which(Other_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
-
-MCI_preds <- names(coefficients(MCI_prior))
-MCI_preds[which(MCI_preds == "ETHNIC_labelBlack")] <- "Black"
-MCI_preds[which(MCI_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
 
 #---- **contingency cells ----
 alpha_0_dist <- read_csv(here::here("priors", "bootstrap_cell_counts.csv")) 
