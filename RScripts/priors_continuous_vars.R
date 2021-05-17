@@ -100,10 +100,10 @@ for(b in 1:B){
     
     #---- ****pool UtU if needed ----
     if(det(t(A) %*% UtU %*% A) == 0){
-      if(exists(paste0("UtU_", (i-1)))){
-        UtU <- UtU + get(paste0("UtU_", (i-1)))
+      if(exists(paste0("UtU_", (group - 1)))){
+        UtU <- UtU + get(paste0("UtU_", (group - 1)))
       } else{
-        UtU <- UtU + get(paste0("UtU_", (i+1))) 
+        UtU <- UtU + get(paste0("UtU_", (group + 1))) 
       }
     }
     
