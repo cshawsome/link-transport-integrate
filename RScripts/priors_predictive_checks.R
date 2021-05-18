@@ -214,8 +214,7 @@ generate_data <- function(){
   
   #---- **return ----
   return(list("Group" = synthetic_sample$Group))
-              # , 
-              # "contingency_table" = contingency_table, 
+              
               # "Z_unimpaired" = Z_1, "Z_other" = Z_2, "Z_MCI" = Z_3, 
               # "Z_dementia" = Z_4))
 }
