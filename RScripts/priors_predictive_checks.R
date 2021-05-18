@@ -32,9 +32,12 @@ alpha_0_dist <-
                   "bootstrap_cell_counts.csv")) 
 
 #--- **beta and sigma ----
-beta_prior <- readRDS(here::here("priors", "beta.rds"))
-V_inv_prior <- readRDS(here::here("priors", "V_inv.rds"))
-Sigma_prior <- readRDS(here::here("priors", "Sigma.rds"))
+priors_beta <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
+                               "priors/priors_beta.csv")) 
+prior_V_inv <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                               "priors/priors_V_inv.csv")) 
+prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                               "priors/priors_Sigma.csv")) 
 
 #---- **hyperparameters ----
 #DOF for inverse wishart
