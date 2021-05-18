@@ -151,11 +151,11 @@ generate_data <- function(){
     }
 
     #---- **pool UtU if needed ----
-    if(det(t(A) %*% UtU %*% A) == 0){
-      if(exists(paste0("UtU_", (i-1)))){
-        UtU <- UtU + get(paste0("UtU_", (i-1)))
+    if(det(t(A) %*% UtU %*% A) < 1e-9){
+      if(exists(paste0("UtU_", (i - 1)))){
+        UtU <- UtU + get(paste0("UtU_", (i - 1)))
       } else{
-        UtU <- UtU + get(paste0("UtU_", (i+1)))
+        UtU <- UtU + get(paste0("UtU_", (i + 1)))
       }
     }
 
