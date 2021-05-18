@@ -67,12 +67,12 @@ synthetic_sample <- ADAMS_subset %>%
   #pre-allocate columns
   mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
 
-ADAMS_data %<>% dplyr::select("HHIDPN", all_of(vars), "group_class") %>% 
-  #use complete data for now
-  na.omit()
-
-ADAMS_means <- colMeans(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])))
-ADAMS_sds <- apply(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
+ADAMS_data %<>% 
+  dplyr::select("HHIDPN", all_of(W), all_of(Z[, "var"]), "Adem_dx_cat") %>% 
+  filter(HHIDPN %in% ADAMS_subset$HHIDPN)
+  
+ADAMS_means <- colMeans(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])))
+ADAMS_sds <- apply(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
 
 #---- contrasts matrix ----
 A = do.call(cbind, list(
