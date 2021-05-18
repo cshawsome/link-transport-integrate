@@ -16,7 +16,7 @@ Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT",
 
 group <- c("Adem_dx_cat")
 
-ADAMS_subset <- 
+ADAMS_train <- 
   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                   "data/cleaned/ADAMS/ADAMS_train.csv")) %>% 
   mutate("group_number" = case_when(Adem_dx_cat == "Normal" ~ 1, 
@@ -24,8 +24,12 @@ ADAMS_subset <-
                                     Adem_dx_cat == "MCI" ~ 3, 
                                     Adem_dx_cat == "Dementia" ~ 4))
 
+alpha_0_dist <- 
+  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                  "bootstrap_cell_counts.csv")) 
+
 #---- arrange data ----
-ADAMS_subset %<>% arrange(Astroke, desc(Black), desc(Hispanic))
+ADAMS_train %<>% arrange(Astroke, desc(Black), desc(Hispanic))
 
 #---- A (contrasts) ----
 #categorical vars contrasts matrix
@@ -41,25 +45,25 @@ A = do.call(cbind, list(
 
 #---- pre-allocate ----
 cells <- 
-  as.data.frame(table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke)) %>% 
+  as.data.frame(table(ADAMS_train$ETHNIC_label, ADAMS_train$Astroke)) %>% 
   unite("cell", c("Var1", "Var2"), sep = ":")
 
 B = 10000
 priors_beta <- as.data.frame(matrix(nrow = (10*4*4) , ncol = B)) %>% 
   set_colnames(seq(1, B)) %>% 
-  mutate("group" = rep(unique(ADAMS_subset$Adem_dx_cat), each = 40), 
+  mutate("group" = rep(unique(ADAMS_train$Adem_dx_cat), each = 40), 
          "group_number" = rep(c(4, 3, 2, 1), each = 40)) 
 priors_V_inv <- as.data.frame(matrix(nrow = (4*4*4), ncol = B)) %>% 
   set_colnames(seq(1, B)) %>% 
-  mutate("group" = rep(unique(ADAMS_subset$Adem_dx_cat), each = 16), 
+  mutate("group" = rep(unique(ADAMS_train$Adem_dx_cat), each = 16), 
          "group_number" = rep(c(4, 3, 2, 1), each = 16)) 
 priors_Sigma <- as.data.frame(matrix(nrow = (10*10*4), ncol = B)) %>% 
   set_colnames(seq(1, B)) %>% 
-  mutate("group" = rep(unique(ADAMS_subset$Adem_dx_cat), each = 100), 
+  mutate("group" = rep(unique(ADAMS_train$Adem_dx_cat), each = 100), 
          "group_number" = rep(c(4, 3, 2, 1), each = 100)) 
 
 for(b in 1:B){
-  sample <- sample_n(ADAMS_subset, size = nrow(ADAMS_subset), replace = TRUE)
+  sample <- sample_n(ADAMS_train, size = nrow(ADAMS_train), replace = TRUE)
   
   for(group in seq(1, 4)){
     #---- filter data ----
