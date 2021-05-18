@@ -132,13 +132,13 @@ generate_data <- function(){
     contingency_table <- rmultinom(n = 1, size = nrow(subset), prob = pi)
     UtU <- diag(contingency_table[, 1])
     
-    #---- **pool UtU if needed ----
+    #---- **draw new UtU if needed ----
     while(det(t(A) %*% UtU %*% A) < 1e-9){
       random_draw <- sample(seq(1, 10000), size = 1)
-      extra_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
+      new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
         filter(group_number == i)
       
-      UtU <- UtU + diag(unlist(extra_counts[, 1]))
+      UtU <- diag(unlist(new_counts[, 1]))
     }
     
     #---- **make U matrix ----

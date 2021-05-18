@@ -24,6 +24,10 @@ ADAMS_train <-
                                     Adem_dx_cat == "MCI" ~ 3, 
                                     Adem_dx_cat == "Dementia" ~ 4))
 
+alpha_0_dist <- 
+  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                  "bootstrap_cell_counts.csv")) 
+
 #---- arrange data ----
 ADAMS_train %<>% arrange(Astroke, desc(Black), desc(Hispanic))
 
@@ -74,7 +78,7 @@ for(b in 1:B){
     if(nrow(contingency_table_temp) < 6){
       contingency_table <- tibble("cells" = cells$cell, "Freq" = 0)
       contingency_table[which(contingency_table_temp$cell %in% 
-                          contingency_table$cells), "Freq"] <- 
+                                contingency_table$cells), "Freq"] <- 
         contingency_table_temp$Freq
     } else{
       contingency_table <- contingency_table_temp
@@ -94,17 +98,13 @@ for(b in 1:B){
     
     UtU <- diag(unlist(contingency_table[, "Freq"]))
     
-    if(group %in% c(2, 3)){
-      assign(paste0("UtU_", group), UtU)
-    }
-    
-    #---- ****pool UtU if needed ----
-    if(det(t(A) %*% UtU %*% A) < 1e-9){
-      if(exists(paste0("UtU_", (group - 1)))){
-        UtU <- UtU + get(paste0("UtU_", (group - 1)))
-      } else{
-        UtU <- UtU + get(paste0("UtU_", (group + 1))) 
-      }
+    #---- **draw new UtU if needed ----
+    while(det(t(A) %*% UtU %*% A) < 1e-9){
+      random_draw <- sample(seq(1, 10000), size = 1)
+      new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
+        filter(group_number == group)
+      
+      UtU <- diag(unlist(new_counts[, 1]))
     }
     
     #---- beta hat ----
