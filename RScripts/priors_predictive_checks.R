@@ -186,7 +186,7 @@ generate_data <- function(){
 
     #---- **draw data ----
     #reformat contingency table
-    table <- contingency_table[, i] %>% as.data.frame() %>%
+    table <- contingency_table %>% as.data.frame() %>%
       cbind(do.call(cbind, list(
         #Black              #Hispanic           #Stroke
         rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>%
@@ -201,11 +201,11 @@ generate_data <- function(){
       }
       #Z (continuous data)
       if(table[j, "Count"] == 1){
-        subset[index:(index - 1 + table[j, "Count"]), colnames(sig_Y)] <-
+        subset[index:(index - 1 + table[j, "Count"]), Z[, "var"]] <-
           t(as.matrix(mvrnorm(n = table[j, "Count"],
                               mu = mu[, paste0(i, ":", j)], Sigma = sig_Y)))
       } else{
-        subset[index:(index - 1 + table[j, "Count"]), colnames(sig_Y)] <-
+        subset[index:(index - 1 + table[j, "Count"]), Z[, "var"]] <-
           mvrnorm(n = table[j, "Count"],
                   mu = mu[, paste0(i, ":", j)],
                   Sigma = sig_Y)
