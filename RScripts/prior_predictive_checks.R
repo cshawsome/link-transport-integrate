@@ -10,7 +10,7 @@ library(gganimate)
 
 #---- read in data ----
 #---- **ADAMS ----
-ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                                 "data/cleaned/ADAMS/ADAMS_train.csv"))
 
 ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
@@ -62,14 +62,14 @@ Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT",
              "Delayed Word Recall", "IADLs", "BMI")) %>% 
   set_colnames(c("var", "label"))
 
-synthetic_sample <- ADAMS_subset %>% 
+synthetic_sample <- ADAMS_train %>% 
   dplyr::select("HHIDPN", all_of(vars), "Adem_dx_cat") %>% 
   #pre-allocate columns
   mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
 
 ADAMS_data %<>% 
   dplyr::select("HHIDPN", all_of(W), all_of(Z[, "var"]), "Adem_dx_cat") %>% 
-  filter(HHIDPN %in% ADAMS_subset$HHIDPN)
+  filter(HHIDPN %in% ADAMS_train$HHIDPN)
   
 ADAMS_means <- colMeans(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])))
 ADAMS_sds <- apply(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
@@ -130,7 +130,17 @@ generate_data <- function(){
 
     #---- **contingency table count ----
     contingency_table <- rmultinom(n = 1, size = nrow(subset), prob = pi)
-
+    UtU <- diag(contingency_table[, 1])
+    
+    #---- **pool UtU if needed ----
+    while(det(t(A) %*% UtU %*% A) < 1e-9){
+      random_draw <- sample(seq(1, 10000), size = 1)
+      extra_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
+        filter(group_number == i)
+      
+      UtU <- UtU + diag(unlist(extra_counts[, 1]))
+    }
+    
     #---- **make U matrix ----
     U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
 
@@ -142,21 +152,6 @@ generate_data <- function(){
         index = sum(contingency_table[1:(j - 1), 1]) + 1
       }
       U[index:(index - 1 + contingency_table[j, 1]), j] <- 1
-    }
-
-    UtU <- diag(contingency_table[, 1])
-
-    if(i %in% c(2, 3)){
-      assign(paste0("UtU_", i), UtU)
-    }
-
-    #---- **pool UtU if needed ----
-    if(det(t(A) %*% UtU %*% A) < 1e-9){
-      if(exists(paste0("UtU_", (i - 1)))){
-        UtU <- UtU + get(paste0("UtU_", (i - 1)))
-      } else{
-        UtU <- UtU + get(paste0("UtU_", (i + 1)))
-      }
     }
 
     #---- **draw Sigma_0----
@@ -266,8 +261,8 @@ for(class in unique(synthetic_dementia_plot_data$Group_label)){
 }
 
 #---- **class-specific continuous ----
-for(class in unique(ADAMS_subset$group_class)){
-  ADAMS_data <- ADAMS_subset %>% 
+for(class in unique(ADAMS_train$Adem_dx_cat)){
+  true_data <- ADAMS_subset %>% 
     dplyr::select(c(all_of(Z[, "var"]), "group_class")) %>% 
     filter(group_class == class)
   
