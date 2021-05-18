@@ -24,10 +24,6 @@ ADAMS_train <-
                                     Adem_dx_cat == "MCI" ~ 3, 
                                     Adem_dx_cat == "Dementia" ~ 4))
 
-alpha_0_dist <- 
-  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                  "bootstrap_cell_counts.csv")) 
-
 #---- arrange data ----
 ADAMS_train %<>% arrange(Astroke, desc(Black), desc(Hispanic))
 
