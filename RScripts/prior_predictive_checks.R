@@ -135,16 +135,16 @@ generate_data <- function(){
     U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
 
     for(j in 1:nrow(contingency_table)){
-      if(contingency_table[j, i] == 0){next}
+      if(contingency_table[j, 1] == 0){next}
       if(j == 1){
         index = 1
       } else{
-        index = sum(contingency_table[1:(j - 1), i]) + 1
+        index = sum(contingency_table[1:(j - 1), 1]) + 1
       }
-      U[index:(index - 1 + contingency_table[j, i]), j] <- 1
+      U[index:(index - 1 + contingency_table[j, 1]), j] <- 1
     }
 
-    UtU <- diag(contingency_table[, i])
+    UtU <- diag(contingency_table[, 1])
 
     if(i %in% c(2, 3)){
       assign(paste0("UtU_", i), UtU)
@@ -215,15 +215,14 @@ generate_data <- function(){
   }
   
   #---- **return ----
-  return(list("Group" = synthetic_sample$Group))
-              
-              # "Z_unimpaired" = Z_1, "Z_other" = Z_2, "Z_MCI" = Z_3, 
-              # "Z_dementia" = Z_4))
+  return(list("Group" = synthetic_sample$Group,
+              "Z_unimpaired" = Z_1, "Z_other" = Z_2, "Z_MCI" = Z_3,
+              "Z_dementia" = Z_4))
 }
 
 #---- multiruns ----
 start <- Sys.time()
-runs = 10000
+runs = 100
 synthetic <- replicate(runs, generate_data(), simplify = FALSE) 
 stop <- Sys.time() - start
 
