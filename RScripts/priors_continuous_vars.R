@@ -119,6 +119,7 @@ for(b in 1:B){
     priors_beta[which(priors_beta$group_number == group), b] <- 
       as.vector(beta_hat)
     
+    #---- Sigma hat ----
     residual <- continuous_covariates - U %*% A %*% beta_hat
     priors_Sigma[which(priors_Sigma$group_number == group), b] <- 
       as.vector(t(residual) %*% residual)
