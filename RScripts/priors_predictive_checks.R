@@ -13,6 +13,9 @@ library(gganimate)
 ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                                 "data/cleaned/ADAMS/ADAMS_train.csv"))
 
+ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                              "data/cleaned/ADAMS/ADAMS_subset_mixed.csv"))
+
 #---- priors ----
 #---- **latent classes ----
 for(group in c("normal", "mci", "other")){
@@ -41,13 +44,13 @@ prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 
 #---- **hyperparameters ----
 #DOF for inverse wishart
-nu_0 <- 200
+nu_0 <- 75
 #scaling for inverse wishart as variance of Beta
 kappa_0 <- 1
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
-vars <- unique(c(Unimpaired_preds, Other_preds, MCI_preds, "ETHNIC_label"))
+vars <- unique(c(normal_preds, other_preds, mci_preds, "ETHNIC_label"))
 
 #Categorical vars (notation from Schafer 1997)
 W <- c("Black", "Hispanic", "Astroke")
@@ -60,17 +63,11 @@ Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT",
   set_colnames(c("var", "label"))
 
 synthetic_sample <- ADAMS_subset %>% 
-  dplyr::select("HHIDPN", all_of(vars), "group_class") %>% 
-  #use complete data for now
-  na.omit() %>% 
-  #Z-score continuous
-  mutate_at(all_of(Z[, "var"]), scale) %>%
-  #transform to correct type
-  mutate_at("Astroke", as.numeric) %>% 
+  dplyr::select("HHIDPN", all_of(vars), "Adem_dx_cat") %>% 
   #pre-allocate columns
   mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
 
-ADAMS_subset %<>% dplyr::select("HHIDPN", all_of(vars), "group_class") %>% 
+ADAMS_data %<>% dplyr::select("HHIDPN", all_of(vars), "group_class") %>% 
   #use complete data for now
   na.omit()
 
