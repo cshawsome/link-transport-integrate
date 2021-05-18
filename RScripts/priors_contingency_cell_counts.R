@@ -124,7 +124,11 @@ for(dem_group in unique(bootstrap_count_plot_data$group)){
   } 
 }
 
-bootstrap_counts %>% as.data.frame() %>%
+bootstrap_counts %>% as.data.frame() %>% 
+  mutate("group_number" = case_when(group == "Normal" ~ 1, 
+                                    group == "Other" ~ 2, 
+                                    group == "MCI" ~ 3, 
+                                    group == "Dementia" ~ 4))
   write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
                    "bootstrap_cell_counts.csv"))
 
