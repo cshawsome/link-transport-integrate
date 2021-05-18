@@ -125,7 +125,8 @@ for(dem_group in unique(bootstrap_count_plot_data$group)){
 }
 
 bootstrap_counts %>% as.data.frame() %>%
-  write_csv(file = here::here("priors", "bootstrap_cell_counts.csv"))
+  write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                   "bootstrap_cell_counts.csv"))
 
 
 
