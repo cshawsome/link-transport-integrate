@@ -167,8 +167,14 @@ generate_data <- function(){
                                            nrow = nrow(Z)))
 
     #---- **beta_0 ----
-    V_0_inv <- matrix(V_inv_prior[, i], nrow = 4, ncol = 4)
-    beta_0 <- matrix(beta_prior[, i], nrow = nrow(V_0_inv), ncol = ncol(sig_Y))
+    V_0_inv <- prior_V_inv[, c(random_draw, ncol(prior_V_inv))] %>% 
+      filter(group_number == i)
+    beta_0 <- priors_beta[, c(random_draw, ncol(priors_beta))] %>% 
+      filter(group_number == i)
+    
+    #as matrices
+    V_0_inv <- matrix(unlist(V_0_inv[, 1]), nrow = 4)
+    beta_0 <- matrix(unlist(beta_0[, 1]), nrow = nrow(V_0_inv))
 
     #---- **draw beta | Sigma----
     beta_Sigma_Y <- matrix.normal(beta_0, solve(V_0_inv), sig_Y/kappa_0)
