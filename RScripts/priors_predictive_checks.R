@@ -87,19 +87,23 @@ A = do.call(cbind, list(
 
 generate_data <- function(){
   #---- true class props ----
-  true_props <- as.data.frame(table(ADAMS_subset$group_class)) %>% 
-    mutate("prop" = Freq/nrow(ADAMS_subset)) %>% 
+  true_props <- as.data.frame(table(ADAMS_data$Adem_dx_cat)) %>% 
+    mutate("prop" = Freq/nrow(ADAMS_data)) %>% 
     set_rownames(c("4", "3", "2", "1"))
   
   #---- latent class ----
   group = 1
   synthetic_sample[, "Group"] <- 0
   
-  for(model in c("Unimpaired", "Other", "MCI")){
+  for(model in c("normal", "other", "mci")){
     subset_index <- which(synthetic_sample$Group == 0)
-    prior_model <- get(paste0(model, "_prior"))
-    betas <- mvrnorm(n = 1, mu = coefficients(prior_model), 
-                     Sigma = vcov(prior_model))
+    random_draw <- sample(seq(1, 10000), size = 1)
+    
+    prior_betas <- as.vector(get(paste0(model, "_betas"))[, random_draw])
+    prior_cov <- matrix(unlist(get(paste0(model, "_cov"))[, random_draw]), 
+                        nrow = nrow(prior_betas))
+    
+    betas <- mvrnorm(n = 1, mu = t(prior_betas), Sigma = prior_cov)
     
     synthetic_sample[subset_index, paste0("p_", model)] <- 
       expit(as.matrix(synthetic_sample[subset_index, 
@@ -114,105 +118,106 @@ generate_data <- function(){
   }
   synthetic_sample[which(synthetic_sample$Group == 0), "Group"] <- 4
   
-  #pre-allocate
-  contingency_table <- matrix(0, ncol = 4, nrow = 6) %>% set_colnames(seq(1, 4))
-  mu <- matrix(0, ncol = 4*6, nrow = 10) %>% 
-    set_colnames(apply(expand.grid(seq(1, 4), seq(1, 6)), 1, paste0, 
-                       collapse = ":"))
-  
-  for(i in 1:4){
-    #---- **contingency cells ----
-    subset <- synthetic_sample %>% filter(Group == i) 
-    prior_counts <- 
-      alpha_0_dist[, sample(seq(1, ncol(alpha_0_dist)), size = 1)]*
-      true_props[paste0(i), "prop"] 
-    
-    #---- **p(contingency table cell) ----
-    pi <- rdirichlet(1, alpha = as.numeric(unlist(prior_counts)))
-    
-    #---- **contingency table count ----
-    contingency_table[, i] <- contingency_table[, i] + 
-      rmultinom(n = 1, size = nrow(subset), prob = pi)
-    
-    #---- **make U matrix ----
-    U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
-    
-    for(j in 1:nrow(contingency_table)){
-      if(contingency_table[j, i] == 0){next}
-      if(j == 1){
-        index = 1
-      } else{
-        index = sum(contingency_table[1:(j - 1), i]) + 1
-      }
-      U[index:(index - 1 + contingency_table[j, i]), j] <- 1
-    }
-    
-    UtU <- diag(contingency_table[, i])
-    
-    # if(i %in% c(2, 3)){
-    #   assign(paste0("UtU_", i), UtU)
-    # }
-    # 
-    # #---- **pool UtU if needed ----
-    # if(det(t(A) %*% UtU %*% A) == 0){
-    #   if(exists(paste0("UtU_", (i-1)))){
-    #     UtU <- UtU + get(paste0("UtU_", (i-1)))
-    #   } else{
-    #     UtU <- UtU + get(paste0("UtU_", (i+1))) 
-    #   }
-    # }
-    #
-    
-    #---- **draw Sigma_0----
-    sig_Y <- riwish(v = (nu_0), S = Sigma_prior)
-    
-    #---- **beta_0 ----
-    V_0_inv <- matrix(V_inv_prior[, i], nrow = 4, ncol = 4)
-    beta_0 <- matrix(beta_prior[, i], nrow = nrow(V_0_inv), ncol = ncol(sig_Y))
-    
-    #---- **draw beta | Sigma----
-    beta_Sigma_Y <- matrix.normal(beta_0, solve(V_0_inv), sig_Y/kappa_0)
-    
-    #---- **compute mu ----
-    mu[, paste0(i, ":", seq(1, 6))] <- 
-      t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = nrow(Z), 
-                     byrow = FALSE))
-    
-    #---- **draw data ----
-    #reformat contingency table
-    table <- contingency_table[, i] %>% as.data.frame() %>% 
-      cbind(do.call(cbind, list(
-        #Black              #Hispanic           #Stroke
-        rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>% 
-      set_colnames(c("Count", W))
-    
-    for(j in 1:nrow(table)){
-      if(table[j, "Count"] == 0){next}
-      if(j == 1){
-        index = 1
-      } else{
-        index = sum(table[1:(j - 1), "Count"]) + 1
-      }
-      #Z (continuous data)
-      if(table[j, "Count"] == 1){
-        subset[index:(index - 1 + table[j, "Count"]), colnames(sig_Y)] <- 
-          t(as.matrix(mvrnorm(n = table[j, "Count"],
-                              mu = mu[, paste0(i, ":", j)], Sigma = sig_Y)))
-      } else{
-        subset[index:(index - 1 + table[j, "Count"]), colnames(sig_Y)] <- 
-          mvrnorm(n = table[j, "Count"],
-                  mu = mu[, paste0(i, ":", j)], 
-                  Sigma = sig_Y)
-      }
-    }
-    assign(paste0("Z_", i), subset[, all_of(Z[, "var"])])
-  }
+  # #pre-allocate
+  # contingency_table <- matrix(0, ncol = 4, nrow = 6) %>% set_colnames(seq(1, 4))
+  # mu <- matrix(0, ncol = 4*6, nrow = 10) %>% 
+  #   set_colnames(apply(expand.grid(seq(1, 4), seq(1, 6)), 1, paste0, 
+  #                      collapse = ":"))
+  # 
+  # for(i in 1:4){
+  #   #---- **contingency cells ----
+  #   subset <- synthetic_sample %>% filter(Group == i) 
+  #   prior_counts <- 
+  #     alpha_0_dist[, sample(seq(1, ncol(alpha_0_dist)), size = 1)]*
+  #     true_props[paste0(i), "prop"] 
+  #   
+  #   #---- **p(contingency table cell) ----
+  #   pi <- rdirichlet(1, alpha = as.numeric(unlist(prior_counts)))
+  #   
+  #   #---- **contingency table count ----
+  #   contingency_table[, i] <- contingency_table[, i] + 
+  #     rmultinom(n = 1, size = nrow(subset), prob = pi)
+  #   
+  #   #---- **make U matrix ----
+  #   U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
+  #   
+  #   for(j in 1:nrow(contingency_table)){
+  #     if(contingency_table[j, i] == 0){next}
+  #     if(j == 1){
+  #       index = 1
+  #     } else{
+  #       index = sum(contingency_table[1:(j - 1), i]) + 1
+  #     }
+  #     U[index:(index - 1 + contingency_table[j, i]), j] <- 1
+  #   }
+  #   
+  #   UtU <- diag(contingency_table[, i])
+  #   
+  #   # if(i %in% c(2, 3)){
+  #   #   assign(paste0("UtU_", i), UtU)
+  #   # }
+  #   # 
+  #   # #---- **pool UtU if needed ----
+  #   # if(det(t(A) %*% UtU %*% A) == 0){
+  #   #   if(exists(paste0("UtU_", (i-1)))){
+  #   #     UtU <- UtU + get(paste0("UtU_", (i-1)))
+  #   #   } else{
+  #   #     UtU <- UtU + get(paste0("UtU_", (i+1))) 
+  #   #   }
+  #   # }
+  #   #
+  #   
+  #   #---- **draw Sigma_0----
+  #   sig_Y <- riwish(v = (nu_0), S = Sigma_prior)
+  #   
+  #   #---- **beta_0 ----
+  #   V_0_inv <- matrix(V_inv_prior[, i], nrow = 4, ncol = 4)
+  #   beta_0 <- matrix(beta_prior[, i], nrow = nrow(V_0_inv), ncol = ncol(sig_Y))
+  #   
+  #   #---- **draw beta | Sigma----
+  #   beta_Sigma_Y <- matrix.normal(beta_0, solve(V_0_inv), sig_Y/kappa_0)
+  #   
+  #   #---- **compute mu ----
+  #   mu[, paste0(i, ":", seq(1, 6))] <- 
+  #     t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = nrow(Z), 
+  #                    byrow = FALSE))
+  #   
+  #   #---- **draw data ----
+  #   #reformat contingency table
+  #   table <- contingency_table[, i] %>% as.data.frame() %>% 
+  #     cbind(do.call(cbind, list(
+  #       #Black              #Hispanic           #Stroke
+  #       rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>% 
+  #     set_colnames(c("Count", W))
+  #   
+  #   for(j in 1:nrow(table)){
+  #     if(table[j, "Count"] == 0){next}
+  #     if(j == 1){
+  #       index = 1
+  #     } else{
+  #       index = sum(table[1:(j - 1), "Count"]) + 1
+  #     }
+  #     #Z (continuous data)
+  #     if(table[j, "Count"] == 1){
+  #       subset[index:(index - 1 + table[j, "Count"]), colnames(sig_Y)] <- 
+  #         t(as.matrix(mvrnorm(n = table[j, "Count"],
+  #                             mu = mu[, paste0(i, ":", j)], Sigma = sig_Y)))
+  #     } else{
+  #       subset[index:(index - 1 + table[j, "Count"]), colnames(sig_Y)] <- 
+  #         mvrnorm(n = table[j, "Count"],
+  #                 mu = mu[, paste0(i, ":", j)], 
+  #                 Sigma = sig_Y)
+  #     }
+  #   }
+  #   assign(paste0("Z_", i), subset[, all_of(Z[, "var"])])
+  # }
   
   #---- **return ----
-  return(list("Group" = synthetic_sample$Group, 
-              "contingency_table" = contingency_table, 
-              "Z_unimpaired" = Z_1, "Z_other" = Z_2, "Z_MCI" = Z_3, 
-              "Z_dementia" = Z_4))
+  return(list("Group" = synthetic_sample$Group))
+              # , 
+              # "contingency_table" = contingency_table, 
+              # "Z_unimpaired" = Z_1, "Z_other" = Z_2, "Z_MCI" = Z_3, 
+              # "Z_dementia" = Z_4))
 }
 
 #---- multiruns ----
@@ -223,7 +228,9 @@ stop <- Sys.time() - start
 
 #---- plots ----
 #---- **dem class ----
-ADAMS_dementia_plot_data <- as.data.frame(table(ADAMS_subset$group_class)) %>% 
+ADAMS_data[which(ADAMS_data$Adem_dx_cat == "Normal"), "Adem_dx_cat"] <- 
+  "Unimpaired"
+ADAMS_dementia_plot_data <- as.data.frame(table(ADAMS_data$Adem_dx_cat)) %>% 
   mutate("prop" = Freq/sum(Freq))
 
 dem_sub <- lapply(synthetic, "[[", "Group") %>% do.call(cbind, .) %>% 
