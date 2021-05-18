@@ -86,11 +86,6 @@ A = do.call(cbind, list(
   rep(c(0, 1), each = 3)))
 
 generate_data <- function(){
-  #---- true class props ----
-  true_props <- as.data.frame(table(ADAMS_data$Adem_dx_cat)) %>% 
-    mutate("prop" = Freq/nrow(ADAMS_data)) %>% 
-    set_rownames(c("4", "3", "2", "1"))
-  
   #---- latent class ----
   group = 1
   synthetic_sample[, "Group"] <- 0
@@ -118,12 +113,11 @@ generate_data <- function(){
   }
   synthetic_sample[which(synthetic_sample$Group == 0), "Group"] <- 4
   
-  # #pre-allocate
-  # contingency_table <- matrix(0, ncol = 4, nrow = 6) %>% set_colnames(seq(1, 4))
-  # mu <- matrix(0, ncol = 4*6, nrow = 10) %>% 
-  #   set_colnames(apply(expand.grid(seq(1, 4), seq(1, 6)), 1, paste0, 
-  #                      collapse = ":"))
-  # 
+  #pre-allocate
+  mu <- matrix(0, ncol = 4*6, nrow = 10) %>%
+    set_colnames(apply(expand.grid(seq(1, 4), seq(1, 6)), 1, paste0,
+                       collapse = ":"))
+
   # for(i in 1:4){
   #   #---- **contingency cells ----
   #   subset <- synthetic_sample %>% filter(Group == i) 
