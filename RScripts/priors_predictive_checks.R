@@ -27,7 +27,9 @@ for(group in c("normal", "mci", "other")){
 }
 
 #---- **contingency cells ----
-alpha_0_dist <- read_csv(here::here("priors", "bootstrap_cell_counts.csv")) 
+alpha_0_dist <- 
+  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                  "bootstrap_cell_counts.csv")) 
 
 #--- **beta and sigma ----
 beta_prior <- readRDS(here::here("priors", "beta.rds"))
