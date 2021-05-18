@@ -264,52 +264,6 @@ for(class in unique(synthetic_dementia_plot_data$Group_label)){
          height = 3, width = 5, units = "in")
 }
 
-#---- **class-specific categorical ----
-ADAMS_categorical_plot_data <- 
-  as.data.frame(table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke, 
-                      ADAMS_subset$group_class)) %>% 
-  mutate("Var2_label" = case_when(Var2 == 0 ~ "No Stroke", 
-                                  TRUE ~ "Stroke")) %>% 
-  unite("cat", c("Var1", "Var2_label"), sep = " + ") %>% 
-  set_colnames(c("cat", "Var2", "Group_label", "Truth"))
-
-categorical_sub <- lapply(synthetic, "[[", "contingency_table") %>% 
-  do.call(cbind, .) %>% as.data.frame() %>% 
-  set_colnames(apply(expand_grid(seq(1, runs), seq(1, 4)), 1, 
-                     paste0, collapse = ":")) %>%
-  mutate("cat" = c("Black + No Stroke", "Hispanic + No Stroke", 
-                   "White + No Stroke", "Black + Stroke", "Hispanic + Stroke", 
-                   "White + Stroke")) %>% 
-  pivot_longer(-c("cat"), names_to = c("Run", "Group"), names_sep = ":", 
-               values_to = "count") %>% 
-  mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
-                                   Group == 2 ~ "Other", 
-                                   Group == 3 ~ "MCI", 
-                                   TRUE ~ "Dementia")) %>% 
-  mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
-                             Group_label == "Other" ~ "#28bed9", 
-                             Group_label == "MCI" ~ "#fdab00", 
-                             TRUE ~ "#ff0000")) %>% 
-  left_join(., ADAMS_categorical_plot_data, by = c("cat", "Group_label"))
-
-for(group in unique(categorical_sub$Group_label)){
-  subset <- categorical_sub %>% filter(Group_label == group)
-  for(category in unique(categorical_sub$cat)){
-    smaller_subset <- subset %>% filter(cat == category)
-    ggplot(data = smaller_subset , aes(x = count)) + 
-      geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-      xlab("Count") + ggtitle(category) + 
-      geom_vline(xintercept = smaller_subset$Truth, 
-                 color = smaller_subset$color, size = 2)
-    
-    ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                             "priors/cell_counts/group_specific/", 
-                             tolower(group), "/", tolower(group), "_",  
-                             category, ".jpeg"), 
-           width = 5, height = 3, units = "in")
-  }
-}
-
 #---- **class-specific continuous ----
 for(class in unique(ADAMS_subset$group_class)){
   ADAMS_data <- ADAMS_subset %>% 
