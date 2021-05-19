@@ -12,23 +12,37 @@ ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
                                 "data/cleaned/ADAMS/ADAMS_train.csv"), 
                          col_types = cols(HHIDPN = col_character())) 
 
-#---- **models for priors ----
-Unimpaired_prior <- readRDS(here::here("priors", "normal_model_25.rds"))
-Other_prior <- readRDS(here::here("priors", "other_model_25.rds"))
-MCI_prior <- readRDS(here::here("priors", "MCI_model_25.rds"))
+#---- priors ----
+#---- **latent classes ----
+for(group in c("normal", "mci", "other")){
+  assign(paste0(group, "_betas"), 
+         read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                         "latent_class_", group, "_betas.csv")))
+  assign(paste0(group, "_cov"), 
+         read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                         "latent_class_", group, "_cov.csv")))
+  
+  assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
+}
 
-Unimpaired_preds <- names(coefficients(Unimpaired_prior))
-Unimpaired_preds[which(Unimpaired_preds == "ETHNIC_labelBlack")] <- "Black"
-Unimpaired_preds[which(Unimpaired_preds == "ETHNIC_labelHispanic")] <- 
-  "Hispanic"
+#---- **contingency cells ----
+alpha_0_dist <- 
+  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                  "bootstrap_cell_counts.csv")) 
 
-Other_preds <- names(coefficients(Other_prior))
-Other_preds[which(Other_preds == "ETHNIC_labelBlack")] <- "Black"
-Other_preds[which(Other_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
+#--- **beta and sigma ----
+priors_beta <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
+                               "priors/priors_beta.csv")) 
+prior_V_inv <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                               "priors/priors_V_inv.csv")) 
+prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                               "priors/priors_Sigma.csv")) 
 
-MCI_preds <- names(coefficients(MCI_prior))
-MCI_preds[which(MCI_preds == "ETHNIC_labelBlack")] <- "Black"
-MCI_preds[which(MCI_preds == "ETHNIC_labelHispanic")] <- "Hispanic"
+#---- **hyperparameters ----
+#DOF for inverse wishart
+nu_0 <- 65
+#scaling for inverse wishart as variance of Beta
+kappa_0 <- 1
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
