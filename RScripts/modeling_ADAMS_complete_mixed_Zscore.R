@@ -58,22 +58,10 @@ Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT",
              "Delayed Word Recall", "IADLs", "BMI")) %>% 
   set_colnames(c("var", "label"))
 
-synthetic_sample <- ADAMS_subset %>% 
-  mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
-         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0),
-         #Add intercept
-         "(Intercept)" = 1) %>% 
-  dplyr::select("HHIDPN", all_of(vars)) %>% 
-  #use complete data for now
-  na.omit() %>% 
+synthetic_sample <- ADAMS_train %>% 
+  dplyr::select("HHIDPN", all_of(vars), "Adem_dx_cat") %>% 
   #pre-allocate columns
   mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
-
-#Categorical vars (notation from Schafer 1997)
-W <- c("Black", "Hispanic", "Astroke")
-#Continuous vars (notation from Schafer 1997)
-Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", 
-       "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
 
 # #Sanity check
 # table(analytical_sample$ETHNIC_label, analytical_sample$Black, useNA = "ifany")
