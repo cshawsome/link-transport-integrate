@@ -76,48 +76,7 @@ synthetic_sample <- arrange(synthetic_sample,
 
 #---- Bayes Stuff ----
 #---- **simulation runs ----
-B = 1000
-
-#---- **hyperparameters ----
-#DOF for inverse wishart
-nu_0 <- 200
-
-#scaling for inverse Wishart as variance of Beta
-kappa_0 <- c(1, 2, 2, 2)
-
-#scaling matrix: one for each continuous var x latent class
-#var order: "AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", 
-# "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"
-var_scale <- cbind(
-  #Unimpaired-- reference group (scale the rest)
-  rep(1, 10),
-  #Other: Age, MMSE
-  c(2, 2.20, rep(1, 8)),
-  #MCI: Age, MMSE
-  c(2, 2.20, rep(1, 8)),
-  #Dementia: Age, MMSE
-  c(2, 0.35, rep(1, 8))) 
-
-#---- **priors ----
-# #uninformative
-# alpha_0 <- as.data.frame(matrix(1, nrow = 6, ncol = 4)) %>%
-#   set_colnames(paste0(seq(1, 4), "_prior_count"))
-
-# #from HRS
-# alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
-#   set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
-#                  "1_prior_count", "2_prior_count"))
-
-#weighted HRS
-alpha_0 <- read_csv(here::here("priors", "contingency_cell_counts.csv")) %>%
-  set_colnames(c("Var1", "Var2", "Freq", "4_prior_count", "3_prior_count",
-                 "1_prior_count", "2_prior_count")) %>%
-  mutate_at(paste0(seq(1, 4), "_prior_count"), function(x) 0.30*x)
-
-#location for inverse wishart 
-beta_prior <- readRDS(here::here("priors", "beta.rds"))
-V_inv_prior <- readRDS(here::here("priors", "V_inv.rds"))
-Sigma_prior <- readRDS(here::here("priors", "Sigma.rds"))
+B = 10
 
 #categorical vars contrasts matrix
 A = do.call(cbind, list(
