@@ -90,15 +90,12 @@ A = do.call(cbind, list(
   rep(c(0, 1), each = 3)))
 
 #---- **chain storage ----
-Unimpaired_gamma_chain <- 
-  matrix(nrow = length(coefficients(Unimpaired_prior)), ncol = B) %>% 
-  set_rownames(paste0("Unimpaired:", Unimpaired_preds))
-Other_gamma_chain <- 
-  matrix(nrow = length(coefficients(Other_prior)), ncol = B) %>% 
-  set_rownames(paste0("Other:", Other_preds))
-MCI_gamma_chain <- 
-  matrix(nrow = length(coefficients(MCI_prior)), ncol = B) %>% 
-  set_rownames(paste0("MCI:", MCI_preds))
+normal_gamma_chain <- matrix(nrow = length(normal_preds), ncol = B) %>% 
+  set_rownames(paste0("Unimpaired:", normal_preds))
+other_gamma_chain <- matrix(nrow = length(other_preds), ncol = B) %>% 
+  set_rownames(paste0("Other:", other_preds))
+mci_gamma_chain <- matrix(nrow = length(mci_preds), ncol = B) %>% 
+  set_rownames(paste0("MCI:", mci_preds))
 
 latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
   set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
