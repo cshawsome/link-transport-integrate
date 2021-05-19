@@ -46,7 +46,17 @@ kappa_0 <- 1
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
-vars <- unique(c(Unimpaired_preds, Other_preds, MCI_preds, "ETHNIC_label"))
+vars <- unique(c(normal_preds, other_preds, mci_preds, "ETHNIC_label"))
+
+#Categorical vars (notation from Schafer 1997)
+W <- c("Black", "Hispanic", "Astroke")
+#Continuous vars (notation from Schafer 1997)
+Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+             "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
+           c("Age", "Total MMSE", "Serial 7s", "Immediate Word Recall", 
+             "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
+             "Delayed Word Recall", "IADLs", "BMI")) %>% 
+  set_colnames(c("var", "label"))
 
 synthetic_sample <- ADAMS_subset %>% 
   mutate("Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
