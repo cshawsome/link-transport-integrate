@@ -4,14 +4,15 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "MBSP", "wesanderson", "RColorBrewer", "devtools", "gifski")
+       "locfit", "MBSP", "wesanderson", "RColorBrewer", "devtools", "gifski", 
+       "transformr")
 install_github("thomasp85/gganimate")
 library(gganimate)
 
 #---- read in data ----
 #---- **ADAMS ----
 ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/cleaned/ADAMS/ADAMS_train.csv"))
+                               "data/cleaned/ADAMS/ADAMS_train.csv"))
 
 ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                               "data/cleaned/ADAMS/ADAMS_subset_mixed.csv"))
@@ -70,7 +71,7 @@ synthetic_sample <- ADAMS_train %>%
 ADAMS_data %<>% 
   dplyr::select("HHIDPN", all_of(W), all_of(Z[, "var"]), "Adem_dx_cat") %>% 
   filter(HHIDPN %in% ADAMS_train$HHIDPN)
-  
+
 ADAMS_means <- colMeans(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])))
 ADAMS_sds <- apply(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
 
@@ -117,17 +118,17 @@ generate_data <- function(){
   mu <- matrix(0, ncol = 4*6, nrow = 10) %>%
     set_colnames(apply(expand.grid(seq(1, 4), seq(1, 6)), 1, paste0,
                        collapse = ":"))
-
+  
   for(i in 1:4){
     #---- **contingency cells ----
     subset <- synthetic_sample %>% filter(Group == i)
     prior_counts <- alpha_0_dist[, c(sample(seq(1, 10000), size = 1), 
                                      ncol(alpha_0_dist))] %>% 
       filter(group_number == i)
-
+    
     #---- **p(contingency table cell) ----
     pi <- rdirichlet(1, alpha = as.numeric(unlist(prior_counts[, 1])))
-
+    
     #---- **contingency table count ----
     contingency_table <- rmultinom(n = 1, size = nrow(subset), prob = pi)
     UtU <- diag(contingency_table[, 1])
@@ -143,7 +144,7 @@ generate_data <- function(){
     
     #---- **make U matrix ----
     U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
-
+    
     for(j in 1:nrow(contingency_table)){
       if(contingency_table[j, 1] == 0){next}
       if(j == 1){
@@ -153,14 +154,14 @@ generate_data <- function(){
       }
       U[index:(index - 1 + contingency_table[j, 1]), j] <- 1
     }
-
+    
     #---- **draw Sigma_0----
     random_draw <- sample(seq(1, 10000), size = 1)
     Sigma_prior <- prior_Sigma[, c(random_draw, ncol(prior_Sigma))] %>% 
       filter(group_number == i)
     sig_Y <- riwish(v = (nu_0), S = matrix(unlist(Sigma_prior[, 1]), 
                                            nrow = nrow(Z)))
-
+    
     #---- **beta_0 ----
     V_0_inv <- prior_V_inv[, c(random_draw, ncol(prior_V_inv))] %>% 
       filter(group_number == i)
@@ -170,15 +171,15 @@ generate_data <- function(){
     #as matrices
     V_0_inv <- matrix(unlist(V_0_inv[, 1]), nrow = 4)
     beta_0 <- matrix(unlist(beta_0[, 1]), nrow = nrow(V_0_inv))
-
+    
     #---- **draw beta | Sigma----
     beta_Sigma_Y <- matrix.normal(beta_0, solve(V_0_inv), sig_Y/kappa_0)
-
+    
     #---- **compute mu ----
     mu[, paste0(i, ":", seq(1, 6))] <-
       t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = nrow(Z),
                      byrow = FALSE))
-
+    
     #---- **draw data ----
     #reformat contingency table
     table <- contingency_table %>% as.data.frame() %>%
@@ -186,7 +187,7 @@ generate_data <- function(){
         #Black              #Hispanic           #Stroke
         rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>%
       set_colnames(c("Count", W))
-
+    
     for(j in 1:nrow(table)){
       if(table[j, "Count"] == 0){next}
       if(j == 1){
@@ -211,13 +212,15 @@ generate_data <- function(){
   
   #---- **return ----
   return(list("Group" = synthetic_sample$Group,
-              "Z_unimpaired" = Z_1, "Z_other" = Z_2, "Z_MCI" = Z_3,
-              "Z_dementia" = Z_4))
+              "Z_normal" = Z_1 %>% mutate("color" = "#00a389"), 
+              "Z_other" = Z_2 %>% mutate("color" = "#28bed9"), 
+              "Z_MCI" = Z_3 %>% mutate("color" = "#fdab00"),
+              "Z_dementia" = Z_4 %>% mutate("color" = "#ff0000")))
 }
 
 #---- multiruns ----
 start <- Sys.time()
-runs = 100
+runs = 1000
 synthetic <- replicate(runs, generate_data(), simplify = FALSE) 
 stop <- Sys.time() - start
 
@@ -261,75 +264,51 @@ for(class in unique(synthetic_dementia_plot_data$Group_label)){
 }
 
 #---- **class-specific continuous ----
+ADAMS_data[which(ADAMS_data$Adem_dx_cat == "Unimpaired"), "Adem_dx_cat"] <- 
+  "Normal"
+
 for(class in unique(ADAMS_train$Adem_dx_cat)){
-  true_data <- ADAMS_subset %>% 
-    dplyr::select(c(all_of(Z[, "var"]), "group_class")) %>% 
-    filter(group_class == class)
+  true_data <- ADAMS_data %>% 
+    dplyr::select(c(all_of(Z[, "var"]), "Adem_dx_cat")) %>% 
+    filter(Adem_dx_cat == class) %>% mutate("color" = "black")
   
   continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
   
   for(i in 1:length(continuous_list)){
     continuous_list[[i]] <- continuous_list[[i]] %>% 
       mutate("run" = i, "type" = "synthetic") %>% 
-      rbind(., ADAMS_data %>% dplyr::select(-"group_class") %>% 
-              mutate("run" = 0, "type" = "ADAMS"))
+      rbind(., true_data %>% dplyr::select(-"Adem_dx_cat") %>% 
+              mutate("run" = i, "type" = "ADAMS"))
   }
   
-  continuous_list %<>% do.call(rbind, .) %>% as.data.frame()
+  continuous_list %<>% do.call(rbind, .) %>% as.data.frame() 
   
   for(var in Z[, "var"]){
-    data <- continuous_list[, c(var, "run", "type")]
+    data <- continuous_list[, c(var, "run", "type", "color")]
     #unstandardize
     synthetic_subset <- data %>% filter(type == "synthetic")
     data[which(data$type == "synthetic"), var] <- 
       synthetic_subset[, var]*ADAMS_sds[var] + ADAMS_means[var]
     
-    continuous_plot <- ggplot() + 
-      geom_density(color = as.factor(data$type)) + 
-      geom_density(data = ADAMS_data, aes(x = unlist(ADAMS_data[, var]))) +
+    continuous_plot <- 
+      ggplot(data = data, aes(color = type, fill = type)) + 
+      geom_density(aes(x = data[, 1]), alpha = 0.5) + 
       theme_minimal() + xlab(Z[which(Z[, "var"] == var), "label"]) + 
+      scale_color_manual(values = rev(unique(data$color))) + 
+      scale_fill_manual(values = rev(unique(data$color))) + 
       transition_states(data$run, transition_length = 1, state_length = 1) +
-      labs(title = "Synthetic {round(frame_time)}",
-           x = var, y = "density") + transition_time(name) +
+      labs(title = "Synthetic {round(frame_time)}") + transition_time(run) +
       ease_aes('linear')
+    
+    animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
+            res = 150, renderer = gifski_renderer())
+    
+    anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/",
+                                "priors/continuous_vars/", tolower(class), "/", 
+                                var, ".gif"),
+              animation = last_animation(),
+              renderer = gifski_renderer())
   }
-  
-  
-  
-  
-  ggplot(data = plot_data %>% 
-           filter(type == "x"), 
-         aes(x = value, color = group, fill = group)) + 
-    geom_density(alpha = 0.5) + theme_minimal() + xlab(label) + 
-    scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)]) + 
-    scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)])
-  geom_density(mapping = aes(x = factor(Group_label,
-                                        levels = c("Unimpaired", "MCI",
-                                                   "Dementia", "Other")), y = prop,
-                             fill = factor(Group_label,
-                                           levels = c("Unimpaired", "MCI",
-                                                      "Dementia", "Other"))),
-               stat = "identity", position = "dodge") +
-    theme_minimal() +
-    ylim(c(0, 1)) + theme(legend.position = "none")  +
-    scale_fill_manual(values = wes_palette("Darjeeling1")[c(2, 3, 1, 5)]) +
-    #gganimate
-    transition_states(name, transition_length = 1, state_length = 1) +
-    labs(title = "Synthetic {round(frame_time)}",
-         x = "Impairment Class", y = "Proportion") + transition_time(name) +
-    ease_aes('linear')
-  
-  animate(synthetic_dementia_class_plot,
-          duration = max(synthetic_dementia_plot_data$name), fps = 1,
-          height = 4, width = 4, units = "in", res = 150,
-          renderer = gifski_renderer())
-  
-  anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/",
-                              "priors/synthetic_dem_class.gif"),
-            animation = last_animation(),
-            renderer = gifski_renderer())
-  
-  
 }
 
 #---- OLD ----
@@ -360,26 +339,26 @@ for(class in unique(ADAMS_train$Adem_dx_cat)){
 #           animation = last_animation(), 
 #           renderer = gifski_renderer())
 
-#---- ***ADAMS ----
-
-
-ADAMS_dementia_class_plot <- 
-  ggplot(data = ADAMS_dementia_plot_data) + 
-  geom_bar(mapping = 
-             aes(x = factor(Var1, 
-                            levels = c("Unimpaired", "MCI", 
-                                       "Dementia", "Other")), y = prop, 
-                 fill = factor(Var1, levels = c("Unimpaired", "MCI", 
-                                                "Dementia", "Other"))), 
-           stat = "identity", position = "dodge") + 
-  theme_minimal() + xlab("Impairment Class") + ylab("Proportion") + 
-  ylim(c(0, 1)) + theme(legend.position = "none")  + 
-  scale_fill_manual(values = wes_palette("Darjeeling1")[c(2, 3, 1, 5)]) + 
-  ggtitle("ADAMS")
-
-ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
-                         "ADAMS_dem_class.png"), device = "jpeg", 
-       width = 4, height = 4, units = "in")
+# #---- ***ADAMS ----
+# 
+# 
+# ADAMS_dementia_class_plot <- 
+#   ggplot(data = ADAMS_dementia_plot_data) + 
+#   geom_bar(mapping = 
+#              aes(x = factor(Var1, 
+#                             levels = c("Unimpaired", "MCI", 
+#                                        "Dementia", "Other")), y = prop, 
+#                  fill = factor(Var1, levels = c("Unimpaired", "MCI", 
+#                                                 "Dementia", "Other"))), 
+#            stat = "identity", position = "dodge") + 
+#   theme_minimal() + xlab("Impairment Class") + ylab("Proportion") + 
+#   ylim(c(0, 1)) + theme(legend.position = "none")  + 
+#   scale_fill_manual(values = wes_palette("Darjeeling1")[c(2, 3, 1, 5)]) + 
+#   ggtitle("ADAMS")
+# 
+# ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/priors/", 
+#                          "ADAMS_dem_class.png"), device = "jpeg", 
+#        width = 4, height = 4, units = "in")
 
 # #---- **categorical: race ----
 # cats <- table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke) %>% 
