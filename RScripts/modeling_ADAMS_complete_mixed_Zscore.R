@@ -63,13 +63,6 @@ synthetic_sample <- ADAMS_train %>%
   #pre-allocate columns
   mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
 
-# #Sanity check
-# table(analytical_sample$ETHNIC_label, analytical_sample$Black, useNA = "ifany")
-# table(analytical_sample$ETHNIC_label, analytical_sample$Hispanic,
-#       useNA = "ifany")
-# 
-# colSums(is.na(analytical_sample))
-
 #---- all-way contingency table ----
 #We have one small cell-- Hispanics who have had a stroke
 cross_class_label <- table(synthetic_sample$ETHNIC_label, 
