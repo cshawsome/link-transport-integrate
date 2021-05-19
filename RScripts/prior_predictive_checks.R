@@ -45,7 +45,7 @@ prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 
 #---- **hyperparameters ----
 #DOF for inverse wishart
-nu_0 <- 75
+nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
 kappa_0 <- 1
 
@@ -214,7 +214,7 @@ generate_data <- function(){
   return(list("Group" = synthetic_sample$Group,
               "Z_normal" = Z_1 %>% mutate("color" = "#00a389"), 
               "Z_other" = Z_2 %>% mutate("color" = "#28bed9"), 
-              "Z_MCI" = Z_3 %>% mutate("color" = "#fdab00"),
+              "Z_mci" = Z_3 %>% mutate("color" = "#fdab00"),
               "Z_dementia" = Z_4 %>% mutate("color" = "#ff0000")))
 }
 
