@@ -8,15 +8,9 @@ p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack",
 
 #---- read in data ----
 #---- **ADAMS ----
-ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/cleaned/ADAMS_subset_mixed.csv"), 
-                         col_types = cols(HHIDPN = col_character(), 
-                                          #Do not standardize these
-                                          Astroke = col_character())) %>% 
-  #Z-score continuous
-  mutate_if(is.numeric, scale) %>%
-  #transform to correct type
-  mutate_at("Astroke", as.numeric)
+ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                "data/cleaned/ADAMS/ADAMS_train.csv"), 
+                         col_types = cols(HHIDPN = col_character())) 
 
 #---- **models for priors ----
 Unimpaired_prior <- readRDS(here::here("priors", "normal_model_25.rds"))
