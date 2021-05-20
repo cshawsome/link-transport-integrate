@@ -61,7 +61,7 @@ Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT",
 synthetic_sample <- ADAMS_train %>% 
   dplyr::select("HHIDPN", all_of(vars), "Adem_dx_cat") %>% 
   #pre-allocate columns
-  mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
+  mutate("Group" = 0, "p_normal" = 0, "p_other" = 0, "p_mci" = 0)
 
 #---- all-way contingency table ----
 #We have one small cell-- Hispanics who have had a stroke
@@ -142,7 +142,8 @@ for(b in 1:B){
     synthetic_sample[subset_index, paste0("p_", model)] <- 
       expit(as.matrix(synthetic_sample[subset_index, 
                                        get(paste0(model, "_preds"))]) %*% 
-              as.matrix(get(paste0(model, "_gamma_chain"))[, b]))
+              as.matrix(model_gamma_chain[which(model_gamma_chain$model == 
+                                                  model), b]))
     
     synthetic_sample[subset_index, "Group"] <- 
       rbernoulli(n = length(subset_index), 

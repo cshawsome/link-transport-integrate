@@ -66,7 +66,7 @@ Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT",
 synthetic_sample <- ADAMS_train %>% 
   dplyr::select("HHIDPN", all_of(vars), "Adem_dx_cat") %>% 
   #pre-allocate columns
-  mutate("Group" = 0, "p_Unimpaired" = 0, "p_Other" = 0, "p_MCI" = 0)
+  mutate("Group" = 0, "p_normal" = 0, "p_other" = 0, "p_mci" = 0)
 
 ADAMS_data %<>% 
   dplyr::select("HHIDPN", all_of(W), all_of(Z[, "var"]), "Adem_dx_cat") %>% 
