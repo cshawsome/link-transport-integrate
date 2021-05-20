@@ -160,7 +160,9 @@ for(b in 1:B){
   
   for(i in 1:4){
     subset <- synthetic_sample %>% filter(Group == i) 
-    posterior_counts <- alpha_0[, paste0(i, "_prior_count")] + 
+    random_draw <- sample(seq(1, 10000), size = 1)
+    posterior_counts <- 
+      alpha_0_dist[which(alpha_0_dist$group_number == i), random_draw] + 
       table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
       dplyr::select("Freq") %>% unlist()
     
@@ -171,6 +173,18 @@ for(b in 1:B){
     #---- ****contingency table count ----
     contingency_table <- rmultinom(n = 1, size = nrow(subset), 
                                    prob = pi_chain[, paste0(i, ":", b)])
+    UtU <- diag(contingency_table[, 1])
+    
+    #---- **draw new UtU if needed ----
+    while(det(t(A) %*% UtU %*% A) < 1e-9){
+      random_draw <- sample(seq(1, 10000), size = 1)
+      new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
+        filter(group_number == i) + 
+        table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
+        dplyr::select("Freq") %>% unlist()
+      
+      UtU <- diag(unlist(new_counts[, 1]))
+    }
     
     #---- ****make U matrix ----
     U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
@@ -183,21 +197,6 @@ for(b in 1:B){
         index = sum(contingency_table[1:(j - 1), ]) + 1
       }
       U[index:(index - 1 + contingency_table[j, ]), j] <- 1
-    }
-    
-    UtU <- diag(contingency_table[, 1])
-    
-    if(i %in% c(2, 3)){
-      assign(paste0("UtU_", i), UtU)
-    }
-    
-    #---- ****pool UtU if needed ----
-    if(det(t(A) %*% UtU %*% A) == 0){
-      if(exists(paste0("UtU_", (i-1)))){
-        UtU <- UtU + get(paste0("UtU_", (i-1)))
-      } else{
-        UtU <- UtU + get(paste0("UtU_", (i+1))) 
-      }
     }
     
     #---- ****Mm ----
