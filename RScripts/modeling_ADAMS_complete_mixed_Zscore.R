@@ -9,8 +9,8 @@ p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack",
 #---- read in data ----
 #---- **ADAMS ----
 ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/cleaned/ADAMS/ADAMS_train.csv"), 
-                         col_types = cols(HHIDPN = col_character())) 
+                               "data/cleaned/ADAMS/ADAMS_train.csv"), 
+                        col_types = cols(HHIDPN = col_character())) 
 
 #---- priors ----
 #---- **latent classes ----
@@ -90,13 +90,14 @@ A = do.call(cbind, list(
   rep(c(0, 1), each = 3)))
 
 #---- **chain storage ----
-normal_gamma_chain <- matrix(nrow = length(normal_preds), ncol = B) %>% 
-  set_rownames(paste0("Unimpaired:", normal_preds))
-other_gamma_chain <- matrix(nrow = length(other_preds), ncol = B) %>% 
-  set_rownames(paste0("Other:", other_preds))
-mci_gamma_chain <- matrix(nrow = length(mci_preds), ncol = B) %>% 
-  set_rownames(paste0("MCI:", mci_preds))
-
+model_gamma_chain <- 
+  matrix(nrow = sum(length(normal_preds), length(other_preds), 
+                    length(mci_preds)), ncol = B) %>% as.data.frame() %>%
+  mutate("model" = c(rep("normal", length(normal_preds)), 
+                     rep("other", length(other_preds)), 
+                     rep("mci", length(mci_preds))), 
+         "pred" = c(normal_preds, mci_preds, other_preds))
+  
 latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
   set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
 
@@ -121,18 +122,29 @@ start <- Sys.time()
 #---- **sampling ----
 for(b in 1:B){
   #---- ****latent class gammas ----
-  Unimpaired_gamma_chain[, b] <- 
-    mvrnorm(n = 1, mu = coefficients(Unimpaired_prior), 
-            Sigma = vcov(Unimpaired_prior))
-  Other_gamma_chain[, b] <- 
-    mvrnorm(n = 1, mu = coefficients(Other_prior), Sigma = vcov(Other_prior))
-  MCI_gamma_chain[, b] <- 
-    mvrnorm(n = 1, mu = coefficients(MCI_prior), Sigma = vcov(MCI_prior))
+  for(model in c("normal", "other", "mci")){
+    random_draw <- sample(seq(1, 10000), size = 1)
+    
+    prior_betas <- as.vector(get(paste0(model, "_betas"))[, random_draw])
+    prior_cov <- matrix(unlist(get(paste0(model, "_cov"))[, random_draw]), 
+                        nrow = nrow(prior_betas))
+    
+    chain <- eval(as.symbol(paste0(model, "_gamma_chain[, ", b, "]")))
+    chain[, b] <- prior_betas
+    
+    normal_gamma_chain[, b] <- 
+      mvrnorm(n = 1, mu = coefficients(Unimpaired_prior), 
+              Sigma = vcov(Unimpaired_prior))
+    other_gamma_chain[, b] <- 
+      mvrnorm(n = 1, mu = coefficients(Other_prior), Sigma = vcov(Other_prior))
+    mci_gamma_chain[, b] <- 
+      mvrnorm(n = 1, mu = coefficients(MCI_prior), Sigma = vcov(MCI_prior))
+  }
   
   #---- ****group membership ----
   group = 1
   synthetic_sample[, "Group"] <- 0
-  for(model in c("Unimpaired", "Other", "MCI")){
+  for(model in c("normal", "other", "mci")){
     subset_index <- which(synthetic_sample$Group == 0)
     
     synthetic_sample[subset_index, paste0("p_", model)] <- 
