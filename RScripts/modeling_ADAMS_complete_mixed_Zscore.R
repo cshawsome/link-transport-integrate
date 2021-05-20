@@ -129,16 +129,8 @@ for(b in 1:B){
     prior_cov <- matrix(unlist(get(paste0(model, "_cov"))[, random_draw]), 
                         nrow = nrow(prior_betas))
     
-    chain <- eval(as.symbol(paste0(model, "_gamma_chain[, ", b, "]")))
-    chain[, b] <- prior_betas
-    
-    normal_gamma_chain[, b] <- 
-      mvrnorm(n = 1, mu = coefficients(Unimpaired_prior), 
-              Sigma = vcov(Unimpaired_prior))
-    other_gamma_chain[, b] <- 
-      mvrnorm(n = 1, mu = coefficients(Other_prior), Sigma = vcov(Other_prior))
-    mci_gamma_chain[, b] <- 
-      mvrnorm(n = 1, mu = coefficients(MCI_prior), Sigma = vcov(MCI_prior))
+    model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
+      mvrnorm(n = 1, mu = unlist(prior_betas), Sigma = prior_cov)
   }
   
   #---- ****group membership ----
