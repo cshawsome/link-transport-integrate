@@ -200,8 +200,8 @@ for(b in 1:B){
     }
     
     #---- ****Mm ----
-    continuous_covariates <- subset %>% 
-      dplyr::select(all_of(Z)) %>% as.matrix
+    continuous_covariates <- subset %>% dplyr::select(all_of(Z[, "var"])) %>% 
+      as.matrix
     
     V_inv <- t(A) %*% UtU %*% A 
     V_0_inv <- matrix(V_inv_prior[, i], nrow = nrow(V_inv), ncol = ncol(V_inv))
