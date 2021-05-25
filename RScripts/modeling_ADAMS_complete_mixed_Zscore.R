@@ -76,7 +76,9 @@ synthetic_sample <- arrange(synthetic_sample,
 
 #---- Bayes Stuff ----
 #---- **simulation runs ----
-B = 10
+burn_in = 1000
+synthetic_sets = 5
+B = burn_in + synthetic_sets
 
 #categorical vars contrasts matrix
 A = do.call(cbind, list(
@@ -310,7 +312,8 @@ gamma_chain_plot <-
          aes(x = reorder(Run, sort(as.numeric(Run))), y = gamma, 
              colour = pred)) + geom_line(aes(group = pred)) + 
   facet_grid(rows = vars(factor(model, 
-                                levels = c("normal", "mci", "other")))) + 
+                                levels = c("normal", "mci", "other"))), 
+             scales = "free") + 
   theme_bw() + xlab("Run") + 
   scale_x_discrete(breaks = seq(0, B, by = 100)) + 
   scale_color_manual(values = rev(extended_pallette14))
