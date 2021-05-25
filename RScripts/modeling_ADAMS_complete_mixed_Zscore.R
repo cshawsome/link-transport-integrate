@@ -76,8 +76,8 @@ synthetic_sample <- arrange(synthetic_sample,
 
 #---- Bayes Stuff ----
 #---- **simulation runs ----
-burn_in = 1000
-synthetic_sets = 5
+burn_in = 500
+synthetic_sets = 10
 B = burn_in + synthetic_sets
 
 #categorical vars contrasts matrix
@@ -290,6 +290,14 @@ for(b in 1:B){
     mutate("ETHNIC_label" = case_when(Black == 1 ~ "Black", 
                                       Hispanic == 1 ~ "Hispanic", 
                                       TRUE ~ "White"))
+  #---- **save synthetic sample ----
+  if(b > burn_in){
+    write_csv(synthetic_sample, 
+              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                            "results/ADAMSA/standard_normal/ADAMSA_synthetic_", 
+                            b - burn_in, ".csv"))
+  }
+  
 }
 
 #---- END TIME ----
@@ -448,10 +456,6 @@ ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot,
 #        width = 7, height = 5, units = "in", device = "jpeg")
 
 #---- save datasets ----
-write_csv(synthetic_sample, 
-          file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                        "ADAMSA/standard_normal/ADAMSA_synthetic.csv"))
-
 write_csv(gamma_plot_data, 
           file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
                         "ADAMSA/standard_normal/diagnostics_data/", 
