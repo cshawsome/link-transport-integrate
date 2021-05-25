@@ -106,16 +106,16 @@ pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>%
                      collapse = ":")) %>% 
   set_rownames(cross_class_label$`Cell Label`)
 
-Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
+Sigma_chain <- matrix(nrow = nrow(Z), ncol = 4*B) %>%
   set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste,
                      collapse = ":")) %>%
-  set_rownames(Z)
+  set_rownames(Z[, "label"])
 
 mu_chain <-
-  matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>%
+  matrix(nrow = nrow(Z), ncol = 4*nrow(cross_class_label)*B) %>%
   set_colnames(apply(
     expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste,
-    collapse = ":")) %>% set_rownames(Z)
+    collapse = ":")) %>% set_rownames(Z[, "label"])
 
 #---- START TIME ----
 start <- Sys.time()
@@ -204,20 +204,30 @@ for(b in 1:B){
       as.matrix
     
     V_inv <- t(A) %*% UtU %*% A 
-    V_0_inv <- matrix(V_inv_prior[, i], nrow = nrow(V_inv), ncol = ncol(V_inv))
-    beta_0 <- matrix(beta_prior[, i], nrow = nrow(V_inv), 
-                     ncol = ncol(continuous_covariates))
+    random_draw <- sample(seq(1, 10000), size = 1)
+    V_0_inv <- 
+      matrix(unlist(prior_V_inv[which(prior_V_inv$group_number == i), 
+                                random_draw]), 
+             nrow = nrow(V_inv), ncol = ncol(V_inv))
+    beta_0 <- matrix(unlist(priors_beta[which(priors_beta$group_number == i), 
+                                        random_draw]), 
+                     nrow = nrow(V_inv),  ncol = ncol(continuous_covariates))
     
-    M <- solve(V_inv + kappa_0[i]*V_0_inv)
+    M <- solve(V_inv + kappa_0*V_0_inv)
     m <-  t(A) %*% t(U) %*% continuous_covariates - 
-      kappa_0[i]*V_0_inv %*% beta_0
+      kappa_0*V_0_inv %*% beta_0
     
     Mm <- M %*% m
     
     #---- ****draw Sigma | Y ----
     ZtZ <- t(continuous_covariates) %*% continuous_covariates
-    third_term <- kappa_0[i]*t(beta_0) %*% V_0_inv %*% beta_0
+    third_term <- kappa_0*t(beta_0) %*% V_0_inv %*% beta_0
     
+    random_draw <- sample(seq(1, 10000), size = 1)
+    Sigma_prior <- 
+      matrix(unlist(prior_Sigma[which(prior_Sigma$group_number == i), 
+                                random_draw]), 
+             nrow = ncol(continuous_covariates))
     sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
                     S = Sigma_prior + ZtZ + third_term)
     
@@ -228,7 +238,7 @@ for(b in 1:B){
     
     #---- ****compute mu ----
     mu_chain[, paste0(i, ":", seq(1, nrow(cross_class_label)), ":", b)] <- 
-      t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = length(Z), 
+      t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = nrow(Z), 
                      byrow = FALSE))
     
     #---- ****draw data ----
@@ -251,15 +261,13 @@ for(b in 1:B){
                colnames(sig_Y)] <- 
           t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
                               mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                              Sigma = diag(sqrt(var_scale[, i])) %*% sig_Y %*% 
-                                diag(sqrt(var_scale[, i])))))
+                              Sigma = sig_Y)))
       } else{
         subset[index:(index - 1 + contingency_table[j, "Count"]), 
                colnames(sig_Y)] <- 
           mvrnorm(n = contingency_table[j, "Count"],
                   mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                  Sigma = diag(sqrt(var_scale[, i])) %*% sig_Y %*% 
-                    diag(sqrt(var_scale[, i])))
+                  Sigma = sig_Y)
       }
       
       #W (categorical data)
@@ -272,7 +280,7 @@ for(b in 1:B){
     
     #---- ****replace synthetic data ----
     synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN),
-                     c(W, Z)] <- subset[, c(W, Z)]
+                     c(W, Z[, "var"])] <- subset[, c(W, Z[, "var"])]
   }
   #---- **post-processing ----
   #---- ****race/ethnicity ----
@@ -286,25 +294,23 @@ for(b in 1:B){
 stop <- Sys.time() - start
 
 #---- **plots ----
+extended_pallette10 <- colorRampPalette(wes_palette("Darjeeling1"))(10)
 extended_pallette14 <- colorRampPalette(wes_palette("Darjeeling1"))(14)
 extended_pallette6 <- colorRampPalette(wes_palette("Darjeeling1"))(6)
 
 #---- ****gamma chains ----
-gamma_plot_data <- 
-  do.call(cbind, list(t(Unimpaired_gamma_chain), t(Other_gamma_chain), 
-                      t(MCI_gamma_chain))) %>% as.data.frame() %>%
-  mutate("run" = seq(1:B)) %>% 
-  pivot_longer(-c("run"), names_to = c("Group", "Predictor"), 
-               names_sep = ":", values_to = "gamma") %>% 
-  filter(Predictor != "(Intercept)")
+gamma_plot_data <- model_gamma_chain %>% as.data.frame() %>% 
+  set_colnames(c(seq(1:B), "model", "pred")) %>%
+  pivot_longer(cols = paste0(seq(1:B)), 
+               names_to = "Run", values_to = "gamma") %>% 
+  filter(pred != "(Intercept)")
 
 gamma_chain_plot <- 
   ggplot(data = gamma_plot_data, 
-         aes(x = reorder(run, sort(as.numeric(run))), y = gamma, 
-             colour = Predictor)) +       
-  geom_line(aes(group = Predictor)) + 
-  facet_grid(rows = vars(factor(Group, 
-                                levels = c("Unimpaired", "MCI", "Other")))) + 
+         aes(x = reorder(Run, sort(as.numeric(Run))), y = gamma, 
+             colour = pred)) + geom_line(aes(group = pred)) + 
+  facet_grid(rows = vars(factor(model, 
+                                levels = c("normal", "mci", "other")))) + 
   theme_bw() + xlab("Run") + 
   scale_x_discrete(breaks = seq(0, B, by = 100)) + 
   scale_color_manual(values = rev(extended_pallette14))
@@ -375,7 +381,7 @@ Sigma_chain_plot <- ggplot(data = Sigma_chain_data,
                            aes(x = Run, y = variance, colour = Z)) +       
   geom_line(aes(group = Z)) + 
   theme_minimal() + xlab("Run") + ylab("Variance") +  
-  scale_color_manual(values = rev(extended_pallette14)) + 
+  scale_color_manual(values = rev(extended_pallette10)) + 
   scale_x_continuous(breaks = seq(0, B, by = 100)) + 
   facet_grid(rows = vars(factor(Group_label, 
                                 levels = c("Unimpaired", "MCI", "Dementia", 
@@ -406,7 +412,7 @@ mu_chain_plot <- ggplot(data = mu_chain_data,
                                 wes_palette("Darjeeling1")[5], 
                                 wes_palette("Darjeeling1")[2])) +
   scale_x_continuous(breaks = seq(0, B, by = 100)) + 
-  facet_grid(rows = vars(factor(Z))) + theme_bw() 
+  facet_grid(rows = vars(factor(Z)), cols = vars(factor(Cell))) + theme_bw() 
 
 ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
