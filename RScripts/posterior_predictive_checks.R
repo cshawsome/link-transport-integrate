@@ -26,3 +26,15 @@ for(run in 1:10){
                             run, ".csv")) %>% mutate("sample" = run))
   }
 }
+
+#---- categorical checks ----
+#---- **race/ethnicity x stroke ----
+true_counts
+
+#---- continuous checks ----
+#---- **density plots ----
+#---- **median plots ----
+#---- **skew plots ----
+
+#---- impairment classification ----
+
