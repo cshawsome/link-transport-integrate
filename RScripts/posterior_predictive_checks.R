@@ -11,6 +11,14 @@ ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
                                "data/cleaned/ADAMS/ADAMS_train.csv"), 
                         col_types = cols(HHIDPN = col_character())) 
 
+#Continuous vars (notation from Schafer 1997)
+Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+             "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
+           c("Age", "Total MMSE", "Serial 7s", "Immediate Word Recall", 
+             "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
+             "Delayed Word Recall", "IADLs", "BMI")) %>% 
+  set_colnames(c("var", "label"))
+
 #---- **synthetic ----
 for(run in 1:10){
   if(run == 1){
@@ -109,6 +117,10 @@ for(dem_group in unique(synthetic_count_plot_data$group)){
 #---- continuous checks ----
 #---- **density plots ----
 #---- **median plots ----
+synthetic_continuous <- matrix(0, nrow = 6*, ncol = (num_samples + 2)) %>% 
+  as.data.frame() %>% set_colnames(c(seq(1, num_samples), "group", "cell"))
+synthetic_counts[, "group"] <- rep(unique(ADAMS_train$Adem_dx_cat), each = 6)
+
 #---- **skew plots ----
 
 #---- impairment classification ----
