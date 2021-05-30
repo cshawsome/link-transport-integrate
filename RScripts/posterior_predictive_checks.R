@@ -22,8 +22,8 @@ Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT",
 
 #---- **ADAMS unscaled ----
 ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                               "data/cleaned/ADAMS/ADAMS_subset_mixed.csv"), 
-                        col_types = cols(HHIDPN = col_character())) %>% 
+                                "data/cleaned/ADAMS/ADAMS_subset_mixed.csv"), 
+                         col_types = cols(HHIDPN = col_character())) %>% 
   filter(HHIDPN %in% ADAMS_train$HHIDPN)
 
 ADAMS_means <- colMeans(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])))
@@ -257,67 +257,41 @@ for(dem_group in unique(synthetic_continuous$group_label)){
 }
 
 #---- impairment classification ----
- <- 
-  matrix(0, nrow = nrow(Z)*4, ncol = (num_samples + 2)) %>% 
-  as.data.frame() %>% set_colnames(c(seq(1, num_samples), "group", "var"))
-synthetic_continuous[, "group"] <- rep(seq(1, 4), each = nrow(Z))
-synthetic_continuous[, "var"] <- rep(Z[, "var"], 4)
+#truth
+ADAMS_train[which(ADAMS_train$Adem_dx_cat == "Normal"), "Adem_dx_cat"] <- 
+  "Unimpaired"
+ADAMS_dementia_plot_data <- as.data.frame(table(ADAMS_train$Adem_dx_cat)) %>% 
+  mutate("prop" = Freq/sum(Freq))
 
-#medians from synthetic datasets
-for(group in 1:4){
-  subsample <- synthetic_sample %>% filter(Group == group)
+
+#synthetic
+dem_sub <- synthetic_sample[, c("Group", "sample")] %>% 
+  mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
+                                   Group == 2 ~ "Other", 
+                                   Group == 3 ~ "MCI", 
+                                   TRUE ~ "Dementia"))
+
+synthetic_dementia_plot_data <- 
+  dem_sub %>% dplyr::count(sample, Group_label) %>%
+  group_by(sample) %>%
+  mutate(prop = n/sum(n)) %>% 
+  mutate_at("sample", as.numeric) %>% 
+  mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
+                             Group_label == "Other" ~ "#28bed9", 
+                             Group_label == "MCI" ~ "#fdab00", 
+                             TRUE ~ "#ff0000"))
+#----****plot ----
+for(class in unique(synthetic_dementia_plot_data$Group_label)){
+  subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
+  ggplot(data = subset) + 
+    geom_histogram(aes(x = prop), 
+                   color = unique(subset$color), fill = unique(subset$color)) + 
+    theme_minimal() + ggtitle(class) + xlab("Proportion") + ylab("Count") +
+    geom_vline(xintercept = ADAMS_dementia_plot_data[
+      which(ADAMS_dementia_plot_data$Var1 == class), "prop"], size = 2)
   
-  for(var in Z[, "var"]){
-    subset <- subsample %>% dplyr::select(!!as.symbol(var), "sample") 
-    subset[, var] <- subset[, var]*ADAMS_sds[var] + ADAMS_means[var]
-    synthetic_continuous[which(synthetic_continuous$group == group & 
-                                 synthetic_continuous$var == var), 
-                         seq(1, num_samples)] <- 
-      t(subset %>% group_by(sample) %>% summarize_all(median) %>% 
-          dplyr::select(var))
-  }
-}
-
-synthetic_continuous %<>% 
-  mutate("truth" = 0, 
-         "label" = rep(Z[, "label"], 4), 
-         "group_label" = case_when(group == 1 ~ "Normal", 
-                                   group == 2 ~ "Other", 
-                                   group == 3 ~ "MCI", 
-                                   group == 4 ~ "Dementia")) %>% 
-  mutate("color" = case_when(group_label == "Normal" ~ "#00a389", 
-                             group_label == "Other" ~ "#28bed9", 
-                             group_label == "MCI" ~ "#fdab00", 
-                             group_label == "Dementia" ~ "#ff0000"))
-
-for(group in unique(ADAMS_subset$Adem_dx_cat)){
-  subsample <- ADAMS_subset %>% filter(Adem_dx_cat == group)
-  
-  for(var in Z[, "var"]){
-    synthetic_continuous[which(synthetic_continuous$group_label == group & 
-                                 synthetic_continuous$var == var), 
-                         "truth"] <- median(unlist(subsample[, var]))
-  }
-}
-
-synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
-
-#---- ****plot ----
-for(dem_group in unique(synthetic_continuous$group_label)){
-  for(var_name in Z[, "label"]){
-    subset <- synthetic_continuous %>% 
-      filter(group_label == dem_group & label == var_name)
-    ggplot(data = subset , aes(x = value)) + 
-      geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-      xlab("Median") + ggtitle(var_name) + 
-      geom_vline(xintercept = subset$truth, color = unique(subset$color), 
-                 size = 2)
-    
-    ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                             "posteriors/continuous_vars/median/", 
-                             tolower(dem_group), "/", tolower(dem_group), "_", 
-                             var_name, ".jpeg"), 
-           width = 5, height = 3, units = "in")
-  } 
+  ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                           "posteriors/impairment_classes/", class, ".jpeg"), 
+         height = 3, width = 5, units = "in")
 }
 
