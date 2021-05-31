@@ -47,7 +47,7 @@ prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 #DOF for inverse wishart
 nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
-kappa_0 <- 0.85
+kappa_0 <- c(0.85, 0.75, 0.75, 0.85)
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
@@ -173,7 +173,7 @@ generate_data <- function(){
     beta_0 <- matrix(unlist(beta_0[, 1]), nrow = nrow(V_0_inv))
     
     #---- **draw beta | Sigma----
-    beta_Sigma_Y <- matrix.normal(beta_0, solve(V_0_inv), sig_Y/kappa_0)
+    beta_Sigma_Y <- matrix.normal(beta_0, solve(V_0_inv), sig_Y/kappa_0[i])
     
     #---- **compute mu ----
     mu[, paste0(i, ":", seq(1, 6))] <-

@@ -42,7 +42,7 @@ prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 #DOF for inverse wishart
 nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
-kappa_0 <- 0.85
+kappa_0 <- c(0.85, 0.75, 0.75, 0.85)
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
@@ -215,15 +215,15 @@ for(b in 1:B){
                                         random_draw]), 
                      nrow = nrow(V_inv),  ncol = ncol(continuous_covariates))
     
-    M <- solve(V_inv + kappa_0*V_0_inv)
+    M <- solve(V_inv + kappa_0[i]*V_0_inv)
     m <-  t(A) %*% t(U) %*% continuous_covariates - 
-      kappa_0*V_0_inv %*% beta_0
+      kappa_0[i]*V_0_inv %*% beta_0
     
     Mm <- M %*% m
     
     #---- ****draw Sigma | Y ----
     ZtZ <- t(continuous_covariates) %*% continuous_covariates
-    third_term <- kappa_0*t(beta_0) %*% V_0_inv %*% beta_0
+    third_term <- kappa_0[i]*t(beta_0) %*% V_0_inv %*% beta_0
     
     random_draw <- sample(seq(1, 10000), size = 1)
     Sigma_prior <- 
@@ -423,12 +423,13 @@ mu_chain_plot <- ggplot(data = mu_chain_data,
                                 wes_palette("Darjeeling1")[5], 
                                 wes_palette("Darjeeling1")[2])) +
   scale_x_continuous(breaks = seq(0, B, by = 100)) + 
-  facet_grid(rows = vars(factor(Z)), cols = vars(factor(Cell))) + theme_bw() 
+  facet_grid(rows = vars(factor(Z)), cols = vars(factor(Cell)), 
+             scales = "free") + theme_bw() 
 
 ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
                      "standard_normal"), 
-       width = 7, height = 14, units = "in", device = "jpeg")
+       width = 14, height = 10, units = "in", device = "jpeg")
 
 # #---- ****varY chain ----
 # varY_chain_data <- varY_chain %>% as.data.frame() %>% 
