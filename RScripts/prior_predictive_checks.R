@@ -47,7 +47,7 @@ prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 #DOF for inverse wishart
 nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
-kappa_0 <- 1
+kappa_0 <- 0.85
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
@@ -340,8 +340,6 @@ for(class in unique(ADAMS_train$Adem_dx_cat)){
 #           renderer = gifski_renderer())
 
 # #---- ***ADAMS ----
-# 
-# 
 # ADAMS_dementia_class_plot <- 
 #   ggplot(data = ADAMS_dementia_plot_data) + 
 #   geom_bar(mapping = 
