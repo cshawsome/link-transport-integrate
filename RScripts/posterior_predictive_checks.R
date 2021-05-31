@@ -30,7 +30,8 @@ ADAMS_means <- colMeans(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])))
 ADAMS_sds <- apply(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
 
 #---- **synthetic ----
-for(run in 1:10){
+num_samples = 1000
+for(run in 1:num_samples){
   if(run == 1){
     synthetic_sample <- 
       read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
@@ -44,8 +45,6 @@ for(run in 1:10){
                             run, ".csv")) %>% mutate("sample" = run))
   }
 }
-
-num_samples <- max(synthetic_sample$sample)
 
 #---- categorical checks ----
 #---- **race/ethnicity x stroke ----
