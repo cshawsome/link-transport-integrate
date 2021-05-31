@@ -279,6 +279,21 @@ synthetic_dementia_plot_data <-
                              Group_label == "Other" ~ "#28bed9", 
                              Group_label == "MCI" ~ "#fdab00", 
                              TRUE ~ "#ff0000"))
+
+percentiles <- tibble("class" = c("Unimpaired", "Other", "MCI", "Dementia"), 
+                      "upper" = 0, 
+                      "lower" = 0)
+
+for(class in unique(synthetic_dementia_plot_data$Group_label)){
+  percentiles[which(percentiles$class == class), "upper"] <- 
+    synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
+    ungroup() %>% summarise_at("prop", ~ quantile(.x, probs = 0.975))
+  
+  percentiles[which(percentiles$class == class), "lower"] <- 
+    synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
+    ungroup() %>% summarise_at("prop", ~ quantile(.x, probs = 0.025))
+}
+
 #----****plot ----
 for(class in unique(synthetic_dementia_plot_data$Group_label)){
   subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
@@ -287,7 +302,13 @@ for(class in unique(synthetic_dementia_plot_data$Group_label)){
                    color = unique(subset$color), fill = unique(subset$color)) + 
     theme_minimal() + ggtitle(class) + xlab("Proportion") + ylab("Count") +
     geom_vline(xintercept = ADAMS_dementia_plot_data[
-      which(ADAMS_dementia_plot_data$Var1 == class), "prop"], size = 2)
+      which(ADAMS_dementia_plot_data$Var1 == class), "prop"], size = 2) + 
+    geom_vline(xintercept = 
+                 unlist(percentiles[which(percentiles$class == class), 
+                                    "upper"]), size = 1, linetype = "dashed") + 
+    geom_vline(xintercept = unlist(percentiles[which(percentiles$class == class), 
+                                        "lower"]), size = 1, linetype = "dashed")
+    
   
   ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                            "posteriors/impairment_classes/", class, ".jpeg"), 
