@@ -6,6 +6,7 @@ if (!require("pacman")){
 p_load("tidyverse", "magrittr", "here")
 
 options(scipen = 999)
+options(warn = 1)
 
 #---- read in data ----
 ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
@@ -24,7 +25,7 @@ mci_preds <- c("ANMSETOT", "ANIMMCR", "Aiadla", "Astroke", "Abmi")
 
 #---- model ----
 bootstrap_models <- function(){
-  subsample <- sample_frac(ADAMS_subset, size = 1, replace = TRUE)
+  subsample <- sample_frac(ADAMS_subset, size = 0.75, replace = TRUE)
   
   normal_model <- 
     glm(formula(paste("ANormal ~ ", paste(normal_preds, collapse = " + "), 
