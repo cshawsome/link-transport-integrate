@@ -24,7 +24,7 @@ mci_preds <- c("ANMSETOT", "ANIMMCR", "Aiadla", "Astroke", "Abmi")
 
 #---- model ----
 bootstrap_models <- function(){
-  subsample <- sample_frac(ADAMS_subset, size = 0.5, replace = TRUE)
+  subsample <- sample_frac(ADAMS_subset, size = 1, replace = TRUE)
   
   normal_model <- 
     glm(formula(paste("ANormal ~ ", paste(normal_preds, collapse = " + "), 
@@ -50,6 +50,16 @@ bootstrap_models <- function(){
 
 bootstrap_runs <- replicate(10000, bootstrap_models(), simplify = FALSE)
 
+#---- check distributions ----
+for(group in c("normal", "other", "mci")){
+  data <- lapply(bootstrap_runs, "[[", paste0(group, "_betas")) %>% 
+    do.call(rbind, .) %>% t() %>% as.data.frame() 
+  
+  for(var in rownames(data)){
+    show(hist(as.numeric(data[var, ]), main = paste0(group, " ", var)))
+  }
+}
+
 #---- format output ----
 for(est in c("betas", "cov")){
   for(group in c("normal", "other", "mci")){
@@ -65,5 +75,7 @@ for(est in c("betas", "cov")){
                        "latent_class_", group, "_", est, ".csv"))
   }
 }
+
+
 
 
