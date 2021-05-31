@@ -77,7 +77,7 @@ synthetic_sample <- arrange(synthetic_sample,
 #---- Bayes Stuff ----
 #---- **simulation runs ----
 burn_in = 500
-synthetic_sets = 10
+synthetic_sets = 1000
 B = burn_in + synthetic_sets
 
 #categorical vars contrasts matrix
@@ -322,7 +322,7 @@ gamma_chain_plot <-
   facet_grid(rows = vars(factor(model, 
                                 levels = c("normal", "mci", "other"))), 
              scales = "free") + 
-  theme_bw() + xlab("Run") + 
+  geom_vline(xintercept = burn_in, size = 1) + theme_bw() + xlab("Run") + 
   scale_x_discrete(breaks = seq(0, B, by = 100)) + 
   scale_color_manual(values = rev(extended_pallette14))
 
@@ -342,8 +342,8 @@ latent_class_data$Group <- fct_relevel(latent_class_data$Group,
 
 latent_class_chain_plot <- 
   ggplot(data = latent_class_data, aes(x = run, y = prob, colour = Group)) +       
-  geom_line(aes(group = Group)) + theme_minimal() + xlab("Run") + 
-  ylab("Proportion of Sample") +  
+  geom_line(aes(group = Group)) + geom_vline(xintercept = burn_in, size = 1) + 
+  theme_minimal() + xlab("Run") + ylab("Proportion of Sample") +  
   scale_color_manual(values = rev(wes_palette("Darjeeling1"))) + 
   scale_x_continuous(breaks = seq(0, B, by = 100)) 
 
@@ -364,8 +364,8 @@ pi_chain_data <- pi_chain %>% as.data.frame() %>% rownames_to_column("Cell") %>%
 
 pi_chain_plot <- ggplot(data = pi_chain_data, 
                         aes(x = Run, y = probability, colour = Cell)) +       
-  geom_line(aes(group = Cell)) + 
-  theme_minimal() + xlab("Run") + ylab("Probability of cell membership") +  
+  geom_line(aes(group = Cell)) + geom_vline(xintercept = burn_in, size = 1) + 
+  xlab("Run") + ylab("Probability of cell membership") +  
   scale_color_manual(values = extended_pallette6) + 
   scale_x_continuous(breaks = seq(0, B, by = 100)) +
   facet_grid(rows = vars(factor(Group_label, 
@@ -390,8 +390,8 @@ Sigma_chain_data <- Sigma_chain %>% as.data.frame() %>%
 
 Sigma_chain_plot <- ggplot(data = Sigma_chain_data, 
                            aes(x = Run, y = variance, colour = Z)) +       
-  geom_line(aes(group = Z)) + 
-  theme_minimal() + xlab("Run") + ylab("Variance") +  
+  geom_line(aes(group = Z)) + geom_vline(xintercept = burn_in, size = 1) +
+  xlab("Run") + ylab("Variance") +  
   scale_color_manual(values = rev(extended_pallette10)) + 
   scale_x_continuous(breaks = seq(0, B, by = 100)) + 
   facet_grid(rows = vars(factor(Group_label, 
@@ -417,7 +417,7 @@ mu_chain_data <- mu_chain %>% as.data.frame() %>%
 mu_chain_plot <- ggplot(data = mu_chain_data, 
                         aes(x = Run, y = mu, colour = Group_label)) +       
   geom_line(aes(group = Group_label), alpha = 0.75) + 
-  theme_minimal() + xlab("Run") + ylab("mu") +  
+  xlab("Run") + ylab("mu") + geom_vline(xintercept = burn_in, size = 1) + 
   scale_color_manual(values = c(wes_palette("Darjeeling1")[1], 
                                 wes_palette("Darjeeling1")[3], 
                                 wes_palette("Darjeeling1")[5], 
