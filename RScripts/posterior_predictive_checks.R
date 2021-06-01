@@ -126,6 +126,7 @@ for(dem_group in unique(synthetic_count_plot_data$group)){
 #---- continuous checks ----
 #---- **density ----
 #---- **median ----
+#---- ****by class ----
 synthetic_continuous <- 
   matrix(0, nrow = nrow(Z)*4, ncol = (num_samples + 2)) %>% 
   as.data.frame() %>% set_colnames(c(seq(1, num_samples), "group", "var"))
@@ -191,6 +192,7 @@ for(dem_group in unique(synthetic_continuous$group_label)){
 }
 
 #---- **skew ----
+#---- ****by class ----
 synthetic_continuous <- 
   matrix(0, nrow = nrow(Z)*4, ncol = (num_samples + 2)) %>% 
   as.data.frame() %>% set_colnames(c(seq(1, num_samples), "group", "var"))
@@ -281,10 +283,11 @@ synthetic_dementia_plot_data <-
                              TRUE ~ "#ff0000"))
 
 percentiles <- tibble("class" = c("Unimpaired", "Other", "MCI", "Dementia"), 
-                      "upper" = 0, 
-                      "lower" = 0)
+                      "upper" = 0, "lower" = 0, 
+                      "upper_count" = 0, "lower_count" = 0)
 
 for(class in unique(synthetic_dementia_plot_data$Group_label)){
+  #props
   percentiles[which(percentiles$class == class), "upper"] <- 
     synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
     ungroup() %>% summarise_at("prop", ~ quantile(.x, probs = 0.975))
@@ -292,26 +295,62 @@ for(class in unique(synthetic_dementia_plot_data$Group_label)){
   percentiles[which(percentiles$class == class), "lower"] <- 
     synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
     ungroup() %>% summarise_at("prop", ~ quantile(.x, probs = 0.025))
+  
+  #counts
+  percentiles[which(percentiles$class == class), "upper_count"] <- 
+    synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
+    ungroup() %>% summarise_at("n", ~ quantile(.x, probs = 0.975))
+  
+  percentiles[which(percentiles$class == class), "lower_count"] <- 
+    synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
+    ungroup() %>% summarise_at("n", ~ quantile(.x, probs = 0.025))
 }
 
-#----****plot ----
+#----****plot: prop ----
 for(class in unique(synthetic_dementia_plot_data$Group_label)){
   subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
   ggplot(data = subset) + 
     geom_histogram(aes(x = prop), 
                    color = unique(subset$color), fill = unique(subset$color)) + 
-    theme_minimal() + ggtitle(class) + xlab("Proportion") + ylab("Count") +
+    theme_minimal() + ggtitle(class) + xlab("Proportion") + ylab("Frequency") +
     geom_vline(xintercept = ADAMS_dementia_plot_data[
       which(ADAMS_dementia_plot_data$Var1 == class), "prop"], size = 2) + 
     geom_vline(xintercept = 
                  unlist(percentiles[which(percentiles$class == class), 
                                     "upper"]), size = 1, linetype = "dashed") + 
-    geom_vline(xintercept = unlist(percentiles[which(percentiles$class == class), 
-                                        "lower"]), size = 1, linetype = "dashed")
-    
+    geom_vline(xintercept = 
+                 unlist(percentiles[which(percentiles$class == class), 
+                                    "lower"]), size = 1, 
+               linetype = "dashed")
+  
   
   ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                           "posteriors/impairment_classes/", class, ".jpeg"), 
+                           "posteriors/impairment_classes/prop/", class, 
+                           ".jpeg"), 
+         height = 3, width = 5, units = "in")
+}
+
+#----****plot: count ----
+for(class in unique(synthetic_dementia_plot_data$Group_label)){
+  subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
+  ggplot(data = subset) + 
+    geom_histogram(aes(x = n), 
+                   color = unique(subset$color), fill = unique(subset$color)) + 
+    theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
+    geom_vline(xintercept = ADAMS_dementia_plot_data[
+      which(ADAMS_dementia_plot_data$Var1 == class), "Freq"], size = 2) + 
+    geom_vline(xintercept = 
+                 unlist(percentiles[which(percentiles$class == class), 
+                                    "upper_count"]), size = 1, 
+               linetype = "dashed") + 
+    geom_vline(xintercept = unlist(percentiles[which(percentiles$class == class), 
+                                               "lower_count"]), size = 1, 
+               linetype = "dashed")
+  
+  
+  ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                           "posteriors/impairment_classes/count/", class, 
+                           ".jpeg"), 
          height = 3, width = 5, units = "in")
 }
 
