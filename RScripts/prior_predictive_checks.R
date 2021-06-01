@@ -47,7 +47,7 @@ prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 #DOF for inverse wishart
 nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
-kappa_0 <- c(0.85, 0.75, 0.75, 0.85)
+kappa_0 <- c(0.85, 0.85, 0.85, 0.85)
 
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
