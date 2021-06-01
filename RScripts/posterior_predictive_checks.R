@@ -435,3 +435,32 @@ for(class in unique(synthetic_dementia_plot_data$Group_label)){
          height = 3, width = 5, units = "in")
 }
 
+#---- ****combined plot ----
+combined_plot_data <- synthetic_dementia_plot_data %>% ungroup() %>% 
+  group_by(Group_label) %>% 
+  summarize_at("n", list("mean" = mean, "lower" = ~ quantile(.x, probs = 0.025), 
+                         "upper" = ~ quantile(.x, probs = 0.975))) %>% 
+  mutate("truth" = ADAMS_dementia_plot_data$Freq) %>% 
+  mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
+                             Group_label == "Other" ~ "#28bed9", 
+                             Group_label == "MCI" ~ "#fdab00", 
+                             Group_label == "Dementia" ~ "#ff0000"))
+combined_plot_data$Group_label <- 
+  factor(combined_plot_data$Group_label, 
+            levels = c("Unimpaired", "Other", "MCI", "Dementia"))
+
+ggplot(data = combined_plot_data, 
+       aes(x = Group_label, y = mean, color = Group_label)) + 
+  geom_point(aes(size = 1)) + theme_minimal() + 
+  geom_point(aes(x = Group_label, y = truth, color = Group_label, size = 1), 
+             shape = 18) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.10) + 
+  xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
+  scale_color_manual(values = rev(c(combined_plot_data$color))) + 
+  ggtitle(paste0("95% Credible intervals from ", num_samples, 
+                 " synthetic datasets"))
+
+ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                         "posteriors/impairment_classes/count/combined.jpeg"), 
+       height = 5, width = 7, units = "in")
+
