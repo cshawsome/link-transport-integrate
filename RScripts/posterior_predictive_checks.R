@@ -126,6 +126,47 @@ for(dem_group in unique(synthetic_count_plot_data$group)){
 #---- continuous checks ----
 #---- **density ----
 #---- **median ----
+#---- ****overall ----
+synthetic_continuous <- 
+  matrix(0, nrow = nrow(Z), ncol = (num_samples + 1)) %>% 
+  as.data.frame() %>% set_colnames(c(seq(1, num_samples), "var"))
+synthetic_continuous[, "var"] <- Z[, "var"]
+
+#medians from synthetic datasets
+for(var in Z[, "var"]){
+  subset <- synthetic_sample %>% dplyr::select(!!as.symbol(var), "sample") 
+  subset[, var] <- subset[, var]*ADAMS_sds[var] + ADAMS_means[var]
+  synthetic_continuous[which(synthetic_continuous$var == var), 
+                       seq(1, num_samples)] <- 
+    t(subset %>% group_by(sample) %>% summarize_all(median) %>% 
+        dplyr::select(var))
+}
+
+synthetic_continuous %<>% 
+  mutate("truth" = 0, 
+         "label" = Z[, "label"])
+
+for(var in Z[, "var"]){
+  synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
+    median(unlist(ADAMS_data[, var]))
+}
+
+synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
+
+#---- ****plot ----
+for(var_name in Z[, "label"]){
+  subset <- synthetic_continuous %>% filter(label == var_name)
+  ggplot(data = subset , aes(x = value)) + 
+    geom_histogram(fill = "black", color = "black") + theme_minimal() + 
+    xlab("Median") + ggtitle(var_name) + 
+    geom_vline(xintercept = subset$truth, color = "#f2caaa" , size = 2)
+  
+  ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                           "posteriors/continuous_vars/median/overall/", 
+                           var_name, ".jpeg"), 
+         width = 5, height = 3, units = "in")
+} 
+
 #---- ****by class ----
 synthetic_continuous <- 
   matrix(0, nrow = nrow(Z)*4, ncol = (num_samples + 2)) %>% 
@@ -192,6 +233,47 @@ for(dem_group in unique(synthetic_continuous$group_label)){
 }
 
 #---- **skew ----
+#---- ****overall ----
+synthetic_continuous <- 
+  matrix(0, nrow = nrow(Z), ncol = (num_samples + 1)) %>% 
+  as.data.frame() %>% set_colnames(c(seq(1, num_samples), "var"))
+synthetic_continuous[, "var"] <- Z[, "var"]
+
+#skew from synthetic datasets
+for(var in Z[, "var"]){
+  subset <- synthetic_sample %>% dplyr::select(!!as.symbol(var), "sample") 
+  subset[, var] <- subset[, var]*ADAMS_sds[var] + ADAMS_means[var]
+  synthetic_continuous[which(synthetic_continuous$var == var), 
+                       seq(1, num_samples)] <- 
+    t(subset %>% group_by(sample) %>% summarize_all(skewness) %>% 
+        dplyr::select(var))
+}
+
+synthetic_continuous %<>% 
+  mutate("truth" = 0, 
+         "label" = Z[, "label"])
+
+for(var in Z[, "var"]){
+  synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
+    skewness(unlist(ADAMS_data[, var]))
+}
+
+synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
+
+#---- ****plot ----
+for(var_name in Z[, "label"]){
+  subset <- synthetic_continuous %>% filter(label == var_name)
+  ggplot(data = subset , aes(x = value)) + 
+    geom_histogram(fill = "black", color = "black") + theme_minimal() + 
+    xlab("Skew") + ggtitle(var_name) + 
+    geom_vline(xintercept = subset$truth, color = "#f2caaa" , size = 2)
+  
+  ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                           "posteriors/continuous_vars/skew/overall/", 
+                           var_name, ".jpeg"), 
+         width = 5, height = 3, units = "in")
+} 
+
 #---- ****by class ----
 synthetic_continuous <- 
   matrix(0, nrow = nrow(Z)*4, ncol = (num_samples + 2)) %>% 
@@ -263,7 +345,6 @@ ADAMS_train[which(ADAMS_train$Adem_dx_cat == "Normal"), "Adem_dx_cat"] <-
   "Unimpaired"
 ADAMS_dementia_plot_data <- as.data.frame(table(ADAMS_train$Adem_dx_cat)) %>% 
   mutate("prop" = Freq/sum(Freq))
-
 
 #synthetic
 dem_sub <- synthetic_sample[, c("Group", "sample")] %>% 
