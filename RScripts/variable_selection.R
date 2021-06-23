@@ -226,6 +226,7 @@ vars[which(vars == "Astroke1")] <- "Astroke"
 ADAMS_subset %<>% dplyr::select(all_of(vars)) %>% na.omit()
 
 #---- split sample ----
+set.seed(20210623)
 train <- sample_frac(ADAMS_subset, size = 0.70, replace = FALSE)
 test <- ADAMS_subset %>% filter(!HHIDPN %in% train$HHIDPN)
 
