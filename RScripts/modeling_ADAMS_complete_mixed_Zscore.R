@@ -236,7 +236,7 @@ for(b in 1:B){
     Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
     
     #---- ****draw beta | Sigma, Y ----
-    beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y)
+    beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y/kappa_0[i])
     
     #---- ****compute mu ----
     mu_chain[, paste0(i, ":", seq(1, nrow(cross_class_label)), ":", b)] <- 
