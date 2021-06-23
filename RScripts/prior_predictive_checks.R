@@ -251,6 +251,22 @@ synthetic_dementia_plot_data <-
 
 for(class in unique(synthetic_dementia_plot_data$Group_label)){
   subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
+  
+  #ADAMS data only
+  ggplot(data = subset) + 
+    geom_histogram(aes(x = prop),
+                   color = "white", fill = "white") +
+    theme_minimal() + ggtitle(class) + xlab("Proportion") + ylab("Count") +
+    geom_vline(xintercept = ADAMS_dementia_plot_data[
+      which(ADAMS_dementia_plot_data$Var1 == class), "prop"], size = 2, 
+      color = unique(subset$color))
+  
+  ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                           "priors/impairment_classes/", class, 
+                           "_line_only.jpeg"), 
+         height = 3, width = 5, units = "in")
+  
+  #Prior predictive check
   ggplot(data = subset) + 
     geom_histogram(aes(x = prop), 
                    color = unique(subset$color), fill = unique(subset$color)) + 
