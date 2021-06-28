@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "MBSP", "wesanderson", "RColorBrewer")
+       "locfit", "MBSP", "wesanderson", "RColorBrewer", "forecast")
 
 #---- read in data ----
 #---- **ADAMS ----
@@ -99,7 +99,7 @@ model_gamma_chain <-
                      rep("other", length(other_preds)), 
                      rep("mci", length(mci_preds))), 
          "pred" = c(normal_preds, mci_preds, other_preds))
-  
+
 latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
   set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
 
@@ -303,12 +303,55 @@ for(b in 1:B){
 #---- END TIME ----
 stop <- Sys.time() - start
 
-#---- **plots ----
+#---- plots ----
 extended_pallette10 <- colorRampPalette(wes_palette("Darjeeling1"))(10)
 extended_pallette14 <- colorRampPalette(wes_palette("Darjeeling1"))(14)
 extended_pallette6 <- colorRampPalette(wes_palette("Darjeeling1"))(6)
 
-#---- ****gamma chains ----
+#---- **acf ----
+#autocorrelation of MCMC chain
+
+#---- ****latent classes ----
+for(i in 1:nrow(latent_class_chain)){
+  plot(ggAcf(latent_class_chain[i, ], lag.max = 100) + theme_minimal() + 
+         ggtitle(rownames(latent_class_chain)[i]))
+  
+  ggsave(filename = 
+           paste0("acf_latent_class_", rownames(latent_class_chain)[i]), 
+         plot = last_plot(), 
+         path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                       "diagnostics/standard_normal/acf"), 
+         width = 7, height = 4, units = "in", device = "jpeg")
+}
+
+#---- ****pi ----
+pi_acf_data <- pi_chain %>% as.data.frame() %>% rownames_to_column("Cell") %>% 
+  pivot_longer(-c("Cell"), names_to = c("Group", "Run"), names_sep = ":", 
+               values_to = "probability") %>% 
+  mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
+                                   Group == 2 ~ "Other", Group == 3 ~ "MCI", 
+                                   Group == 4 ~ "Dementia")) %>% 
+  pivot_wider(names_from = "Run", values_from = "probability") %>% 
+  dplyr::select(-"Group") %>% 
+  unite("names", c("Cell", "Group_label"), sep = " | ") %>% 
+  column_to_rownames("names")
+
+for(i in 1:nrow(pi_acf_data)){
+  plot(ggAcf(pi_acf_data[i, ], lag.max = 100) + theme_minimal() + 
+         ggtitle(rownames(pi_acf_data)[i]))
+  
+  ggsave(filename = 
+           paste0("acf_pi_", rownames(pi_acf_data)[i]), 
+         plot = last_plot(), 
+         path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                       "diagnostics/standard_normal/acf"), 
+         width = 7, height = 4, units = "in", device = "jpeg")
+}
+
+#---- ****mu ----
+#---- ****Sigma ----
+
+#---- **gamma chains ----
 gamma_plot_data <- model_gamma_chain %>% as.data.frame() %>% 
   set_colnames(c(seq(1:B), "model", "pred")) %>%
   pivot_longer(cols = paste0(seq(1:B)), 
@@ -331,7 +374,7 @@ ggsave(filename = "gamma_chain.jpeg", plot = gamma_chain_plot,
                      "standard_normal"), 
        width = 7, height = 6, units = "in", device = "jpeg")
 
-#---- ****latent class chain ----
+#---- **latent class chain ----
 latent_class_data <- t(latent_class_chain) %>% as.data.frame() %>%
   mutate("run" = seq(1:B)) %>% 
   pivot_longer(-c("run"), names_to = c("Group"), values_to = "prob") %>% 
@@ -344,7 +387,10 @@ latent_class_chain_plot <-
   ggplot(data = latent_class_data, aes(x = run, y = prob, colour = Group)) +       
   geom_line(aes(group = Group)) + geom_vline(xintercept = burn_in, size = 1) + 
   theme_minimal() + xlab("Run") + ylab("Proportion of Sample") +  
-  scale_color_manual(values = rev(wes_palette("Darjeeling1"))) + 
+  scale_color_manual(values = c(wes_palette("Darjeeling1")[1], 
+                                wes_palette("Darjeeling1")[3], 
+                                wes_palette("Darjeeling1")[2], 
+                                wes_palette("Darjeeling1")[5])) + 
   scale_x_continuous(breaks = seq(0, B, by = 100)) 
 
 ggsave(filename = "latent_class_chain.jpeg", plot = latent_class_chain_plot, 
@@ -352,7 +398,7 @@ ggsave(filename = "latent_class_chain.jpeg", plot = latent_class_chain_plot,
                      "standard_normal"), 
        width = 7, height = 3, units = "in", device = "jpeg")
 
-#---- ****pi chain ----
+#---- **pi chain ----
 pi_chain_data <- pi_chain %>% as.data.frame() %>% rownames_to_column("Cell") %>% 
   pivot_longer(-c("Cell"), names_to = c("Group", "Run"), names_sep = ":", 
                values_to = "probability") %>% 
@@ -377,7 +423,7 @@ ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot,
                      "standard_normal"), 
        width = 7, height = 5, units = "in", device = "jpeg")
 
-#---- ****Sigma chain ----
+#---- **Sigma chain ----
 Sigma_chain_data <- Sigma_chain %>% as.data.frame() %>% 
   rownames_to_column("Z") %>% 
   pivot_longer(-c("Z"), names_to = c("Group", "Run"), names_sep = ":", 
@@ -403,7 +449,7 @@ ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot,
                      "standard_normal"), 
        width = 7, height = 5, units = "in", device = "jpeg")
 
-#---- ****mu chain ----
+#---- **mu chain ----
 mu_chain_data <- mu_chain %>% as.data.frame() %>% 
   rownames_to_column("Z") %>% 
   pivot_longer(-c("Z"), names_to = c("Group", "Cell", "Run"), names_sep = ":", 
@@ -431,7 +477,7 @@ ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot,
                      "standard_normal"), 
        width = 14, height = 10, units = "in", device = "jpeg")
 
-# #---- ****varY chain ----
+# #---- **varY chain ----
 # varY_chain_data <- varY_chain %>% as.data.frame() %>% 
 #   rownames_to_column("Z") %>% 
 #   pivot_longer(-c("Z"), names_to = c("Group", "Run"), names_sep = ":", 
