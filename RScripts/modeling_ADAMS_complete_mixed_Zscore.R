@@ -311,6 +311,7 @@ extended_pallette6 <- colorRampPalette(wes_palette("Darjeeling1"))(6)
 #---- **acf ----
 #autocorrelation of MCMC chain
 
+
 #---- ****latent classes ----
 for(i in 1:nrow(latent_class_chain)){
   plot(ggAcf(latent_class_chain[i, ], lag.max = 100) + theme_minimal() + 
