@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "haven", "labelled", "forcats")
+p_load("tidyverse", "magrittr", "haven", "labelled", "forcats", "NormPsy")
 
 #---- source scripts ----
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
@@ -367,6 +367,13 @@ ADAMS_subset %<>%
 
 ADAMS_subset %<>% 
   mutate_at(.vars = "ANMSETOT", function(x) ifelse(x > 30, NA, x))
+
+#normalized MMSE
+ADAMS_subset %<>% mutate("ANMSETOT_norm" = normMMSE(ANMSETOT))
+
+# #Sanity check
+# hist(ADAMS_subset$ANMSETOT)
+# hist(ADAMS_subset$ANMSETOT_norm)
 
 #---- **BWC 20 and 86 ----
 # #Variable check
