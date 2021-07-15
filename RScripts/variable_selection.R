@@ -67,10 +67,10 @@ vars <-
   c("AAGE", "GENDER_label", "ETHNIC_label", "EDYRScat_label", "AAMARRD_label", 
     "AACURRWK_label", 
     #Neuropsych
-    "ANMSETOT", "ANBWC20", "ANBWC86", "ANSER7T", "ANSCISOR", "ANCACTUS", 
-    "ANPRES", "ANVCPRES", "ANAFTOT", "ANBNTTOT", "ANCPTOT", "ANDCPTOT", 
-    "ANIMMCR", "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", "ANWM2TOT", 
-    "ANTMASEC", "ANTMBSEC", "ANSDMTOT", 
+    "ANMSETOT", "ANMSETOT_norm", "ANBWC20", "ANBWC86", "ANSER7T", "ANSCISOR", 
+    "ANCACTUS", "ANPRES", "ANVCPRES", "ANAFTOT", "ANBNTTOT", "ANCPTOT", 
+    "ANDCPTOT", "ANIMMCR", "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", 
+    "ANWM2TOT", "ANTMASEC", "ANTMBSEC", "ANSDMTOT", 
     #Health and health behaviors
     "Astroke", "Ahibpe", "Adiabe", "Ahearte", "Acancre", "Abmi", "Aiadla", 
     "Aadla", "Agrossa", "Afinea", "Acesd", "Asmoken", "DRINKcat_label",
