@@ -48,7 +48,7 @@ bootstrap_models <- function(prop){
               "mci_cov" = as.vector(vcov(mci_model))))
 }
 
-bootstrap_runs <- replicate(10000, bootstrap_models(prop = 0.5), 
+bootstrap_runs <- replicate(10000, bootstrap_models(prop = 1), 
                             simplify = FALSE)
 
 #---- check distributions ----
