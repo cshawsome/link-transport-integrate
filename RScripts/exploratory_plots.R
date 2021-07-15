@@ -15,11 +15,11 @@ W <- cbind(c("ETHNIC_label", "Astroke"),
   set_colnames(c("var", "label"))
 
 #Continuous vars (notation from Schafer 1997)
-Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
-             "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
-           c("Age", "Total MMSE", "Serial 7s", "Immediate Word Recall", 
-             "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
-             "Delayed Word Recall", "IADLs", "BMI")) %>% 
+Z <- cbind(c("AAGE", "ANMSETOT", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", 
+             "ANRECYES", "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
+           c("Age", "Total MMSE", "Normed Total MMSE", "Serial 7s", 
+             "Immediate Word Recall", "Wordlist Recall (Yes)", "Story Recall I", 
+             "Proxy Cognition (Avg)", "Delayed Word Recall", "IADLs", "BMI")) %>% 
   set_colnames(c("var", "label"))
 
 group <- c("Adem_dx_cat")
@@ -42,7 +42,7 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
                      Adem_dx_cat == "Normal" ~ "Unimpaired",
                      TRUE ~ Adem_dx_cat))
 
-analytical_sample <- ADAMS_subset  %>% 
+analytical_sample <- ADAMS_subset %>% 
   #don't standardize this
   mutate_at("Astroke", as.character) %>%
   #Z-score continuous
@@ -146,7 +146,7 @@ continuous_var_plot_names <- paste0(Z[, "var"], "_plotX")
         get(continuous_var_plot_names[6])))) / 
     (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
        get(continuous_var_plot_names[9]))) / 
-  get(continuous_var_plot_names[10])
+  (get(continuous_var_plot_names[10]) + get(continuous_var_plot_names[11]))
 
 ggsave(filename = "ADAMS_all_X.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
@@ -159,22 +159,21 @@ merged_data <- left_join(ADAMS_subset, analytical_sample, by = "HHIDPN")
 for(var in Z[, "var"]){
   label <- Z[which(Z[, "var"] == var), "label"]
   plot_data <- merged_data %>% 
-    dplyr::select(contains(c(var, "group_class"))) %>% 
+    dplyr::select(c(paste0({{ var }}, c(".x", ".y")), 
+                    paste0("group_class", c(".x", ".y")))) %>% 
     pivot_longer(everything(), names_to = c(".value", "type"), 
                  names_pattern = "(.*).(.)") %>% 
     set_colnames(c("type", "value", "group")) 
   plot_data[, "value"] <- unlist(plot_data[, "value"])
   plot_data[which(plot_data$type == "y"), "type"] <- "z"
   
-  plotX <- ggplot(data = plot_data %>% 
-                    filter(type == "x"), 
+  plotX <- ggplot(data = plot_data %>% filter(type == "x"), 
                   aes(x = value, color = group, fill = group)) + 
     geom_density(alpha = 0.5) + theme_minimal() + xlab(label) + 
     scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)]) + 
     scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)])
   
-  plotZ <- ggplot(data = plot_data %>% 
-                    filter(type == "z"), 
+  plotZ <- ggplot(data = plot_data %>% filter(type == "z"), 
                   aes(x = value, color = group, fill = group)) + 
     geom_density(alpha = 0.5) + theme_minimal() + xlab(label) + 
     scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)]) + 
@@ -190,7 +189,7 @@ for(var in Z[, "var"]){
 }
 
 #---- **patchwork plot ----
-continuous_var_plot_names <- paste0(Z, "_plotX")
+continuous_var_plot_names <- paste0(Z[, "var"], "_plotX")
 
 ((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
       get(continuous_var_plot_names[3])) /
@@ -198,7 +197,7 @@ continuous_var_plot_names <- paste0(Z, "_plotX")
         get(continuous_var_plot_names[6])))) / 
     (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
        get(continuous_var_plot_names[9]))) / 
-  get(continuous_var_plot_names[10])
+  (get(continuous_var_plot_names[10]) + get(continuous_var_plot_names[11]))
 
 ggsave(filename = "ADAMS_mix_X.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
@@ -213,7 +212,7 @@ continuous_var_plot_names <- paste0(Z, "_plotZ")
         get(continuous_var_plot_names[6])))) / 
     (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
        get(continuous_var_plot_names[9]))) / 
-  get(continuous_var_plot_names[10])
+  (get(continuous_var_plot_names[10]) + get(continuous_var_plot_names[11]))
 
 ggsave(filename = "ADAMS_mix_Z.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
