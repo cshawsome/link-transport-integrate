@@ -13,14 +13,14 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
 
 #---- predictors ----
 #normal model predictors
-normal_preds <- c("AAGE", "Black", "Hispanic", "ANMSETOT", "ANSER7T", "ANIMMCR", 
-                  "ANRECYES", "ANWM1TOT", "proxy_cog")
+normal_preds <- c("AAGE", "Black", "Hispanic", "ANMSETOT_norm", "ANSER7T", 
+                  "ANIMMCR", "ANRECYES", "ANWM1TOT", "proxy_cog")
 
 #other model predictors
-other_preds <- c("AAGE", "ANMSETOT", "ANIMMCR", "ANDELCOR")
+other_preds <- c("AAGE", "ANMSETOT_norm", "ANIMMCR", "ANDELCOR")
 
 #mci model predictors
-mci_preds <- c("ANMSETOT", "ANIMMCR", "Aiadla", "Astroke", "Abmi")
+mci_preds <- c("ANMSETOT_norm", "ANIMMCR", "Aiadla", "Astroke", "Abmi")
 
 #---- model ----
 bootstrap_models <- function(){
