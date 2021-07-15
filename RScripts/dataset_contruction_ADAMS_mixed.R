@@ -547,7 +547,8 @@ ADAMS_subset %<>% mutate("log_AAGE" = log(AAGE))
 # hist(ADAMS_subset$EDYRS)
 
 #---- save dataset ----
-write_csv(ADAMS_subset, file = paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                      "data/cleaned/ADAMS_subset_mixed.csv"))
+write_csv(ADAMS_subset, 
+          file = paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                        "data/cleaned/ADAMS/ADAMS_subset_mixed.csv"))
 
 

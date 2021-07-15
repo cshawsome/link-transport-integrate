@@ -10,7 +10,7 @@ options(scipen = 999)
 #---- read in data ----
 ADAMS_subset <- 
   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                  "data/cleaned/ADAMS_subset_mixed.csv"), 
+                  "data/cleaned/ADAMS/ADAMS_subset_mixed.csv"), 
            col_types = cols("AYEAR" = col_character(), 
                             "Astroke" = col_character(), 
                             "Ahibpe" = col_character(), 
