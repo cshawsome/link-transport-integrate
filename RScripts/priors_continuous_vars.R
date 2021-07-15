@@ -11,7 +11,7 @@ options(scipen = 999)
 #Categorical vars (notation from Schafer 1997)
 W <- c("ETHNIC_label", "Astroke")
 #Continuous vars (notation from Schafer 1997)
-Z <- c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+Z <- c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
        "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
 
 group <- c("Adem_dx_cat")
