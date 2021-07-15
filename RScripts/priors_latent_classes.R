@@ -23,8 +23,8 @@ other_preds <- c("AAGE", "ANMSETOT_norm", "ANIMMCR", "ANDELCOR")
 mci_preds <- c("ANMSETOT_norm", "ANIMMCR", "Aiadla", "Astroke", "Abmi")
 
 #---- model ----
-bootstrap_models <- function(){
-  subsample <- sample_frac(ADAMS_subset, size = 0.5, replace = TRUE)
+bootstrap_models <- function(prop){
+  subsample <- sample_frac(ADAMS_subset, size = prop, replace = TRUE)
   
   normal_model <- 
     glm(formula(paste("ANormal ~ ", paste(normal_preds, collapse = " + "), 
@@ -48,7 +48,8 @@ bootstrap_models <- function(){
               "mci_cov" = as.vector(vcov(mci_model))))
 }
 
-bootstrap_runs <- replicate(10000, bootstrap_models(), simplify = FALSE)
+bootstrap_runs <- replicate(10000, bootstrap_models(prop = 0.5), 
+                            simplify = FALSE)
 
 #---- check distributions ----
 for(group in c("normal", "other", "mci")){
