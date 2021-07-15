@@ -16,7 +16,6 @@ ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
 
 ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                               "data/cleaned/ADAMS/ADAMS_subset_mixed.csv"))
-
 #---- priors ----
 #---- **latent classes ----
 for(group in c("normal", "mci", "other")){
@@ -56,8 +55,8 @@ vars <- unique(c(normal_preds, other_preds, mci_preds, "ETHNIC_label"))
 #Categorical vars (notation from Schafer 1997)
 W <- c("Black", "Hispanic", "Astroke")
 #Continuous vars (notation from Schafer 1997)
-Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
-             "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
+Z <- cbind(c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES", 
+             "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
            c("Age", "Total MMSE", "Serial 7s", "Immediate Word Recall", 
              "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
              "Delayed Word Recall", "IADLs", "BMI")) %>% 
