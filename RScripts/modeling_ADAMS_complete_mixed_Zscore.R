@@ -51,9 +51,9 @@ vars <- unique(c(normal_preds, other_preds, mci_preds, "ETHNIC_label"))
 #Categorical vars (notation from Schafer 1997)
 W <- c("Black", "Hispanic", "Astroke")
 #Continuous vars (notation from Schafer 1997)
-Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
-             "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
-           c("Age", "Total MMSE", "Serial 7s", "Immediate Word Recall", 
+Z <- cbind(c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES", 
+             "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
+           c("Age", "Normed Total MMSE", "Serial 7s", "Immediate Word Recall", 
              "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
              "Delayed Word Recall", "IADLs", "BMI")) %>% 
   set_colnames(c("var", "label"))
@@ -115,11 +115,9 @@ mu_chain <-
     expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste,
     collapse = ":")) %>% set_rownames(Z[, "label"])
 
-#---- START TIME ----
-start <- Sys.time()
 #---- **synthetic data function ----
-generate_sythetic <- function(warm_up, synthetic_sets, synthetic_sample, 
-                              starting_props){
+generate_synthetic <- function(warm_up, synthetic_sets, synthetic_sample, 
+                               starting_props){
   #number to sample
   warm_up = warm_up
   synthetic_sets = synthetic_sets
@@ -131,8 +129,6 @@ generate_sythetic <- function(warm_up, synthetic_sets, synthetic_sample,
       synthetic_sample[, "Group"] <- 
         sample(seq(1, 4), size = nrow(synthetic_sample) , replace = TRUE, 
                prob = starting_props)
-      
-      return(table(synthetic_sample$Group))
     } else{
       #---- ****latent class gammas ----
       for(model in c("normal", "other", "mci")){
@@ -160,7 +156,8 @@ generate_sythetic <- function(warm_up, synthetic_sets, synthetic_sample,
         
         synthetic_sample[subset_index, "Group"] <- 
           rbernoulli(n = length(subset_index), 
-                     p = synthetic_sample[subset_index, paste0("p_", model)])*group
+                     p = synthetic_sample[subset_index, 
+                                          paste0("p_", model)])*group
         
         group = group + 1
       }
@@ -312,8 +309,12 @@ generate_sythetic <- function(warm_up, synthetic_sets, synthetic_sample,
   }
 }
 
-#---- END TIME ----
+#---- run function ----
 stop <- Sys.time() - start
+generate_synthetic(warm_up = 500, synthetic_sets = 1000, synthetic_sample, 
+                   #warm start
+                   starting_props = c(0.40, 0.20, 0.10, 0.30))
+start <- Sys.time()
 
 #---- plots ----
 extended_pallette10 <- colorRampPalette(wes_palette("Darjeeling1"))(10)
