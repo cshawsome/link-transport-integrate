@@ -116,8 +116,12 @@ mu_chain <-
     collapse = ":")) %>% set_rownames(Z[, "label"])
 
 #---- **synthetic data function ----
-generate_synthetic <- function(warm_up, synthetic_sets, synthetic_sample, 
+generate_synthetic <- function(warm_up, synthetic_sets, synthetic_sample, run, 
                                starting_props){
+  #generate subfolders to store results
+  dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                    "results/ADAMSA/standard_normal/run_", run))
+  
   #number to sample
   warm_up = warm_up
   synthetic_sets = synthetic_sets
@@ -303,18 +307,19 @@ generate_synthetic <- function(warm_up, synthetic_sets, synthetic_sample,
     if(b > warm_up){
       write_csv(synthetic_sample, 
                 file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                              "results/ADAMSA/standard_normal/ADAMSA_synthetic_", 
-                              b - warm_up, ".csv"))
+                              "results/ADAMSA/standard_normal/run_", 
+                              run, "/ADAMSA_synthetic_", b - warm_up, ".csv"))
     }
   }
 }
 
 #---- run function ----
-stop <- Sys.time() - start
+start <- Sys.time()
 generate_synthetic(warm_up = 500, synthetic_sets = 1000, synthetic_sample, 
+                   run = 1, 
                    #warm start
                    starting_props = c(0.40, 0.20, 0.10, 0.30))
-start <- Sys.time()
+stop <- Sys.time() - start
 
 #---- plots ----
 extended_pallette10 <- colorRampPalette(wes_palette("Darjeeling1"))(10)
