@@ -300,11 +300,11 @@ generate_synthetic <- function(warm_up, synthetic_sets, synthetic_sample,
                                         Hispanic == 1 ~ "Hispanic", 
                                         TRUE ~ "White"))
     #---- **save synthetic sample ----
-    if(b > burn_in){
+    if(b > warm_up){
       write_csv(synthetic_sample, 
                 file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
                               "results/ADAMSA/standard_normal/ADAMSA_synthetic_", 
-                              b - burn_in, ".csv"))
+                              b - warm_up, ".csv"))
     }
   }
 }
