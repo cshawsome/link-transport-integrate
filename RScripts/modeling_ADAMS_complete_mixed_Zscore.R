@@ -475,7 +475,7 @@ A = do.call(cbind, list(
   rep(c(0, 1), each = 3)))
 
 start <- Sys.time()
-results <- generate_synthetic(warm_up = 50, synthetic_sets = 100, 
+results <- generate_synthetic(warm_up = 500, synthetic_sets = 1000, 
                               synthetic_sample, run = 1, 
                               #warm start
                               starting_props = c(0.40, 0.20, 0.10, 0.30), A = A)
