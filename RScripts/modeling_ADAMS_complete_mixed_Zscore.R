@@ -115,8 +115,8 @@ generate_synthetic <-
     mu_chain <-
       matrix(nrow = nrow(Z), ncol = 4*nrow(cross_class_label)*B) %>%
       set_colnames(apply(
-        expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste,
-        collapse = ":")) %>% set_rownames(Z[, "label"])
+        expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, 
+        paste,collapse = ":")) %>% set_rownames(Z[, "label"])
     
     #---- start sampling ----
     for(b in 1:B){
@@ -207,8 +207,8 @@ generate_synthetic <-
         }
         
         #---- ****Mm ----
-        continuous_covariates <- subset %>% dplyr::select(all_of(Z[, "var"])) %>% 
-          as.matrix
+        continuous_covariates <- subset %>% 
+          dplyr::select(all_of(Z[, "var"])) %>% as.matrix
         
         V_inv <- t(A) %*% UtU %*% A 
         random_draw <- sample(seq(1, 10000), size = 1)
@@ -338,12 +338,15 @@ generate_synthetic <-
       pivot_longer(-c("run"), names_to = c("Group"), values_to = "prob") %>% 
       arrange(desc(prob)) %>%
       mutate_at("Group", as.factor)
-    latent_class_data$Group <- fct_relevel(latent_class_data$Group, 
-                                           paste0(unique(latent_class_data$Group)))
+    latent_class_data$Group <- 
+      fct_relevel(latent_class_data$Group, 
+                  paste0(unique(latent_class_data$Group)))
     
     latent_class_chain_plot <- 
-      ggplot(data = latent_class_data, aes(x = run, y = prob, colour = Group)) +       
-      geom_line(aes(group = Group)) + geom_vline(xintercept = warm_up, size = 1) + 
+      ggplot(data = latent_class_data, 
+             aes(x = run, y = prob, colour = Group)) +       
+      geom_line(aes(group = Group)) + 
+      geom_vline(xintercept = warm_up, size = 1) + 
       theme_minimal() + xlab("Run") + ylab("Proportion of Sample") +  
       scale_color_manual(values = c(wes_palette("Darjeeling1")[1], 
                                     wes_palette("Darjeeling1")[3], 
@@ -357,7 +360,8 @@ generate_synthetic <-
            width = 7, height = 3, units = "in", device = "jpeg")
     
     #---- **pi chain ----
-    pi_chain_data <- pi_chain %>% as.data.frame() %>% rownames_to_column("Cell") %>% 
+    pi_chain_data <- pi_chain %>% as.data.frame() %>% 
+      rownames_to_column("Cell") %>% 
       pivot_longer(-c("Cell"), names_to = c("Group", "Run"), names_sep = ":", 
                    values_to = "probability") %>% 
       mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
@@ -368,7 +372,8 @@ generate_synthetic <-
     
     pi_chain_plot <- ggplot(data = pi_chain_data, 
                             aes(x = Run, y = probability, colour = Cell)) +       
-      geom_line(aes(group = Cell)) + geom_vline(xintercept = warm_up, size = 1) + 
+      geom_line(aes(group = Cell)) + 
+      geom_vline(xintercept = warm_up, size = 1) + 
       xlab("Run") + ylab("Probability of cell membership") +  
       scale_color_manual(values = extended_pallette6) + 
       scale_x_continuous(breaks = seq(0, B, by = 100)) +
@@ -410,8 +415,8 @@ generate_synthetic <-
     #---- **mu chain ----
     mu_chain_data <- mu_chain %>% as.data.frame() %>% 
       rownames_to_column("Z") %>% 
-      pivot_longer(-c("Z"), names_to = c("Group", "Cell", "Run"), names_sep = ":", 
-                   values_to = "mu") %>% 
+      pivot_longer(-c("Z"), names_to = c("Group", "Cell", "Run"), 
+                   names_sep = ":", values_to = "mu") %>% 
       mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
                                        Group == 2 ~ "Other", Group == 3 ~ "MCI", 
                                        Group == 4 ~ "Dementia")) %>% 
@@ -437,29 +442,29 @@ generate_synthetic <-
     
     #---- save datasets ----
     write_csv(gamma_plot_data, 
-              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                            "ADAMSA/standard_normal/diagnostics_data/run_", run, 
-                            "/ADAMSA_gamma_plot_data.csv"))
+              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                            "results/ADAMSA/standard_normal/diagnostics_data/", 
+                            "run_", run, "/ADAMSA_gamma_plot_data.csv"))
     
     write_csv(latent_class_data, 
-              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                            "ADAMSA/standard_normal/diagnostics_data/run_", run,  
-                            "/ADAMSA_latent_class_data.csv"))
+              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                            "results/ADAMSA/standard_normal/diagnostics_data/", 
+                            "run_", run,  "/ADAMSA_latent_class_data.csv"))
     
     write_csv(pi_chain_data, 
-              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                            "ADAMSA/standard_normal/diagnostics_data/run_", run,  
-                            "/ADAMSA_pi_chain_data.csv"))
+              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                            "results/ADAMSA/standard_normal/diagnostics_data/", 
+                            "run_", run,  "/ADAMSA_pi_chain_data.csv"))
     
     write_csv(Sigma_chain_data, 
-              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                            "ADAMSA/standard_normal/diagnostics_data/run_", run,  
-                            "/ADAMSA_Sigma_chain_data.csv"))
+              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                            "results/ADAMSA/standard_normal/diagnostics_data/", 
+                            "run_", run, "/ADAMSA_Sigma_chain_data.csv"))
     
     write_csv(mu_chain_data, 
-              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                            "ADAMSA/standard_normal/diagnostics_data/run_", run,  
-                            "/ADAMSA_mu_chain_data.csv"))
+              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                            "results/ADAMSA/standard_normal/diagnostics_data/", 
+                            "run_", run, "/ADAMSA_mu_chain_data.csv"))
   }
 
 #---- run function ----
