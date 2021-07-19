@@ -74,8 +74,237 @@ cross_class_label <- table(synthetic_sample$ETHNIC_label,
 synthetic_sample <- arrange(synthetic_sample, 
                             Astroke, desc(Black), desc(Hispanic))
 
-#---- Bayes Stuff ----
-#---- **simulation runs ----
+#---- **synthetic data function ----
+generate_synthetic <- 
+  function(warm_up, synthetic_sets, synthetic_sample, run, starting_props, A){
+    #generate subfolders to store results
+    dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                      "results/ADAMSA/standard_normal/run_", run))
+    
+    #---- number to sample ----
+    warm_up = warm_up
+    synthetic_sets = synthetic_sets
+    B = warm_up + synthetic_sets
+    
+    #---- chain storage ----
+    model_gamma_chain <- 
+      matrix(nrow = sum(length(normal_preds), length(other_preds), 
+                        length(mci_preds)), ncol = B) %>% as.data.frame() %>%
+      mutate("model" = c(rep("normal", length(normal_preds)), 
+                         rep("other", length(other_preds)), 
+                         rep("mci", length(mci_preds))), 
+             "pred" = c(normal_preds, mci_preds, other_preds))
+    
+    latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
+      set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
+    
+    pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
+      set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste, 
+                         collapse = ":")) %>% 
+      set_rownames(cross_class_label$`Cell Label`)
+    
+    Sigma_chain <- matrix(nrow = nrow(Z), ncol = 4*B) %>%
+      set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste,
+                         collapse = ":")) %>%
+      set_rownames(Z[, "label"])
+    
+    mu_chain <-
+      matrix(nrow = nrow(Z), ncol = 4*nrow(cross_class_label)*B) %>%
+      set_colnames(apply(
+        expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste,
+        collapse = ":")) %>% set_rownames(Z[, "label"])
+    
+    for(b in 1:B){
+      if(b == 1){
+        #---- ****init group membership ----
+        synthetic_sample[, "Group"] <- 
+          sample(seq(1, 4), size = nrow(synthetic_sample) , replace = TRUE, 
+                 prob = starting_props)
+      } else{
+        #---- ****latent class gammas ----
+        for(model in c("normal", "other", "mci")){
+          random_draw <- sample(seq(1, 10000), size = 1)
+          
+          prior_betas <- as.vector(get(paste0(model, "_betas"))[, random_draw])
+          prior_cov <- matrix(unlist(get(paste0(model, "_cov"))[, random_draw]), 
+                              nrow = nrow(prior_betas))
+          
+          model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
+            mvrnorm(n = 1, mu = unlist(prior_betas), Sigma = prior_cov)
+        }
+        
+        #---- ****group membership ----
+        group = 1
+        synthetic_sample[, "Group"] <- 0
+        for(model in c("normal", "other", "mci")){
+          subset_index <- which(synthetic_sample$Group == 0)
+          
+          synthetic_sample[subset_index, paste0("p_", model)] <- 
+            expit(as.matrix(synthetic_sample[subset_index, 
+                                             get(paste0(model, "_preds"))]) %*% 
+                    as.matrix(model_gamma_chain[which(model_gamma_chain$model == 
+                                                        model), b]))
+          
+          synthetic_sample[subset_index, "Group"] <- 
+            rbernoulli(n = length(subset_index), 
+                       p = synthetic_sample[subset_index, 
+                                            paste0("p_", model)])*group
+          
+          group = group + 1
+        }
+        
+        synthetic_sample[which(synthetic_sample$Group == 0), "Group"] <- 4
+      }
+      
+      #---- ****group: summary ----
+      latent_class_chain[, b] <- 
+        table(synthetic_sample$Group)/sum(table(synthetic_sample$Group))
+      
+      for(i in 1:4){
+        subset <- synthetic_sample %>% filter(Group == i) 
+        random_draw <- sample(seq(1, 10000), size = 1)
+        posterior_counts <- 
+          alpha_0_dist[which(alpha_0_dist$group_number == i), random_draw] + 
+          table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
+          dplyr::select("Freq") %>% unlist()
+        
+        #---- ****p(contingency table cell) ----
+        pi_chain[, paste0(i, ":", b)] <- 
+          rdirichlet(1, alpha = as.numeric(unlist(posterior_counts)))
+        
+        #---- ****contingency table count ----
+        contingency_table <- rmultinom(n = 1, size = nrow(subset), 
+                                       prob = pi_chain[, paste0(i, ":", b)])
+        UtU <- diag(contingency_table[, 1])
+        
+        #---- ****draw new UtU if needed ----
+        while(det(t(A) %*% UtU %*% A) < 1e-9){
+          random_draw <- sample(seq(1, 10000), size = 1)
+          new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
+            filter(group_number == i) + 
+            table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
+            dplyr::select("Freq") %>% unlist()
+          
+          UtU <- diag(unlist(new_counts[, 1]))
+        }
+        
+        #---- ****make U matrix ----
+        U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
+        
+        for(j in 1:nrow(contingency_table)){
+          if(contingency_table[j, ] == 0){next}
+          if(j == 1){
+            index = 1
+          } else{
+            index = sum(contingency_table[1:(j - 1), ]) + 1
+          }
+          U[index:(index - 1 + contingency_table[j, ]), j] <- 1
+        }
+        
+        #---- ****Mm ----
+        continuous_covariates <- subset %>% dplyr::select(all_of(Z[, "var"])) %>% 
+          as.matrix
+        
+        V_inv <- t(A) %*% UtU %*% A 
+        random_draw <- sample(seq(1, 10000), size = 1)
+        V_0_inv <- 
+          matrix(unlist(prior_V_inv[which(prior_V_inv$group_number == i), 
+                                    random_draw]), 
+                 nrow = nrow(V_inv), ncol = ncol(V_inv))
+        beta_0 <- matrix(unlist(priors_beta[which(priors_beta$group_number == i), 
+                                            random_draw]), 
+                         nrow = nrow(V_inv),  ncol = ncol(continuous_covariates))
+        
+        M <- solve(V_inv + kappa_0[i]*V_0_inv)
+        m <-  t(A) %*% t(U) %*% continuous_covariates - 
+          kappa_0[i]*V_0_inv %*% beta_0
+        
+        Mm <- M %*% m
+        
+        #---- ****draw Sigma | Y ----
+        ZtZ <- t(continuous_covariates) %*% continuous_covariates
+        third_term <- kappa_0[i]*t(beta_0) %*% V_0_inv %*% beta_0
+        
+        random_draw <- sample(seq(1, 10000), size = 1)
+        Sigma_prior <- 
+          matrix(unlist(prior_Sigma[which(prior_Sigma$group_number == i), 
+                                    random_draw]), 
+                 nrow = ncol(continuous_covariates))
+        sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
+                        S = Sigma_prior + ZtZ + third_term)
+        
+        Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
+        
+        #---- ****draw beta | Sigma, Y ----
+        beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y/kappa_0[i])
+        
+        #---- ****compute mu ----
+        mu_chain[, paste0(i, ":", seq(1, nrow(cross_class_label)), ":", b)] <- 
+          t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = nrow(Z), 
+                         byrow = FALSE))
+        
+        #---- ****draw data ----
+        #reformat contingency table
+        contingency_table %<>% cbind(do.call(cbind, list(
+          #Black              #Hispanic           #Stroke
+          rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>% 
+          set_colnames(c("Count", W))
+        
+        for(j in 1:nrow(contingency_table)){
+          if(contingency_table[j, "Count"] == 0){next}
+          if(j == 1){
+            index = 1
+          } else{
+            index = sum(contingency_table[1:(j - 1), "Count"]) + 1
+          }
+          #Z (continuous data)
+          if(contingency_table[j, "Count"] == 1){
+            subset[index:(index - 1 + contingency_table[j, "Count"]), 
+                   colnames(sig_Y)] <- 
+              t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
+                                  mu = mu_chain[, paste0(i, ":", j, ":", b)], 
+                                  Sigma = sig_Y)))
+          } else{
+            subset[index:(index - 1 + contingency_table[j, "Count"]), 
+                   colnames(sig_Y)] <- 
+              mvrnorm(n = contingency_table[j, "Count"],
+                      mu = mu_chain[, paste0(i, ":", j, ":", b)], 
+                      Sigma = sig_Y)
+          }
+          
+          #W (categorical data)
+          subset[index:(index - 1 + contingency_table[j, "Count"]), 
+                 colnames(contingency_table)[-1]] <- 
+            matrix(rep(contingency_table[j, colnames(contingency_table)[-1]], 
+                       contingency_table[j, "Count"]), 
+                   ncol = 3, byrow = TRUE)
+        }
+        
+        #---- ****replace synthetic data ----
+        synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN),
+                         c(W, Z[, "var"])] <- subset[, c(W, Z[, "var"])]
+      }
+      #---- ****post-processing ----
+      #---- ******race/ethnicity ----
+      synthetic_sample %<>% 
+        mutate("ETHNIC_label" = case_when(Black == 1 ~ "Black", 
+                                          Hispanic == 1 ~ "Hispanic", 
+                                          TRUE ~ "White"))
+      #---- ****save synthetic sample ----
+      if(b > warm_up){
+        write_csv(synthetic_sample, 
+                  file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                                "results/ADAMSA/standard_normal/run_", 
+                                run, "/ADAMSA_synthetic_", b - warm_up, ".csv"))
+      }
+    }
+    #---- ****return ----
+    return(list("model_gamma_chain" = model_gamma_chain, 
+                "latent_class_chain" = latent_class_chain, "pi_chain" = pi_chain, 
+                "Sigma_chain" = Sigma_chain, "mu_chain" = mu_chain))
+  }
+
+#---- run function ----
 #categorical vars contrasts matrix
 A = do.call(cbind, list(
   #intercept
@@ -87,238 +316,11 @@ A = do.call(cbind, list(
   #stroke main effect
   rep(c(0, 1), each = 3)))
 
-#---- **chain storage ----
-model_gamma_chain <- 
-  matrix(nrow = sum(length(normal_preds), length(other_preds), 
-                    length(mci_preds)), ncol = B) %>% as.data.frame() %>%
-  mutate("model" = c(rep("normal", length(normal_preds)), 
-                     rep("other", length(other_preds)), 
-                     rep("mci", length(mci_preds))), 
-         "pred" = c(normal_preds, mci_preds, other_preds))
-
-latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
-  set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
-
-pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
-  set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste, 
-                     collapse = ":")) %>% 
-  set_rownames(cross_class_label$`Cell Label`)
-
-Sigma_chain <- matrix(nrow = nrow(Z), ncol = 4*B) %>%
-  set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste,
-                     collapse = ":")) %>%
-  set_rownames(Z[, "label"])
-
-mu_chain <-
-  matrix(nrow = nrow(Z), ncol = 4*nrow(cross_class_label)*B) %>%
-  set_colnames(apply(
-    expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, paste,
-    collapse = ":")) %>% set_rownames(Z[, "label"])
-
-#---- **synthetic data function ----
-generate_synthetic <- function(warm_up, synthetic_sets, synthetic_sample, run, 
-                               starting_props){
-  #generate subfolders to store results
-  dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                    "results/ADAMSA/standard_normal/run_", run))
-  
-  #number to sample
-  warm_up = warm_up
-  synthetic_sets = synthetic_sets
-  B = warm_up + synthetic_sets
-  
-  for(b in 1:B){
-    if(b == 1){
-      #---- ****init group membership ----
-      synthetic_sample[, "Group"] <- 
-        sample(seq(1, 4), size = nrow(synthetic_sample) , replace = TRUE, 
-               prob = starting_props)
-    } else{
-      #---- ****latent class gammas ----
-      for(model in c("normal", "other", "mci")){
-        random_draw <- sample(seq(1, 10000), size = 1)
-        
-        prior_betas <- as.vector(get(paste0(model, "_betas"))[, random_draw])
-        prior_cov <- matrix(unlist(get(paste0(model, "_cov"))[, random_draw]), 
-                            nrow = nrow(prior_betas))
-        
-        model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
-          mvrnorm(n = 1, mu = unlist(prior_betas), Sigma = prior_cov)
-      }
-      
-      #---- ****group membership ----
-      group = 1
-      synthetic_sample[, "Group"] <- 0
-      for(model in c("normal", "other", "mci")){
-        subset_index <- which(synthetic_sample$Group == 0)
-        
-        synthetic_sample[subset_index, paste0("p_", model)] <- 
-          expit(as.matrix(synthetic_sample[subset_index, 
-                                           get(paste0(model, "_preds"))]) %*% 
-                  as.matrix(model_gamma_chain[which(model_gamma_chain$model == 
-                                                      model), b]))
-        
-        synthetic_sample[subset_index, "Group"] <- 
-          rbernoulli(n = length(subset_index), 
-                     p = synthetic_sample[subset_index, 
-                                          paste0("p_", model)])*group
-        
-        group = group + 1
-      }
-      
-      synthetic_sample[which(synthetic_sample$Group == 0), "Group"] <- 4
-    }
-    
-    #---- ****group: summary ----
-    latent_class_chain[, b] <- 
-      table(synthetic_sample$Group)/sum(table(synthetic_sample$Group))
-    
-    for(i in 1:4){
-      subset <- synthetic_sample %>% filter(Group == i) 
-      random_draw <- sample(seq(1, 10000), size = 1)
-      posterior_counts <- 
-        alpha_0_dist[which(alpha_0_dist$group_number == i), random_draw] + 
-        table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
-        dplyr::select("Freq") %>% unlist()
-      
-      #---- ****p(contingency table cell) ----
-      pi_chain[, paste0(i, ":", b)] <- 
-        rdirichlet(1, alpha = as.numeric(unlist(posterior_counts)))
-      
-      #---- ****contingency table count ----
-      contingency_table <- rmultinom(n = 1, size = nrow(subset), 
-                                     prob = pi_chain[, paste0(i, ":", b)])
-      UtU <- diag(contingency_table[, 1])
-      
-      #---- **draw new UtU if needed ----
-      while(det(t(A) %*% UtU %*% A) < 1e-9){
-        random_draw <- sample(seq(1, 10000), size = 1)
-        new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
-          filter(group_number == i) + 
-          table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
-          dplyr::select("Freq") %>% unlist()
-        
-        UtU <- diag(unlist(new_counts[, 1]))
-      }
-      
-      #---- ****make U matrix ----
-      U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
-      
-      for(j in 1:nrow(contingency_table)){
-        if(contingency_table[j, ] == 0){next}
-        if(j == 1){
-          index = 1
-        } else{
-          index = sum(contingency_table[1:(j - 1), ]) + 1
-        }
-        U[index:(index - 1 + contingency_table[j, ]), j] <- 1
-      }
-      
-      #---- ****Mm ----
-      continuous_covariates <- subset %>% dplyr::select(all_of(Z[, "var"])) %>% 
-        as.matrix
-      
-      V_inv <- t(A) %*% UtU %*% A 
-      random_draw <- sample(seq(1, 10000), size = 1)
-      V_0_inv <- 
-        matrix(unlist(prior_V_inv[which(prior_V_inv$group_number == i), 
-                                  random_draw]), 
-               nrow = nrow(V_inv), ncol = ncol(V_inv))
-      beta_0 <- matrix(unlist(priors_beta[which(priors_beta$group_number == i), 
-                                          random_draw]), 
-                       nrow = nrow(V_inv),  ncol = ncol(continuous_covariates))
-      
-      M <- solve(V_inv + kappa_0[i]*V_0_inv)
-      m <-  t(A) %*% t(U) %*% continuous_covariates - 
-        kappa_0[i]*V_0_inv %*% beta_0
-      
-      Mm <- M %*% m
-      
-      #---- ****draw Sigma | Y ----
-      ZtZ <- t(continuous_covariates) %*% continuous_covariates
-      third_term <- kappa_0[i]*t(beta_0) %*% V_0_inv %*% beta_0
-      
-      random_draw <- sample(seq(1, 10000), size = 1)
-      Sigma_prior <- 
-        matrix(unlist(prior_Sigma[which(prior_Sigma$group_number == i), 
-                                  random_draw]), 
-               nrow = ncol(continuous_covariates))
-      sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
-                      S = Sigma_prior + ZtZ + third_term)
-      
-      Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
-      
-      #---- ****draw beta | Sigma, Y ----
-      beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y/kappa_0[i])
-      
-      #---- ****compute mu ----
-      mu_chain[, paste0(i, ":", seq(1, nrow(cross_class_label)), ":", b)] <- 
-        t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = nrow(Z), 
-                       byrow = FALSE))
-      
-      #---- ****draw data ----
-      #reformat contingency table
-      contingency_table %<>% cbind(do.call(cbind, list(
-        #Black              #Hispanic           #Stroke
-        rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>% 
-        set_colnames(c("Count", W))
-      
-      for(j in 1:nrow(contingency_table)){
-        if(contingency_table[j, "Count"] == 0){next}
-        if(j == 1){
-          index = 1
-        } else{
-          index = sum(contingency_table[1:(j - 1), "Count"]) + 1
-        }
-        #Z (continuous data)
-        if(contingency_table[j, "Count"] == 1){
-          subset[index:(index - 1 + contingency_table[j, "Count"]), 
-                 colnames(sig_Y)] <- 
-            t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
-                                mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                                Sigma = sig_Y)))
-        } else{
-          subset[index:(index - 1 + contingency_table[j, "Count"]), 
-                 colnames(sig_Y)] <- 
-            mvrnorm(n = contingency_table[j, "Count"],
-                    mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                    Sigma = sig_Y)
-        }
-        
-        #W (categorical data)
-        subset[index:(index - 1 + contingency_table[j, "Count"]), 
-               colnames(contingency_table)[-1]] <- 
-          matrix(rep(contingency_table[j, colnames(contingency_table)[-1]], 
-                     contingency_table[j, "Count"]), 
-                 ncol = 3, byrow = TRUE)
-      }
-      
-      #---- ****replace synthetic data ----
-      synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN),
-                       c(W, Z[, "var"])] <- subset[, c(W, Z[, "var"])]
-    }
-    #---- **post-processing ----
-    #---- ****race/ethnicity ----
-    synthetic_sample %<>% 
-      mutate("ETHNIC_label" = case_when(Black == 1 ~ "Black", 
-                                        Hispanic == 1 ~ "Hispanic", 
-                                        TRUE ~ "White"))
-    #---- **save synthetic sample ----
-    if(b > warm_up){
-      write_csv(synthetic_sample, 
-                file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                              "results/ADAMSA/standard_normal/run_", 
-                              run, "/ADAMSA_synthetic_", b - warm_up, ".csv"))
-    }
-  }
-}
-
-#---- run function ----
 start <- Sys.time()
-generate_synthetic(warm_up = 500, synthetic_sets = 1000, synthetic_sample, 
-                   run = 1, 
-                   #warm start
-                   starting_props = c(0.40, 0.20, 0.10, 0.30))
+results <- generate_synthetic(warm_up = 50, synthetic_sets = 100, 
+                              synthetic_sample, run = 1, 
+                              #warm start
+                              starting_props = c(0.40, 0.20, 0.10, 0.30), A = A)
 stop <- Sys.time() - start
 
 #---- plots ----
