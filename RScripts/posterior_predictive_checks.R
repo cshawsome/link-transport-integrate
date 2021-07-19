@@ -13,9 +13,9 @@ ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
                         col_types = cols(HHIDPN = col_character())) 
 
 #Continuous vars (notation from Schafer 1997)
-Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
+Z <- cbind(c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
              "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
-           c("Age", "Total MMSE", "Serial 7s", "Immediate Word Recall", 
+           c("Age", "Normed Total MMSE", "Serial 7s", "Immediate Word Recall", 
              "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
              "Delayed Word Recall", "IADLs", "BMI")) %>% 
   set_colnames(c("var", "label"))
