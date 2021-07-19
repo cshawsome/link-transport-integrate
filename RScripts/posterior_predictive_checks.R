@@ -118,7 +118,7 @@ for(dem_group in unique(synthetic_count_plot_data$group)){
                  size = 2)
     
     ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                             "posteriors/cell_counts/group_specific/", 
+                             "posteriors/run_1/cell_counts/group_specific/", 
                              tolower(dem_group), "/", tolower(dem_group), "_", 
                              category, "_count.jpeg"), 
            width = 5, height = 3, units = "in")
