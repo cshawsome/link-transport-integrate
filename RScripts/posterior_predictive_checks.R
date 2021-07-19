@@ -31,18 +31,20 @@ ADAMS_sds <- apply(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
 
 #---- **synthetic ----
 num_samples = 1000
-for(run in 1:num_samples){
-  if(run == 1){
+for(sample in 1:num_samples){
+  if(sample == 1){
     synthetic_sample <- 
       read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                      "results/ADAMSA/standard_normal/ADAMSA_synthetic_", run, 
-                      ".csv")) %>% mutate("sample" = run)
+                      "results/ADAMSA/standard_normal/run_1/ADAMSA_synthetic_", 
+                      sample, ".csv")) %>% 
+      mutate("sample" = sample)
   } else{
     synthetic_sample %<>% 
       rbind(., 
             read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                            "results/ADAMSA/standard_normal/ADAMSA_synthetic_", 
-                            run, ".csv")) %>% mutate("sample" = run))
+                            "results/ADAMSA/standard_normal/run_1", 
+                            "/ADAMSA_synthetic_", sample, ".csv")) %>% 
+              mutate("sample" = sample))
   }
 }
 
