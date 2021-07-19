@@ -323,7 +323,7 @@ generate_synthetic <-
       facet_grid(rows = vars(factor(model, 
                                     levels = c("normal", "mci", "other"))), 
                  scales = "free") + 
-      geom_vline(xintercept = burn_in, size = 1) + theme_bw() + xlab("Run") + 
+      geom_vline(xintercept = warm_up, size = 1) + theme_bw() + xlab("Run") + 
       scale_x_discrete(breaks = seq(0, B, by = 100)) + 
       scale_color_manual(values = rev(extended_pallette14))
     
@@ -343,7 +343,7 @@ generate_synthetic <-
     
     latent_class_chain_plot <- 
       ggplot(data = latent_class_data, aes(x = run, y = prob, colour = Group)) +       
-      geom_line(aes(group = Group)) + geom_vline(xintercept = burn_in, size = 1) + 
+      geom_line(aes(group = Group)) + geom_vline(xintercept = warm_up, size = 1) + 
       theme_minimal() + xlab("Run") + ylab("Proportion of Sample") +  
       scale_color_manual(values = c(wes_palette("Darjeeling1")[1], 
                                     wes_palette("Darjeeling1")[3], 
@@ -368,7 +368,7 @@ generate_synthetic <-
     
     pi_chain_plot <- ggplot(data = pi_chain_data, 
                             aes(x = Run, y = probability, colour = Cell)) +       
-      geom_line(aes(group = Cell)) + geom_vline(xintercept = burn_in, size = 1) + 
+      geom_line(aes(group = Cell)) + geom_vline(xintercept = warm_up, size = 1) + 
       xlab("Run") + ylab("Probability of cell membership") +  
       scale_color_manual(values = extended_pallette6) + 
       scale_x_continuous(breaks = seq(0, B, by = 100)) +
@@ -394,7 +394,7 @@ generate_synthetic <-
     
     Sigma_chain_plot <- ggplot(data = Sigma_chain_data, 
                                aes(x = Run, y = variance, colour = Z)) +       
-      geom_line(aes(group = Z)) + geom_vline(xintercept = burn_in, size = 1) +
+      geom_line(aes(group = Z)) + geom_vline(xintercept = warm_up, size = 1) +
       xlab("Run") + ylab("Variance") +  
       scale_color_manual(values = rev(extended_pallette10)) + 
       scale_x_continuous(breaks = seq(0, B, by = 100)) + 
@@ -421,7 +421,7 @@ generate_synthetic <-
     mu_chain_plot <- ggplot(data = mu_chain_data, 
                             aes(x = Run, y = mu, colour = Group_label)) +       
       geom_line(aes(group = Group_label), alpha = 0.75) + 
-      xlab("Run") + ylab("mu") + geom_vline(xintercept = burn_in, size = 1) + 
+      xlab("Run") + ylab("mu") + geom_vline(xintercept = warm_up, size = 1) + 
       scale_color_manual(values = c(wes_palette("Darjeeling1")[1], 
                                     wes_palette("Darjeeling1")[3], 
                                     wes_palette("Darjeeling1")[5], 
@@ -439,27 +439,27 @@ generate_synthetic <-
     write_csv(gamma_plot_data, 
               file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
                             "ADAMSA/standard_normal/diagnostics_data/run_", run, 
-                            "ADAMSA_gamma_plot_data.csv"))
+                            "/ADAMSA_gamma_plot_data.csv"))
     
     write_csv(latent_class_data, 
               file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
                             "ADAMSA/standard_normal/diagnostics_data/run_", run,  
-                            "ADAMSA_latent_class_data.csv"))
+                            "/ADAMSA_latent_class_data.csv"))
     
     write_csv(pi_chain_data, 
               file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
                             "ADAMSA/standard_normal/diagnostics_data/run_", run,  
-                            "ADAMSA_pi_chain_data.csv"))
+                            "/ADAMSA_pi_chain_data.csv"))
     
     write_csv(Sigma_chain_data, 
               file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
                             "ADAMSA/standard_normal/diagnostics_data/run_", run,  
-                            "ADAMSA_Sigma_chain_data.csv"))
+                            "/ADAMSA_Sigma_chain_data.csv"))
     
     write_csv(mu_chain_data, 
               file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
                             "ADAMSA/standard_normal/diagnostics_data/run_", run,  
-                            "ADAMSA_mu_chain_data.csv"))
+                            "/ADAMSA_mu_chain_data.csv"))
   }
 
 #---- run function ----
