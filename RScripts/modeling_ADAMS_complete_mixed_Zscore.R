@@ -480,10 +480,22 @@ A = do.call(cbind, list(
   rep(c(0, 1), each = 3)))
 
 start <- Sys.time()
-results <- generate_synthetic(warm_up = 500, synthetic_sets = 1000, 
+#starting_props are for (normal, other, mci, dementia)
+warm_up = 500
+synthetic_sets = 1000
+results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
                               synthetic_sample, run = 1, 
                               #warm start
                               starting_props = c(0.40, 0.20, 0.10, 0.30), A = A)
+results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
+                              synthetic_sample, run = 2, 
+                              starting_props = c(0.25, 0.25, 0.25, 0.25), A = A)
+results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
+                              synthetic_sample, run = 3, 
+                              starting_props = c(0.10, 0.20, 0.30, 0.40), A = A)
+results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
+                              synthetic_sample, run = 4, 
+                              starting_props = c(0.10, 0.30, 0.40, 0.20), A = A)
 stop <- Sys.time() - start
 
 
