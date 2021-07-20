@@ -150,7 +150,7 @@ synthetic_continuous %<>%
 
 for(var in Z[, "var"]){
   synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
-    median(unlist(ADAMS_data[, var]))
+    median(unlist(ADAMS_subset[, var]))
 }
 
 synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
@@ -164,7 +164,7 @@ for(var_name in Z[, "label"]){
     geom_vline(xintercept = subset$truth, color = "#f2caaa" , size = 2)
   
   ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                           "posteriors/continuous_vars/median/overall/", 
+                           "posteriors/run_1/continuous_vars/median/overall/", 
                            var_name, ".jpeg"), 
          width = 5, height = 3, units = "in")
 } 
@@ -227,7 +227,7 @@ for(dem_group in unique(synthetic_continuous$group_label)){
                  size = 2)
     
     ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                             "posteriors/continuous_vars/median/", 
+                             "posteriors/run_1/continuous_vars/median/", 
                              tolower(dem_group), "/", tolower(dem_group), "_", 
                              var_name, ".jpeg"), 
            width = 5, height = 3, units = "in")
@@ -257,7 +257,7 @@ synthetic_continuous %<>%
 
 for(var in Z[, "var"]){
   synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
-    skewness(unlist(ADAMS_data[, var]))
+    skewness(unlist(ADAMS_subset[, var]))
 }
 
 synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
@@ -271,7 +271,7 @@ for(var_name in Z[, "label"]){
     geom_vline(xintercept = subset$truth, color = "#f2caaa" , size = 2)
   
   ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                           "posteriors/continuous_vars/skew/overall/", 
+                           "posteriors/run_1/continuous_vars/skew/overall/", 
                            var_name, ".jpeg"), 
          width = 5, height = 3, units = "in")
 } 
@@ -334,7 +334,7 @@ for(dem_group in unique(synthetic_continuous$group_label)){
                  size = 2)
     
     ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                             "posteriors/continuous_vars/skew/", 
+                             "posteriors/run_1/continuous_vars/skew/", 
                              tolower(dem_group), "/", tolower(dem_group), "_", 
                              var_name, ".jpeg"), 
            width = 5, height = 3, units = "in")
@@ -389,53 +389,53 @@ for(class in unique(synthetic_dementia_plot_data$Group_label)){
     ungroup() %>% summarise_at("n", ~ quantile(.x, probs = 0.025))
 }
 
-#----****plot: prop ----
-for(class in unique(synthetic_dementia_plot_data$Group_label)){
-  subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
-  ggplot(data = subset) + 
-    geom_histogram(aes(x = prop), 
-                   color = unique(subset$color), fill = unique(subset$color)) + 
-    theme_minimal() + ggtitle(class) + xlab("Proportion") + ylab("Frequency") +
-    geom_vline(xintercept = ADAMS_dementia_plot_data[
-      which(ADAMS_dementia_plot_data$Var1 == class), "prop"], size = 2) + 
-    geom_vline(xintercept = 
-                 unlist(percentiles[which(percentiles$class == class), 
-                                    "upper"]), size = 1, linetype = "dashed") + 
-    geom_vline(xintercept = 
-                 unlist(percentiles[which(percentiles$class == class), 
-                                    "lower"]), size = 1, 
-               linetype = "dashed")
-  
-  
-  ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                           "posteriors/impairment_classes/prop/", class, 
-                           ".jpeg"), 
-         height = 3, width = 5, units = "in")
-}
-
-#----****plot: count ----
-for(class in unique(synthetic_dementia_plot_data$Group_label)){
-  subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
-  ggplot(data = subset) + 
-    geom_histogram(aes(x = n), 
-                   color = unique(subset$color), fill = unique(subset$color)) + 
-    theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
-    geom_vline(xintercept = ADAMS_dementia_plot_data[
-      which(ADAMS_dementia_plot_data$Var1 == class), "Freq"], size = 2) + 
-    geom_vline(xintercept = 
-                 unlist(percentiles[which(percentiles$class == class), 
-                                    "upper_count"]), size = 1, 
-               linetype = "dashed") + 
-    geom_vline(xintercept = unlist(percentiles[which(percentiles$class == class), 
-                                               "lower_count"]), size = 1, 
-               linetype = "dashed")
-  
-  
-  ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                           "posteriors/impairment_classes/count/", class, 
-                           ".jpeg"), 
-         height = 3, width = 5, units = "in")
-}
+# #----****plot: prop ----
+# for(class in unique(synthetic_dementia_plot_data$Group_label)){
+#   subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
+#   ggplot(data = subset) + 
+#     geom_histogram(aes(x = prop), 
+#                    color = unique(subset$color), fill = unique(subset$color)) + 
+#     theme_minimal() + ggtitle(class) + xlab("Proportion") + ylab("Frequency") +
+#     geom_vline(xintercept = ADAMS_dementia_plot_data[
+#       which(ADAMS_dementia_plot_data$Var1 == class), "prop"], size = 2) + 
+#     geom_vline(xintercept = 
+#                  unlist(percentiles[which(percentiles$class == class), 
+#                                     "upper"]), size = 1, linetype = "dashed") + 
+#     geom_vline(xintercept = 
+#                  unlist(percentiles[which(percentiles$class == class), 
+#                                     "lower"]), size = 1, 
+#                linetype = "dashed")
+#   
+#   
+#   ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+#                            "posteriors/run_1/impairment_classes/prop/", class, 
+#                            ".jpeg"), 
+#          height = 3, width = 5, units = "in")
+# }
+# 
+# #----****plot: count ----
+# for(class in unique(synthetic_dementia_plot_data$Group_label)){
+#   subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
+#   ggplot(data = subset) + 
+#     geom_histogram(aes(x = n), 
+#                    color = unique(subset$color), fill = unique(subset$color)) + 
+#     theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
+#     geom_vline(xintercept = ADAMS_dementia_plot_data[
+#       which(ADAMS_dementia_plot_data$Var1 == class), "Freq"], size = 2) + 
+#     geom_vline(xintercept = 
+#                  unlist(percentiles[which(percentiles$class == class), 
+#                                     "upper_count"]), size = 1, 
+#                linetype = "dashed") + 
+#     geom_vline(xintercept = unlist(percentiles[which(percentiles$class == class), 
+#                                                "lower_count"]), size = 1, 
+#                linetype = "dashed")
+#   
+#   
+#   ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+#                            "posteriors/impairment_classes/count/", class, 
+#                            ".jpeg"), 
+#          height = 3, width = 5, units = "in")
+# }
 
 #---- ****combined plot ----
 combined_plot_data <- synthetic_dementia_plot_data %>% ungroup() %>% 
@@ -463,6 +463,7 @@ ggplot(data = combined_plot_data,
                  " synthetic datasets"))
 
 ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                         "posteriors/impairment_classes/count/combined.jpeg"), 
+                         "posteriors/run_1/impairment_classes/count/", 
+                         "combined.jpeg"), 
        height = 5, width = 7, units = "in")
 
