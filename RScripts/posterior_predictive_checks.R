@@ -48,6 +48,38 @@ for(sample in 1:num_samples){
   }
 }
 
+#---- chain convergence ----
+num_chains = 4
+for(chain in 1:num_chains){
+  if(chain == 1){
+    group_membership <- 
+      read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                      "results/ADAMSA/standard_normal/diagnostics_data/", 
+                      "run_", chain,  "/ADAMSA_latent_class_data.csv")) %>% 
+      mutate("chain" = chain)
+  } else{
+    group_membership %<>% 
+      rbind(., 
+            read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                            "results/ADAMSA/standard_normal/diagnostics_data/", 
+                            "run_", chain,  "/ADAMSA_latent_class_data.csv")) %>% 
+              mutate("chain" = chain))
+  }
+}
+
+#---- **plot ----
+chain_convergence <- ggplot(data = group_membership, 
+                            aes(x = run, y = prob, colour = as.factor(chain))) +       
+  geom_line(aes(group = as.factor(chain))) + xlab("Run") + ylab("Proportion") +
+  facet_grid(rows = vars(factor(Group, 
+                                levels = c("Unimpaired", "MCI", "Dementia", 
+                                           "Other")))) + theme_bw() 
+
+ggsave(filename = "group_membership_chains.jpeg", plot = chain_convergence, 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                     "diagnostics/standard_normal"), 
+       width = 6, height = 5, units = "in", device = "jpeg")
+
 #---- categorical checks ----
 #---- **race/ethnicity x stroke ----
 for(group in unique(ADAMS_train$Adem_dx_cat)){
@@ -449,7 +481,7 @@ combined_plot_data <- synthetic_dementia_plot_data %>% ungroup() %>%
                              Group_label == "Dementia" ~ "#ff0000"))
 combined_plot_data$Group_label <- 
   factor(combined_plot_data$Group_label, 
-            levels = c("Unimpaired", "Other", "MCI", "Dementia"))
+         levels = c("Unimpaired", "Other", "MCI", "Dementia"))
 
 ggplot(data = combined_plot_data, 
        aes(x = Group_label, y = mean, color = Group_label)) + 
