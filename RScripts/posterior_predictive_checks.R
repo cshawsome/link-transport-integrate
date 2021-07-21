@@ -66,7 +66,8 @@ for(chain in 1:num_chains){
       rbind(., 
             read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
                             "results/ADAMSA/standard_normal/diagnostics_data/", 
-                            "run_", chain,  "/ADAMSA_latent_class_data.csv")) %>% 
+                            "run_", chain,  
+                            "/ADAMSA_latent_class_data.csv")) %>% 
               mutate("chain" = chain))
   }
 }
@@ -385,15 +386,15 @@ ADAMS_dementia_plot_data <- as.data.frame(table(ADAMS_train$Adem_dx_cat)) %>%
   mutate("prop" = Freq/sum(Freq))
 
 #synthetic
-dem_sub <- synthetic_sample[, c("Group", "sample")] %>% 
+dem_sub <- synthetic_sample[, c("Group", "sample", "chain")] %>% 
   mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
                                    Group == 2 ~ "Other", 
                                    Group == 3 ~ "MCI", 
                                    TRUE ~ "Dementia"))
 
 synthetic_dementia_plot_data <- 
-  dem_sub %>% dplyr::count(sample, Group_label) %>%
-  group_by(sample) %>%
+  dem_sub %>% dplyr::count(chain, sample, Group_label) %>%
+  group_by(chain, sample) %>%
   mutate(prop = n/sum(n)) %>% 
   mutate_at("sample", as.numeric) %>% 
   mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
@@ -401,31 +402,64 @@ synthetic_dementia_plot_data <-
                              Group_label == "MCI" ~ "#fdab00", 
                              TRUE ~ "#ff0000"))
 
-percentiles <- tibble("class" = c("Unimpaired", "Other", "MCI", "Dementia"), 
-                      "upper" = 0, "lower" = 0, 
-                      "upper_count" = 0, "lower_count" = 0)
+#---- ****combined plot ----
+combined_plot_data <- synthetic_dementia_plot_data %>% ungroup() %>% 
+  group_by(chain, Group_label) %>% 
+  summarize_at("n", list("mean" = mean, "lower" = ~ quantile(.x, probs = 0.025), 
+                         "upper" = ~ quantile(.x, probs = 0.975))) %>% 
+  mutate("truth" = ADAMS_dementia_plot_data$Freq) %>% 
+  mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
+                             Group_label == "Other" ~ "#28bed9", 
+                             Group_label == "MCI" ~ "#fdab00", 
+                             Group_label == "Dementia" ~ "#ff0000")) %>% 
+  mutate("chain" = paste0("Chain ", chain))
 
-for(class in unique(synthetic_dementia_plot_data$Group_label)){
-  #props
-  percentiles[which(percentiles$class == class), "upper"] <- 
-    synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
-    ungroup() %>% summarise_at("prop", ~ quantile(.x, probs = 0.975))
-  
-  percentiles[which(percentiles$class == class), "lower"] <- 
-    synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
-    ungroup() %>% summarise_at("prop", ~ quantile(.x, probs = 0.025))
-  
-  #counts
-  percentiles[which(percentiles$class == class), "upper_count"] <- 
-    synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
-    ungroup() %>% summarise_at("n", ~ quantile(.x, probs = 0.975))
-  
-  percentiles[which(percentiles$class == class), "lower_count"] <- 
-    synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
-    ungroup() %>% summarise_at("n", ~ quantile(.x, probs = 0.025))
-}
+
+combined_plot_data$Group_label <- 
+  factor(combined_plot_data$Group_label, 
+         levels = c("Unimpaired", "Other", "MCI", "Dementia"))
+
+ggplot(data = combined_plot_data, 
+       aes(x = Group_label, y = mean, color = Group_label)) + 
+  geom_point(aes(size = 1)) + theme_bw() + 
+  geom_point(aes(x = Group_label, y = truth, color = Group_label, size = 1), 
+             shape = 18) + 
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.10) + 
+  xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
+  scale_color_manual(values = rev(c(combined_plot_data$color))) + 
+  facet_wrap(facets = as.factor(combined_plot_data$chain), nrow = 2, ncol = 2) +
+  ggtitle(paste0("95% Credible intervals from ", num_samples, 
+                 " synthetic datasets"))
+
+ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                         "posteriors/impairment_classes_combined_all_runs.jpeg"), 
+       height = 5, width = 7, units = "in")
 
 # #----****plot: prop ----
+# percentiles <- tibble("class" = c("Unimpaired", "Other", "MCI", "Dementia"), 
+# "upper" = 0, "lower" = 0, 
+# "upper_count" = 0, "lower_count" = 0)
+# 
+# for(class in unique(synthetic_dementia_plot_data$Group_label)){
+#   #props
+#   percentiles[which(percentiles$class == class), "upper"] <- 
+#     synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
+#     ungroup() %>% summarise_at("prop", ~ quantile(.x, probs = 0.975))
+#   
+#   percentiles[which(percentiles$class == class), "lower"] <- 
+#     synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
+#     ungroup() %>% summarise_at("prop", ~ quantile(.x, probs = 0.025))
+#   
+#   #counts
+#   percentiles[which(percentiles$class == class), "upper_count"] <- 
+#     synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
+#     ungroup() %>% summarise_at("n", ~ quantile(.x, probs = 0.975))
+#   
+#   percentiles[which(percentiles$class == class), "lower_count"] <- 
+#     synthetic_dementia_plot_data %>% filter(Group_label == class) %>% 
+#     ungroup() %>% summarise_at("n", ~ quantile(.x, probs = 0.025))
+# }
+# 
 # for(class in unique(synthetic_dementia_plot_data$Group_label)){
 #   subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
 #   ggplot(data = subset) + 
@@ -473,33 +507,5 @@ for(class in unique(synthetic_dementia_plot_data$Group_label)){
 #          height = 3, width = 5, units = "in")
 # }
 
-#---- ****combined plot ----
-combined_plot_data <- synthetic_dementia_plot_data %>% ungroup() %>% 
-  group_by(Group_label) %>% 
-  summarize_at("n", list("mean" = mean, "lower" = ~ quantile(.x, probs = 0.025), 
-                         "upper" = ~ quantile(.x, probs = 0.975))) %>% 
-  mutate("truth" = ADAMS_dementia_plot_data$Freq) %>% 
-  mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
-                             Group_label == "Other" ~ "#28bed9", 
-                             Group_label == "MCI" ~ "#fdab00", 
-                             Group_label == "Dementia" ~ "#ff0000"))
-combined_plot_data$Group_label <- 
-  factor(combined_plot_data$Group_label, 
-         levels = c("Unimpaired", "Other", "MCI", "Dementia"))
 
-ggplot(data = combined_plot_data, 
-       aes(x = Group_label, y = mean, color = Group_label)) + 
-  geom_point(aes(size = 1)) + theme_minimal() + 
-  geom_point(aes(x = Group_label, y = truth, color = Group_label, size = 1), 
-             shape = 18) +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.10) + 
-  xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
-  scale_color_manual(values = rev(c(combined_plot_data$color))) + 
-  ggtitle(paste0("95% Credible intervals from ", num_samples, 
-                 " synthetic datasets"))
-
-ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                         "posteriors/run_1/impairment_classes/count/", 
-                         "combined.jpeg"), 
-       height = 5, width = 7, units = "in")
 
