@@ -31,25 +31,29 @@ ADAMS_sds <- apply(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
 
 #---- **synthetic ----
 num_samples = 1000
+num_chains = 4
 for(sample in 1:num_samples){
-  if(sample == 1){
-    synthetic_sample <- 
-      read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                      "results/ADAMSA/standard_normal/run_1/ADAMSA_synthetic_", 
-                      sample, ".csv")) %>% 
-      mutate("sample" = sample)
-  } else{
-    synthetic_sample %<>% 
-      rbind(., 
-            read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                            "results/ADAMSA/standard_normal/run_1", 
-                            "/ADAMSA_synthetic_", sample, ".csv")) %>% 
-              mutate("sample" = sample))
+  for(chain in 1:num_chains){
+    if(sample == 1 & chain == 1){
+      synthetic_sample <- 
+        read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                        "results/ADAMSA/standard_normal/run_", chain, 
+                        "/ADAMSA_synthetic_", 
+                        sample, ".csv")) %>% 
+        mutate("sample" = sample, "chain" = chain)
+    } else{
+      synthetic_sample %<>% 
+        rbind(., 
+              read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                              "results/ADAMSA/standard_normal/run_", chain, 
+                              "/ADAMSA_synthetic_", sample, ".csv")) %>% 
+                mutate("sample" = sample, "chain" = chain))
+    }
   }
+  
 }
 
 #---- chain convergence ----
-num_chains = 4
 for(chain in 1:num_chains){
   if(chain == 1){
     group_membership <- 
