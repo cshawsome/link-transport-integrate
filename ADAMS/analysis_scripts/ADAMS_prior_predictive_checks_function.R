@@ -49,8 +49,9 @@ ADAMS_prior_predictive_checks <-
       for(i in 1:4){
         #---- **contingency cells ----
         subset <- synthetic_sample %>% filter(Group == i)
-        prior_counts <- alpha_0_dist[, c(sample(seq(1, 10000), size = 1), 
-                                         ncol(alpha_0_dist))] %>% 
+        prior_counts <- 
+          alpha_0_dist[, c(sample(seq(1, ncol(alpha_0_dist) - 3), size = 1), 
+                           ncol(alpha_0_dist))] %>% 
           filter(group_number == i)
         
         #---- **p(contingency table cell) ----
@@ -62,7 +63,7 @@ ADAMS_prior_predictive_checks <-
         
         #---- **draw new UtU if needed ----
         while(det(t(A) %*% UtU %*% A) < 1e-9){
-          random_draw <- sample(seq(1, 10000), size = 1)
+          random_draw <- sample(seq(1, ncol(alpha_0_dist) - 3), size = 1)
           new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
             filter(group_number == i)
           
