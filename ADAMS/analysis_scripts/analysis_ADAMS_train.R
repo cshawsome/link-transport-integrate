@@ -20,6 +20,7 @@ ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
 #---- prior predictive checks ----
 #---- **specifying priors ----
 #---- ****latent classes ----
+#based on analysis in priors_latent_classes.R
 for(group in c("normal", "mci", "other")){
   assign(paste0(group, "_betas"), 
          read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
