@@ -137,7 +137,8 @@ for(wave in c("A", "B", "C", "D")){
                   "Probable Dementia", "Dementia") ~ "Dementia",
               ADAMS_demdx[, paste0(wave, "dem_dx_cat")] == "Other" ~ "Other", 
               ADAMS_demdx[, paste0(wave, "dem_dx_cat")] == "MCI" ~ "MCI", 
-              ADAMS_demdx[, paste0(wave, "dem_dx_cat")] == "Normal" ~ "Normal")
+              ADAMS_demdx[, paste0(wave, "dem_dx_cat")] == "Normal" ~ 
+                "Unimpaired")
 }
 
 # #Sanity check
@@ -549,6 +550,6 @@ ADAMS_subset %<>% mutate("log_AAGE" = log(AAGE))
 #---- save dataset ----
 write_csv(ADAMS_subset, 
           file = paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                        "data/cleaned/ADAMS/ADAMS_subset_mixed.csv"))
+                        "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"))
 
 
