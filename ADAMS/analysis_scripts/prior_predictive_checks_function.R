@@ -1,17 +1,7 @@
 prior_predictive_checks <- 
-  function(normal_preds, other_preds, mci_preds){
+  function(normal_preds, other_preds, mci_preds, categorical_vars, continuous_vars){
     #---- select variables ----
     vars <- unique(c(normal_preds, other_preds, mci_preds, "ETHNIC_label"))
-    
-    #Categorical vars (notation from Schafer 1997)
-    W <- c("Black", "Hispanic", "Astroke")
-    #Continuous vars (notation from Schafer 1997)
-    Z <- cbind(c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES", 
-                 "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
-               c("Age", "Total MMSE", "Serial 7s", "Immediate Word Recall", 
-                 "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
-                 "Delayed Word Recall", "IADLs", "BMI")) %>% 
-      set_colnames(c("var", "label"))
     
     synthetic_sample <- ADAMS_train %>% 
       dplyr::select("HHIDPN", all_of(vars), "Adem_dx_cat") %>% 
