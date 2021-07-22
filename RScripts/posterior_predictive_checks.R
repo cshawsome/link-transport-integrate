@@ -13,8 +13,8 @@ ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
                         col_types = cols(HHIDPN = col_character())) 
 
 #Continuous vars (notation from Schafer 1997)
-Z <- cbind(c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
-             "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
+Z <- cbind(c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES", 
+             "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
            c("Age", "Normed Total MMSE", "Serial 7s", "Immediate Word Recall", 
              "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
              "Delayed Word Recall", "IADLs", "BMI")) %>% 
@@ -31,7 +31,7 @@ ADAMS_sds <- apply(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
 
 #---- **synthetic ----
 num_samples = 1000
-num_chains = 4
+num_chains = 5
 for(sample in 1:num_samples){
   for(chain in 1:num_chains){
     if(sample == 1 & chain == 1){
@@ -76,14 +76,15 @@ for(chain in 1:num_chains){
 chain_convergence <- ggplot(data = group_membership, 
                             aes(x = run, y = prob, colour = as.factor(chain))) +       
   geom_line(aes(group = as.factor(chain))) + xlab("Run") + ylab("Proportion") +
-  facet_grid(rows = vars(factor(Group, 
+  facet_wrap(facets = vars(factor(Group, 
                                 levels = c("Unimpaired", "MCI", "Dementia", 
-                                           "Other")))) + theme_bw() 
+                                           "Other"))), nrow = 2, ncol = 2) + 
+  theme_bw() 
 
 ggsave(filename = "group_membership_chains.jpeg", plot = chain_convergence, 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                      "diagnostics/standard_normal"), 
-       width = 6, height = 5, units = "in", device = "jpeg")
+       width = 10, height = 5, units = "in", device = "jpeg")
 
 #---- categorical checks ----
 #---- **race/ethnicity x stroke ----
@@ -427,13 +428,13 @@ ggplot(data = combined_plot_data,
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.10) + 
   xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
   scale_color_manual(values = rev(c(combined_plot_data$color))) + 
-  facet_wrap(facets = as.factor(combined_plot_data$chain), nrow = 2, ncol = 2) +
+  facet_wrap(facets = as.factor(combined_plot_data$chain), nrow = 2, ncol = 3) +
   ggtitle(paste0("95% Credible intervals from ", num_samples, 
                  " synthetic datasets"))
 
 ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                          "posteriors/impairment_classes_combined_all_runs.jpeg"), 
-       height = 5, width = 7, units = "in")
+       height = 5, width = 10, units = "in")
 
 # #----****plot: prop ----
 # percentiles <- tibble("class" = c("Unimpaired", "Other", "MCI", "Dementia"), 
