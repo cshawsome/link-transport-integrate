@@ -28,7 +28,7 @@ rand_variables <-
     paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"),
     paste0("r", rand_waves, "drinkn"))
 
-RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS/", 
                         "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
                  col_select = all_of(rand_variables)) %>% 
   mutate_at("hhidpn", as.character)
