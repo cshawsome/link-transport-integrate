@@ -1,16 +1,15 @@
 ADAMS_prior_predictive_checks <- 
   function(normal_preds, other_preds, mci_preds, categorical_vars, 
-           continuous_vars, id_var, extra_vars = NULL, dataset_to_copy, 
-           num_synthetic, orig_means, orig_sds){
+           continuous_vars, id_var, dementia_var, dataset_to_copy, 
+           num_synthetic, normal_betas, normal_cov, other_betas, other_cov, 
+           mci_betas, mci_cov, alpha_0_dist, orig_means, orig_sds){
     #---- select variables ----
-    vars <- unique(c(normal_preds, other_preds, mci_preds, extra_vars))
+    vars <- unique(c(normal_preds, other_preds, mci_preds, dementia_var))
     
     synthetic_sample <- dataset_to_copy %>% 
-      dplyr::select(id_var, all_of(vars)) %>% 
+      dplyr::select(all_of(id_var), all_of(vars)) %>% 
       #pre-allocate columns
       mutate("Group" = 0, "p_normal" = 0, "p_other" = 0, "p_mci" = 0)
-    
-    
     
     generate_data <- function(){
       #---- latent class ----
@@ -19,7 +18,8 @@ ADAMS_prior_predictive_checks <-
       
       for(model in c("normal", "other", "mci")){
         subset_index <- which(synthetic_sample$Group == 0)
-        random_draw <- sample(seq(1, 10000), size = 1)
+        random_draw <- sample(seq(1, ncol(get(paste0(model, "_cov")))), 
+                              size = 1)
         
         prior_betas <- as.vector(get(paste0(model, "_betas"))[, random_draw])
         prior_cov <- matrix(unlist(get(paste0(model, "_cov"))[, random_draw]), 
@@ -34,7 +34,8 @@ ADAMS_prior_predictive_checks <-
         
         synthetic_sample[subset_index, "Group"] <- 
           rbernoulli(n = length(subset_index), 
-                     p = synthetic_sample[subset_index, paste0("p_", model)])*group
+                     p = synthetic_sample[subset_index, 
+                                          paste0("p_", model)])*group
         
         group = group + 1
       }
