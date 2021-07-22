@@ -496,6 +496,9 @@ results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets
 results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
                               synthetic_sample, run = 4, 
                               starting_props = c(0.10, 0.30, 0.40, 0.20), A = A)
+results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
+                              synthetic_sample, run = 5, 
+                              starting_props = c(0.05, 0.15, 0.25, 0.55), A = A)
 stop <- Sys.time() - start
 
 
