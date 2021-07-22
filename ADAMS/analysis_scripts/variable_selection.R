@@ -379,8 +379,8 @@ train <- sample_frac(ADAMS_subset, size = 0.70, replace = FALSE)
 test <- ADAMS_subset %>% filter(!HHIDPN %in% train$HHIDPN)
 
 write_csv(train, file = paste0("/Users/CrystalShaw/Box/Dissertation/",
-                               "/data/cleaned/ADAMS/ADAMS_train.csv"))
+                               "/data/ADAMS/cleaned/ADAMS_train.csv"))
 write_csv(test, file = paste0("/Users/CrystalShaw/Box/Dissertation/",
-                              "/data/cleaned/ADAMS/ADAMS_test.csv"))
+                              "/data/ADAMS/cleaned/ADAMS_test.csv"))
 
 
