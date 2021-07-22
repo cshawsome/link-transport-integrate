@@ -1,6 +1,3 @@
-#---- priors ----
-
-
 #---- select variables ----
 #based on analysis in priors_latent_classes.R
 vars <- unique(c(normal_preds, other_preds, mci_preds, "ETHNIC_label"))
