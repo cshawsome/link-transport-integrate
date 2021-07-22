@@ -2,7 +2,8 @@ ADAMS_prior_predictive_checks <-
   function(normal_preds, other_preds, mci_preds, categorical_vars, 
            continuous_vars, id_var, dementia_var, dataset_to_copy, 
            num_synthetic, normal_betas, normal_cov, other_betas, other_cov, 
-           mci_betas, mci_cov, alpha_0_dist, orig_means, orig_sds){
+           mci_betas, mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
+           prior_beta, orig_means, orig_sds){
     #---- select variables ----
     vars <- unique(c(normal_preds, other_preds, mci_preds, dementia_var))
     
