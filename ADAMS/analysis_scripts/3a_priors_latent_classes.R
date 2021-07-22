@@ -9,11 +9,11 @@ options(scipen = 999)
 
 #---- read in data ----
 ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/cleaned/ADAMS/ADAMS_train.csv"))
+                                "data/ADAMS/cleaned/ADAMS_train.csv"))
 
 #---- predictors ----
-#normal model predictors
-normal_preds <- c("AAGE", "Black", "Hispanic", "ANMSETOT_norm", "ANSER7T", 
+#unimpaired model predictors
+unimpaired_preds <- c("AAGE", "Black", "Hispanic", "ANMSETOT_norm", "ANSER7T", 
                   "ANIMMCR", "ANRECYES", "ANWM1TOT", "proxy_cog")
 
 #other model predictors
@@ -26,24 +26,24 @@ mci_preds <- c("ANMSETOT_norm", "ANIMMCR", "Aiadla", "Astroke", "Abmi")
 bootstrap_models <- function(prop){
   subsample <- sample_frac(ADAMS_subset, size = prop, replace = TRUE)
   
-  normal_model <- 
-    glm(formula(paste("ANormal ~ ", paste(normal_preds, collapse = " + "), 
+  unimpaired_model <- 
+    glm(formula(paste("AUnimpaired ~ ", paste(unimpaired_preds, collapse = " + "), 
                       collapse = "")), family = "binomial", data = subsample)
   
   other_model <- 
     glm(formula(paste("AOther ~ ", paste(other_preds, collapse = " + "), 
                       collapse = "")), family = "binomial", data = subsample %>% 
-          filter(ANormal == 0))
+          filter(AUnimpaired == 0))
   
   mci_model <- 
     glm(formula(paste("AMCI ~ ", paste(mci_preds, collapse = " + "), 
                       collapse = "")), family = "binomial", data = subsample %>% 
-          filter(ANormal == 0 & AOther == 0)) 
+          filter(AUnimpaired == 0 & AOther == 0)) 
   
-  return(list("normal_betas" = coefficients(normal_model),
+  return(list("unimpaired_betas" = coefficients(unimpaired_model),
               "other_betas" = coefficients(other_model), 
               "mci_betas" = coefficients(mci_model), 
-              "normal_cov" = as.vector(vcov(normal_model)), 
+              "unimpaired_cov" = as.vector(vcov(unimpaired_model)), 
               "other_cov" = as.vector(vcov(other_model)), 
               "mci_cov" = as.vector(vcov(mci_model))))
 }
@@ -52,7 +52,7 @@ bootstrap_runs <- replicate(10000, bootstrap_models(prop = 1),
                             simplify = FALSE)
 
 #---- check distributions ----
-for(group in c("normal", "other", "mci")){
+for(group in c("unimpaired", "other", "mci")){
   data <- lapply(bootstrap_runs, "[[", paste0(group, "_betas")) %>% 
     do.call(rbind, .) %>% t() %>% as.data.frame() 
   
@@ -63,7 +63,7 @@ for(group in c("normal", "other", "mci")){
 
 #---- format output ----
 for(est in c("betas", "cov")){
-  for(group in c("normal", "other", "mci")){
+  for(group in c("unimpaired", "other", "mci")){
     data <- lapply(bootstrap_runs, "[[", paste0(group, "_", est)) %>% 
       do.call(rbind, .) %>% t() %>% as.data.frame() 
     
