@@ -34,15 +34,15 @@ for(group in c("normal", "mci", "other")){
 #---- ****contingency cells ----
 alpha_0_dist <- 
   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                  "bootstrap_cell_counts.csv")) 
+                  "ADAMS_train/bootstrap_cell_counts.csv")) 
 
 #--- ****beta and sigma ----
 priors_beta <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                               "priors/priors_beta.csv")) 
+                               "priors/ADAMS_train/priors_beta.csv")) 
 prior_V_inv <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                               "priors/priors_V_inv.csv")) 
+                               "priors/ADAMS_train/priors_V_inv.csv")) 
 prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                               "priors/priors_Sigma.csv")) 
+                               "priors/ADAMS_train/priors_Sigma.csv")) 
 
 #---- ****hyperparameters ----
 #DOF for inverse wishart
