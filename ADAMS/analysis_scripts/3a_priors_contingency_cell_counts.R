@@ -3,23 +3,16 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "here")
+p_load("tidyverse", "magrittr")
 
 options(scipen = 999)
 
 #---- read in data ----
 ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/cleaned/ADAMS/ADAMS_train.csv"))
+                                "data/ADAMS/cleaned/ADAMS_train.csv"))
 
 #Categorical vars (notation from Schafer 1997)
 W <- c("Black", "Hispanic", "Astroke")
-#Continuous vars (notation from Schafer 1997)
-Z <- cbind(c("AAGE", "ANMSETOT", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
-             "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
-           c("Age", "Total MMSE", "Serial 7s", "Immediate Word Recall", 
-             "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
-             "Delayed Word Recall", "IADLs", "BMI")) %>% 
-  set_colnames(c("var", "label"))
 
 #---- cross-class race/ethnicity x stroke ----
 overall_data_counts <- as.data.frame(table(ADAMS_subset$ETHNIC_label, 
@@ -62,14 +55,6 @@ for(b in 1:B){
   }
 }
 
-# bootstrap_percents <- 
-#   round(bootstrap_counts/colSums(bootstrap_counts)*100, 1) %>% 
-#   as.data.frame() %>%
-#   mutate("truth" = data_counts$percent, 
-#          "cat" = c("Black + No Stroke", "Hispanic + No Stroke", 
-#                    "White + No Stroke", "Black + Stroke", "Hispanic + Stroke", 
-#                    "White + Stroke")) %>% pivot_longer(-c("truth", "cat"))
-
 bootstrap_count_plot_data <- bootstrap_counts %>% mutate("truth" = 0) 
 
 for(group in unique(ADAMS_subset$Adem_dx_cat)){
@@ -85,27 +70,18 @@ bootstrap_count_plot_data %<>%
                        "White + No Stroke", "Black + Stroke", 
                        "Hispanic + Stroke", "White + Stroke"), 4)) %>% 
   pivot_longer(-c("group", "cell", "truth", "cat")) %>% 
-  mutate("color" = case_when(group == "Normal" ~ "#00a389", 
+  mutate("color" = case_when(group == "Unimpaired" ~ "#00a389", 
                              group == "Other" ~ "#28bed9", 
                              group == "MCI" ~ "#fdab00", 
                              group == "Dementia" ~ "#ff0000"))
 
 #---- **plots ----
-# #percent
-# for(category in unique(bootstrap_percents$cat)){
-#   subset <- bootstrap_percents %>% filter(cat == category)
-#   ggplot(data = subset , aes(x = value)) + 
-#     geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-#     xlab("Percent") + ggtitle(category) + 
-#     geom_vline(xintercept = subset$truth, color = "#f2caaa", size = 2)
-#   
-#   ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-#                            "priors/cell_counts/overall/", category, 
-#                            "_percent.jpeg"), 
-#          width = 5, height = 3, units = "in")
-# }
+#---- ****create directories ----
+for(dem_group in unique(ADAMS_subset$Adem_dx_cat)){
+  
+}
 
-#count
+#---- ****create plot ----
 for(dem_group in unique(bootstrap_count_plot_data$group)){
   for(category in unique(bootstrap_count_plot_data$cat)){
     subset <- bootstrap_count_plot_data %>% 
@@ -125,7 +101,7 @@ for(dem_group in unique(bootstrap_count_plot_data$group)){
 }
 
 bootstrap_counts %>% as.data.frame() %>% 
-  mutate("group_number" = case_when(group == "Normal" ~ 1, 
+  mutate("group_number" = case_when(group == "Unimpaired" ~ 1, 
                                     group == "Other" ~ 2, 
                                     group == "MCI" ~ 3, 
                                     group == "Dementia" ~ 4)) %>%
