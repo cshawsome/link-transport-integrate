@@ -85,7 +85,7 @@ ADAMS_prior_predictive_checks <-
         }
         
         #---- **draw Sigma_0----
-        random_draw <- sample(seq(1, 10000), size = 1)
+        random_draw <- sample(seq(1, ncol(prior_Sigma) - 2), size = 1)
         Sigma_prior <- prior_Sigma[, c(random_draw, ncol(prior_Sigma))] %>% 
           filter(group_number == i)
         sig_Y <- riwish(v = (nu_0), S = matrix(unlist(Sigma_prior[, 1]), 
@@ -113,9 +113,10 @@ ADAMS_prior_predictive_checks <-
         #reformat contingency table
         table <- contingency_table %>% as.data.frame() %>%
           cbind(do.call(cbind, list(
-            #Black              #Hispanic           #Stroke
-            rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>%
-          set_colnames(c("Count", W))
+            #Black              #Hispanic           
+            rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2),
+            #Stroke
+            c(rep(0, 3), rep(1, 3))))) %>% set_colnames(c("Count", W))
         
         for(j in 1:nrow(table)){
           if(table[j, "Count"] == 0){next}
@@ -132,8 +133,7 @@ ADAMS_prior_predictive_checks <-
           } else{
             subset[index:(index - 1 + table[j, "Count"]), Z[, "var"]] <-
               mvrnorm(n = table[j, "Count"],
-                      mu = mu[, paste0(i, ":", j)],
-                      Sigma = sig_Y)
+                      mu = mu[, paste0(i, ":", j)], Sigma = sig_Y)
           }
         }
         assign(paste0("Z_", i), subset[, all_of(Z[, "var"])])
