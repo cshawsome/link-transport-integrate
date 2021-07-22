@@ -3,14 +3,14 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "broom", "openxlsx", "sjPlot", "here")
+p_load("tidyverse", "magrittr", "broom", "sjPlot")
 
 options(scipen = 999)
 
 #---- read in data ----
 ADAMS_subset <- 
   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                  "data/cleaned/ADAMS/ADAMS_subset_mixed.csv"), 
+                  "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"), 
            col_types = cols("AYEAR" = col_character(), 
                             "Astroke" = col_character(), 
                             "Ahibpe" = col_character(), 
