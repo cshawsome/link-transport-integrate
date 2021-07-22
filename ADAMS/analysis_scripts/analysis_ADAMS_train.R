@@ -23,10 +23,10 @@ ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
 for(group in c("normal", "mci", "other")){
   assign(paste0(group, "_betas"), 
          read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                         "latent_class_", group, "_betas.csv")))
+                         "ADAMS_train/latent_class_", group, "_betas.csv")))
   assign(paste0(group, "_cov"), 
          read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                         "latent_class_", group, "_cov.csv")))
+                         "ADAMS_train/latent_class_", group, "_cov.csv")))
   
   assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
 }
