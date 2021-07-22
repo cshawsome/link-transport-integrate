@@ -211,7 +211,7 @@ tab_model(unimpaired_model_25, other_model_25, MCI_model_25, digits = 3,
           title = "Up to 25% sample dropped", show.loglik = TRUE,
           show.dev = TRUE,
           file = paste0("/Users/CrystalShaw/Box/Dissertation/",
-                        "/tables/priors/", 
+                        "tables/ADAMS/priors/", 
                         "dem_class_nested_regressions_25.html"))
 
 #---- select important predictors ----
