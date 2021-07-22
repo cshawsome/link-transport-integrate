@@ -73,3 +73,11 @@ A = do.call(cbind, list(
   rep(c(0, 1, 0), 2),
   #stroke main effect
   rep(c(0, 1), each = 3)))
+
+#---- **original means and variances ----
+ADAMS_data %<>% 
+  dplyr::select("HHIDPN", all_of(W), all_of(Z[, "var"]), "Adem_dx_cat") %>% 
+  filter(HHIDPN %in% ADAMS_train$HHIDPN)
+
+ADAMS_means <- colMeans(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])))
+ADAMS_sds <- apply(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])), 2, sd)

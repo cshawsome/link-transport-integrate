@@ -1,19 +1,16 @@
 prior_predictive_checks <- 
-  function(normal_preds, other_preds, mci_preds, categorical_vars, continuous_vars){
+  function(normal_preds, other_preds, mci_preds, categorical_vars, 
+           continuous_vars, id_var, extra_vars = NULL, dataset_to_copy, 
+           num_synthetic, orig_means, orig_sds){
     #---- select variables ----
-    vars <- unique(c(normal_preds, other_preds, mci_preds, "ETHNIC_label"))
+    vars <- unique(c(normal_preds, other_preds, mci_preds, extra_vars))
     
-    synthetic_sample <- ADAMS_train %>% 
-      dplyr::select("HHIDPN", all_of(vars), "Adem_dx_cat") %>% 
+    synthetic_sample <- dataset_to_copy %>% 
+      dplyr::select(id_var, all_of(vars)) %>% 
       #pre-allocate columns
       mutate("Group" = 0, "p_normal" = 0, "p_other" = 0, "p_mci" = 0)
     
-    ADAMS_data %<>% 
-      dplyr::select("HHIDPN", all_of(W), all_of(Z[, "var"]), "Adem_dx_cat") %>% 
-      filter(HHIDPN %in% ADAMS_train$HHIDPN)
     
-    ADAMS_means <- colMeans(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])))
-    ADAMS_sds <- apply(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
     
     generate_data <- function(){
       #---- latent class ----
@@ -148,10 +145,10 @@ prior_predictive_checks <-
     }
     
     #---- multiruns ----
-    start <- Sys.time()
-    runs = 1000
-    synthetic <- replicate(runs, generate_data(), simplify = FALSE) 
-    stop <- Sys.time() - start
+    #start <- Sys.time()
+    runs = num_synthetic
+    synthetic <- replicate(num_synthetic, generate_data(), simplify = FALSE) 
+    #stop <- Sys.time() - start
     
     #---- plots ----
     #---- **dem class ----
@@ -256,6 +253,5 @@ prior_predictive_checks <-
       }
     }
   }
-
 
 
