@@ -10,12 +10,23 @@ install_github("thomasp85/gganimate")
 library(gganimate)
 
 #---- read in data ----
-#---- **ADAMS ----
+#dataset we're trying to copy
 ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                                "data/ADAMS/cleaned/ADAMS_train.csv"))
-
+#complete dataset
 ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                               "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"))
+
+#---- define relevant vars ----
+#Categorical vars (notation from Schafer 1997)
+W <- c("Black", "Hispanic", "Astroke")
+#Continuous vars (notation from Schafer 1997)
+Z <- cbind(c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES", 
+             "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
+           c("Age", "Total MMSE", "Serial 7s", "Immediate Word Recall", 
+             "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
+             "Delayed Word Recall", "IADLs", "BMI")) %>% 
+  set_colnames(c("var", "label"))
 
 #---- prior predictive checks ----
 #---- **specifying priors ----
@@ -50,6 +61,7 @@ prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
 kappa_0 <- c(0.85, 0.85, 0.85, 0.85)
+
 
 #---- **contrasts matrix ----
 A = do.call(cbind, list(
