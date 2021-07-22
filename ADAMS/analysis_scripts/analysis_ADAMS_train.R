@@ -12,10 +12,10 @@ library(gganimate)
 #---- read in data ----
 #---- **ADAMS ----
 ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                               "data/cleaned/ADAMS/ADAMS_train.csv"))
+                               "data/ADAMS/cleaned/ADAMS_train.csv"))
 
 ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                              "data/cleaned/ADAMS/ADAMS_subset_mixed.csv"))
+                              "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"))
 
 #---- prior predictive checks ----
 #---- **specifying priors ----
