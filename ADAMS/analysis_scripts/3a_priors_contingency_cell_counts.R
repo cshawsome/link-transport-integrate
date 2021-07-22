@@ -78,7 +78,9 @@ bootstrap_count_plot_data %<>%
 #---- **plots ----
 #---- ****create directories ----
 for(dem_group in unique(ADAMS_subset$Adem_dx_cat)){
-  
+ dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_train/", 
+                   "priors/cell_counts/group_specific/", 
+                   tolower(dem_group))) 
 }
 
 #---- ****create plot ----
@@ -93,7 +95,7 @@ for(dem_group in unique(bootstrap_count_plot_data$group)){
                  size = 2)
     
     ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                             "priors/cell_counts/group_specific/", 
+                             "ADAMS_train/priors/cell_counts/group_specific/", 
                              tolower(dem_group), "/", tolower(dem_group), "_", 
                              category, "_count.jpeg"), 
            width = 5, height = 3, units = "in")
@@ -105,7 +107,7 @@ bootstrap_counts %>% as.data.frame() %>%
                                     group == "Other" ~ 2, 
                                     group == "MCI" ~ 3, 
                                     group == "Dementia" ~ 4)) %>%
-  write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+  write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/ADAMS_train/", 
                    "bootstrap_cell_counts.csv"))
 
 
