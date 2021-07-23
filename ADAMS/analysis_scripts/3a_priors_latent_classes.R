@@ -14,7 +14,7 @@ ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/",
 #---- predictors ----
 #unimpaired model predictors
 unimpaired_preds <- c("AAGE", "Black", "Hispanic", "ANMSETOT_norm", "ANSER7T", 
-                  "ANIMMCR", "ANRECYES", "ANWM1TOT", "proxy_cog")
+                      "ANIMMCR", "ANRECYES", "ANWM1TOT", "proxy_cog")
 
 #other model predictors
 other_preds <- c("AAGE", "ANMSETOT_norm", "ANIMMCR", "ANDELCOR")
@@ -27,7 +27,8 @@ bootstrap_models <- function(prop){
   subsample <- sample_frac(ADAMS_subset, size = prop, replace = TRUE)
   
   unimpaired_model <- 
-    glm(formula(paste("AUnimpaired ~ ", paste(unimpaired_preds, collapse = " + "), 
+    glm(formula(paste("AUnimpaired ~ ", 
+                      paste(unimpaired_preds, collapse = " + "), 
                       collapse = "")), family = "binomial", data = subsample)
   
   other_model <- 
@@ -48,8 +49,7 @@ bootstrap_models <- function(prop){
               "mci_cov" = as.vector(vcov(mci_model))))
 }
 
-bootstrap_runs <- replicate(10000, bootstrap_models(prop = 1), 
-                            simplify = FALSE)
+bootstrap_runs <- replicate(10000, bootstrap_models(prop = 1), simplify = FALSE)
 
 #---- check distributions ----
 for(group in c("unimpaired", "other", "mci")){
@@ -73,7 +73,7 @@ for(est in c("betas", "cov")){
     
     data %>% 
       write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                       "latent_class_", group, "_", est, ".csv"))
+                       "ADAMS_train/latent_class_", group, "_", est, ".csv"))
   }
 }
 
