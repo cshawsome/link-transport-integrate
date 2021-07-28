@@ -7,11 +7,8 @@ ADAMS_prior_predictive_checks <-
            path_to_folder){
     #---- create folders for results ----
     dir.create(paste0(path_to_folder, "impairment_classes/"), recursive = TRUE)
-    dir.create(paste0(path_to_folder, "cell_counts/overall/"), recursive = TRUE)
     
     for(class in unlist(unique(dataset_to_copy[, dementia_var]))){
-      dir.create(paste0(path_to_folder, "cell_counts/group_specific/", 
-                        tolower(class)), recursive = TRUE)
       dir.create(paste0(path_to_folder, "continuous_vars/", 
                         tolower(class)), recursive = TRUE)
     }
