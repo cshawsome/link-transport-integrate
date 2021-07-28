@@ -100,4 +100,7 @@ ADAMS_prior_predictive_checks(unimpaired_preds, other_preds, mci_preds,
                                 paste0("/Users/CrystalShaw/Box/Dissertation/", 
                                        "figures/ADAMS_train/", 
                                        "prior_predictive_checks/"))
+
+#---- sythetic datasets ----
+#---- posterior predictive checks ----
   
