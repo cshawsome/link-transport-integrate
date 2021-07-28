@@ -10,8 +10,8 @@ install_github("thomasp85/gganimate")
 library(gganimate)
 
 #---- source functions ----
-source(here::here("ADAMS", "analysis_scripts", "ADAMS_train", 
-                  "prior_predictive_checks_function.R"))
+source(here::here("ADAMS", "analysis_scripts", 
+                  "ADAMS_prior_predictive_checks_function.R"))
 
 #---- read in data ----
 #dataset we're trying to copy
