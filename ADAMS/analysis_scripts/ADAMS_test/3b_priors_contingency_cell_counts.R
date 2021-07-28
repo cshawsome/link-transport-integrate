@@ -29,7 +29,7 @@ for(group in unique(ADAMS_subset$Adem_dx_cat)){
 }
 
 #---- bootstrap props ----
-B = 10
+B = 10000
 bootstrap_props <- matrix(0, nrow = 6*4, ncol = (B + 2)) %>% 
   as.data.frame() %>% set_colnames(c(seq(1, B), "group", "cell"))
 bootstrap_props[, "group"] <- rep(unique(ADAMS_subset$Adem_dx_cat), each = 6)
@@ -91,7 +91,7 @@ for(dem_group in unique(bootstrap_props_plot_data$group)){
       filter(group == dem_group & cat == category)
     ggplot(data = subset , aes(x = value)) + 
       geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-      xlab("Count") + ggtitle(category) + 
+      xlab("Proportion") + ggtitle(category) + 
       geom_vline(xintercept = subset$truth, color = unique(subset$color), 
                  size = 2)
     
