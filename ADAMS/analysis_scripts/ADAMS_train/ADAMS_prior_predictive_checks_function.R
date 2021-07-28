@@ -16,19 +16,19 @@ ADAMS_prior_predictive_checks <-
     }
     
     #---- select variables ----
-    vars <- unique(c(normal_preds, other_preds, mci_preds, dementia_var))
+    vars <- unique(c(unimpaired_preds, other_preds, mci_preds, dementia_var))
     
     synthetic_sample <- dataset_to_copy %>% 
       dplyr::select(all_of(id_var), all_of(vars)) %>% 
       #pre-allocate columns
-      mutate("Group" = 0, "p_normal" = 0, "p_other" = 0, "p_mci" = 0)
+      mutate("Group" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
     
     generate_data <- function(){
       #---- latent class ----
       group = 1
       synthetic_sample[, "Group"] <- 0
       
-      for(model in c("normal", "other", "mci")){
+      for(model in c("unimpaired", "other", "mci")){
         subset_index <- which(synthetic_sample$Group == 0)
         random_draw <- sample(seq(1, ncol(get(paste0(model, "_cov")))), 
                               size = 1)
@@ -153,7 +153,7 @@ ADAMS_prior_predictive_checks <-
       
       #---- **return ----
       return(list("Group" = synthetic_sample$Group,
-                  "Z_normal" = Z_1 %>% mutate("color" = "#00a389"), 
+                  "Z_unimpaired" = Z_1 %>% mutate("color" = "#00a389"), 
                   "Z_other" = Z_2 %>% mutate("color" = "#28bed9"), 
                   "Z_mci" = Z_3 %>% mutate("color" = "#fdab00"),
                   "Z_dementia" = Z_4 %>% mutate("color" = "#ff0000")))
@@ -201,40 +201,37 @@ ADAMS_prior_predictive_checks <-
           which(to_copy_dementia_plot_data$Var1 == class), "prop"], size = 2, 
           color = unique(subset$color))
       
-      ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                               "priors/impairment_classes/", class, 
+      ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
                                "_line_only.jpeg"), 
              height = 3, width = 5, units = "in")
       
       #Prior predictive check
       ggplot(data = subset) + 
         geom_histogram(aes(x = prop), 
-                       color = unique(subset$color), fill = unique(subset$color)) + 
+                       color = unique(subset$color), 
+                       fill = unique(subset$color)) + 
         theme_minimal() + ggtitle(class) + xlab("Proportion") + ylab("Count") +
-        geom_vline(xintercept = ADAMS_dementia_plot_data[
-          which(ADAMS_dementia_plot_data$Var1 == class), "prop"], size = 2)
+        geom_vline(xintercept = to_copy_dementia_plot_data[
+          which(to_copy_dementia_plot_data$Var1 == class), "prop"], size = 2)
       
-      ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                               "priors/impairment_classes/", class, ".jpeg"), 
+      ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
+                               ".jpeg"), 
              height = 3, width = 5, units = "in")
     }
     
     #---- **class-specific continuous ----
-    ADAMS_data[which(ADAMS_data$Adem_dx_cat == "Unimpaired"), "Adem_dx_cat"] <- 
-      "Normal"
-    
-    for(class in unique(ADAMS_train$Adem_dx_cat)){
-      true_data <- ADAMS_data %>% 
-        dplyr::select(c(all_of(Z[, "var"]), "Adem_dx_cat")) %>% 
-        filter(Adem_dx_cat == class) %>% mutate("color" = "black")
+    for(class in unlist(unique(dataset_to_copy[, dementia_var]))){
+      true_data <- dataset_to_copy %>% 
+        dplyr::select(c(all_of(Z[, "var"]), all_of(dementia_var))) %>% 
+        filter(!!as.symbol(dementia_var) == class) %>% mutate("color" = "black")
       
       continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
       
       for(i in 1:length(continuous_list)){
         continuous_list[[i]] <- continuous_list[[i]] %>% 
           mutate("run" = i, "type" = "synthetic") %>% 
-          rbind(., true_data %>% dplyr::select(-"Adem_dx_cat") %>% 
-                  mutate("run" = i, "type" = "ADAMS"))
+          rbind(., true_data %>% dplyr::select(-dementia_var) %>% 
+                  mutate("run" = i, "type" = "True Data"))
       }
       
       continuous_list %<>% do.call(rbind, .) %>% as.data.frame() 
@@ -242,9 +239,11 @@ ADAMS_prior_predictive_checks <-
       for(var in Z[, "var"]){
         data <- continuous_list[, c(var, "run", "type", "color")]
         #unstandardize
+        data[, var] <- data[, var]*orig_sds[var] + orig_means[var]
+        
         synthetic_subset <- data %>% filter(type == "synthetic")
-        data[which(data$type == "synthetic"), var] <- 
-          synthetic_subset[, var]*ADAMS_sds[var] + ADAMS_means[var]
+        # data[which(data$type == "synthetic"), var] <- 
+        #   synthetic_subset[, var]*orig_sds[var] + orig_means[var]
         
         continuous_plot <- 
           ggplot(data = data, aes(color = type, fill = type)) + 
@@ -259,13 +258,10 @@ ADAMS_prior_predictive_checks <-
         animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
                 res = 150, renderer = gifski_renderer())
         
-        anim_save(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/",
-                                    "priors/continuous_vars/", tolower(class), "/", 
-                                    var, ".gif"),
+        anim_save(filename = paste0(path_to_folder, "continuous_vars/", 
+                                    tolower(class), "/", var, ".gif"),
                   animation = last_animation(),
                   renderer = gifski_renderer())
       }
     }
   }
-
-
