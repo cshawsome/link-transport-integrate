@@ -11,10 +11,9 @@ library(gganimate)
 
 #---- read in data ----
 #dataset we're trying to copy
-ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                               "data/ADAMS/cleaned/ADAMS_train.csv"))
-dataset_to_copy[which(dataset_to_copy[, dementia_var] == "Normal"), 
-                dementia_var] <- "Unimpaired"
+dataset_to_copy <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                   "data/ADAMS/cleaned/ADAMS_train.csv"))
+
 #complete dataset
 ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                               "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"))
