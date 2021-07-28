@@ -3,7 +3,8 @@ ADAMS_prior_predictive_checks <-
            continuous_vars, id_var, dementia_var, dataset_to_copy, 
            num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 
            other_cov, mci_betas, mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
-           prior_beta, contrasts_matrix, orig_means, orig_sds, path_to_folder){
+           prior_beta, nu_0, kappa_0, contrasts_matrix, orig_means, orig_sds, 
+           path_to_folder){
     #---- create folders for results ----
     dir.create(paste0(path_to_folder, "impairment_classes/"), recursive = TRUE)
     dir.create(paste0(path_to_folder, "cell_counts/overall/"), recursive = TRUE)
