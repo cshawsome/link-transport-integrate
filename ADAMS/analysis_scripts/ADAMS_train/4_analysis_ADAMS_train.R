@@ -9,6 +9,10 @@ p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack",
 install_github("thomasp85/gganimate")
 library(gganimate)
 
+#---- source functions ----
+source(here::here("ADAMS", "analysis_scripts", "ADAMS_train", 
+                  "prior_predictive_checks_function.R"))
+
 #---- read in data ----
 #dataset we're trying to copy
 dataset_to_copy <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
@@ -57,12 +61,6 @@ prior_V_inv <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
                                "priors/ADAMS_train/priors_Sigma.csv")) 
 
-#---- ****hyperparameters ----
-#DOF for inverse wishart
-nu_0 <- 65
-#scaling for inverse wishart as variance of Beta
-kappa_0 <- c(0.85, 0.85, 0.85, 0.85)
-
 #---- **contrasts matrix ----
 A = do.call(cbind, list(
   #intercept
@@ -74,6 +72,12 @@ A = do.call(cbind, list(
   #stroke main effect
   rep(c(0, 1), each = 3)))
 
+#---- **hyperparameters (tune these) ----
+#DOF for inverse wishart
+nu_0 <- 65
+#scaling for inverse wishart as variance of Beta
+kappa_0 <- c(0.85, 0.85, 0.85, 0.85)
+
 #---- **original means and variances ----
 ADAMS_data %<>% 
   dplyr::select("HHIDPN", all_of(W), all_of(Z[, "var"]), "Adem_dx_cat") %>% 
@@ -83,6 +87,17 @@ ADAMS_means <- colMeans(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])))
 ADAMS_sds <- apply(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
 
 #---- **run checks ----
-dementia_var <- "Adem_dx_cat"
-path_to_folder <- paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                         "ADAMS_train/prior_predictive_checks/")
+ADAMS_prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
+                              categorical_vars = W, continuous_vars = Z, 
+                              id_var = "HHIDPN", dementia_var = "Adem_dx_cat", 
+                              dataset_to_copy, num_synthetic = 1000, 
+                              unimpaired_betas, unimpaired_cov, other_betas, 
+                              other_cov, mci_betas, mci_cov, alpha_0_dist, 
+                              prior_Sigma, prior_V_inv, prior_beta, nu_0, 
+                              kappa_0, contrasts_matrix = A, 
+                              orig_means = ADAMS_means, orig_sds = ADAMS_sds, 
+                              path_to_folder = 
+                                paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                       "figures/ADAMS_train/", 
+                                       "prior_predictive_checks/"))
+  
