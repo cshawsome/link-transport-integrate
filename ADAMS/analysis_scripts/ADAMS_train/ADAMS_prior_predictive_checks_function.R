@@ -1,9 +1,20 @@
 ADAMS_prior_predictive_checks <- 
-  function(normal_preds, other_preds, mci_preds, categorical_vars, 
+  function(unimpaired_preds, other_preds, mci_preds, categorical_vars, 
            continuous_vars, id_var, dementia_var, dataset_to_copy, 
-           num_synthetic, normal_betas, normal_cov, other_betas, other_cov, 
-           mci_betas, mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
-           prior_beta, orig_means, orig_sds){
+           num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 
+           other_cov, mci_betas, mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
+           prior_beta, contrasts_matrix, orig_means, orig_sds, path_to_folder){
+    #---- create folders for results ----
+    dir.create(paste0(path_to_folder, "impairment_classes/"), recursive = TRUE)
+    dir.create(paste0(path_to_folder, "cell_counts/overall/"), recursive = TRUE)
+    
+    for(class in unlist(unique(dataset_to_copy[, dementia_var]))){
+      dir.create(paste0(path_to_folder, "cell_counts/group_specific/", 
+                        tolower(class)), recursive = TRUE)
+      dir.create(paste0(path_to_folder, "continuous_vars/", 
+                        tolower(class)), recursive = TRUE)
+    }
+    
     #---- select variables ----
     vars <- unique(c(normal_preds, other_preds, mci_preds, dementia_var))
     
@@ -63,7 +74,7 @@ ADAMS_prior_predictive_checks <-
         UtU <- diag(contingency_table[, 1])
         
         #---- **draw new UtU if needed ----
-        while(det(t(A) %*% UtU %*% A) < 1e-9){
+        while(det(t(contrasts_matrix) %*% UtU %*% contrasts_matrix) < 1e-9){
           random_draw <- sample(seq(1, ncol(alpha_0_dist) - 3), size = 1)
           new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
             filter(group_number == i)
@@ -106,8 +117,9 @@ ADAMS_prior_predictive_checks <-
         
         #---- **compute mu ----
         mu[, paste0(i, ":", seq(1, 6))] <-
-          t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = nrow(Z),
-                         byrow = FALSE))
+          t(contrasts_matrix %*% 
+              matrix(beta_Sigma_Y, nrow = ncol(contrasts_matrix), 
+                     ncol = nrow(Z), byrow = FALSE))
         
         #---- **draw data ----
         #reformat contingency table
@@ -155,9 +167,8 @@ ADAMS_prior_predictive_checks <-
     
     #---- plots ----
     #---- **dem class ----
-    ADAMS_data[which(ADAMS_data$Adem_dx_cat == "Normal"), "Adem_dx_cat"] <- 
-      "Unimpaired"
-    ADAMS_dementia_plot_data <- as.data.frame(table(ADAMS_data$Adem_dx_cat)) %>% 
+    to_copy_dementia_plot_data <- 
+      as.data.frame(table(dataset_to_copy[, dementia_var])) %>% 
       mutate("prop" = Freq/sum(Freq))
     
     dem_sub <- lapply(synthetic, "[[", "Group") %>% do.call(cbind, .) %>% 
@@ -181,13 +192,13 @@ ADAMS_prior_predictive_checks <-
     for(class in unique(synthetic_dementia_plot_data$Group_label)){
       subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
       
-      #ADAMS data only
+      #original data only
       ggplot(data = subset) + 
         geom_histogram(aes(x = prop),
                        color = "white", fill = "white") +
         theme_minimal() + ggtitle(class) + xlab("Proportion") + ylab("Count") +
-        geom_vline(xintercept = ADAMS_dementia_plot_data[
-          which(ADAMS_dementia_plot_data$Var1 == class), "prop"], size = 2, 
+        geom_vline(xintercept = to_copy_dementia_plot_data[
+          which(to_copy_dementia_plot_data$Var1 == class), "prop"], size = 2, 
           color = unique(subset$color))
       
       ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 

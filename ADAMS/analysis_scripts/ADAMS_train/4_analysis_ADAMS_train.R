@@ -83,5 +83,6 @@ ADAMS_means <- colMeans(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])))
 ADAMS_sds <- apply(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
 
 #---- **run checks ----
+dementia_var <- "Adem_dx_cat"
 path_to_folder <- paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                         "prior_predictive_checks")
+                         "ADAMS_train/prior_predictive_checks/")
