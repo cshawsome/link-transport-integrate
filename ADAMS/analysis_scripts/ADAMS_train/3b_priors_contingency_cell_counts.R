@@ -79,8 +79,8 @@ bootstrap_count_plot_data %<>%
 #---- ****create directories ----
 for(dem_group in unique(ADAMS_subset$Adem_dx_cat)){
  dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_train/", 
-                   "priors/cell_counts/group_specific/", 
-                   tolower(dem_group))) 
+                   "prior_predictive_checks/cell_counts/group_specific/", 
+                   tolower(dem_group)), recursive = TRUE) 
 }
 
 #---- ****create plot ----
@@ -95,9 +95,9 @@ for(dem_group in unique(bootstrap_count_plot_data$group)){
                  size = 2)
     
     ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                             "ADAMS_train/priors/cell_counts/group_specific/", 
-                             tolower(dem_group), "/", tolower(dem_group), "_", 
-                             category, "_count.jpeg"), 
+                             "ADAMS_train/prior_predictive_checks/cell_counts/", 
+                             "group_specific/", tolower(dem_group), "/", 
+                             tolower(dem_group), "_", category, "_count.jpeg"), 
            width = 5, height = 3, units = "in")
   } 
 }
