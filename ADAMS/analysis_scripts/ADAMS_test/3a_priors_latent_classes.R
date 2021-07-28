@@ -7,9 +7,9 @@ p_load("tidyverse", "magrittr", "here")
 
 options(scipen = 999)
 
-#---- read in data ----
+#---- read in training data ----
 ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/ADAMS/cleaned/ADAMS_test.csv"))
+                                "data/ADAMS/cleaned/ADAMS_train.csv"))
 
 #---- predictors ----
 #unimpaired model predictors
@@ -73,10 +73,6 @@ for(est in c("betas", "cov")){
     
     data %>% 
       write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                       "ADAMS_train/latent_class_", group, "_", est, ".csv"))
+                       "ADAMS_test/latent_class_", group, "_", est, ".csv"))
   }
 }
-
-
-
-
