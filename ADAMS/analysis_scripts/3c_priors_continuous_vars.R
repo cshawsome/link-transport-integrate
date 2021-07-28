@@ -18,14 +18,14 @@ group <- c("Adem_dx_cat")
 
 ADAMS_train <- 
   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                  "data/cleaned/ADAMS/ADAMS_train.csv")) %>% 
-  mutate("group_number" = case_when(Adem_dx_cat == "Normal" ~ 1, 
+                  "data/ADAMS/cleaned/ADAMS_train.csv")) %>% 
+  mutate("group_number" = case_when(Adem_dx_cat == "Unimpaired" ~ 1, 
                                     Adem_dx_cat == "Other" ~ 2, 
                                     Adem_dx_cat == "MCI" ~ 3, 
                                     Adem_dx_cat == "Dementia" ~ 4))
 
 alpha_0_dist <- 
-  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/ADAMS_train/", 
                   "bootstrap_cell_counts.csv")) 
 
 #---- arrange data ----
