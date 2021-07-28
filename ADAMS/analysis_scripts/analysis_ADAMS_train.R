@@ -33,7 +33,7 @@ Z <- cbind(c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES",
 #---- **specifying priors ----
 #---- ****latent classes ----
 #based on analysis in priors_latent_classes.R
-for(group in c("normal", "mci", "other")){
+for(group in c("unimpaired", "mci", "other")){
   assign(paste0(group, "_betas"), 
          read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
                          "ADAMS_train/latent_class_", group, "_betas.csv")))
@@ -62,7 +62,6 @@ prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
 kappa_0 <- c(0.85, 0.85, 0.85, 0.85)
-
 
 #---- **contrasts matrix ----
 A = do.call(cbind, list(
