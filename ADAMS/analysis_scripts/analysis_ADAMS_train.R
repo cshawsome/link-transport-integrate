@@ -13,6 +13,8 @@ library(gganimate)
 #dataset we're trying to copy
 ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                                "data/ADAMS/cleaned/ADAMS_train.csv"))
+dataset_to_copy[which(dataset_to_copy[, dementia_var] == "Normal"), 
+                dementia_var] <- "Unimpaired"
 #complete dataset
 ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
                               "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"))
@@ -81,3 +83,7 @@ ADAMS_data %<>%
 
 ADAMS_means <- colMeans(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])))
 ADAMS_sds <- apply(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
+
+#---- **run checks ----
+path_to_folder <- paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                         "prior_predictive_checks")
