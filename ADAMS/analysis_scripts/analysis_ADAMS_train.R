@@ -77,7 +77,7 @@ A = do.call(cbind, list(
 #---- **original means and variances ----
 ADAMS_data %<>% 
   dplyr::select("HHIDPN", all_of(W), all_of(Z[, "var"]), "Adem_dx_cat") %>% 
-  filter(HHIDPN %in% ADAMS_train$HHIDPN)
+  filter(HHIDPN %in% dataset_to_copy$HHIDPN)
 
 ADAMS_means <- colMeans(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])))
 ADAMS_sds <- apply(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
