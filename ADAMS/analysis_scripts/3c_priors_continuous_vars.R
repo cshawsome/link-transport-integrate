@@ -128,10 +128,10 @@ for(b in 1:B){
 
 #---- save ----
 write_csv(priors_beta, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                              "priors/priors_beta.csv"))
+                              "priors/ADAMS_train/priors_beta.csv"))
 write_csv(priors_V_inv, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                               "priors/priors_V_inv.csv"))
+                               "priors/ADAMS_train/priors_V_inv.csv"))
 write_csv(priors_Sigma, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                               "priors/priors_Sigma.csv"))
+                               "priors/ADAMS_train/priors_Sigma.csv"))
 
 
