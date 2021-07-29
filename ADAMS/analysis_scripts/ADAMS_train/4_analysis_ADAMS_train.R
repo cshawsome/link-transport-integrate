@@ -11,7 +11,7 @@ library(gganimate)
 
 #---- source functions ----
 source(here::here("ADAMS", "analysis_scripts", 
-                  "ADAMS_prior_predictive_checks_function.R"))
+                  "ADAMS_prior_predictive_checks_counts_function.R"))
 
 #---- read in data ----
 #dataset we're trying to copy
@@ -87,20 +87,22 @@ ADAMS_means <- colMeans(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])))
 ADAMS_sds <- apply(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
 
 #---- **run checks ----
-ADAMS_prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
-                              categorical_vars = W, continuous_vars = Z, 
-                              id_var = "HHIDPN", dementia_var = "Adem_dx_cat", 
-                              dataset_to_copy, num_synthetic = 1000, 
-                              unimpaired_betas, unimpaired_cov, other_betas, 
-                              other_cov, mci_betas, mci_cov, alpha_0_dist, 
-                              prior_Sigma, prior_V_inv, prior_beta, nu_0, 
-                              kappa_0, contrasts_matrix = A, 
-                              orig_means = ADAMS_means, orig_sds = ADAMS_sds, 
-                              path_to_folder = 
-                                paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                       "figures/ADAMS_train/", 
-                                       "prior_predictive_checks/"))
+ADAMS_prior_predictive_checks_counts(unimpaired_preds, other_preds, mci_preds, 
+                                     categorical_vars = W, continuous_vars = Z, 
+                                     id_var = "HHIDPN", 
+                                     dementia_var = "Adem_dx_cat", 
+                                     dataset_to_copy, num_synthetic = 1000, 
+                                     unimpaired_betas, unimpaired_cov, 
+                                     other_betas, other_cov, mci_betas, mci_cov, 
+                                     alpha_0_dist, prior_Sigma, prior_V_inv, 
+                                     prior_beta, nu_0, kappa_0, 
+                                     contrasts_matrix = A, 
+                                     orig_means = ADAMS_means, 
+                                     orig_sds = ADAMS_sds, 
+                                     path_to_folder = 
+                                       paste0("/Users/CrystalShaw/Box/
+                                              Dissertation/figures/ADAMS_train/", 
+                                              "prior_predictive_checks/"))
 
 #---- sythetic datasets ----
 #---- posterior predictive checks ----
-  
