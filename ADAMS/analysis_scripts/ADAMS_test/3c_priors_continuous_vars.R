@@ -133,5 +133,3 @@ write_csv(priors_V_inv, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
                                "priors/ADAMS_test/priors_V_inv.csv"))
 write_csv(priors_Sigma, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
                                "priors/ADAMS_test/priors_Sigma.csv"))
-
-
