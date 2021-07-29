@@ -115,9 +115,10 @@ categorical_vars <- W
 continuous_vars <- Z
 id_var <- "HHIDPN"
 dementia_var <- "Adem_dx_cat"
-path_to_folder <- paste0("/Users/CrystalShaw/Box/
-                                              Dissertation/figures/ADAMS_train/", 
-                         "prior_predictive_checks/")
+path_to_analyses_folder <- 
+  paste0("/Users/CrystalShaw/Box/Dissertation/analyses/ADAMS_train/")
+path_to_figures_folder <- 
+  paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_train/")
 
 
 results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
