@@ -65,7 +65,8 @@ ADAMS_prior_predictive_checks_props <-
           filter(group_number == i)
         
         #---- **p(contingency table cell) ----
-        pi <- rdirichlet(1, alpha = as.numeric(unlist(prior_counts[, 1])))
+        pi <- rdirichlet(1, alpha = as.numeric(unlist(prior_counts[, 1]))*
+                           nrow(subset))
         
         #---- **contingency table count ----
         contingency_table <- rmultinom(n = 1, size = nrow(subset), prob = pi)
@@ -77,7 +78,7 @@ ADAMS_prior_predictive_checks_props <-
           new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
             filter(group_number == i)
           
-          UtU <- diag(unlist(new_counts[, 1]))
+          UtU <- diag(unlist(new_counts[, 1])*nrow(subset))
         }
         
         #---- **make U matrix ----
