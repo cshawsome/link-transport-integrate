@@ -1,4 +1,4 @@
-ADAMS_prior_predictive_checks <- 
+ADAMS_prior_predictive_checks_props <- 
   function(unimpaired_preds, other_preds, mci_preds, categorical_vars, 
            continuous_vars, id_var, dementia_var, dataset_to_copy, 
            num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 

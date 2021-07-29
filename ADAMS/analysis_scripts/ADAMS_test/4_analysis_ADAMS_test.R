@@ -11,7 +11,7 @@ library(gganimate)
 
 #---- source functions ----
 source(here::here("ADAMS", "analysis_scripts", 
-                  "ADAMS_prior_predictive_checks_function.R"))
+                  "ADAMS_prior_predictive_checks_props_function.R"))
 
 #---- read in data ----
 #dataset we're trying to copy
@@ -40,10 +40,10 @@ Z <- cbind(c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES",
 for(group in c("unimpaired", "mci", "other")){
   assign(paste0(group, "_betas"), 
          read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                         "ADAMS_train/latent_class_", group, "_betas.csv")))
+                         "ADAMS_test/latent_class_", group, "_betas.csv")))
   assign(paste0(group, "_cov"), 
          read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                         "ADAMS_train/latent_class_", group, "_cov.csv")))
+                         "ADAMS_test/latent_class_", group, "_cov.csv")))
   
   assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
 }
@@ -51,15 +51,15 @@ for(group in c("unimpaired", "mci", "other")){
 #---- ****contingency cells ----
 alpha_0_dist <- 
   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                  "ADAMS_train/bootstrap_cell_counts.csv")) 
+                  "ADAMS_test/bootstrap_cell_props.csv")) 
 
 #--- ****beta and sigma ----
 priors_beta <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                               "priors/ADAMS_train/priors_beta.csv")) 
+                               "priors/ADAMS_test/priors_beta.csv")) 
 prior_V_inv <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                               "priors/ADAMS_train/priors_V_inv.csv")) 
+                               "priors/ADAMS_test/priors_V_inv.csv")) 
 prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                               "priors/ADAMS_train/priors_Sigma.csv")) 
+                               "priors/ADAMS_test/priors_Sigma.csv")) 
 
 #---- **contrasts matrix ----
 A = do.call(cbind, list(
@@ -87,20 +87,22 @@ ADAMS_means <- colMeans(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])))
 ADAMS_sds <- apply(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
 
 #---- **run checks ----
-ADAMS_prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
-                              categorical_vars = W, continuous_vars = Z, 
-                              id_var = "HHIDPN", dementia_var = "Adem_dx_cat", 
-                              dataset_to_copy, num_synthetic = 1000, 
-                              unimpaired_betas, unimpaired_cov, other_betas, 
-                              other_cov, mci_betas, mci_cov, alpha_0_dist, 
-                              prior_Sigma, prior_V_inv, prior_beta, nu_0, 
-                              kappa_0, contrasts_matrix = A, 
-                              orig_means = ADAMS_means, orig_sds = ADAMS_sds, 
-                              path_to_folder = 
-                                paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                       "figures/ADAMS_train/", 
-                                       "prior_predictive_checks/"))
+ADAMS_prior_predictive_checks_props(unimpaired_preds, other_preds, mci_preds, 
+                                    categorical_vars = W, continuous_vars = Z, 
+                                    id_var = "HHIDPN", 
+                                    dementia_var = "Adem_dx_cat", 
+                                    dataset_to_copy, num_synthetic = 1000, 
+                                    unimpaired_betas, unimpaired_cov, 
+                                    other_betas, other_cov, mci_betas, mci_cov, 
+                                    alpha_0_dist, prior_Sigma, prior_V_inv, 
+                                    prior_beta, nu_0, kappa_0, 
+                                    contrasts_matrix = A, 
+                                    orig_means = ADAMS_means, 
+                                    orig_sds = ADAMS_sds, 
+                                    path_to_folder = 
+                                      paste0("/Users/CrystalShaw/Box/
+                                             Dissertation/figures/ADAMS_test/", 
+                                             "prior_predictive_checks/"))
 
 #---- sythetic datasets ----
 #---- posterior predictive checks ----
-  
