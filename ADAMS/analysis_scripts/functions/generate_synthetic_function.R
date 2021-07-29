@@ -1,6 +1,11 @@
 generate_synthetic <- 
-  function(warm_up, num_synthetic_sets, dataset_to_copy, run_number, 
-           starting_props, contrasts_matrix){
+  function(warm_up, num_synthetic_sets, run_number, starting_props, 
+           unimpaired_preds, other_preds, mci_preds, categorical_vars, 
+           continuous_vars, id_var, dementia_var, dataset_to_copy, 
+           num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 
+           other_cov, mci_betas, mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
+           prior_beta, nu_0, kappa_0, contrasts_matrix, orig_means, orig_sds, 
+           path_to_folder){
     #---- generate subfolders for results ----
     dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
                       "results/ADAMSA/standard_normal/run_", run))
