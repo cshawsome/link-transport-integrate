@@ -104,7 +104,7 @@ for(b in 1:B){
       new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
         filter(group_number == group)
       
-      UtU <- diag(unlist(new_counts[, 1]))
+      UtU <- diag(round(unlist(new_counts[, 1])*nrow(subset)))
     }
     
     #---- beta hat ----
@@ -128,10 +128,10 @@ for(b in 1:B){
 
 #---- save ----
 write_csv(priors_beta, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                              "priors/ADAMS_train/priors_beta.csv"))
+                              "priors/ADAMS_test/priors_beta.csv"))
 write_csv(priors_V_inv, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                               "priors/ADAMS_train/priors_V_inv.csv"))
+                               "priors/ADAMS_test/priors_V_inv.csv"))
 write_csv(priors_Sigma, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                               "priors/ADAMS_train/priors_Sigma.csv"))
+                               "priors/ADAMS_test/priors_Sigma.csv"))
 
 
