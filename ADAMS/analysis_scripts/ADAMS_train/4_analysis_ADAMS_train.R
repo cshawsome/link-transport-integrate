@@ -100,14 +100,26 @@ ADAMS_prior_predictive_checks_counts(unimpaired_preds, other_preds, mci_preds,
                                      orig_means = ADAMS_means, 
                                      orig_sds = ADAMS_sds, 
                                      path_to_folder = 
-                                       paste0("/Users/CrystalShaw/Box/
-                                              Dissertation/figures/ADAMS_train/", 
+                                       paste0("/Users/CrystalShaw/Box/",
+                                              "Dissertation/figures/", 
+                                              "ADAMS_train/", 
                                               "prior_predictive_checks/"))
 
 #---- synthetic datasets ----
 #starting_props are for (normal, other, mci, dementia)
 warm_up = 500
-synthetic_sets = 1000
+num_synthetic = 1000
+run_number = 1
+starting_props = rep(0.25, 4)
+categorical_vars <- W
+continuous_vars <- Z
+id_var <- "HHIDPN"
+dementia_var <- "Adem_dx_cat"
+path_to_folder <- paste0("/Users/CrystalShaw/Box/
+                                              Dissertation/figures/ADAMS_train/", 
+                         "prior_predictive_checks/")
+
+
 results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
                               synthetic_sample, run = 1, 
                               #warm start
