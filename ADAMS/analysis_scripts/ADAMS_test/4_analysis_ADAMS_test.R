@@ -10,7 +10,7 @@ install_github("thomasp85/gganimate")
 library(gganimate)
 
 #---- source functions ----
-source(here::here("ADAMS", "analysis_scripts", 
+source(here::here("ADAMS", "analysis_scripts", "functions", 
                   "ADAMS_prior_predictive_checks_props_function.R"))
 
 #---- read in data ----
