@@ -104,5 +104,5 @@ ADAMS_prior_predictive_checks_props(unimpaired_preds, other_preds, mci_preds,
                                              Dissertation/figures/ADAMS_test/", 
                                              "prior_predictive_checks/"))
 
-#---- sythetic datasets ----
+#---- synthetic datasets ----
 #---- posterior predictive checks ----
