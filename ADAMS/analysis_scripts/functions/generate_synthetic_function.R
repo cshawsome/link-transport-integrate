@@ -21,12 +21,12 @@ generate_synthetic <-
     
     #---- chain storage ----
     model_gamma_chain <- 
-      matrix(nrow = sum(length(normal_preds), length(other_preds), 
+      matrix(nrow = sum(length(unimpaired_preds), length(other_preds), 
                         length(mci_preds)), ncol = B) %>% as.data.frame() %>%
-      mutate("model" = c(rep("normal", length(normal_preds)), 
+      mutate("model" = c(rep("unimpaired", length(unimpaired_preds)), 
                          rep("other", length(other_preds)), 
                          rep("mci", length(mci_preds))), 
-             "pred" = c(normal_preds, mci_preds, other_preds))
+             "pred" = c(unimpaired_preds, mci_preds, other_preds))
     
     latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
       set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
@@ -56,7 +56,7 @@ generate_synthetic <-
                  prob = starting_props)
       } else{
         #---- ****latent class gammas ----
-        for(model in c("normal", "other", "mci")){
+        for(model in c("unimpaired", "other", "mci")){
           random_draw <- sample(seq(1, 10000), size = 1)
           
           prior_betas <- as.vector(get(paste0(model, "_betas"))[, random_draw])
@@ -70,7 +70,7 @@ generate_synthetic <-
         #---- ****group membership ----
         group = 1
         synthetic_sample[, "Group"] <- 0
-        for(model in c("normal", "other", "mci")){
+        for(model in c("unimpaired", "other", "mci")){
           subset_index <- which(synthetic_sample$Group == 0)
           
           synthetic_sample[subset_index, paste0("p_", model)] <- 
@@ -250,7 +250,7 @@ generate_synthetic <-
              aes(x = reorder(Run, sort(as.numeric(Run))), y = gamma, 
                  colour = pred)) + geom_line(aes(group = pred)) + 
       facet_grid(rows = vars(factor(model, 
-                                    levels = c("normal", "mci", "other"))), 
+                                    levels = c("unimpaired", "mci", "other"))), 
                  scales = "free") + 
       geom_vline(xintercept = warm_up, size = 1) + theme_bw() + xlab("Run") + 
       scale_x_discrete(breaks = seq(0, B, by = 100)) + 
