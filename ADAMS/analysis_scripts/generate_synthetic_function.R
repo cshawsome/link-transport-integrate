@@ -1,10 +1,4 @@
-#---- Package loading + options ----
-if (!require("pacman")){
-  install.packages("pacman", repos='http://cran.us.r-project.org')
-}
 
-p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "MBSP", "wesanderson", "RColorBrewer", "forecast")
 
 #---- read in data ----
 #---- **ADAMS ----
@@ -467,39 +461,7 @@ generate_synthetic <-
                             "run_", run, "/ADAMSA_mu_chain_data.csv"))
   }
 
-#---- run function ----
-#categorical vars contrasts matrix
-A = do.call(cbind, list(
-  #intercept
-  rep(1, 6),
-  #race/ethnicity main effect: Black
-  rep(c(1, 0, 0), 2),
-  #race/ethnicity main effect: Hispanic
-  rep(c(0, 1, 0), 2),
-  #stroke main effect
-  rep(c(0, 1), each = 3)))
 
-start <- Sys.time()
-#starting_props are for (normal, other, mci, dementia)
-warm_up = 500
-synthetic_sets = 1000
-results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
-                              synthetic_sample, run = 1, 
-                              #warm start
-                              starting_props = c(0.40, 0.20, 0.10, 0.30), A = A)
-results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
-                              synthetic_sample, run = 2, 
-                              starting_props = c(0.25, 0.25, 0.25, 0.25), A = A)
-results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
-                              synthetic_sample, run = 3, 
-                              starting_props = c(0.10, 0.20, 0.30, 0.40), A = A)
-results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
-                              synthetic_sample, run = 4, 
-                              starting_props = c(0.10, 0.30, 0.40, 0.20), A = A)
-results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
-                              synthetic_sample, run = 5, 
-                              starting_props = c(0.05, 0.15, 0.25, 0.55), A = A)
-stop <- Sys.time() - start
 
 
 

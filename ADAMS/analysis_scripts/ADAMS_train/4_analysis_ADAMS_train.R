@@ -105,4 +105,24 @@ ADAMS_prior_predictive_checks_counts(unimpaired_preds, other_preds, mci_preds,
                                               "prior_predictive_checks/"))
 
 #---- synthetic datasets ----
+#starting_props are for (normal, other, mci, dementia)
+warm_up = 500
+synthetic_sets = 1000
+results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
+                              synthetic_sample, run = 1, 
+                              #warm start
+                              starting_props = c(0.40, 0.20, 0.10, 0.30), A = A)
+results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
+                              synthetic_sample, run = 2, 
+                              starting_props = c(0.25, 0.25, 0.25, 0.25), A = A)
+results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
+                              synthetic_sample, run = 3, 
+                              starting_props = c(0.10, 0.20, 0.30, 0.40), A = A)
+results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
+                              synthetic_sample, run = 4, 
+                              starting_props = c(0.10, 0.30, 0.40, 0.20), A = A)
+results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
+                              synthetic_sample, run = 5, 
+                              starting_props = c(0.05, 0.15, 0.25, 0.55), A = A)
+
 #---- posterior predictive checks ----
