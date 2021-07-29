@@ -1,22 +1,22 @@
 generate_synthetic <- 
-  function(warm_up, num_synthetic_sets, run_number, starting_props, 
+  function(warm_up, run_number, starting_props, 
            unimpaired_preds, other_preds, mci_preds, categorical_vars, 
            continuous_vars, id_var, dementia_var, dataset_to_copy, 
            num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 
            other_cov, mci_betas, mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
-           prior_beta, nu_0, kappa_0, contrasts_matrix, orig_means, orig_sds, 
-           path_to_folder){
+           prior_beta, nu_0, kappa_0, contrasts_matrix, path_to_analyses_folder, 
+           path_to_figures_folder){
     #---- generate subfolders for results ----
-    dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                      "results/ADAMSA/standard_normal/run_", run))
-    dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/figures/diagnostics/", 
-                      "standard_normal/run_", run))
-    dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/results/", 
-                      "ADAMSA/standard_normal/diagnostics_data/run_", run))
+    dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
+                      run_number), recursive = TRUE)
+    dir.create(paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
+               recursive = TRUE)
+    dir.create(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
+                      run_number), recursive = TRUE)
     
     #---- sampling counts ----
     warm_up = warm_up
-    synthetic_sets = synthetic_sets
+    synthetic_sets = num_synthetic
     B = warm_up + synthetic_sets
     
     #---- chain storage ----
