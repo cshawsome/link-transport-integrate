@@ -4,8 +4,8 @@ generate_synthetic <-
            continuous_vars, id_var, dementia_var, dataset_to_copy, 
            num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 
            other_cov, mci_betas, mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
-           prior_beta, nu_0, kappa_0, contrasts_matrix, path_to_analyses_folder, 
-           path_to_figures_folder){
+           prior_beta, nu_0, kappa_0, contrasts_matrix,
+           path_to_analyses_folder, path_to_figures_folder){
     #---- generate subfolders for results ----
     dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
                       run_number), recursive = TRUE)
@@ -18,6 +18,13 @@ generate_synthetic <-
     warm_up = warm_up
     synthetic_sets = num_synthetic
     B = warm_up + synthetic_sets
+    
+    #---- count contingency cells ----
+    cross_class_label <- 
+      table(dataset_to_copy$ETHNIC_label, dataset_to_copy$Astroke) %>% 
+      as.data.frame() %>% 
+      mutate("Stroke" = ifelse(Var2 == 0, "No Stroke", "Stroke")) %>% 
+      unite("Cell Label", c("Var1", "Stroke"), sep = " | ", remove = FALSE)
     
     #---- chain storage ----
     model_gamma_chain <- 
