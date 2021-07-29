@@ -25,8 +25,8 @@ ADAMS_train <-
                                     Adem_dx_cat == "Dementia" ~ 4))
 
 alpha_0_dist <- 
-  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/ADAMS_train/", 
-                  "bootstrap_cell_counts.csv")) 
+  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/ADAMS_test/", 
+                  "bootstrap_cell_props.csv")) 
 
 #---- arrange data ----
 ADAMS_train %<>% arrange(Astroke, desc(Black), desc(Hispanic))
