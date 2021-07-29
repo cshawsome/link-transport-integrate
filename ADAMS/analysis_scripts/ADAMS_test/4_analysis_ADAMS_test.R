@@ -16,7 +16,7 @@ source(here::here("ADAMS", "analysis_scripts",
 #---- read in data ----
 #dataset we're trying to copy
 dataset_to_copy <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                   "data/ADAMS/cleaned/ADAMS_train.csv"))
+                                   "data/ADAMS/cleaned/ADAMS_test.csv"))
 
 #complete dataset
 ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
