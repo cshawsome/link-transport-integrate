@@ -100,8 +100,8 @@ ADAMS_prior_predictive_checks_props(unimpaired_preds, other_preds, mci_preds,
                                     orig_means = ADAMS_means, 
                                     orig_sds = ADAMS_sds, 
                                     path_to_folder = 
-                                      paste0("/Users/CrystalShaw/Box/
-                                             Dissertation/figures/ADAMS_test/", 
+                                      paste0("/Users/CrystalShaw/Box/",
+                                             "Dissertation/figures/ADAMS_test/", 
                                              "prior_predictive_checks/"))
 
 #---- synthetic datasets ----
