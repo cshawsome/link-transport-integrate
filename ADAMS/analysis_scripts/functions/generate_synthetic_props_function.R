@@ -3,8 +3,8 @@ generate_synthetic_props <-
            unimpaired_preds, other_preds, mci_preds, categorical_vars, 
            continuous_vars, id_var, dementia_var, dataset_to_copy, 
            num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 
-           other_cov, mci_betas, mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
-           prior_beta, nu_0, kappa_0, contrasts_matrix,
+           other_cov, mci_betas, mci_cov, alpha_0_dist, count = "no", 
+           prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, contrasts_matrix,
            path_to_analyses_folder, path_to_figures_folder){
     #---- generate subfolders for results ----
     dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
@@ -115,9 +115,14 @@ generate_synthetic_props <-
           next
         } else{
           random_draw <- sample(seq(1, 10000), size = 1)
-          posterior_counts <- 
-            alpha_0_dist[which(alpha_0_dist$group_number == i), random_draw]*
-            nrow(subset) + 
+          posterior_first_count <- 
+            alpha_0_dist[which(alpha_0_dist$group_number == i), random_draw]
+          
+          if(count == "no"){
+            posterior_first_count = posterior_first_count*nrow(subset)
+          }
+          
+          posterior_count <- posterior_first_count + 
             table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
             dplyr::select("Freq") %>% unlist()
           
@@ -133,8 +138,13 @@ generate_synthetic_props <-
           #---- ****draw new UtU if needed ----
           while(det(t(A) %*% UtU %*% A) < 1e-9){
             random_draw <- sample(seq(1, 10000), size = 1)
-            new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
-              filter(group_number == i)*nrow(subset) + 
+            new_first_counts <- 
+              alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
+              filter(group_number == i)
+            if(count == "no"){
+              new_first_counts = new_first_counts*nrow(subset)
+            }
+            new_counts <- new_first_counts + 
               table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
               dplyr::select("Freq") %>% unlist()
             
@@ -164,7 +174,8 @@ generate_synthetic_props <-
             matrix(unlist(prior_V_inv[which(prior_V_inv$group_number == i), 
                                       random_draw]), 
                    nrow = nrow(V_inv), ncol = ncol(V_inv))
-          beta_0 <- matrix(unlist(priors_beta[which(priors_beta$group_number == i), 
+          beta_0 <- 
+            matrix(unlist(priors_beta[which(priors_beta$group_number == i), 
                                               random_draw]), 
                            nrow = nrow(V_inv),  
                            ncol = ncol(continuous_covariates))
