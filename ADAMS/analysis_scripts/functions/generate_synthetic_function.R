@@ -82,14 +82,14 @@ generate_synthetic <-
           
           dataset_to_copy[subset_index, paste0("p_", model)] <- 
             expit(as.matrix(dataset_to_copy[subset_index, 
-                                             get(paste0(model, "_preds"))]) %*% 
+                                            get(paste0(model, "_preds"))]) %*% 
                     as.matrix(model_gamma_chain[which(model_gamma_chain$model == 
                                                         model), b]))
           
           dataset_to_copy[subset_index, "Group"] <- 
             rbernoulli(n = length(subset_index), 
                        p = dataset_to_copy[subset_index, 
-                                            paste0("p_", model)])*group
+                                           paste0("p_", model)])*group
           
           group = group + 1
         }
@@ -111,127 +111,131 @@ generate_synthetic <-
       
       for(i in 1:4){
         subset <- dataset_to_copy %>% filter(Group == i) 
-        random_draw <- sample(seq(1, 10000), size = 1)
-        posterior_counts <- 
-          alpha_0_dist[which(alpha_0_dist$group_number == i), random_draw] + 
-          table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
-          dplyr::select("Freq") %>% unlist()
-        
-        #---- ****p(contingency table cell) ----
-        pi_chain[, paste0(i, ":", b)] <- 
-          rdirichlet(1, alpha = as.numeric(unlist(posterior_counts)))
-        
-        #---- ****contingency table count ----
-        contingency_table <- rmultinom(n = 1, size = nrow(subset), 
-                                       prob = pi_chain[, paste0(i, ":", b)])
-        UtU <- diag(contingency_table[, 1])
-        
-        #---- ****draw new UtU if needed ----
-        while(det(t(A) %*% UtU %*% A) < 1e-9){
+        if(nrow(subset) == 0){
+          next
+        } else{
           random_draw <- sample(seq(1, 10000), size = 1)
-          new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
-            filter(group_number == i) + 
+          posterior_counts <- 
+            alpha_0_dist[which(alpha_0_dist$group_number == i), random_draw] + 
             table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
             dplyr::select("Freq") %>% unlist()
           
-          UtU <- diag(unlist(new_counts[, 1]))
-        }
-        
-        #---- ****make U matrix ----
-        U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
-        
-        for(j in 1:nrow(contingency_table)){
-          if(contingency_table[j, ] == 0){next}
-          if(j == 1){
-            index = 1
-          } else{
-            index = sum(contingency_table[1:(j - 1), ]) + 1
-          }
-          U[index:(index - 1 + contingency_table[j, ]), j] <- 1
-        }
-        
-        #---- ****Mm ----
-        continuous_covariates <- subset %>% 
-          dplyr::select(all_of(Z[, "var"])) %>% as.matrix
-        
-        V_inv <- t(A) %*% UtU %*% A 
-        random_draw <- sample(seq(1, 10000), size = 1)
-        V_0_inv <- 
-          matrix(unlist(prior_V_inv[which(prior_V_inv$group_number == i), 
-                                    random_draw]), 
-                 nrow = nrow(V_inv), ncol = ncol(V_inv))
-        beta_0 <- matrix(unlist(priors_beta[which(priors_beta$group_number == i), 
-                                            random_draw]), 
-                         nrow = nrow(V_inv),  ncol = ncol(continuous_covariates))
-        
-        M <- solve(V_inv + kappa_0[i]*V_0_inv)
-        m <-  t(A) %*% t(U) %*% continuous_covariates - 
-          kappa_0[i]*V_0_inv %*% beta_0
-        
-        Mm <- M %*% m
-        
-        #---- ****draw Sigma | Y ----
-        ZtZ <- t(continuous_covariates) %*% continuous_covariates
-        third_term <- kappa_0[i]*t(beta_0) %*% V_0_inv %*% beta_0
-        
-        random_draw <- sample(seq(1, 10000), size = 1)
-        Sigma_prior <- 
-          matrix(unlist(prior_Sigma[which(prior_Sigma$group_number == i), 
-                                    random_draw]), 
-                 nrow = ncol(continuous_covariates))
-        sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
-                        S = Sigma_prior + ZtZ + third_term)
-        
-        Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
-        
-        #---- ****draw beta | Sigma, Y ----
-        beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y/kappa_0[i])
-        
-        #---- ****compute mu ----
-        mu_chain[, paste0(i, ":", seq(1, nrow(cross_class_label)), ":", b)] <- 
-          t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = nrow(Z), 
-                         byrow = FALSE))
-        
-        #---- ****draw data ----
-        #reformat contingency table
-        contingency_table %<>% cbind(do.call(cbind, list(
-          #Black              #Hispanic           #Stroke
-          rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>% 
-          set_colnames(c("Count", W))
-        
-        for(j in 1:nrow(contingency_table)){
-          if(contingency_table[j, "Count"] == 0){next}
-          if(j == 1){
-            index = 1
-          } else{
-            index = sum(contingency_table[1:(j - 1), "Count"]) + 1
-          }
-          #Z (continuous data)
-          if(contingency_table[j, "Count"] == 1){
-            subset[index:(index - 1 + contingency_table[j, "Count"]), 
-                   colnames(sig_Y)] <- 
-              t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
-                                  mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                                  Sigma = sig_Y)))
-          } else{
-            subset[index:(index - 1 + contingency_table[j, "Count"]), 
-                   colnames(sig_Y)] <- 
-              mvrnorm(n = contingency_table[j, "Count"],
-                      mu = mu_chain[, paste0(i, ":", j, ":", b)], 
-                      Sigma = sig_Y)
+          #---- ****p(contingency table cell) ----
+          pi_chain[, paste0(i, ":", b)] <- 
+            rdirichlet(1, alpha = as.numeric(unlist(posterior_counts)))
+          
+          #---- ****contingency table count ----
+          contingency_table <- rmultinom(n = 1, size = nrow(subset), 
+                                         prob = pi_chain[, paste0(i, ":", b)])
+          UtU <- diag(contingency_table[, 1])
+          
+          #---- ****draw new UtU if needed ----
+          while(det(t(A) %*% UtU %*% A) < 1e-9){
+            random_draw <- sample(seq(1, 10000), size = 1)
+            new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
+              filter(group_number == i) + 
+              table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
+              dplyr::select("Freq") %>% unlist()
+            
+            UtU <- diag(unlist(new_counts[, 1]))
           }
           
-          #W (categorical data)
-          subset[index:(index - 1 + contingency_table[j, "Count"]), 
-                 colnames(contingency_table)[-1]] <- 
-            matrix(rep(contingency_table[j, colnames(contingency_table)[-1]], 
-                       contingency_table[j, "Count"]), 
-                   ncol = 3, byrow = TRUE)
+          #---- ****make U matrix ----
+          U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
+          
+          for(j in 1:nrow(contingency_table)){
+            if(contingency_table[j, ] == 0){next}
+            if(j == 1){
+              index = 1
+            } else{
+              index = sum(contingency_table[1:(j - 1), ]) + 1
+            }
+            U[index:(index - 1 + contingency_table[j, ]), j] <- 1
+          }
+          
+          #---- ****Mm ----
+          continuous_covariates <- subset %>% 
+            dplyr::select(all_of(Z[, "var"])) %>% as.matrix
+          
+          V_inv <- t(A) %*% UtU %*% A 
+          random_draw <- sample(seq(1, 10000), size = 1)
+          V_0_inv <- 
+            matrix(unlist(prior_V_inv[which(prior_V_inv$group_number == i), 
+                                      random_draw]), 
+                   nrow = nrow(V_inv), ncol = ncol(V_inv))
+          beta_0 <- matrix(unlist(priors_beta[which(priors_beta$group_number == i), 
+                                              random_draw]), 
+                           nrow = nrow(V_inv),  ncol = ncol(continuous_covariates))
+          
+          M <- solve(V_inv + kappa_0[i]*V_0_inv)
+          m <-  t(A) %*% t(U) %*% continuous_covariates - 
+            kappa_0[i]*V_0_inv %*% beta_0
+          
+          Mm <- M %*% m
+          
+          #---- ****draw Sigma | Y ----
+          ZtZ <- t(continuous_covariates) %*% continuous_covariates
+          third_term <- kappa_0[i]*t(beta_0) %*% V_0_inv %*% beta_0
+          
+          random_draw <- sample(seq(1, 10000), size = 1)
+          Sigma_prior <- 
+            matrix(unlist(prior_Sigma[which(prior_Sigma$group_number == i), 
+                                      random_draw]), 
+                   nrow = ncol(continuous_covariates))
+          sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
+                          S = Sigma_prior + ZtZ + third_term)
+          
+          Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
+          
+          #---- ****draw beta | Sigma, Y ----
+          beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y/kappa_0[i])
+          
+          #---- ****compute mu ----
+          mu_chain[, paste0(i, ":", seq(1, nrow(cross_class_label)), ":", b)] <- 
+            t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = nrow(Z), 
+                           byrow = FALSE))
+          
+          #---- ****draw data ----
+          #reformat contingency table
+          contingency_table %<>% cbind(do.call(cbind, list(
+            #Black              #Hispanic           #Stroke
+            rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>% 
+            set_colnames(c("Count", W))
+          
+          for(j in 1:nrow(contingency_table)){
+            if(contingency_table[j, "Count"] == 0){next}
+            if(j == 1){
+              index = 1
+            } else{
+              index = sum(contingency_table[1:(j - 1), "Count"]) + 1
+            }
+            #Z (continuous data)
+            if(contingency_table[j, "Count"] == 1){
+              subset[index:(index - 1 + contingency_table[j, "Count"]), 
+                     colnames(sig_Y)] <- 
+                t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
+                                    mu = mu_chain[, paste0(i, ":", j, ":", b)], 
+                                    Sigma = sig_Y)))
+            } else{
+              subset[index:(index - 1 + contingency_table[j, "Count"]), 
+                     colnames(sig_Y)] <- 
+                mvrnorm(n = contingency_table[j, "Count"],
+                        mu = mu_chain[, paste0(i, ":", j, ":", b)], 
+                        Sigma = sig_Y)
+            }
+            
+            #W (categorical data)
+            subset[index:(index - 1 + contingency_table[j, "Count"]), 
+                   colnames(contingency_table)[-1]] <- 
+              matrix(rep(contingency_table[j, colnames(contingency_table)[-1]], 
+                         contingency_table[j, "Count"]), 
+                     ncol = 3, byrow = TRUE)
+          }
+          
+          #---- ****replace synthetic data ----
+          dataset_to_copy[which(dataset_to_copy$HHIDPN %in% subset$HHIDPN),
+                          c(W, Z[, "var"])] <- subset[, c(W, Z[, "var"])]
         }
-        
-        #---- ****replace synthetic data ----
-        dataset_to_copy[which(dataset_to_copy$HHIDPN %in% subset$HHIDPN),
-                         c(W, Z[, "var"])] <- subset[, c(W, Z[, "var"])]
       }
       #---- ****post-processing ----
       #---- ******race/ethnicity ----
