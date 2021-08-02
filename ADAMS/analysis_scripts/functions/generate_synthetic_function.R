@@ -109,8 +109,6 @@ generate_synthetic <-
         latent_class_chain[, b] <- summary 
       }
       
-        
-      
       for(i in 1:4){
         subset <- dataset_to_copy %>% filter(Group == i) 
         random_draw <- sample(seq(1, 10000), size = 1)
