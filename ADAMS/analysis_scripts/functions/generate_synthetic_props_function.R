@@ -1,4 +1,4 @@
-generate_synthetic <- 
+generate_synthetic_props <- 
   function(warm_up, run_number, starting_props, 
            unimpaired_preds, other_preds, mci_preds, categorical_vars, 
            continuous_vars, id_var, dementia_var, dataset_to_copy, 
