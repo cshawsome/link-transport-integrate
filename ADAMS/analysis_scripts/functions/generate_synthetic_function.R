@@ -98,8 +98,18 @@ generate_synthetic <-
       }
       
       #---- ****group: summary ----
-      latent_class_chain[, b] <- 
-        table(dataset_to_copy$Group)/sum(table(dataset_to_copy$Group))
+      summary <- table(dataset_to_copy$Group)/sum(table(dataset_to_copy$Group)) 
+      if(length(summary) < 4){
+        missing <- which(!seq(1, 4) %in% names(summary))
+        new_summary <- vector(length = 4)
+        new_summary[missing] <- 0
+        new_summary[-missing] <- summary
+        latent_class_chain[, b] <- new_summary 
+      } else{
+        latent_class_chain[, b] <- summary 
+      }
+      
+        
       
       for(i in 1:4){
         subset <- dataset_to_copy %>% filter(Group == i) 
