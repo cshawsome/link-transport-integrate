@@ -58,8 +58,8 @@ generate_synthetic <-
     for(b in 1:B){
       if(b == 1){
         #---- ****init group membership ----
-        synthetic_sample[, "Group"] <- 
-          sample(seq(1, 4), size = nrow(synthetic_sample) , replace = TRUE, 
+        dataset_to_copy[, "Group"] <- 
+          sample(seq(1, 4), size = nrow(dataset_to_copy) , replace = TRUE, 
                  prob = starting_props)
       } else{
         #---- ****latent class gammas ----
@@ -76,33 +76,33 @@ generate_synthetic <-
         
         #---- ****group membership ----
         group = 1
-        synthetic_sample[, "Group"] <- 0
+        dataset_to_copy[, "Group"] <- 0
         for(model in c("unimpaired", "other", "mci")){
-          subset_index <- which(synthetic_sample$Group == 0)
+          subset_index <- which(dataset_to_copy$Group == 0)
           
-          synthetic_sample[subset_index, paste0("p_", model)] <- 
-            expit(as.matrix(synthetic_sample[subset_index, 
+          dataset_to_copy[subset_index, paste0("p_", model)] <- 
+            expit(as.matrix(dataset_to_copy[subset_index, 
                                              get(paste0(model, "_preds"))]) %*% 
                     as.matrix(model_gamma_chain[which(model_gamma_chain$model == 
                                                         model), b]))
           
-          synthetic_sample[subset_index, "Group"] <- 
+          dataset_to_copy[subset_index, "Group"] <- 
             rbernoulli(n = length(subset_index), 
-                       p = synthetic_sample[subset_index, 
+                       p = dataset_to_copy[subset_index, 
                                             paste0("p_", model)])*group
           
           group = group + 1
         }
         
-        synthetic_sample[which(synthetic_sample$Group == 0), "Group"] <- 4
+        dataset_to_copy[which(dataset_to_copy$Group == 0), "Group"] <- 4
       }
       
       #---- ****group: summary ----
       latent_class_chain[, b] <- 
-        table(synthetic_sample$Group)/sum(table(synthetic_sample$Group))
+        table(dataset_to_copy$Group)/sum(table(dataset_to_copy$Group))
       
       for(i in 1:4){
-        subset <- synthetic_sample %>% filter(Group == i) 
+        subset <- dataset_to_copy %>% filter(Group == i) 
         random_draw <- sample(seq(1, 10000), size = 1)
         posterior_counts <- 
           alpha_0_dist[which(alpha_0_dist$group_number == i), random_draw] + 
@@ -222,23 +222,24 @@ generate_synthetic <-
         }
         
         #---- ****replace synthetic data ----
-        synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN),
+        dataset_to_copy[which(dataset_to_copy$HHIDPN %in% subset$HHIDPN),
                          c(W, Z[, "var"])] <- subset[, c(W, Z[, "var"])]
       }
       #---- ****post-processing ----
       #---- ******race/ethnicity ----
-      synthetic_sample %<>% 
+      dataset_to_copy %<>% 
         mutate("ETHNIC_label" = case_when(Black == 1 ~ "Black", 
                                           Hispanic == 1 ~ "Hispanic", 
                                           TRUE ~ "White"))
       #---- ****save synthetic sample ----
       if(b > warm_up){
-        write_csv(synthetic_sample, 
+        write_csv(dataset_to_copy, 
                   file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
                                 "results/ADAMSA/standard_normal/run_", 
                                 run, "/ADAMSA_synthetic_", b - warm_up, ".csv"))
       }
     }
+    
     #---- **dx plots ----
     #---- ****color palettes ----
     extended_pallette10 <- colorRampPalette(wes_palette("Darjeeling1"))(10)
