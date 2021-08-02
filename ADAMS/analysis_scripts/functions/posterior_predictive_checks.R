@@ -1,50 +1,26 @@
-
-#---- read in data ----
-#---- **ADAMS train ----
-ADAMS_train <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                               "data/cleaned/ADAMS/ADAMS_train.csv"), 
-                        col_types = cols(HHIDPN = col_character())) 
-
-#Continuous vars (notation from Schafer 1997)
-Z <- cbind(c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES", 
-             "ANWM1TOT", "proxy_cog", "ANDELCOR", "Aiadla", "Abmi"), 
-           c("Age", "Normed Total MMSE", "Serial 7s", "Immediate Word Recall", 
-             "Wordlist Recall (Yes)", "Story Recall I", "Proxy Cognition (Avg)", 
-             "Delayed Word Recall", "IADLs", "BMI")) %>% 
-  set_colnames(c("var", "label"))
-
-#---- **ADAMS unscaled ----
-ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/cleaned/ADAMS/ADAMS_subset_mixed.csv"), 
-                         col_types = cols(HHIDPN = col_character())) %>% 
-  filter(HHIDPN %in% ADAMS_train$HHIDPN)
-
-ADAMS_means <- colMeans(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])))
-ADAMS_sds <- apply(ADAMS_subset %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
-
-#---- **synthetic ----
-num_samples = 1000
-num_chains = 5
-for(sample in 1:num_samples){
-  for(chain in 1:num_chains){
-    if(sample == 1 & chain == 1){
-      synthetic_sample <- 
-        read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                        "results/ADAMSA/standard_normal/run_", chain, 
-                        "/ADAMSA_synthetic_", 
-                        sample, ".csv")) %>% 
-        mutate("sample" = sample, "chain" = chain)
-    } else{
-      synthetic_sample %<>% 
-        rbind(., 
-              read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                              "results/ADAMSA/standard_normal/run_", chain, 
-                              "/ADAMSA_synthetic_", sample, ".csv")) %>% 
-                mutate("sample" = sample, "chain" = chain))
+ADAMS_posterior_predictive_checks <- 
+  function(dataset_to_copy, continuous_covariates, orig_means, orig_sds, 
+           num_samples, num_chains, path_to_analyses_folder){
+    
+    #---- read in synthetic data ----
+    for(sample in 1:num_samples){
+      for(chain in 1:num_chains){
+        if(sample == 1 & chain == 1){
+          synthetic_sample <- 
+            read_csv(paste0(path_to_analyses_folder, "synthetic_data/run_", 
+                            chain, "/ADAMSA_synthetic_", sample, ".csv")) %>% 
+            mutate("sample" = sample, "chain" = chain)
+        } else{
+          synthetic_sample %<>% 
+            rbind(., 
+                  read_csv(paste0(path_to_analyses_folder, "synthetic_data/run_", 
+                                  chain, "/ADAMSA_synthetic_", sample, 
+                                  ".csv")) %>% 
+                    mutate("sample" = sample, "chain" = chain))
+        }
+      }
     }
   }
-  
-}
 
 #---- chain convergence ----
 for(chain in 1:num_chains){
