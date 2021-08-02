@@ -107,35 +107,85 @@ ADAMS_prior_predictive_checks_counts(unimpaired_preds, other_preds, mci_preds,
 
 #---- synthetic datasets ----
 #starting_props are for (normal, other, mci, dementia)
-warm_up = 500
-num_synthetic = 1000
-run_number = 1
-starting_props = rep(0.25, 4)
-categorical_vars <- W
-continuous_vars <- Z
-id_var <- "HHIDPN"
-dementia_var <- "Adem_dx_cat"
-path_to_analyses_folder <- 
-  paste0("/Users/CrystalShaw/Box/Dissertation/analyses/ADAMS_train/")
-path_to_figures_folder <- 
-  paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_train/")
+generate_synthetic(warm_up = 500, run_number = 1, 
+                   #warm start
+                   starting_props = c(0.40, 0.20, 0.10, 0.30), 
+                   unimpaired_preds, other_preds, mci_preds, 
+                   categorical_vars = W, continuous_vars = Z, id_var = "HHIDPN", 
+                   dementia_var = "Adem_dx_cat", dataset_to_copy, 
+                   num_synthetic = 1000, unimpaired_betas, unimpaired_cov, 
+                   other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
+                   prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
+                   contrasts_matrix = A,
+                   path_to_analyses_folder = 
+                     paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                            "ADAMS_train/"), 
+                   path_to_figures_folder = 
+                     paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                            "ADAMS_train/"))
 
+generate_synthetic(warm_up = 500, run_number = 2, 
+                   starting_props = c(0.25, 0.25, 0.25, 0.25),
+                   unimpaired_preds, other_preds, mci_preds, 
+                   categorical_vars = W, continuous_vars = Z, id_var = "HHIDPN", 
+                   dementia_var = "Adem_dx_cat", dataset_to_copy, 
+                   num_synthetic = 1000, unimpaired_betas, unimpaired_cov, 
+                   other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
+                   prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
+                   contrasts_matrix = A,
+                   path_to_analyses_folder = 
+                     paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                            "ADAMS_train/"), 
+                   path_to_figures_folder = 
+                     paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                            "ADAMS_train/"))
 
-results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
-                              synthetic_sample, run = 1, 
-                              #warm start
-                              starting_props = c(0.40, 0.20, 0.10, 0.30), A = A)
-results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
-                              synthetic_sample, run = 2, 
-                              starting_props = c(0.25, 0.25, 0.25, 0.25), A = A)
-results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
-                              synthetic_sample, run = 3, 
-                              starting_props = c(0.10, 0.20, 0.30, 0.40), A = A)
-results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
-                              synthetic_sample, run = 4, 
-                              starting_props = c(0.10, 0.30, 0.40, 0.20), A = A)
-results <- generate_synthetic(warm_up = warm_up, synthetic_sets = synthetic_sets, 
-                              synthetic_sample, run = 5, 
-                              starting_props = c(0.05, 0.15, 0.25, 0.55), A = A)
+generate_synthetic(warm_up = 500, run_number = 3, 
+                   starting_props = c(0.10, 0.20, 0.30, 0.40),
+                   unimpaired_preds, other_preds, mci_preds, 
+                   categorical_vars = W, continuous_vars = Z, id_var = "HHIDPN", 
+                   dementia_var = "Adem_dx_cat", dataset_to_copy, 
+                   num_synthetic = 1000, unimpaired_betas, unimpaired_cov, 
+                   other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
+                   prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
+                   contrasts_matrix = A,
+                   path_to_analyses_folder = 
+                     paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                            "ADAMS_train/"), 
+                   path_to_figures_folder = 
+                     paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                            "ADAMS_train/"))
+
+generate_synthetic(warm_up = 500, run_number = 4, 
+                   starting_props = c(0.10, 0.30, 0.40, 0.20),
+                   unimpaired_preds, other_preds, mci_preds, 
+                   categorical_vars = W, continuous_vars = Z, id_var = "HHIDPN", 
+                   dementia_var = "Adem_dx_cat", dataset_to_copy, 
+                   num_synthetic = 1000, unimpaired_betas, unimpaired_cov, 
+                   other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
+                   prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
+                   contrasts_matrix = A,
+                   path_to_analyses_folder = 
+                     paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                            "ADAMS_train/"), 
+                   path_to_figures_folder = 
+                     paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                            "ADAMS_train/"))
+
+generate_synthetic(warm_up = 500, run_number = 5, 
+                   starting_props = c(0.05, 0.15, 0.25, 0.55),
+                   unimpaired_preds, other_preds, mci_preds, 
+                   categorical_vars = W, continuous_vars = Z, id_var = "HHIDPN", 
+                   dementia_var = "Adem_dx_cat", dataset_to_copy, 
+                   num_synthetic = 1000, unimpaired_betas, unimpaired_cov, 
+                   other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
+                   prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
+                   contrasts_matrix = A,
+                   path_to_analyses_folder = 
+                     paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
+                            "ADAMS_train/"), 
+                   path_to_figures_folder = 
+                     paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                            "ADAMS_train/"))
 
 #---- posterior predictive checks ----
