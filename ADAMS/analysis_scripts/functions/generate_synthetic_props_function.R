@@ -116,7 +116,8 @@ generate_synthetic <-
         } else{
           random_draw <- sample(seq(1, 10000), size = 1)
           posterior_counts <- 
-            alpha_0_dist[which(alpha_0_dist$group_number == i), random_draw] + 
+            alpha_0_dist[which(alpha_0_dist$group_number == i), random_draw]*
+            nrow(subset) + 
             table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
             dplyr::select("Freq") %>% unlist()
           
@@ -133,7 +134,7 @@ generate_synthetic <-
           while(det(t(A) %*% UtU %*% A) < 1e-9){
             random_draw <- sample(seq(1, 10000), size = 1)
             new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
-              filter(group_number == i) + 
+              filter(group_number == i)*nrow(subset) + 
               table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
               dplyr::select("Freq") %>% unlist()
             
@@ -165,7 +166,8 @@ generate_synthetic <-
                    nrow = nrow(V_inv), ncol = ncol(V_inv))
           beta_0 <- matrix(unlist(priors_beta[which(priors_beta$group_number == i), 
                                               random_draw]), 
-                           nrow = nrow(V_inv),  ncol = ncol(continuous_covariates))
+                           nrow = nrow(V_inv),  
+                           ncol = ncol(continuous_covariates))
           
           M <- solve(V_inv + kappa_0[i]*V_0_inv)
           m <-  t(A) %*% t(U) %*% continuous_covariates - 
