@@ -12,6 +12,8 @@ library(gganimate)
 #---- source functions ----
 source(here::here("ADAMS", "analysis_scripts", "functions", 
                   "ADAMS_prior_predictive_checks_counts_function.R"))
+source(here::here("ADAMS", "analysis_scripts", "functions", 
+                  "generate_synthetic_function.R"))
 
 #---- read in data ----
 #dataset we're trying to copy
