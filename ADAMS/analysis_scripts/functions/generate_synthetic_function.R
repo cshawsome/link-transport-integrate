@@ -236,7 +236,8 @@ generate_synthetic <-
         write_csv(dataset_to_copy, 
                   file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
                                 "results/ADAMSA/standard_normal/run_", 
-                                run, "/ADAMSA_synthetic_", b - warm_up, ".csv"))
+                                run_number, "/ADAMSA_synthetic_", b - warm_up, 
+                                ".csv"))
       }
     }
     
