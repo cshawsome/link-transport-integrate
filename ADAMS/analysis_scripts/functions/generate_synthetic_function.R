@@ -251,7 +251,8 @@ generate_synthetic <-
       set_colnames(c(seq(1:B), "model", "pred")) %>%
       pivot_longer(cols = paste0(seq(1:B)), 
                    names_to = "Run", values_to = "gamma") %>% 
-      filter(pred != "(Intercept)")
+      filter(pred != "(Intercept)") %>% 
+      filter(!is.na(gamma))
     
     gamma_chain_plot <- 
       ggplot(data = gamma_plot_data, 
@@ -265,8 +266,7 @@ generate_synthetic <-
       scale_color_manual(values = rev(extended_pallette14))
     
     ggsave(filename = "gamma_chain.jpeg", plot = gamma_chain_plot, 
-           path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                         "diagnostics/standard_normal/run_", run), 
+           path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
            width = 7, height = 6, units = "in", device = "jpeg")
     
     #---- **latent class chain ----
@@ -292,8 +292,7 @@ generate_synthetic <-
       scale_x_continuous(breaks = seq(0, B, by = 100)) 
     
     ggsave(filename = "latent_class_chain.jpeg", plot = latent_class_chain_plot, 
-           path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                         "diagnostics/standard_normal/run_", run), 
+           path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
            width = 7, height = 3, units = "in", device = "jpeg")
     
     #---- **pi chain ----
@@ -319,8 +318,7 @@ generate_synthetic <-
                                                "Other")))) + theme_bw() 
     
     ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
-           path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                         "diagnostics/standard_normal/run_", run), 
+           path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
            width = 7, height = 5, units = "in", device = "jpeg")
     
     #---- **Sigma chain ----
@@ -345,8 +343,7 @@ generate_synthetic <-
                                                "Other")))) + theme_bw() 
     
     ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
-           path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                         "diagnostics/standard_normal/run_", run), 
+           path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
            width = 7, height = 5, units = "in", device = "jpeg")
     
     #---- **mu chain ----
@@ -373,35 +370,29 @@ generate_synthetic <-
                  scales = "free") + theme_bw() 
     
     ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
-           path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                         "diagnostics/standard_normal/run_", run), 
+           path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
            width = 14, height = 10, units = "in", device = "jpeg")
     
     #---- save datasets ----
     write_csv(gamma_plot_data, 
-              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                            "results/ADAMSA/standard_normal/diagnostics_data/", 
-                            "run_", run, "/ADAMSA_gamma_plot_data.csv"))
+              file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                            "run_", run_number, "/ADAMSA_gamma_plot_data.csv"))
     
     write_csv(latent_class_data, 
-              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                            "results/ADAMSA/standard_normal/diagnostics_data/", 
-                            "run_", run,  "/ADAMSA_latent_class_data.csv"))
+              file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                            "run_", run_number, "/ADAMSA_latent_class_data.csv"))
     
     write_csv(pi_chain_data, 
-              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                            "results/ADAMSA/standard_normal/diagnostics_data/", 
-                            "run_", run,  "/ADAMSA_pi_chain_data.csv"))
+              file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                            "run_", run_number, "/ADAMSA_pi_chain_data.csv"))
     
     write_csv(Sigma_chain_data, 
-              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                            "results/ADAMSA/standard_normal/diagnostics_data/", 
-                            "run_", run, "/ADAMSA_Sigma_chain_data.csv"))
+              file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                            "run_", run_number, "/ADAMSA_Sigma_chain_data.csv"))
     
     write_csv(mu_chain_data, 
-              file = paste0("/Users/CrystalShaw/Box/Dissertation/analyses/", 
-                            "results/ADAMSA/standard_normal/diagnostics_data/", 
-                            "run_", run, "/ADAMSA_mu_chain_data.csv"))
+              file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                            "run_", run_number, "/ADAMSA_mu_chain_data.csv"))
   }
 
 
