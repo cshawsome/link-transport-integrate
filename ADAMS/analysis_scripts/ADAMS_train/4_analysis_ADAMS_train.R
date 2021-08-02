@@ -13,7 +13,7 @@ library(gganimate)
 source(here::here("ADAMS", "analysis_scripts", "functions", 
                   "ADAMS_prior_predictive_checks_counts_function.R"))
 source(here::here("ADAMS", "analysis_scripts", "functions", 
-                  "generate_synthetic_function.R"))
+                  "generate_synthetic_counts_function.R"))
 
 #---- read in data ----
 #dataset we're trying to copy
@@ -109,7 +109,7 @@ ADAMS_prior_predictive_checks_counts(unimpaired_preds, other_preds, mci_preds,
 
 #---- synthetic datasets ----
 #starting_props are for (normal, other, mci, dementia)
-generate_synthetic(warm_up = 500, run_number = 1, 
+generate_synthetic_counts(warm_up = 500, run_number = 1, 
                    #warm start
                    starting_props = c(0.40, 0.20, 0.10, 0.30), 
                    unimpaired_preds, other_preds, mci_preds, 
@@ -126,7 +126,7 @@ generate_synthetic(warm_up = 500, run_number = 1,
                      paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                             "ADAMS_train/"))
 
-generate_synthetic(warm_up = 500, run_number = 2, 
+generate_synthetic_counts(warm_up = 500, run_number = 2, 
                    starting_props = c(0.25, 0.25, 0.25, 0.25),
                    unimpaired_preds, other_preds, mci_preds, 
                    categorical_vars = W, continuous_vars = Z, id_var = "HHIDPN", 
@@ -142,7 +142,7 @@ generate_synthetic(warm_up = 500, run_number = 2,
                      paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                             "ADAMS_train/"))
 
-generate_synthetic(warm_up = 500, run_number = 3, 
+generate_synthetic_counts(warm_up = 500, run_number = 3, 
                    starting_props = c(0.10, 0.20, 0.30, 0.40),
                    unimpaired_preds, other_preds, mci_preds, 
                    categorical_vars = W, continuous_vars = Z, id_var = "HHIDPN", 
@@ -158,7 +158,7 @@ generate_synthetic(warm_up = 500, run_number = 3,
                      paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                             "ADAMS_train/"))
 
-generate_synthetic(warm_up = 500, run_number = 4, 
+generate_synthetic_counts(warm_up = 500, run_number = 4, 
                    starting_props = c(0.10, 0.30, 0.40, 0.20),
                    unimpaired_preds, other_preds, mci_preds, 
                    categorical_vars = W, continuous_vars = Z, id_var = "HHIDPN", 
@@ -174,7 +174,7 @@ generate_synthetic(warm_up = 500, run_number = 4,
                      paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                             "ADAMS_train/"))
 
-generate_synthetic(warm_up = 500, run_number = 5, 
+generate_synthetic_counts(warm_up = 500, run_number = 5, 
                    starting_props = c(0.05, 0.15, 0.25, 0.55),
                    unimpaired_preds, other_preds, mci_preds, 
                    categorical_vars = W, continuous_vars = Z, id_var = "HHIDPN", 
