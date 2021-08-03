@@ -13,7 +13,7 @@ library(gganimate)
 source(here::here("ADAMS", "analysis_scripts", "functions", 
                   "ADAMS_prior_predictive_checks_props_function.R"))
 source(here::here("ADAMS", "analysis_scripts", "functions", 
-                  "generate_synthetic_props_function.R"))
+                  "generate_synthetic_function.R"))
 source(here::here("ADAMS", "analysis_scripts", "functions", 
                   "ADAMS_posterior_predictive_checks.R"))
 
