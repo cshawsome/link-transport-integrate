@@ -178,9 +178,11 @@ ADAMS_posterior_predictive_checks <-
     #---- **median ----
     #---- ****overall ----
     synthetic_continuous <- 
-      matrix(0, nrow = nrow(Z), ncol = (num_samples + 1)) %>% 
-      as.data.frame() %>% set_colnames(c(seq(1, num_samples), "var"))
-    synthetic_continuous[, "var"] <- Z[, "var"]
+      matrix(0, nrow = nrow(Z)*num_chains, ncol = (num_samples + 2)) %>% 
+      as.data.frame() %>% set_colnames(c(seq(1, num_samples), "var", "chain"))
+    synthetic_continuous[, "var"] <- rep(Z[, "var"], num_chains)
+    synthetic_continuous[, "chain"] <- 
+      rep(seq(1, num_chains), each = length(Z[, "var"]))
     
     #medians from synthetic datasets
     for(var in Z[, "var"]){
