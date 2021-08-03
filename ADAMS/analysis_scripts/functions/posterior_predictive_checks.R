@@ -6,7 +6,8 @@ ADAMS_posterior_predictive_checks <-
     #---- create directories for results ----
     for(chain in 1:num_chains){
       for(group in unlist(unique(dataset_to_copy[, dementia_var]))){
-        dir.create(paste0(path_to_figures_folder, "posterior_predictive_checks/", 
+        dir.create(paste0(path_to_figures_folder, 
+                          "posterior_predictive_checks/", 
                           "run_", chain, "/cell_counts/group_specific/", 
                           tolower(group)), recursive = TRUE)
       }
@@ -14,11 +15,13 @@ ADAMS_posterior_predictive_checks <-
     
     for(chain in 1:num_chains){
       for(metric in c("median", "skew")){
-        dir.create(paste0(path_to_figures_folder, "posterior_predictive_checks/", 
+        dir.create(paste0(path_to_figures_folder, 
+                          "posterior_predictive_checks/", 
                           "run_", chain, "/continuous_vars/", metric, 
                           "/overall"), recursive = TRUE)
         for(group in unlist(unique(dataset_to_copy[, dementia_var]))){
-          dir.create(paste0(path_to_figures_folder, "posterior_predictive_checks/", 
+          dir.create(paste0(path_to_figures_folder, 
+                            "posterior_predictive_checks/", 
                             "run_", chain, "/continuous_vars/", metric, "/",
                             tolower(group)), recursive = TRUE)
         }
@@ -39,9 +42,9 @@ ADAMS_posterior_predictive_checks <-
         } else{
           synthetic_sample %<>% 
             rbind(., 
-                  read_csv(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                                  chain, "/ADAMSA_synthetic_", sample, 
-                                  ".csv")) %>% 
+                  read_csv(paste0(path_to_analyses_folder, 
+                                  "synthetic_data/run_", chain, 
+                                  "/ADAMSA_synthetic_", sample, ".csv")) %>% 
                     mutate("sample" = sample, "chain" = chain))
         }
       }
@@ -301,8 +304,8 @@ ADAMS_posterior_predictive_checks <-
                        size = 2)
           
           ggsave(filename = paste0(path_to_figures_folder, 
-                                   "posterior_predictive_checks/run_", chain_num, 
-                                   "/continuous_vars/median/", 
+                                   "posterior_predictive_checks/run_", 
+                                   chain_num, "/continuous_vars/median/", 
                                    tolower(dem_group), "/", tolower(dem_group), 
                                    "_", var_name, ".jpeg"), 
                  width = 5, height = 3, units = "in")
@@ -431,8 +434,8 @@ ADAMS_posterior_predictive_checks <-
                        size = 2)
           
           ggsave(filename = paste0(path_to_figures_folder, 
-                                   "posterior_predictive_checks/run_", chain_num, 
-                                   "/continuous_vars/skew/", 
+                                   "posterior_predictive_checks/run_", 
+                                   chain_num, "/continuous_vars/skew/", 
                                    tolower(dem_group), "/", tolower(dem_group), 
                                    "_", var_name, ".jpeg"), 
                  width = 5, height = 3, units = "in")
@@ -442,7 +445,8 @@ ADAMS_posterior_predictive_checks <-
     
     #---- impairment classification ----
     #truth
-    dementia_plot_data <- as.data.frame(table(dataset_to_copy[, dementia_var])) %>% 
+    dementia_plot_data <- 
+      as.data.frame(table(dataset_to_copy[, dementia_var])) %>% 
       mutate("prop" = Freq/sum(Freq))
     
     #synthetic
@@ -465,7 +469,8 @@ ADAMS_posterior_predictive_checks <-
     #---- **combined plot ----
     combined_plot_data <- synthetic_dementia_plot_data %>% ungroup() %>% 
       group_by(chain, Group_label) %>% 
-      summarize_at("n", list("mean" = mean, "lower" = ~ quantile(.x, probs = 0.025), 
+      summarize_at("n", list("mean" = mean, 
+                             "lower" = ~ quantile(.x, probs = 0.025), 
                              "upper" = ~ quantile(.x, probs = 0.975))) %>% 
       mutate("truth" = dementia_plot_data$Freq) %>% 
       mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
@@ -487,11 +492,13 @@ ADAMS_posterior_predictive_checks <-
       geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.10) + 
       xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
       scale_color_manual(values = rev(c(combined_plot_data$color))) + 
-      facet_wrap(facets = as.factor(combined_plot_data$chain), nrow = 2, ncol = 3) +
+      facet_wrap(facets = as.factor(combined_plot_data$chain), 
+                 nrow = 2, ncol = 3) +
       ggtitle(paste0("95% Credible intervals from ", num_samples, 
                      " synthetic datasets"))
     
-    ggsave(filename = paste0(path_to_figures_folder, "posterior_predictive_checks/", 
+    ggsave(filename = paste0(path_to_figures_folder, 
+                             "posterior_predictive_checks/", 
                              "impairment_classes_combined_all_runs.jpeg"), 
            height = 5, width = 10, units = "in")
   }
