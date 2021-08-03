@@ -462,7 +462,7 @@ ADAMS_posterior_predictive_checks <-
                                  Group_label == "MCI" ~ "#fdab00", 
                                  TRUE ~ "#ff0000"))
     
-    #---- ****combined plot ----
+    #---- **combined plot ----
     combined_plot_data <- synthetic_dementia_plot_data %>% ungroup() %>% 
       group_by(chain, Group_label) %>% 
       summarize_at("n", list("mean" = mean, "lower" = ~ quantile(.x, probs = 0.025), 
