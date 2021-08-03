@@ -200,7 +200,7 @@ ADAMS_posterior_predictive_checks(dataset_to_copy, continuous_covariates = Z,
                                   dementia_var = "Adem_dx_cat", 
                                   path_to_analyses_folder = 
                                     paste0("/Users/CrystalShaw/Box/",
-                                           "Dissertation/analyses/ADAMS_train/"), 
+                                           "Dissertation/analyses/ADAMS_test/"), 
                                   path_to_figures_folder = 
                                     paste0("/Users/CrystalShaw/Box/", 
-                                           "Dissertation/figures/ADAMS_train/"))
+                                           "Dissertation/figures/ADAMS_test/"))
