@@ -234,67 +234,80 @@ ADAMS_posterior_predictive_checks <-
     
     #---- ****by class ----
     synthetic_continuous <- 
-      matrix(0, nrow = nrow(Z)*4, ncol = (num_samples + 2)) %>% 
-      as.data.frame() %>% set_colnames(c(seq(1, num_samples), "group", "var"))
+      matrix(0, nrow = nrow(Z)*4*num_chains, ncol = (num_samples + 3)) %>% 
+      as.data.frame() %>% 
+      set_colnames(c(seq(1, num_samples), "group", "var", "chain"))
     synthetic_continuous[, "group"] <- rep(seq(1, 4), each = nrow(Z))
     synthetic_continuous[, "var"] <- rep(Z[, "var"], 4)
+    synthetic_continuous[, "chain"] <- rep(seq(1, num_chains), each = nrow(Z)*4)
     
     #medians from synthetic datasets
     for(group in 1:4){
       subsample <- synthetic_sample %>% filter(Group == group)
       
       for(var in Z[, "var"]){
-        subset <- subsample %>% dplyr::select(!!as.symbol(var), "sample") 
-        subset[, var] <- subset[, var]*ADAMS_sds[var] + ADAMS_means[var]
+        subset <- subsample %>% 
+          dplyr::select(!!as.symbol(var), "sample", "chain") 
+        subset[, var] <- subset[, var]*orig_sds[var] + orig_means[var]
         synthetic_continuous[which(synthetic_continuous$group == group & 
-                                     synthetic_continuous$var == var), 
+                                     synthetic_continuous$var == var & 
+                                     synthetic_continuous$chain %in% 
+                                     seq(1, num_chains)), 
                              seq(1, num_samples)] <- 
-          t(subset %>% group_by(sample) %>% summarize_all(median) %>% 
-              dplyr::select(var))
+          matrix(subset %>% group_by(chain, sample) %>%
+                   summarize_all(median) %>% ungroup() %>%
+                   dplyr::select(all_of(var)) %>% unlist(),
+                 nrow = num_chains, ncol = num_samples, byrow = TRUE)
       }
     }
     
     synthetic_continuous %<>% 
       mutate("truth" = 0, 
-             "label" = rep(Z[, "label"], 4), 
-             "group_label" = case_when(group == 1 ~ "Normal", 
+             "label" = rep(Z[, "label"], 4*num_chains), 
+             "group_label" = case_when(group == 1 ~ "Unimpaired", 
                                        group == 2 ~ "Other", 
                                        group == 3 ~ "MCI", 
                                        group == 4 ~ "Dementia")) %>% 
-      mutate("color" = case_when(group_label == "Normal" ~ "#00a389", 
+      mutate("color" = case_when(group_label == "Unimpaired" ~ "#00a389", 
                                  group_label == "Other" ~ "#28bed9", 
                                  group_label == "MCI" ~ "#fdab00", 
                                  group_label == "Dementia" ~ "#ff0000"))
     
-    for(group in unique(ADAMS_subset$Adem_dx_cat)){
-      subsample <- ADAMS_subset %>% filter(Adem_dx_cat == group)
+    for(group in unlist(unique(dataset_to_copy[, dementia_var]))){
+      subsample <- dataset_to_copy %>% 
+        filter(!!as.symbol(dementia_var) == group)
       
       for(var in Z[, "var"]){
         synthetic_continuous[which(synthetic_continuous$group_label == group & 
                                      synthetic_continuous$var == var), 
-                             "truth"] <- median(unlist(subsample[, var]))
+                             "truth"] <- 
+          median(unlist(subsample[, var])*orig_sds[var] + orig_means[var])
       }
     }
     
     synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
     
     #---- ****plot ----
-    for(dem_group in unique(synthetic_continuous$group_label)){
-      for(var_name in Z[, "label"]){
-        subset <- synthetic_continuous %>% 
-          filter(group_label == dem_group & label == var_name)
-        ggplot(data = subset , aes(x = value)) + 
-          geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-          xlab("Median") + ggtitle(var_name) + 
-          geom_vline(xintercept = subset$truth, color = unique(subset$color), 
-                     size = 2)
-        
-        ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                                 "posteriors/run_1/continuous_vars/median/", 
-                                 tolower(dem_group), "/", tolower(dem_group), "_", 
-                                 var_name, ".jpeg"), 
-               width = 5, height = 3, units = "in")
-      } 
+    for(chain_num in 1:num_chains){
+      for(dem_group in unique(synthetic_continuous$group_label)){
+        for(var_name in Z[, "label"]){
+          subset <- synthetic_continuous %>% 
+            filter(group_label == dem_group & label == var_name & 
+                     chain == chain_num)
+          ggplot(data = subset , aes(x = value)) + 
+            geom_histogram(fill = "black", color = "black") + theme_minimal() + 
+            xlab("Median") + ggtitle(var_name) + 
+            geom_vline(xintercept = subset$truth, color = unique(subset$color), 
+                       size = 2)
+          
+          ggsave(filename = paste0(path_to_figures_folder, 
+                                   "posterior_predictive_checks/run_", chain_num, 
+                                   "/continuous_vars/median/", 
+                                   tolower(dem_group), "/", tolower(dem_group), 
+                                   "_", var_name, ".jpeg"), 
+                 width = 5, height = 3, units = "in")
+        } 
+      }
     }
     
     #---- **skew ----
@@ -332,134 +345,135 @@ ADAMS_posterior_predictive_checks <-
         geom_histogram(fill = "black", color = "black") + theme_minimal() + 
         xlab("Skew") + ggtitle(var_name) + 
         geom_vline(xintercept = subset$truth, color = "#f2caaa" , size = 2)
-      
-      ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                               "posteriors/run_1/continuous_vars/skew/overall/", 
-                               var_name, ".jpeg"), 
-             width = 5, height = 3, units = "in")
+    
+    ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                             "posteriors/run_1/continuous_vars/skew/overall/", 
+                             var_name, ".jpeg"), 
+           width = 5, height = 3, units = "in")
     } 
-    
-    #---- ****by class ----
-    synthetic_continuous <- 
-      matrix(0, nrow = nrow(Z)*4, ncol = (num_samples + 2)) %>% 
-      as.data.frame() %>% set_colnames(c(seq(1, num_samples), "group", "var"))
-    synthetic_continuous[, "group"] <- rep(seq(1, 4), each = nrow(Z))
-    synthetic_continuous[, "var"] <- rep(Z[, "var"], 4)
-    
-    #skewness from synthetic datasets
-    for(group in 1:4){
-      subsample <- synthetic_sample %>% filter(Group == group)
-      
-      for(var in Z[, "var"]){
-        subset <- subsample %>% dplyr::select(!!as.symbol(var), "sample") 
-        subset[, var] <- subset[, var]*ADAMS_sds[var] + ADAMS_means[var]
-        synthetic_continuous[which(synthetic_continuous$group == group & 
-                                     synthetic_continuous$var == var), 
-                             seq(1, num_samples)] <- 
-          t(subset %>% group_by(sample) %>% summarize_all(skewness) %>% 
-              dplyr::select(var))
-      }
-    }
-    
-    synthetic_continuous %<>% 
-      mutate("truth" = 0, 
-             "label" = rep(Z[, "label"], 4), 
-             "group_label" = case_when(group == 1 ~ "Normal", 
-                                       group == 2 ~ "Other", 
-                                       group == 3 ~ "MCI", 
-                                       group == 4 ~ "Dementia")) %>% 
-      mutate("color" = case_when(group_label == "Normal" ~ "#00a389", 
-                                 group_label == "Other" ~ "#28bed9", 
-                                 group_label == "MCI" ~ "#fdab00", 
-                                 group_label == "Dementia" ~ "#ff0000"))
-    
-    for(group in unique(ADAMS_subset$Adem_dx_cat)){
-      subsample <- ADAMS_subset %>% filter(Adem_dx_cat == group)
-      
-      for(var in Z[, "var"]){
-        synthetic_continuous[which(synthetic_continuous$group_label == group & 
-                                     synthetic_continuous$var == var), 
-                             "truth"] <- skewness(unlist(subsample[, var]))
-      }
-    }
-    
-    synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
-    
-    #---- ****plot ----
-    for(dem_group in unique(synthetic_continuous$group_label)){
-      for(var_name in Z[, "label"]){
-        subset <- synthetic_continuous %>% 
-          filter(group_label == dem_group & label == var_name)
-        ggplot(data = subset , aes(x = value)) + 
-          geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-          xlab("Skew") + ggtitle(var_name) + 
-          geom_vline(xintercept = subset$truth, color = unique(subset$color), 
-                     size = 2)
         
-        ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                                 "posteriors/run_1/continuous_vars/skew/", 
-                                 tolower(dem_group), "/", tolower(dem_group), "_", 
-                                 var_name, ".jpeg"), 
-               width = 5, height = 3, units = "in")
-      } 
-    }
+        #---- ****by class ----
+        synthetic_continuous <- 
+          matrix(0, nrow = nrow(Z)*4, ncol = (num_samples + 2)) %>% 
+          as.data.frame() %>% set_colnames(c(seq(1, num_samples), "group", "var"))
+        synthetic_continuous[, "group"] <- rep(seq(1, 4), each = nrow(Z))
+        synthetic_continuous[, "var"] <- rep(Z[, "var"], 4)
+        
+        #skewness from synthetic datasets
+        for(group in 1:4){
+          subsample <- synthetic_sample %>% filter(Group == group)
+          
+          for(var in Z[, "var"]){
+            subset <- subsample %>% dplyr::select(!!as.symbol(var), "sample") 
+            subset[, var] <- subset[, var]*ADAMS_sds[var] + ADAMS_means[var]
+            synthetic_continuous[which(synthetic_continuous$group == group & 
+                                         synthetic_continuous$var == var), 
+                                 seq(1, num_samples)] <- 
+              t(subset %>% group_by(sample) %>% summarize_all(skewness) %>% 
+                  dplyr::select(var))
+          }
+        }
+        
+        synthetic_continuous %<>% 
+          mutate("truth" = 0, 
+                 "label" = rep(Z[, "label"], 4), 
+                 "group_label" = case_when(group == 1 ~ "Normal", 
+                                           group == 2 ~ "Other", 
+                                           group == 3 ~ "MCI", 
+                                           group == 4 ~ "Dementia")) %>% 
+          mutate("color" = case_when(group_label == "Normal" ~ "#00a389", 
+                                     group_label == "Other" ~ "#28bed9", 
+                                     group_label == "MCI" ~ "#fdab00", 
+                                     group_label == "Dementia" ~ "#ff0000"))
+        
+        for(group in unique(ADAMS_subset$Adem_dx_cat)){
+          subsample <- ADAMS_subset %>% filter(Adem_dx_cat == group)
+          
+          for(var in Z[, "var"]){
+            synthetic_continuous[which(synthetic_continuous$group_label == group & 
+                                         synthetic_continuous$var == var), 
+                                 "truth"] <- skewness(unlist(subsample[, var]))
+          }
+        }
+        
+        synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
+        
+        #---- ****plot ----
+        for(dem_group in unique(synthetic_continuous$group_label)){
+          for(var_name in Z[, "label"]){
+            subset <- synthetic_continuous %>% 
+              filter(group_label == dem_group & label == var_name)
+            ggplot(data = subset , aes(x = value)) + 
+              geom_histogram(fill = "black", color = "black") + theme_minimal() + 
+              xlab("Skew") + ggtitle(var_name) + 
+              geom_vline(xintercept = subset$truth, color = unique(subset$color), 
+                         size = 2)
+            
+            ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                                     "posteriors/run_1/continuous_vars/skew/", 
+                                     tolower(dem_group), "/", tolower(dem_group), "_", 
+                                     var_name, ".jpeg"), 
+                   width = 5, height = 3, units = "in")
+          } 
+        }
+        
+        
+        }
+      
+      #---- impairment classification ----
+      #truth
+      dementia_plot_data <- as.data.frame(table(dataset_to_copy[, dementia_var])) %>% 
+        mutate("prop" = Freq/sum(Freq))
+      
+      #synthetic
+      dem_sub <- synthetic_sample[, c("Group", "sample", "chain")] %>% 
+        mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
+                                         Group == 2 ~ "Other", 
+                                         Group == 3 ~ "MCI", 
+                                         TRUE ~ "Dementia"))
+      
+      synthetic_dementia_plot_data <- 
+        dem_sub %>% dplyr::count(chain, sample, Group_label) %>%
+        group_by(chain, sample) %>%
+        mutate(prop = n/sum(n)) %>% 
+        mutate_at("sample", as.numeric) %>% 
+        mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
+                                   Group_label == "Other" ~ "#28bed9", 
+                                   Group_label == "MCI" ~ "#fdab00", 
+                                   TRUE ~ "#ff0000"))
+      
+      #---- ****combined plot ----
+      combined_plot_data <- synthetic_dementia_plot_data %>% ungroup() %>% 
+        group_by(chain, Group_label) %>% 
+        summarize_at("n", list("mean" = mean, "lower" = ~ quantile(.x, probs = 0.025), 
+                               "upper" = ~ quantile(.x, probs = 0.975))) %>% 
+        mutate("truth" = dementia_plot_data$Freq) %>% 
+        mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
+                                   Group_label == "Other" ~ "#28bed9", 
+                                   Group_label == "MCI" ~ "#fdab00", 
+                                   Group_label == "Dementia" ~ "#ff0000")) %>% 
+        mutate("chain" = paste0("Chain ", chain))
+      
+      
+      combined_plot_data$Group_label <- 
+        factor(combined_plot_data$Group_label, 
+               levels = c("Unimpaired", "Other", "MCI", "Dementia"))
+      
+      ggplot(data = combined_plot_data, 
+             aes(x = Group_label, y = mean, color = Group_label)) + 
+        geom_point(aes(size = 1)) + theme_bw() + 
+        geom_point(aes(x = Group_label, y = truth, color = Group_label, size = 1), 
+                   shape = 18) + 
+        geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.10) + 
+        xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
+        scale_color_manual(values = rev(c(combined_plot_data$color))) + 
+        facet_wrap(facets = as.factor(combined_plot_data$chain), nrow = 2, ncol = 3) +
+        ggtitle(paste0("95% Credible intervals from ", num_samples, 
+                       " synthetic datasets"))
+      
+      ggsave(filename = paste0(path_to_figures_folder, "posterior_predictive_checks/", 
+                               "impairment_classes_combined_all_runs.jpeg"), 
+             height = 5, width = 10, units = "in")
+        }
     
     
-  }
-
-#---- impairment classification ----
-#truth
-dementia_plot_data <- as.data.frame(table(dataset_to_copy[, dementia_var])) %>% 
-  mutate("prop" = Freq/sum(Freq))
-
-#synthetic
-dem_sub <- synthetic_sample[, c("Group", "sample", "chain")] %>% 
-  mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
-                                   Group == 2 ~ "Other", 
-                                   Group == 3 ~ "MCI", 
-                                   TRUE ~ "Dementia"))
-
-synthetic_dementia_plot_data <- 
-  dem_sub %>% dplyr::count(chain, sample, Group_label) %>%
-  group_by(chain, sample) %>%
-  mutate(prop = n/sum(n)) %>% 
-  mutate_at("sample", as.numeric) %>% 
-  mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
-                             Group_label == "Other" ~ "#28bed9", 
-                             Group_label == "MCI" ~ "#fdab00", 
-                             TRUE ~ "#ff0000"))
-
-#---- ****combined plot ----
-combined_plot_data <- synthetic_dementia_plot_data %>% ungroup() %>% 
-  group_by(chain, Group_label) %>% 
-  summarize_at("n", list("mean" = mean, "lower" = ~ quantile(.x, probs = 0.025), 
-                         "upper" = ~ quantile(.x, probs = 0.975))) %>% 
-  mutate("truth" = dementia_plot_data$Freq) %>% 
-  mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
-                             Group_label == "Other" ~ "#28bed9", 
-                             Group_label == "MCI" ~ "#fdab00", 
-                             Group_label == "Dementia" ~ "#ff0000")) %>% 
-  mutate("chain" = paste0("Chain ", chain))
-
-
-combined_plot_data$Group_label <- 
-  factor(combined_plot_data$Group_label, 
-         levels = c("Unimpaired", "Other", "MCI", "Dementia"))
-
-ggplot(data = combined_plot_data, 
-       aes(x = Group_label, y = mean, color = Group_label)) + 
-  geom_point(aes(size = 1)) + theme_bw() + 
-  geom_point(aes(x = Group_label, y = truth, color = Group_label, size = 1), 
-             shape = 18) + 
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.10) + 
-  xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
-  scale_color_manual(values = rev(c(combined_plot_data$color))) + 
-  facet_wrap(facets = as.factor(combined_plot_data$chain), nrow = 2, ncol = 3) +
-  ggtitle(paste0("95% Credible intervals from ", num_samples, 
-                 " synthetic datasets"))
-
-ggsave(filename = paste0(path_to_figures_folder, "posterior_predictive_checks/", 
-                         "impairment_classes_combined_all_runs.jpeg"), 
-       height = 5, width = 10, units = "in")
-}
-
