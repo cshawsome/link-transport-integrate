@@ -14,6 +14,8 @@ source(here::here("ADAMS", "analysis_scripts", "functions",
                   "ADAMS_prior_predictive_checks_counts_function.R"))
 source(here::here("ADAMS", "analysis_scripts", "functions", 
                   "generate_synthetic_function.R"))
+source(here::here("ADAMS", "analysis_scripts", "functions", 
+                  "ADAMS_posterior_predictive_checks.R"))
 
 #---- read in data ----
 #dataset we're trying to copy
@@ -191,10 +193,15 @@ generate_synthetic(warm_up = 500, run_number = 5,
                             "figures/ADAMS_train/"))
 
 #---- posterior predictive checks ----
-orig_means = ADAMS_means
-orig_sds = ADAMS_sds
-num_samples = 1000
-num_chains = 5
-path_to_analyses_folder = 
-  paste0("/Users/CrystalShaw/Box/Dissertation/", 
-         "analyses/ADAMS_train/")
+ADAMS_posterior_predictive_checks(dataset_to_copy, continuous_covariates = Z, 
+                                  orig_means = ADAMS_means, orig_sds = ADAMS_sds, 
+                                  num_samples = 1000, num_chains = 5, 
+                                  dementia_var = "Adem_dx_cat", 
+                                  path_to_analyses_folder = 
+                                    paste0("/Users/CrystalShaw/Box/",
+                                           "Dissertation/analyses/ADAMS_train/"), 
+                                  path_to_figures_folder = 
+                                    paste0("/Users/CrystalShaw/Box/", 
+                                           "Dissertation/figures/ADAMS_train/"))
+
+
