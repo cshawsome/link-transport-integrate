@@ -15,8 +15,13 @@ ADAMS_posterior_predictive_checks <-
     for(chain in 1:num_chains){
       for(metric in c("median", "skew")){
         dir.create(paste0(path_to_figures_folder, "posterior_predictive_checks/", 
-                          "run_", chain, "/continuous_vars/", metric, "/",
-                          tolower(group)), recursive = TRUE)
+                          "run_", chain, "/continuous_vars/", metric, 
+                          "/overall"), recursive = TRUE)
+        for(group in unlist(unique(dataset_to_copy[, dementia_var]))){
+          dir.create(paste0(path_to_figures_folder, "posterior_predictive_checks/", 
+                            "run_", chain, "/continuous_vars/", metric, "/",
+                            tolower(group)), recursive = TRUE)
+        }
       }
     }
     
@@ -186,38 +191,46 @@ ADAMS_posterior_predictive_checks <-
     
     #medians from synthetic datasets
     for(var in Z[, "var"]){
-      subset <- synthetic_sample %>% dplyr::select(!!as.symbol(var), "sample") 
-      subset[, var] <- subset[, var]*ADAMS_sds[var] + ADAMS_means[var]
-      synthetic_continuous[which(synthetic_continuous$var == var), 
+      subset <- synthetic_sample %>% 
+        dplyr::select(!!as.symbol(var), "sample", "chain") 
+      subset[, var] <- subset[, var]*orig_sds[var] + orig_means[var]
+      synthetic_continuous[which(synthetic_continuous$var == var & 
+                                   synthetic_continuous$chain %in% 
+                                   seq(1, num_chains)), 
                            seq(1, num_samples)] <- 
-        t(subset %>% group_by(sample) %>% summarize_all(median) %>% 
-            dplyr::select(var))
+        matrix(subset %>% group_by(chain, sample) %>% 
+                 summarize_all(median) %>% ungroup() %>% 
+                 dplyr::select(all_of(var)) %>% unlist(), 
+               nrow = num_chains, ncol = num_samples, byrow = TRUE)
     }
     
     synthetic_continuous %<>% 
       mutate("truth" = 0, 
-             "label" = Z[, "label"])
+             "label" = rep(Z[, "label"], num_chains))
     
     for(var in Z[, "var"]){
       synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
-        median(unlist(ADAMS_subset[, var]))
+        median(unlist(dataset_to_copy[, var]*orig_sds[var] + orig_means[var]))
     }
     
     synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
     
     #---- ****plot ----
-    for(var_name in Z[, "label"]){
-      subset <- synthetic_continuous %>% filter(label == var_name)
-      ggplot(data = subset , aes(x = value)) + 
-        geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-        xlab("Median") + ggtitle(var_name) + 
-        geom_vline(xintercept = subset$truth, color = "#f2caaa" , size = 2)
-      
-      ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                               "posteriors/run_1/continuous_vars/median/overall/", 
-                               var_name, ".jpeg"), 
-             width = 5, height = 3, units = "in")
-    } 
+    for(chain_num in seq(1:num_chains)){
+      for(var_name in Z[, "label"]){
+        subset <- synthetic_continuous %>% 
+          filter(label == var_name & chain == chain_num)
+        ggplot(data = subset , aes(x = value)) + 
+          geom_histogram(fill = "black", color = "black") + theme_minimal() + 
+          xlab("Median") + ggtitle(var_name) + 
+          geom_vline(xintercept = subset$truth, color = "#f2caaa" , size = 2)
+        
+        ggsave(filename = paste0(path_to_figures_folder, 
+                                 "posterior_predictive_checks/run_", chain_num, 
+                                 "/continuous_vars/median/overall/", var_name, 
+                                 ".jpeg"), width = 5, height = 3, units = "in")
+      }
+    }
     
     #---- ****by class ----
     synthetic_continuous <- 
