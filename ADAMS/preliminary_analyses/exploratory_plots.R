@@ -26,7 +26,7 @@ group <- c("Adem_dx_cat")
 
 #---- **ADAMS ----
 ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/cleaned/ADAMS_subset_mixed.csv"), 
+                                "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"), 
                          col_types = cols(HHIDPN = col_character())) %>% 
   dplyr::select(c("HHIDPN", all_of(group), 
                   all_of(W[, "var"]), all_of(Z[, "var"]))) %>% 
@@ -125,7 +125,7 @@ cross_class_label <- table(analytical_sample$ETHNIC_label,
 #        width = 10, height = 8, units = "in", device = "jpeg")
 
 #---- continuous plots ----
-for(var in Z[, "var"]){
+for(var in Z[which(Z[, "label"] != "Total MMSE"), "var"]){
   label <- Z[which(Z[, "var"] == var), "label"]
   plot_data <- ADAMS_subset %>% 
     dplyr::select(all_of(var)) %>% 
@@ -138,7 +138,8 @@ for(var in Z[, "var"]){
   assign(paste0(var, "_plotX"), plotX)
 }
 
-continuous_var_plot_names <- paste0(Z[, "var"], "_plotX")
+continuous_var_plot_names <- 
+  paste0(Z[which(Z[, "label"] != "Total MMSE"), "var"], "_plotX")
 
 ((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
       get(continuous_var_plot_names[3])) /
@@ -146,17 +147,17 @@ continuous_var_plot_names <- paste0(Z[, "var"], "_plotX")
         get(continuous_var_plot_names[6])))) / 
     (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
        get(continuous_var_plot_names[9]))) / 
-  (get(continuous_var_plot_names[10]) + get(continuous_var_plot_names[11]))
+  (get(continuous_var_plot_names[10]))
 
 ggsave(filename = "ADAMS_all_X.jpeg", plot = last_plot(), 
-       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_train/", 
                      "prelim_analyses/ADAMSA"), width = 12, height = 12, 
        units = "in", device = "jpeg")
 
 #---- mixture plots ----
 merged_data <- left_join(ADAMS_subset, analytical_sample, by = "HHIDPN")
 
-for(var in Z[, "var"]){
+for(var in Z[which(Z[, "label"] != "Total MMSE"), "var"]){
   label <- Z[which(Z[, "var"] == var), "label"]
   plot_data <- merged_data %>% 
     dplyr::select(c(paste0({{ var }}, c(".x", ".y")), 
@@ -189,7 +190,8 @@ for(var in Z[, "var"]){
 }
 
 #---- **patchwork plot ----
-continuous_var_plot_names <- paste0(Z[, "var"], "_plotX")
+continuous_var_plot_names <- 
+  paste0(Z[which(Z[, "label"] != "Total MMSE"), "var"], "_plotX")
 
 ((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
       get(continuous_var_plot_names[3])) /
@@ -197,27 +199,27 @@ continuous_var_plot_names <- paste0(Z[, "var"], "_plotX")
         get(continuous_var_plot_names[6])))) / 
     (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
        get(continuous_var_plot_names[9]))) / 
-  (get(continuous_var_plot_names[10]) + get(continuous_var_plot_names[11]))
+  (get(continuous_var_plot_names[10]))
 
 ggsave(filename = "ADAMS_mix_X.jpeg", plot = last_plot(), 
-       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_train/", 
                      "prelim_analyses/ADAMSA"), width = 12, height = 12, 
        units = "in", device = "jpeg")
 
-continuous_var_plot_names <- paste0(Z, "_plotZ")
-
-((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
-      get(continuous_var_plot_names[3])) /
-     (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
-        get(continuous_var_plot_names[6])))) / 
-    (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
-       get(continuous_var_plot_names[9]))) / 
-  (get(continuous_var_plot_names[10]) + get(continuous_var_plot_names[11]))
-
-ggsave(filename = "ADAMS_mix_Z.jpeg", plot = last_plot(), 
-       path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                     "prelim_analyses/ADAMSA"), width = 12, height = 12, 
-       units = "in", device = "jpeg")
+# continuous_var_plot_names <- paste0(Z, "_plotZ")
+# 
+# ((((get(continuous_var_plot_names[1]) + get(continuous_var_plot_names[2]) + 
+#       get(continuous_var_plot_names[3])) /
+#      (get(continuous_var_plot_names[4]) + get(continuous_var_plot_names[5]) + 
+#         get(continuous_var_plot_names[6])))) / 
+#     (get(continuous_var_plot_names[7]) + get(continuous_var_plot_names[8]) + 
+#        get(continuous_var_plot_names[9]))) / 
+#   (get(continuous_var_plot_names[10]) + get(continuous_var_plot_names[11]))
+# 
+# ggsave(filename = "ADAMS_mix_Z.jpeg", plot = last_plot(), 
+#        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+#                      "prelim_analyses/ADAMSA"), width = 12, height = 12, 
+#        units = "in", device = "jpeg")
 
 #---- OLD CODE ----
 #---- plots ----
