@@ -227,24 +227,22 @@ ADAMS_prior_predictive_checks_counts <-
       
       for(i in 1:length(continuous_list)){
         continuous_list[[i]] <- continuous_list[[i]] %>% 
-          mutate("run" = i, "type" = "synthetic") %>% 
-          rbind(., true_data %>% dplyr::select(-dementia_var) %>% 
-                  mutate("run" = i, "type" = "True Data"))
+          mutate("run" = i, "Data Type" = "Synthetic") %>% 
+          rbind(., true_data %>% dplyr::select(-all_of(dementia_var)) %>% 
+                  mutate("run" = i, "Data Type" = "Observed"))
       }
       
       continuous_list %<>% do.call(rbind, .) %>% as.data.frame() 
       
       for(var in Z[, "var"]){
-        data <- continuous_list[, c(var, "run", "type", "color")]
+        data <- continuous_list[, c(var, "run", "Data Type", "color")]
         #unstandardize
         data[, var] <- data[, var]*orig_sds[var] + orig_means[var]
         
-        synthetic_subset <- data %>% filter(type == "synthetic")
-        # data[which(data$type == "synthetic"), var] <- 
-        #   synthetic_subset[, var]*orig_sds[var] + orig_means[var]
+        synthetic_subset <- data %>% filter(`Data Type` == "Synthetic")
         
         continuous_plot <- 
-          ggplot(data = data, aes(color = type, fill = type)) + 
+          ggplot(data = data, aes(color = `Data Type`, fill = `Data Type`)) + 
           geom_density(aes(x = data[, 1]), alpha = 0.5) + 
           theme_minimal() + xlab(Z[which(Z[, "var"] == var), "label"]) + 
           scale_color_manual(values = rev(unique(data$color))) + 
@@ -252,7 +250,7 @@ ADAMS_prior_predictive_checks_counts <-
           transition_states(data$run, transition_length = 1, state_length = 1) +
           labs(title = "Synthetic {round(frame_time)}") + transition_time(run) +
           ease_aes('linear')
-        
+
         animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
                 res = 150, renderer = gifski_renderer())
         
