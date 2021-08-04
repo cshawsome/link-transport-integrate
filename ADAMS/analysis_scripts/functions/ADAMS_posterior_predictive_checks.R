@@ -501,5 +501,25 @@ ADAMS_posterior_predictive_checks <-
                              "posterior_predictive_checks/", 
                              "impairment_classes_combined_all_runs.jpeg"), 
            height = 5, width = 10, units = "in")
+    
+    #---- ** individual plots ----
+    for(chain_num in 1:num_chains){
+      ggplot(data = combined_plot_data %>% filter(chain == chain_num), 
+             aes(x = Group_label, y = mean, color = Group_label)) + 
+        geom_point(aes(size = 1)) + theme_minimal() + 
+        geom_point(aes(x = Group_label, y = truth, color = Group_label, 
+                       size = 1), shape = 18) + 
+        geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.10) + 
+        xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
+        scale_color_manual(values = rev(c(combined_plot_data$color))) + 
+        ggtitle(paste0("95% Credible intervals from ", num_samples, 
+                       " synthetic datasets"))
+      
+      ggsave(filename = paste0(path_to_figures_folder, 
+                               "posterior_predictive_checks/run_", chain_num,  
+                               "/impairment_classes.jpeg"), 
+             height = 5, width = 10, units = "in")
+      
+    }
   }
 
