@@ -26,14 +26,15 @@ ADAMS_posterior_predictive_checks <-
                             tolower(group)), recursive = TRUE)
         }
       }
+      dir.create(paste0(path_to_figures_folder, "posterior_predictive_checks/", 
+                        "run_", chain, "/impairment_classes"), recursive = TRUE)
     }
     
-    dir.create(paste0(path_to_figures_folder, "posterior_predictive_checks/", 
-                      "run_", chain, "/impairment_classes"), recursive = TRUE)
-    
     #---- read in synthetic data ----
-    for(sample in 1:num_samples){
-      for(chain in 1:num_chains){
+    for(sample in 1:10){
+    #for(sample in 1:num_samples){
+      for(chain in 1:1){
+      #for(chain in 1:num_chains){
         if(sample == 1 & chain == 1){
           synthetic_sample <- 
             read_csv(paste0(path_to_analyses_folder, "synthetic_data/run_", 
@@ -504,7 +505,8 @@ ADAMS_posterior_predictive_checks <-
     
     #---- ** individual plots ----
     for(chain_num in 1:num_chains){
-      ggplot(data = combined_plot_data %>% filter(chain == chain_num), 
+      ggplot(data = combined_plot_data %>% 
+               filter(chain == paste0("Chain ", chain_num)), 
              aes(x = Group_label, y = mean, color = Group_label)) + 
         geom_point(aes(size = 1)) + theme_minimal() + 
         geom_point(aes(x = Group_label, y = truth, color = Group_label, 
