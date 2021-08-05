@@ -31,10 +31,8 @@ ADAMS_posterior_predictive_checks <-
     }
     
     #---- read in synthetic data ----
-    for(sample in 1:10){
-    #for(sample in 1:num_samples){
-      for(chain in 1:1){
-      #for(chain in 1:num_chains){
+    for(sample in 1:num_samples){
+      for(chain in 1:num_chains){
         if(sample == 1 & chain == 1){
           synthetic_sample <- 
             read_csv(paste0(path_to_analyses_folder, "synthetic_data/run_", 
