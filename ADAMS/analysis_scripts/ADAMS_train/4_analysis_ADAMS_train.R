@@ -111,6 +111,35 @@ ADAMS_prior_predictive_checks_counts(unimpaired_preds, other_preds, mci_preds,
 
 #---- synthetic datasets ----
 #starting_props are for (normal, other, mci, dementia)
+#---- **visualize starting points ----
+groups <- c("Unimpaired", "Other", "MCI", "Dementia") 
+plot_data <- 
+  cbind(expand.grid(paste0("Chain ", seq(1, 5)), groups),
+  expand.grid(seq(1, 5), seq(1, 4))) %>% 
+  set_colnames(c("Chain", "Group", "y", "x")) %>% 
+  mutate("props" = NA)
+
+plot_data[which(plot_data$Chain == "Chain 1" & plot_data$Group %in% groups), 
+          "props"] <- c(0.40, 0.20, 0.10, 0.30)
+plot_data[which(plot_data$Chain == "Chain 2" & plot_data$Group %in% groups), 
+          "props"] <- c(0.25, 0.25, 0.25, 0.25)
+plot_data[which(plot_data$Chain == "Chain 3" & plot_data$Group %in% groups), 
+          "props"] <- c(0.10, 0.20, 0.30, 0.40)
+plot_data[which(plot_data$Chain == "Chain 4" & plot_data$Group %in% groups), 
+          "props"] <- c(0.10, 0.30, 0.40, 0.20)
+plot_data[which(plot_data$Chain == "Chain 5" & plot_data$Group %in% groups), 
+          "props"] <- c(0.05, 0.15, 0.25, 0.55)
+
+ggplot(plot_data, aes(fill = Group, y = props, x = Chain)) + 
+  geom_bar(position = "fill", stat = "identity") + theme_minimal() + 
+  scale_fill_manual(values = c("#00a389", "#28bed9", "#fdab00", "#ff0000")) + 
+  ylab("Proportion") + xlab(" ")
+
+ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                         "ADAMS_train/diagnostics/chain_starts.jpeg"), 
+       width = 5, height = 3, units = "in")
+
+#---- **generate datasets ----
 generate_synthetic(warm_up = 500, run_number = 1, 
                    #warm start
                    starting_props = c(0.40, 0.20, 0.10, 0.30), 
@@ -192,9 +221,13 @@ generate_synthetic(warm_up = 500, run_number = 5,
                      paste0("/Users/CrystalShaw/Box/Dissertation/", 
                             "figures/ADAMS_train/"))
 
+
+
+
 #---- posterior predictive checks ----
 ADAMS_posterior_predictive_checks(dataset_to_copy, continuous_covariates = Z, 
-                                  orig_means = ADAMS_means, orig_sds = ADAMS_sds, 
+                                  orig_means = ADAMS_means, 
+                                  orig_sds = ADAMS_sds, 
                                   num_samples = 1000, num_chains = 5, 
                                   dementia_var = "Adem_dx_cat", 
                                   path_to_analyses_folder = 
