@@ -221,9 +221,6 @@ generate_synthetic(warm_up = 500, run_number = 5,
                      paste0("/Users/CrystalShaw/Box/Dissertation/", 
                             "figures/ADAMS_train/"))
 
-
-
-
 #---- posterior predictive checks ----
 ADAMS_posterior_predictive_checks(dataset_to_copy, continuous_covariates = Z, 
                                   orig_means = ADAMS_means, 
