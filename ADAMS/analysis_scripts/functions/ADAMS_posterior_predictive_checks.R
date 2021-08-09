@@ -484,11 +484,12 @@ ADAMS_posterior_predictive_checks <-
              levels = c("Unimpaired", "Other", "MCI", "Dementia"))
     
     ggplot(data = combined_plot_data, 
-           aes(x = Group_label, y = mean, color = Group_label)) + 
-      geom_point(aes(size = 1)) + theme_bw() + 
-      geom_point(aes(x = Group_label, y = truth, color = Group_label, size = 1), 
-                 shape = 18) + 
-      geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.10) + 
+           aes(x = Group_label, y = mean)) + theme_bw() + 
+      geom_point(aes(x = Group_label, y = truth, size = 1), color = "black",
+                 shape = 18, alpha = 1) + 
+      geom_errorbar(aes(ymin = lower, ymax = upper, color = Group_label), 
+                    width = 0.10) + 
+      geom_point(aes(size = 1, color = Group_label), alpha = 0.5) +
       xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
       scale_color_manual(values = rev(c(combined_plot_data$color))) + 
       facet_wrap(facets = as.factor(combined_plot_data$chain), 
@@ -505,11 +506,13 @@ ADAMS_posterior_predictive_checks <-
     for(chain_num in 1:num_chains){
       ggplot(data = combined_plot_data %>% 
                filter(chain == paste0("Chain ", chain_num)), 
-             aes(x = Group_label, y = mean, color = Group_label)) + 
-        geom_point(aes(size = 1)) + theme_minimal() + 
-        geom_point(aes(x = Group_label, y = truth, color = Group_label, 
-                       size = 1), shape = 18) + 
-        geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.10) + 
+             aes(x = Group_label, y = mean)) + 
+        geom_point(aes(size = 1, color = Group_label), alpha = 0.5) + 
+        theme_minimal() + 
+        geom_point(aes(x = Group_label, y = truth, 
+                       size = 1), shape = 18, color = "black") + 
+        geom_errorbar(aes(ymin = lower, ymax = upper, color = Group_label), 
+                      width = 0.10) + 
         xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
         scale_color_manual(values = rev(c(combined_plot_data$color))) + 
         ggtitle(paste0("95% Credible intervals from ", num_samples, 
@@ -519,7 +522,6 @@ ADAMS_posterior_predictive_checks <-
                                "posterior_predictive_checks/run_", chain_num,  
                                "/impairment_classes.jpeg"), 
              height = 5, width = 10, units = "in")
-      
     }
   }
 
