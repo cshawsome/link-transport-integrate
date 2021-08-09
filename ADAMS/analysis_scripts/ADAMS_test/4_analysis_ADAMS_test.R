@@ -5,7 +5,7 @@ if (!require("pacman")){
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
        "locfit", "MBSP", "wesanderson", "RColorBrewer", "devtools", "gifski", 
-       "transformr", "moments")
+       "transformr", "moments", "vroom")
 install_github("thomasp85/gganimate")
 library(gganimate)
 
@@ -19,12 +19,12 @@ source(here::here("ADAMS", "analysis_scripts", "functions",
 
 #---- read in data ----
 #dataset we're trying to copy
-dataset_to_copy <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                   "data/ADAMS/cleaned/ADAMS_test.csv"))
+dataset_to_copy <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                "data/ADAMS/cleaned/ADAMS_test.csv"))
 
 #complete dataset
-ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                              "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"))
+ADAMS_data <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                           "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"))
 
 #---- define relevant vars ----
 #Categorical vars (notation from Schafer 1997)
@@ -43,27 +43,27 @@ Z <- cbind(c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES",
 #based on analysis in priors_latent_classes.R
 for(group in c("unimpaired", "mci", "other")){
   assign(paste0(group, "_betas"), 
-         read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                         "ADAMS_test/latent_class_", group, "_betas.csv")))
+         vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                      "ADAMS_test/latent_class_", group, "_betas.csv")))
   assign(paste0(group, "_cov"), 
-         read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                         "ADAMS_test/latent_class_", group, "_cov.csv")))
+         vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                      "ADAMS_test/latent_class_", group, "_cov.csv")))
   
   assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
 }
 
 #---- ****contingency cells ----
 alpha_0_dist <- 
-  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                  "ADAMS_test/bootstrap_cell_props.csv")) 
+  vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+               "ADAMS_test/bootstrap_cell_props.csv")) 
 
 #--- ****beta and sigma ----
-priors_beta <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                               "priors/ADAMS_test/priors_beta.csv")) 
-prior_V_inv <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                               "priors/ADAMS_test/priors_V_inv.csv")) 
-prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                               "priors/ADAMS_test/priors_Sigma.csv")) 
+priors_beta <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
+                            "priors/ADAMS_test/priors_beta.csv")) 
+prior_V_inv <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                            "priors/ADAMS_test/priors_V_inv.csv")) 
+prior_Sigma <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                            "priors/ADAMS_test/priors_Sigma.csv")) 
 
 #---- **contrasts matrix ----
 A = do.call(cbind, list(
