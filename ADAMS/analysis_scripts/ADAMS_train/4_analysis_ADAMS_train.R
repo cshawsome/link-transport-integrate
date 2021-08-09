@@ -19,12 +19,12 @@ source(here::here("ADAMS", "analysis_scripts", "functions",
 
 #---- read in data ----
 #dataset we're trying to copy
-dataset_to_copy <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                   "data/ADAMS/cleaned/ADAMS_train.csv"))
+dataset_to_copy <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                "data/ADAMS/cleaned/ADAMS_train.csv"))
 
 #complete dataset
-ADAMS_data <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                              "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"))
+ADAMS_data <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                           "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"))
 
 #---- define relevant vars ----
 #Categorical vars (notation from Schafer 1997)
@@ -43,27 +43,27 @@ Z <- cbind(c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES",
 #based on analysis in priors_latent_classes.R
 for(group in c("unimpaired", "mci", "other")){
   assign(paste0(group, "_betas"), 
-         read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                         "ADAMS_train/latent_class_", group, "_betas.csv")))
+         vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                      "ADAMS_train/latent_class_", group, "_betas.csv")))
   assign(paste0(group, "_cov"), 
-         read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                         "ADAMS_train/latent_class_", group, "_cov.csv")))
+         vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+                      "ADAMS_train/latent_class_", group, "_cov.csv")))
   
   assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
 }
 
 #---- ****contingency cells ----
 alpha_0_dist <- 
-  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                  "ADAMS_train/bootstrap_cell_counts.csv")) 
+  vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
+               "ADAMS_train/bootstrap_cell_counts.csv")) 
 
 #--- ****beta and sigma ----
-priors_beta <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                               "priors/ADAMS_train/priors_beta.csv")) 
-prior_V_inv <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                               "priors/ADAMS_train/priors_V_inv.csv")) 
-prior_Sigma <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                               "priors/ADAMS_train/priors_Sigma.csv")) 
+priors_beta <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
+                            "priors/ADAMS_train/priors_beta.csv")) 
+prior_V_inv <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                            "priors/ADAMS_train/priors_V_inv.csv")) 
+prior_Sigma <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                            "priors/ADAMS_train/priors_Sigma.csv")) 
 
 #---- **contrasts matrix ----
 A = do.call(cbind, list(
@@ -115,7 +115,7 @@ ADAMS_prior_predictive_checks_counts(unimpaired_preds, other_preds, mci_preds,
 groups <- c("Unimpaired", "Other", "MCI", "Dementia") 
 plot_data <- 
   cbind(expand.grid(paste0("Chain ", seq(1, 5)), groups),
-  expand.grid(seq(1, 5), seq(1, 4))) %>% 
+        expand.grid(seq(1, 5), seq(1, 4))) %>% 
   set_colnames(c("Chain", "Group", "y", "x")) %>% 
   mutate("props" = NA)
 
