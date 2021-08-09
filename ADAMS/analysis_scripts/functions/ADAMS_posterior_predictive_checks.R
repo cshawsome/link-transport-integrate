@@ -35,15 +35,15 @@ ADAMS_posterior_predictive_checks <-
       for(chain in 1:num_chains){
         if(sample == 1 & chain == 1){
           synthetic_sample <- 
-            read_csv(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                            chain, "/ADAMSA_synthetic_", sample, ".csv")) %>% 
+            vroom(paste0(path_to_analyses_folder, "synthetic_data/run_", 
+                         chain, "/ADAMSA_synthetic_", sample, ".csv")) %>% 
             mutate("sample" = sample, "chain" = chain)
         } else{
           synthetic_sample %<>% 
             rbind(., 
-                  read_csv(paste0(path_to_analyses_folder, 
-                                  "synthetic_data/run_", chain, 
-                                  "/ADAMSA_synthetic_", sample, ".csv")) %>% 
+                  vroom(paste0(path_to_analyses_folder, 
+                               "synthetic_data/run_", chain, 
+                               "/ADAMSA_synthetic_", sample, ".csv")) %>% 
                     mutate("sample" = sample, "chain" = chain))
         }
       }
@@ -53,16 +53,16 @@ ADAMS_posterior_predictive_checks <-
     for(chain_num in 1:num_chains){
       if(chain_num == 1){
         group_membership <- 
-          read_csv(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                          "run_", chain_num, 
-                          "/ADAMSA_latent_class_data.csv")) %>% 
+          vroom(paste0(path_to_analyses_folder, "diagnostics_data/", 
+                       "run_", chain_num, 
+                       "/ADAMSA_latent_class_data.csv")) %>% 
           mutate("chain" = chain_num)
       } else{
         group_membership %<>% 
           rbind(., 
-                read_csv(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "run_", chain_num, 
-                                "/ADAMSA_latent_class_data.csv")) %>% 
+                vroom(paste0(path_to_analyses_folder, "diagnostics_data/", 
+                             "run_", chain_num, 
+                             "/ADAMSA_latent_class_data.csv")) %>% 
                   mutate("chain" = chain_num))
       }
     }
