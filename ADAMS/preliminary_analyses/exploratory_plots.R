@@ -164,21 +164,29 @@ for(var in Z[which(Z[, "label"] != "Total MMSE"), "var"]){
                     paste0("group_class", c(".x", ".y")))) %>% 
     pivot_longer(everything(), names_to = c(".value", "type"), 
                  names_pattern = "(.*).(.)") %>% 
-    set_colnames(c("type", "value", "group")) 
+    set_colnames(c("type", "value", "Group")) 
   plot_data[, "value"] <- unlist(plot_data[, "value"])
   plot_data[which(plot_data$type == "y"), "type"] <- "z"
   
   plotX <- ggplot(data = plot_data %>% filter(type == "x"), 
-                  aes(x = value, color = group, fill = group)) + 
+                  aes(x = value, color = Group, fill = Group)) + 
     geom_density(alpha = 0.5) + theme_minimal() + xlab(label) + 
-    scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)]) + 
-    scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)])
+    theme(text = element_text(size = 8)) + 
+    scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
+                       guide = guide_legend(reverse = TRUE)) + 
+    scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
+                      guide = guide_legend(reverse = TRUE)) + 
+    theme(legend.position = "bottom") 
   
   plotZ <- ggplot(data = plot_data %>% filter(type == "z"), 
-                  aes(x = value, color = group, fill = group)) + 
+                  aes(x = value, color = Group, fill = Group)) + 
     geom_density(alpha = 0.5) + theme_minimal() + xlab(label) + 
-    scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)]) + 
-    scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)])
+    theme(text = element_text(size = 8)) + 
+    scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
+                       guide = guide_legend(reverse = TRUE)) + 
+    scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
+                      guide = guide_legend(reverse = TRUE)) + 
+    theme(legend.position = "bottom") 
   
   if(var != Z[nrow(Z), "var"]){
     plotZ <- plotZ + theme(legend.position = "none") 
@@ -203,7 +211,7 @@ continuous_var_plot_names <-
 
 ggsave(filename = "ADAMS_mix_X.jpeg", plot = last_plot(), 
        path = paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_train/", 
-                     "prelim_analyses/ADAMSA"), width = 12, height = 12, 
+                     "prelim_analyses/ADAMSA"), width = 5.5, height = 6.5, 
        units = "in", device = "jpeg")
 
 # continuous_var_plot_names <- paste0(Z, "_plotZ")
