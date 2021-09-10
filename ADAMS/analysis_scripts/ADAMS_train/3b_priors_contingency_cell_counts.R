@@ -75,15 +75,30 @@ bootstrap_count_plot_data %<>%
                              group == "MCI" ~ "#fdab00", 
                              group == "Dementia" ~ "#ff0000"))
 
+#---- save data ----
+bootstrap_counts %>% as.data.frame() %>% 
+  mutate("group_number" = case_when(group == "Unimpaired" ~ 1, 
+                                    group == "Other" ~ 2, 
+                                    group == "MCI" ~ 3, 
+                                    group == "Dementia" ~ 4)) %>%
+  write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/ADAMS_train/", 
+                   "bootstrap_cell_counts.csv"))
+
+
 #---- **plots ----
+# #use data or read in from directory
+# bootstrap_count_plot_data <- 
+#   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/ADAMS_train/", 
+#                   "bootstrap_cell_counts.csv"))
+
 #---- ****create directories ----
 for(dem_group in unique(ADAMS_subset$Adem_dx_cat)){
- dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_train/", 
-                   "prior_predictive_checks/cell_counts/group_specific/", 
-                   tolower(dem_group)), recursive = TRUE) 
+  dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_train/", 
+                    "prior_predictive_checks/cell_counts/group_specific/", 
+                    tolower(dem_group)), recursive = TRUE) 
 }
 
-#---- ****create plot ----
+#---- ****create plot v1 ----
 for(dem_group in unique(bootstrap_count_plot_data$group)){
   for(category in unique(bootstrap_count_plot_data$cat)){
     subset <- bootstrap_count_plot_data %>% 
@@ -91,6 +106,7 @@ for(dem_group in unique(bootstrap_count_plot_data$group)){
     ggplot(data = subset , aes(x = value)) + 
       geom_histogram(fill = "black", color = "black") + theme_minimal() + 
       xlab("Count") + ggtitle(category) + 
+      theme(text = element_text(size = 8)) + 
       geom_vline(xintercept = subset$truth, color = unique(subset$color), 
                  size = 2)
     
@@ -102,13 +118,26 @@ for(dem_group in unique(bootstrap_count_plot_data$group)){
   } 
 }
 
-bootstrap_counts %>% as.data.frame() %>% 
-  mutate("group_number" = case_when(group == "Unimpaired" ~ 1, 
-                                    group == "Other" ~ 2, 
-                                    group == "MCI" ~ 3, 
-                                    group == "Dementia" ~ 4)) %>%
-  write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/ADAMS_train/", 
-                   "bootstrap_cell_counts.csv"))
+#---- ****create plot v2 ----
+for(dem_group in unique(bootstrap_count_plot_data$group)){
+  for(category in unique(bootstrap_count_plot_data$cat)){
+    subset <- bootstrap_count_plot_data %>% 
+      filter(group == dem_group & cat == category)
+    ggplot(data = subset , aes(x = value)) + 
+      geom_histogram(fill = "black", color = "black") + theme_minimal() + 
+      xlab("Count") + ggtitle(category) + 
+      theme(text = element_text(size = 8)) + 
+      geom_vline(xintercept = subset$truth, color = unique(subset$color), 
+                 size = 2)
+    
+    ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                             "ADAMS_train/prior_predictive_checks/cell_counts/", 
+                             "group_specific/", tolower(dem_group), "/", 
+                             tolower(dem_group), "_", category, "_count.jpeg"), 
+           width = 5, height = 3, units = "in")
+  } 
+}
+
 
 
 
