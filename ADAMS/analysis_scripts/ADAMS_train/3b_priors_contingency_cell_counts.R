@@ -120,22 +120,20 @@ for(dem_group in unique(bootstrap_count_plot_data$group)){
 
 #---- ****create plot v2 ----
 for(dem_group in unique(bootstrap_count_plot_data$group)){
-  for(category in unique(bootstrap_count_plot_data$cat)){
-    subset <- bootstrap_count_plot_data %>% 
-      filter(group == dem_group & cat == category)
+    subset <- bootstrap_count_plot_data %>% filter(group == dem_group)
     ggplot(data = subset , aes(x = value)) + 
-      geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-      xlab("Count") + ggtitle(category) + 
-      theme(text = element_text(size = 8)) + 
-      geom_vline(xintercept = subset$truth, color = unique(subset$color), 
-                 size = 2)
+      geom_histogram(fill = "black", color = "black") + theme_bw() + 
+      geom_vline(aes(xintercept = truth), color = unique(subset$color), 
+                 size = 1) + xlab("Contingency Cell Count") + ylab("") +
+      facet_wrap(facets = vars(cat), ncol = 2, scales = "free") +
+      theme(text = element_text(size = 6))  
+      
     
     ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
                              "ADAMS_train/prior_predictive_checks/cell_counts/", 
-                             "group_specific/", tolower(dem_group), "/", 
-                             tolower(dem_group), "_", category, "_count.jpeg"), 
-           width = 5, height = 3, units = "in")
-  } 
+                             "group_specific/", tolower(dem_group), 
+                             "_count.jpeg"), 
+           width = 2.45, height = 2.6, units = "in")
 }
 
 
