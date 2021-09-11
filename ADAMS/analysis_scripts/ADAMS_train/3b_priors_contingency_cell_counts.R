@@ -126,7 +126,8 @@ for(dem_group in unique(bootstrap_count_plot_data$group)){
       geom_vline(aes(xintercept = truth), color = unique(subset$color), 
                  size = 1) + xlab("Contingency Cell Count") + ylab("") +
       facet_wrap(facets = vars(cat), ncol = 2, scales = "free") +
-      theme(text = element_text(size = 6))  
+      theme(text = element_text(size = 6), 
+            strip.text = element_text(size = 10))  
       
     
     ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
