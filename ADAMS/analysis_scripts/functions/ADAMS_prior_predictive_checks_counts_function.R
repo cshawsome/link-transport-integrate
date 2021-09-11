@@ -10,7 +10,7 @@ ADAMS_prior_predictive_checks_counts <-
     
     for(class in unlist(unique(dataset_to_copy[, dementia_var]))){
       dir.create(paste0(path_to_folder, "continuous_vars/", 
-                        tolower(class)), recursive = TRUE)
+                        tolower(class), "/ANMSETOT_norm"), recursive = TRUE)
     }
     
     #---- select variables ----
@@ -217,7 +217,61 @@ ADAMS_prior_predictive_checks_counts <-
              height = 3, width = 5, units = "in")
     }
     
-    #---- **class-specific continuous ----
+    #---- **run-specific MMSE stills ----
+    true_data <- dataset_to_copy %>% 
+      dplyr::select(c(all_of(Z[, "var"]), all_of(dementia_var))) %>% 
+      mutate("color" = "black")
+    
+    for(run in 1:num_synthetic){
+      continuous_list <- synthetic[[run]]
+      synthetic_data <- 
+        do.call(rbind, continuous_list[2:length(continuous_list)]) %>% 
+        rownames_to_column("Group") 
+      synthetic_data[, "Group"] <- 
+        str_to_title(unlist(apply(synthetic_data[, "Group"], 1, 
+                                  function(x) rm_between(x, "_", ".", 
+                                                         extract = TRUE)))) 
+      #all caps MCI
+      synthetic_data[which(synthetic_data[, "Group"] == "Mci"), "Group"] <- "MCI"
+      
+      for(var in c("ANMSETOT_norm")){
+        plot_data <- 
+          rbind(true_data[, c("Adem_dx_cat", var, "color")] %>% 
+                  set_colnames(c("Group", var, "color")) %>% 
+                  mutate("Data Type" = "Observed"), 
+                synthetic_data[, c("Group", var, "color")] %>% 
+                  mutate("Data Type" = "Synthetic"))
+        plot_data[, "Group"] <- 
+          factor(plot_data$Group, 
+                 level = c("Unimpaired", "Other", "MCI", "Dementia"))
+        
+        for(group in c("Unimpaired", "Other", "MCI", "Dementia")){
+          subgroup_data <- plot_data %>% filter(Group == group)
+          plot <- ggplot(data = subgroup_data, 
+                         aes(color = `Data Type`, fill = `Data Type`)) + 
+            geom_density(aes(x = unlist(subgroup_data[, var])), 
+                         alpha = 0.5) +
+            theme_bw() + xlab(Z[which(Z[, "var"] == var), "label"]) + 
+            scale_color_manual(values = unique(subgroup_data$color)) + 
+            scale_fill_manual(values = unique(subgroup_data$color)) + 
+            ggtitle(group) + 
+            theme(plot.title = 
+                    element_text(hjust = 0.5, face = "bold",
+                                 color = unique(subgroup_data$color)[2]), 
+                  text = element_text(size = 6), 
+                  legend.position = "bottom", 
+                  legend.key.size = unit(0.3, "cm")) + 
+            guides(color = guide_legend(nrow = 2, byrow = TRUE))
+          
+          ggsave(filename = paste0(path_to_folder, "continuous_vars/", 
+                                   tolower(group), "/", var, "/", var, "_", run, 
+                                   ".jpeg"), width = 1.3, height = 1.4, 
+                 units = "in")
+        }
+      }
+    }
+    
+    #---- **class-specific continuous gifs ----
     for(class in unlist(unique(dataset_to_copy[, dementia_var]))){
       true_data <- dataset_to_copy %>% 
         dplyr::select(c(all_of(Z[, "var"]), all_of(dementia_var))) %>% 
@@ -250,7 +304,7 @@ ADAMS_prior_predictive_checks_counts <-
           transition_states(data$run, transition_length = 1, state_length = 1) +
           labs(title = "Synthetic {round(frame_time)}") + transition_time(run) +
           ease_aes('linear')
-
+        
         animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
                 res = 150, renderer = gifski_renderer())
         
