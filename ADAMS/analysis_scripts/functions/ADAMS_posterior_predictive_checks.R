@@ -298,16 +298,20 @@ ADAMS_posterior_predictive_checks <-
                      chain == chain_num)
           ggplot(data = subset , aes(x = value)) + 
             geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-            xlab("Median") + ggtitle(var_name) + 
+            xlab("Median") + ggtitle(dem_group) + 
             geom_vline(xintercept = subset$truth, color = unique(subset$color), 
-                       size = 2)
+                       size = 1) + labs(subtitle = var_name) +
+            theme(plot.title = 
+                    element_text(hjust = 0.5, face = "bold",
+                                 color = unique(subset$color)), 
+                  text = element_text(size = 6)) 
           
           ggsave(filename = paste0(path_to_figures_folder, 
                                    "posterior_predictive_checks/run_", 
                                    chain_num, "/continuous_vars/median/", 
                                    tolower(dem_group), "/", tolower(dem_group), 
                                    "_", var_name, ".jpeg"), 
-                 width = 5, height = 3, units = "in")
+                 width = 1.3, height = 1.4, units = "in")
         } 
       }
     }
@@ -513,15 +517,20 @@ ADAMS_posterior_predictive_checks <-
                        size = 1), shape = 18, color = "black") + 
         geom_errorbar(aes(ymin = lower, ymax = upper, color = Group_label), 
                       width = 0.10) + 
-        xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
+        xlab("") + ylab("Count") + 
+        theme(text = element_text(size = 10), legend.title = element_blank(), 
+              legend.position = "bottom", 
+              plot.title = element_text(size = 10)) +
         scale_color_manual(values = rev(c(combined_plot_data$color))) + 
         ggtitle(paste0("95% Credible intervals from ", num_samples, 
-                       " synthetic datasets"))
+                       " synthetic datasets")) + 
+        guides(color = "none") + 
+        guides(size = guide_legend(override.aes = list(shape = c(18))))
       
       ggsave(filename = paste0(path_to_figures_folder, 
                                "posterior_predictive_checks/run_", chain_num,  
                                "/impairment_classes.jpeg"), 
-             height = 5, width = 10, units = "in")
+             height = 4, width = 5.5, units = "in")
     }
   }
 
