@@ -195,7 +195,8 @@ generate_synthetic_props(warm_up = 500, run_number = 5,
 
 #---- posterior predictive checks ----
 ADAMS_posterior_predictive_checks(dataset_to_copy, continuous_covariates = Z, 
-                                  orig_means = ADAMS_means, orig_sds = ADAMS_sds, 
+                                  orig_means = ADAMS_means, 
+                                  orig_sds = ADAMS_sds, 
                                   num_samples = 1000, num_chains = 5, 
                                   dementia_var = "Adem_dx_cat", 
                                   path_to_analyses_folder = 
