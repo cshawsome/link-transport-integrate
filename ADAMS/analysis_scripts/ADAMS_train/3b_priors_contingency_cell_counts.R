@@ -84,13 +84,7 @@ bootstrap_counts %>% as.data.frame() %>%
   write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/ADAMS_train/", 
                    "bootstrap_cell_counts.csv"))
 
-
 #---- **plots ----
-# #use data or read in from directory
-# bootstrap_count_plot_data <- 
-#   read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/ADAMS_train/", 
-#                   "bootstrap_cell_counts.csv"))
-
 #---- ****create directories ----
 for(dem_group in unique(ADAMS_subset$Adem_dx_cat)){
   dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_train/", 
@@ -127,7 +121,7 @@ for(dem_group in unique(bootstrap_count_plot_data$group)){
                  size = 1) + xlab("Contingency Cell Count") + ylab("") +
       facet_wrap(facets = vars(cat), ncol = 2, scales = "free") +
       theme(text = element_text(size = 6), 
-            strip.text = element_text(size = 10))  
+            strip.text = element_text(size = 6))  
       
     
     ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
