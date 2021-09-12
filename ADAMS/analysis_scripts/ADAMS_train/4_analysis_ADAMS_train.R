@@ -7,9 +7,7 @@ p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack",
        "locfit", "MBSP", "wesanderson", "RColorBrewer", "devtools", "gifski", 
        "transformr", "moments", "vroom", "qdapRegex")
 install_github("thomasp85/gganimate")
-install_github("thomasp85/patchwork")
 library(gganimate)
-library(patchwork)
 
 #---- source functions ----
 source(here::here("ADAMS", "analysis_scripts", "functions", 
