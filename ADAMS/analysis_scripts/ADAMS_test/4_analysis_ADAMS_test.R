@@ -5,7 +5,7 @@ if (!require("pacman")){
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
        "locfit", "MBSP", "wesanderson", "RColorBrewer", "devtools", "gifski", 
-       "transformr", "moments", "vroom")
+       "transformr", "moments", "vroom", "qdapRegex")
 install_github("thomasp85/gganimate")
 library(gganimate)
 
