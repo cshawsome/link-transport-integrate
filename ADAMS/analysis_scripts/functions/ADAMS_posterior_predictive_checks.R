@@ -161,22 +161,22 @@ ADAMS_posterior_predictive_checks <-
     #---- **plot ----
     for(chain in 1:num_chains){
       for(dem_group in unique(synthetic_count_plot_data$group)){
-        for(category in unique(synthetic_count_plot_data$cat)){
-          subset <- synthetic_count_plot_data %>% 
-            filter(group == dem_group & cat == category & chain == chain)
-          ggplot(data = subset , aes(x = value)) + 
-            geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-            xlab("Count") + ggtitle(category) + 
-            geom_vline(xintercept = subset$truth, color = unique(subset$color), 
-                       size = 2)
-          
-          ggsave(filename = paste0(path_to_figures_folder, 
-                                   "posterior_predictive_checks/run_", chain, 
-                                   "/cell_counts/group_specific/", 
-                                   tolower(dem_group), "/", tolower(dem_group), 
-                                   "_", category, "_count.jpeg"), 
-                 width = 5, height = 3, units = "in")
-        } 
+        subset <- synthetic_count_plot_data %>% 
+          filter(group == dem_group & chain == chain)
+        ggplot(data = subset , aes(x = value)) + 
+          geom_histogram(fill = "black", color = "black") + theme_bw() + 
+          xlab("Contingency Cell Count") + ylab("") + 
+          facet_wrap(facets = vars(cat), ncol = 2, scales = "free") +
+          geom_vline(aes(xintercept = truth), color = unique(subset$color),
+                     size = 1) +
+          theme(text = element_text(size = 6), 
+                strip.text = element_text(size = 6))  
+        
+        ggsave(filename = paste0(path_to_figures_folder, 
+                                 "posterior_predictive_checks/run_", chain, 
+                                 "/cell_counts/group_specific/", 
+                                 tolower(dem_group), "_count.jpeg"), 
+               width = 2.45, height = 2.6, units = "in")
       }
     }
     
