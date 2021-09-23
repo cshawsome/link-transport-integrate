@@ -3,22 +3,31 @@ if (!require("pacman")){
   install.packages("pacman", repos = 'http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "magrittr", "future.apply", "readr", "haven",
-       "lubridate", "gmodels", "tidyselect")
+p_load("here", "tidyverse", "magrittr", "haven")
 
 options(scipen = 999)
 
-#---- Read in the HRS data (wave 13) ----
+#---- read in data ----
+#---- **HRS ----
+#wave 13 = 2016 wave
 #list of variables to read in from HRS data:
 # ID, Age, Sex/Gender, Race/Ethnicity, Years of education
 
-vars = c("HHIDPN", "R13AGEY_B", "RAGENDER", "RARACEM", "RAHISPAN", "RAEDYRS")
+vars = c("HHIDPN") 
+         #"R13AGEY_B", "RAGENDER", "RARACEM", "RAHISPAN", "RAEDYRS")
 
-HRS_data <- read_sas(paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/",
-                            "HRS/HRS RAND/randhrs1992_2016v1_SAS_data/",
-                            "randhrs1992_2016v1.sas7bdat"),
-                     n_max = Inf, col_select = all_of(vars)) %>%
+HRS_data <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
+                            "HRS/RAND_longitudinal/STATA/",
+                            "randhrs1992_2016v2.dta"),
+                     n_max = Inf) 
+
+%>%
   mutate_at("HHIDPN", as.character)
+
+#---- **HCAP ----
+#---- **ADAMS ----
+
+#---- data cleaning ----
 
 
 HRS_clean <- HRS_data %>%
@@ -46,49 +55,6 @@ HRS_clean <- HRS_data %>%
                                   RAEDYRS %in% seq(13, 15) ~ "Some college",
                                   RAEDYRS >= 16 ~ "Bachelor's degree or higher",
                                   TRUE ~ "missing"))
-
-#---- Read in NHATS data (wave 1 and 5 (baseline data), 6) ----
-#list of variables to read in from HRS data:
-# ID, Age, Sex/Gender, Race/Ethnicity, Years of education
-w1_vars = c("spid", "el1higstschl")
-w5_vars = c("spid", "el5higstschl")
-w6_vars = c("spid", "r6d2intvrage", "r5dgender", "rl5dracehisp")
-
-NHATS_w1 <- read_sas(paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/",
-                            "NHATS/Round 1/NHATS_ROUND_1_SP_File.sas7bdat"),
-                     n_max = Inf, col_select = all_of(w1_vars)) %>%
-  mutate_at("spid", as.character)
-
-NHATS_w5 <- read_sas(paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/",
-                            "NHATS/Round 5/NHATS_ROUND_5_SP_File_V2.sas7bdat"),
-                     n_max = Inf, col_select = all_of(w5_vars)) %>%
-  mutate_at("spid", as.character)
-
-NHATS_w6 <- read_sas(paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/",
-                            "NHATS/Round 6/NHATS_ROUND_6_SP_File_V2.sas7bdat"),
-                     n_max = Inf, col_select = all_of(w6_vars)) %>%
-  mutate_at("spid", as.character)
-
-NHATS_clean <- left_join(NHATS_w6, NHATS_w5, by = "spid") %>%
-  left_join(., NHATS_w1, by = "spid") %>%
-  #Remove those who didn't take the survey based on age variable
-  filter(!is.na(r6d2intvrage) & r6d2intvrage != -1) %>%
-  #Remove those who don't know/refuse race/ethnicity question
-  filter(!(rl5dracehisp %in% c(5, 6))) %>%
-  #Carry forward education data from wave 1
-  mutate("elhigstschl" = case_when(el5higstschl == -1 ~ el1higstschl,
-                                   TRUE ~ el5higstschl)) %>%
-  #Remove those not in the survey based on education variable
-  filter(elhigstschl != -1) %>%
-  #My education categories
-  mutate("my_edu_cat" = case_when(elhigstschl == 1 ~ "No school completed",
-                                  elhigstschl == 2 ~ "1-8",
-                                  elhigstschl %in% c(3) ~ "Some high school",
-                                  elhigstschl == 4 ~ "High school diploma",
-                                  elhigstschl %in% c(5, 6, 7) ~ "Some college",
-                                  elhigstschl %in% c(8, 9) ~
-                                    "Bachelor's degree or higher",
-                                  elhigstschl %in% c(-9, -8, -7) ~ "missing"))
 
 
 #---- Read in HCAP participant ids (wave 1) ----
