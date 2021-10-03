@@ -71,14 +71,17 @@ ADAMS_posterior_predictive_checks <-
     chain_convergence <- 
       ggplot(data = group_membership, 
              aes(x = run, y = prob, colour = as.factor(chain))) +       
-      geom_line(aes(group = as.factor(chain)), alpha = 0.75) + xlab("Run") + 
+      geom_line(aes(group = as.factor(chain)), alpha = 0.60) + xlab("Run") + 
       ylab("Proportion") + guides(color = guide_legend(title = "Chain")) + 
       scale_color_manual(values = wes_palette("Darjeeling2")) +
+      theme_bw() +
       facet_wrap(facets = 
                    vars(factor(Group, 
                                levels = c("Unimpaired", "MCI", "Dementia", 
                                           "Other"))), nrow = 2, ncol = 2) + 
-      theme_bw() 
+      theme(text = element_text(size = 12),
+            strip.text = element_text(size = 12)) + 
+      theme(legend.position = "bottom")  
     
     ggsave(filename = "group_membership_chains.jpeg", plot = chain_convergence, 
            path = paste0(path_to_figures_folder, "diagnostics/"), 
