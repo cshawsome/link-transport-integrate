@@ -7,25 +7,46 @@ p_load("here", "tidyverse", "magrittr", "haven")
 
 options(scipen = 999)
 
+#---- source scripts ----
+#custom read da dct function
+source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
+              "data_read/read_da_dct.R"))
+
 #---- read in data ----
+#---- **HRS tracker ----
+HRS_tracker_data_path <- 
+  paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS_tracker/trk2018_3/", 
+         "TRK2018TR_R.da")
+HRS_tracker_dict_path <- 
+  paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS_tracker/trk2018_3/", 
+         "TRK2018TR_R.dCT")
+
+#filter to those who completed Wave A assessment
+HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path, 
+                           HHIDPN = "TRUE") %>% 
+  #Participated in 2016 HRS
+  filter(PIWTYPE == 1) %>% filter(PAGE >= 65)
+
+
+#---- **ADAMS ----
+
+
 #---- **HRS ----
 #wave 13 = 2016 wave
 #list of variables to read in from HRS data:
-# ID, Age, Sex/Gender, Race/Ethnicity, Years of education
+# ID, Age, Sex/Gender, Race/Ethnicity
 
-vars = c("HHIDPN") 
-         #"R13AGEY_B", "RAGENDER", "RARACEM", "RAHISPAN", "RAEDYRS")
+hrs_vars = c("hhidpn", "r13agey_b", "raracem", "rahispan", "") 
 
-HRS_data <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                            "HRS/RAND_longitudinal/STATA/",
-                            "randhrs1992_2016v2.dta"),
-                     n_max = Inf) 
+HRS <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS/", 
+                       "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
+                col_select = all_of(hrs_vars)) %>% 
+  mutate_at("hhidpn", as.character)
 
-%>%
-  mutate_at("HHIDPN", as.character)
+
+
 
 #---- **HCAP ----
-#---- **ADAMS ----
 
 #---- data cleaning ----
 
