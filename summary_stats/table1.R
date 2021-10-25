@@ -261,29 +261,29 @@ table(ADAMS_A$race_eth, useNA = "ifany")
 table(ADAMS_A$race_eth, useNA = "ifany")/nrow(ADAMS_A)
 
 #---- ******BMI ----
-summary(HRS_2016$r13bmi)
-sd(HRS_2016$r13bmi, na.rm = TRUE)
+summary(ADAMS_A$Abmi)
+sd(ADAMS_A$Abmi, na.rm = TRUE)
 
 #---- ******IADL ----
-hist(HRS_2016$r13iadla)
-summary(HRS_2016$r13iadla)
-sd(HRS_2016$r13iadla, na.rm = TRUE)
+hist(ADAMS_A$Aiadla)
+summary(ADAMS_A$Aiadla)
+sd(ADAMS_A$Aiadla, na.rm = TRUE)
 
 #---- ******stroke history ----
-table(HRS_2016$r13stroke, useNA = "ifany")
-summary(HRS_2016$r13stroke)
+table(ADAMS_A$Astroke, useNA = "ifany")
+summary(ADAMS_A$Astroke)
 
 #---- ******serial 7s ----
-summary(HRS_2016$r13ser7)
-sd(HRS_2016$r13ser7, na.rm = TRUE)
+summary(ADAMS_A$Aser7)
+sd(ADAMS_A$Aser7, na.rm = TRUE)
 
 #---- ******immediate word recall ----
-summary(HRS_2016$r13imrc)
-sd(HRS_2016$r13imrc, na.rm = TRUE)
+summary(ADAMS_A$Aimrc)
+sd(ADAMS_A$Aimrc, na.rm = TRUE)
 
 #---- ******delayed word recall ----
-summary(HRS_2016$r13dlrc)
-sd(HRS_2016$r13dlrc, na.rm = TRUE)
+summary(ADAMS_A$Adlrc)
+sd(ADAMS_A$Adlrc, na.rm = TRUE)
 
 #---- **HCAP ----
 
