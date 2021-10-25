@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos = 'http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "magrittr", "haven", "stringr")
+p_load("here", "tidyverse", "magrittr", "haven", "stringr", "NormPsy")
 
 options(scipen = 999)
 
@@ -221,7 +221,7 @@ ADAMS_A <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>%
   left_join(., ADAMS_demdx, by = "HHIDPN") %>% 
   left_join(., HRS, by = "HHIDPN")
 
-wave_updated_vars <- c("cpl", "bmi", "iadla", "stroke", "imrc", "dlrc", "ser7")
+wave_updated_vars <- c("cpl", "bmi", "iadla", "stroke")
 
 for(var in wave_updated_vars){
   if(var == "cpl"){
@@ -240,12 +240,31 @@ for(var in wave_updated_vars){
   }
 }
 
-#race/ethnicity
 ADAMS_A %<>% 
+  #race/ethnicity
   mutate("race_eth" = case_when(rahispan == 1 ~ "Hispanic", 
                                 rahispan == 0 & raracem == 1 ~ "White", 
                                 rahispan == 0 & raracem == 2 ~ "Black", 
-                                rahispan == 0 & raracem == 3 ~ "Other"))
+                                rahispan == 0 & raracem == 3 ~ "Other")) %>% 
+  #clean serial 7s data (missing/refused)
+  mutate_at(.vars = c("ANSER7T"), function(x) ifelse(x > 5, NA, x)) %>%
+  #clean immediate word recall
+  mutate_at(.vars = c("ANIMMCR1", "ANIMMCR2", "ANIMMCR3", "ANDELCOR"), 
+            #Missing/refused  
+            function(x) ifelse(x > 10, NA, x)) %>% 
+  #Best of 3 immediate recall trials
+  mutate("ANIMMCR" = pmax(ANIMMCR1, ANIMMCR2, ANIMMCR3, na.rm = TRUE)) %>%
+  #clean MMSE data
+  mutate_at(.vars = "ANMSETOT", function(x) ifelse(x > 30, NA, x)) %>% 
+  #normalize MMSE
+  mutate("ANMSETOT_norm" = normMMSE(ANMSETOT)) %>%
+  #clean word list recognition (missing/refused)
+  mutate_at(.vars = c("ANRECYES"), function(x) ifelse(x > 10, NA, x)) %>% 
+  #clean immediate story recall (missing/refused)
+  mutate_at(.vars = c("ANWM1TOT"), function(x) ifelse(x > 37, NA, x)) %>%
+  #proxy cognition 
+  mutate("proxy_cog" = ADAMS_A %>% dplyr::select(contains("AGQ")) %>% 
+           rowMeans(., na.rm = TRUE))
 
 #---- ******coupled status ----
 table(ADAMS_A$Acpl, useNA = "ifany")
@@ -274,16 +293,36 @@ table(ADAMS_A$Astroke, useNA = "ifany")
 summary(ADAMS_A$Astroke)
 
 #---- ******serial 7s ----
-summary(ADAMS_A$Aser7)
-sd(ADAMS_A$Aser7, na.rm = TRUE)
+summary(ADAMS_A$ANSER7T)
+sd(ADAMS_A$ANSER7T, na.rm = TRUE)
 
 #---- ******immediate word recall ----
-summary(ADAMS_A$Aimrc)
-sd(ADAMS_A$Aimrc, na.rm = TRUE)
+summary(ADAMS_A$ANIMMCR)
+sd(ADAMS_A$ANIMMCR, na.rm = TRUE)
 
 #---- ******delayed word recall ----
-summary(ADAMS_A$Adlrc)
-sd(ADAMS_A$Adlrc, na.rm = TRUE)
+summary(ADAMS_A$ANDELCOR)
+sd(ADAMS_A$ANDELCOR, na.rm = TRUE)
+
+#---- ******normed MMSE----
+summary(ADAMS_A$ANMSETOT_norm)
+sd(ADAMS_A$ANMSETOT_norm, na.rm = TRUE)
+
+#---- ******word list recognition (yes)----
+summary(ADAMS_A$ANRECYES)
+sd(ADAMS_A$ANRECYES, na.rm = TRUE)
+
+#---- ******story recall (immediate)----
+summary(ADAMS_A$ANWM1TOT)
+sd(ADAMS_A$ANWM1TOT, na.rm = TRUE)
+
+#---- ******proxy cognition----
+summary(ADAMS_A$proxy_cog)
+sd(ADAMS_A$proxy_cog, na.rm = TRUE)
+
+#---- ******dementia adjudication ----
+table(ADAMS_A$Adem_dx_cat)
+table(ADAMS_A$Adem_dx_cat)/nrow(ADAMS_A)
 
 #---- **HCAP ----
 
