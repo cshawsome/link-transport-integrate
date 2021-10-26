@@ -22,7 +22,6 @@ HRS_tracker_dict_path <-
   paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS_tracker/trk2018_3/", 
          "TRK2018TR_R.dct")
 
-#filter to those who completed Wave A assessment
 HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path, 
                            HHIDPN = "TRUE") %>% 
   #Participated in 2016 HRS
@@ -36,7 +35,7 @@ HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
 # Serial 7s, Immediate Word Recall, Delayed Word Recall
 
 hrs_waves <- c(5, 6, 7, 13)
-hrs_vars = c("rahhidpn", "raracem", "rahispan",
+hrs_vars = c("hhid", "pn", "rahhidpn", "raracem", "rahispan", "r13mstat",
              paste0("h", hrs_waves, "cpl"), paste0("r", hrs_waves, "agey_b"),
              paste0("r", hrs_waves, "bmi"), paste0("r", hrs_waves, "iadla"),
              paste0("r", hrs_waves, "stroke"), paste0("r", hrs_waves, "ser7"),
@@ -45,6 +44,8 @@ hrs_vars = c("rahhidpn", "raracem", "rahispan",
 HRS <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS/", 
                        "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
                 col_select = all_of(hrs_vars)) 
+colnames(HRS)[which(colnames(HRS) == "hhid")] <- "HHID"
+colnames(HRS)[which(colnames(HRS) == "pn")] <- "PN"
 colnames(HRS)[which(colnames(HRS) == "rahhidpn")] <- "HHIDPN"
 
 HRS_2016 <- HRS %>% 
@@ -325,116 +326,93 @@ table(ADAMS_A$Adem_dx_cat)
 table(ADAMS_A$Adem_dx_cat)/nrow(ADAMS_A)
 
 #---- **HCAP ----
+HCAP_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                         "HCAP/HC16/HC16da/HC16HP_R.da")
 
+HCAP_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                         "HCAP/HC16/HC16sta/HC16HP_R.dct")
 
-#---- data cleaning ----
-HRS_clean <- HRS_data %>%
-  #Filter out those younger than 50
-  filter(R13AGEY_B >= 50) %>%
-  #Remove those missing race/ethnicity data
-  filter(!is.na(RARACEM)) %>%
-  filter(!is.na(RAHISPAN)) %>%
-  #My age categories
-  mutate_at("R13AGEY_B", floor) %>%
-  mutate("my_age_cat" = case_when(R13AGEY_B %in% seq(50, 54) ~ "50-54",
-                                  R13AGEY_B %in% seq(55, 59) ~ "55-59",
-                                  R13AGEY_B %in% seq(60, 64) ~ "60-64",
-                                  R13AGEY_B %in% seq(65, 69) ~ "65-69",
-                                  R13AGEY_B %in% seq(70, 74) ~ "70-74",
-                                  R13AGEY_B %in% seq(75, 79) ~ "75-79",
-                                  R13AGEY_B %in% seq(80, 84) ~ "80-84",
-                                  R13AGEY_B %in% seq(85, 89) ~ "85-89",
-                                  R13AGEY_B >= 90 ~ "90+")) %>%
-  #My education categories
-  mutate("my_edu_cat" = case_when(RAEDYRS == 0 ~ "No school completed",
-                                  RAEDYRS %in% seq(1, 8) ~ "1-8",
-                                  RAEDYRS %in% seq(9, 11) ~ "Some high school",
-                                  RAEDYRS == 12 ~ "High school diploma",
-                                  RAEDYRS %in% seq(13, 15) ~ "Some college",
-                                  RAEDYRS >= 16 ~ "Bachelor's degree or higher",
-                                  TRUE ~ "missing"))
+#---- **HCAP informant ----
+HCAP_informant_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                         "HCAP/HC16/HC16da/HC16HP_I.da")
 
+HCAP_informant_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                         "HCAP/HC16/HC16sta/HC16HP_I.dct")
 
-#---- Read in HCAP participant ids (wave 1) ----
-# Set path to the data file "*.da"
-data_path <- paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/HCAP/",
-                    "HC16/HC16da/HC16HP_R.da")
+#---- ****join data ----
+HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") %>%
+  #join informant data
+  left_join(., read_da_dct(HCAP_informant_data_path, HCAP_informant_dict_path, 
+                           HHIDPN = "TRUE"), 
+            by = "HHIDPN") %>% 
+  #filter to tracker data
+  left_join(., HRS, by = "HHIDPN") %>% 
+  #round age up to 65 (there's some 64 years olds)
+  mutate("age" = ifelse(r13agey_b < 65, 65, r13agey_b)) %>%
+  #race/ethnicity
+  mutate("race_eth" = case_when(rahispan == 1 ~ "Hispanic", 
+                                rahispan == 0 & raracem == 1 ~ "White", 
+                                rahispan == 0 & raracem == 2 ~ "Black", 
+                                rahispan == 0 & raracem == 3 ~ "Other")) %>% 
+  filter(!is.na(race_eth)) %>% 
+  #Best of 3 immediate recall trials
+  mutate("H1RWLIMMSCORE" = pmax(H1RWLIMM1SCORE, H1RWLIMM2SCORE, H1RWLIMM3SCORE, 
+                                na.rm = TRUE)) %>%
+  #normalize MMSE
+  mutate("H1RMSESCORE_norm" = normMMSE(H1RMSESCORE)) %>%
+  #sum score immediate story recall 
+  mutate("story_sum_immediate" = H1RBMIMMSCORE + H1RLMIMMSCORE)
 
-# Set path to the dictionary file "*.dct"
-dict_path <- paste0("/Users/CrystalShaw/Box/NIA_F31_April2020/Data/HCAP/",
-                    "HC16/HC16sta/HC16HP_R.dct")
+#---- ******coupled status ----
+table(HCAP_2016$h13cpl, useNA = "ifany")
+summary(HCAP_2016$h13cpl)
 
-# Read the dictionary file
-df_dict <- read.table(dict_path, skip = 2, fill = TRUE,
-                      stringsAsFactors = FALSE)
+#---- ******age ----
+summary(HCAP_2016$age)
+sd(HCAP_2016$age)
 
-#Set column names for dictionary dataframe
-colnames(df_dict) <- c("col.num", "col.type", "col.name", "col.width",
-                       "col.lbl")
+#---- ******race/ethnicity ----
+table(HCAP_2016$race_eth, useNA = "ifany")
+table(HCAP_2016$race_eth, useNA = "ifany")/nrow(HCAP_2016)
 
-#Remove last row which only contains a closing}
-df_dict <- df_dict[-nrow(df_dict), ]
+#---- ******BMI ----
+summary(HCAP_2016$r13bmi)
+sd(HCAP_2016$r13bmi, na.rm = TRUE)
 
-#Extract numeric value from column width field
-df_dict$col.width <- as.integer(sapply(df_dict$col.width, gsub,
-                                       pattern = "[^0-9\\.]",
-                                       replacement = ""))
+#---- ******IADL ----
+summary(HCAP_2016$r13iadla)
+sd(HRS_2016$r13iadla, na.rm = TRUE)
 
-#Convert column types to format to be used with read_fwf function
-df_dict$col.type <-
-  sapply(df_dict$col.type,
-         function(x) ifelse(x %in% c("int","byte","long"), "i",
-                            ifelse(x == "float", "n",
-                                   ifelse(x == "double", "d", "c"))))
+#---- ******stroke history ----
+table(HCAP_2016$r13stroke, useNA = "ifany")
+summary(HCAP_2016$r13stroke)
 
-#Read the data file into a dataframe
-HCAP <- read_fwf(file = data_path,
-                 fwf_widths(widths = df_dict$col.width,
-                            col_names = df_dict$col.name),
-                 col_types = paste(df_dict$col.type, collapse = ""))
+#---- ******serial 7s ----
+#had to take from HRS because not sure if item 12 on MMSE is serial7s or WORLD backwards
+#**ask Jen Manly
+summary(HCAP_2016$r13ser7)
+sd(HCAP_2016$r13ser7, na.rm = TRUE)
 
-# Add column labels to headers
-attributes(HCAP)$variable.labels <- df_dict$col.lbl
+#---- ******immediate word recall ----
+summary(HCAP_2016$H1RWLIMMSCORE)
+sd(HCAP_2016$H1RWLIMMSCORE, na.rm = TRUE)
 
-HCAP %<>% as.data.frame() %>%
-  unite("HHIDPN", c("HHID", "PN"), sep = "")
-HCAP$HHIDPN = str_remove(HCAP$HHIDPN, "^0+")
+#---- ******delayed word recall ----
+summary(HCAP_2016$H1RWLDELSCORE)
+sd(HCAP_2016$H1RWLDELSCORE, na.rm = TRUE)
 
-#Join HCAP with HRS data
-HRS_HCAP <- inner_join(HRS_clean, HCAP, by = "HHIDPN")
+#---- ******normed MMSE----
+summary(HCAP_2016$H1RMSESCORE_norm)
+sd(HCAP_2016$H1RMSESCORE_norm, na.rm = TRUE)
 
-#---- Filling in F31 Research Strategy Table 2 ----
-nrow(HRS_clean)
-table(HRS_clean$my_age_cat)
-table(HRS_clean$my_age_cat)/nrow(HRS_clean)
-# 1 = Male; 2 = Female
-table(HRS_clean$RAGENDER)
-table(HRS_clean$RAGENDER)/nrow(HRS_clean)
-# Race: 1 = White; 2 = Black; 3 = Other
-CrossTable(HRS_clean$RARACEM, HRS_clean$RAHISPAN)
-table(HRS_clean$my_edu_cat)
-table(HRS_clean$my_edu_cat)/nrow(HRS_clean)
+#---- ******word list recognition (yes)----
+summary(HCAP_2016$H1RWLRECYSCORE)
+sd(HCAP_2016$H1RWLRECYSCORE, na.rm = TRUE)
 
-nrow(NHATS_clean)
-table(NHATS_clean$r6d2intvrage)
-table(NHATS_clean$r6d2intvrage)/nrow(NHATS_clean)
-# 1 = Male; 2 = Female
-table(NHATS_clean$r5dgender)
-table(NHATS_clean$r5dgender)/nrow(NHATS_clean)
-# 1 = Non-hispanic White; 2 = Non-hispanic Black; 3 = Non-hispanic Other;
-# 4 = Hispanic
-table(NHATS_clean$rl5dracehisp)
-table(NHATS_clean$rl5dracehisp)/nrow(NHATS_clean)
-table(NHATS_clean$my_edu_cat)
-table(NHATS_clean$my_edu_cat)/nrow(NHATS_clean)
+#---- ******story recall (immediate)----
+summary(HCAP_2016$story_sum_immediate)
+sd(HCAP_2016$story_sum_immediate, na.rm = TRUE)
 
-nrow(HRS_HCAP)
-table(HRS_HCAP$my_age_cat)
-table(HRS_HCAP$my_age_cat)/nrow(HRS_HCAP)
-# 1 = Male; 2 = Female
-table(HRS_HCAP$RAGENDER)
-table(HRS_HCAP$RAGENDER)/nrow(HRS_HCAP)
-# Race: 1 = White; 2 = Black; 3 = Other
-CrossTable(HRS_HCAP$RARACEM, HRS_HCAP$RAHISPAN)
-table(HRS_HCAP$my_edu_cat)
-table(HRS_HCAP$my_edu_cat)/nrow(HRS_HCAP)
+#---- ******proxy cognition----
+summary(HCAP_2016$H1IIQSCORE)
+sd(HCAP_2016$H1IIQSCORE, na.rm = TRUE)
