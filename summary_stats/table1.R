@@ -35,11 +35,13 @@ HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
 # Serial 7s, Immediate Word Recall, Delayed Word Recall
 
 hrs_waves <- c(5, 6, 7, 13)
-hrs_vars = c("hhid", "pn", "rahhidpn", "raracem", "rahispan", "r13mstat",
+hrs_vars = c("hhid", "pn", "rahhidpn", "ragender", "raracem", "rahispan", 
+             "r13mstat",
              paste0("h", hrs_waves, "cpl"), paste0("r", hrs_waves, "agey_b"),
              paste0("r", hrs_waves, "bmi"), paste0("r", hrs_waves, "iadla"),
              paste0("r", hrs_waves, "stroke"), paste0("r", hrs_waves, "ser7"),
-             paste0("r", hrs_waves, "imrc"), paste0("r", hrs_waves, "dlrc"))
+             paste0("r", hrs_waves, "imrc"), paste0("r", hrs_waves, "dlrc"), 
+             paste0("r", hrs_waves, "cogtot"))
 
 HRS <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS/", 
                        "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
@@ -60,6 +62,15 @@ HRS_2016 <- HRS %>%
                                 rahispan == 0 & raracem == 3 ~ "Other")) %>%
   #missing race/ethnicity data (n = 6)
   filter(!is.na(race_eth))
+
+#---- ******female ----
+#1 = male; 2 = female
+table(HRS_2016$ragender, useNA = "ifany")
+mean(HRS_2016$ragender == 2)
+
+#---- ******hrs cognitive score ----
+summary(HRS_2016$r13cogtot, useNA = "ifany")
+sd(HRS_2016$r13cogtot, na.rm = TRUE)
 
 #---- ******coupled status ----
 table(HRS_2016$h13cpl, useNA = "ifany")
@@ -222,7 +233,7 @@ ADAMS_A <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>%
   left_join(., ADAMS_demdx, by = "HHIDPN") %>% 
   left_join(., HRS, by = "HHIDPN")
 
-wave_updated_vars <- c("cpl", "bmi", "iadla", "stroke")
+wave_updated_vars <- c("cpl", "bmi", "iadla", "stroke", "cogtot")
 
 for(var in wave_updated_vars){
   if(var == "cpl"){
@@ -243,10 +254,10 @@ for(var in wave_updated_vars){
 
 ADAMS_A %<>% 
   #race/ethnicity
-  mutate("race_eth" = case_when(rahispan == 1 ~ "Hispanic", 
-                                rahispan == 0 & raracem == 1 ~ "White", 
-                                rahispan == 0 & raracem == 2 ~ "Black", 
-                                rahispan == 0 & raracem == 3 ~ "Other")) %>% 
+  mutate("race_eth" = case_when(rahispan == 1 ~ "Hispanic",
+                                rahispan == 0 & raracem == 1 ~ "White",
+                                rahispan == 0 & raracem == 2 ~ "Black",
+                                rahispan == 0 & raracem == 3 ~ "Other")) %>%
   #clean serial 7s data (missing/refused)
   mutate_at(.vars = c("ANSER7T"), function(x) ifelse(x > 5, NA, x)) %>%
   #clean immediate word recall
@@ -265,7 +276,28 @@ ADAMS_A %<>%
   mutate_at(.vars = c("ANWM1TOT"), function(x) ifelse(x > 37, NA, x)) %>%
   #proxy cognition 
   mutate("proxy_cog" = ADAMS_A %>% dplyr::select(contains("AGQ")) %>% 
-           rowMeans(., na.rm = TRUE))
+           rowMeans(., na.rm = TRUE))  
+
+#no self-response neuropsych
+ADAMS_A %<>% 
+  mutate("no_data" = 
+           rowSums(!is.na(ADAMS_A %>% 
+                            dplyr::select(c("ANSER7T", "ANIMMCR", "ANDELCOR", 
+                                            "ANMSETOT_norm", "ANRECYES", 
+                                            "ANWM1TOT")))))
+#filter data
+#no self-response on neuropsych
+sum(ADAMS_A$no_data == 0)
+ADAMS_A %<>% filter(no_data > 0)
+
+#---- ******female ----
+#1 = male; 2 = female
+table(ADAMS_A$ragender, useNA = "ifany")
+mean(ADAMS_A$ragender == 2)
+
+#---- ******hrs cognitive score ----
+summary(ADAMS_A$Acogtot, useNA = "ifany")
+sd(ADAMS_A$Acogtot, na.rm = TRUE)
 
 #---- ******coupled status ----
 table(ADAMS_A$Acpl, useNA = "ifany")
@@ -334,10 +366,10 @@ HCAP_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/",
 
 #---- **HCAP informant ----
 HCAP_informant_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                         "HCAP/HC16/HC16da/HC16HP_I.da")
+                                   "HCAP/HC16/HC16da/HC16HP_I.da")
 
 HCAP_informant_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                         "HCAP/HC16/HC16sta/HC16HP_I.dct")
+                                   "HCAP/HC16/HC16sta/HC16HP_I.dct")
 
 #---- ****join data ----
 HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") %>%
@@ -362,6 +394,28 @@ HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") %>%
   mutate("H1RMSESCORE_norm" = normMMSE(H1RMSESCORE)) %>%
   #sum score immediate story recall 
   mutate("story_sum_immediate" = H1RBMIMMSCORE + H1RLMIMMSCORE)
+
+#no self-response neuropsych
+HCAP_2016 %<>% 
+  mutate("no_data" = 
+           rowSums(!is.na(HCAP_2016 %>% 
+                            dplyr::select(c("r13ser7", "H1RWLIMMSCORE", 
+                                            "H1RWLDELSCORE", 
+                                            "H1RMSESCORE_norm", "H1RWLRECYSCORE", 
+                                            "story_sum_immediate")))))
+#filter data
+#no self-response on neuropsych
+sum(HCAP_2016$no_data == 0)
+HCAP_2016 %<>% filter(no_data > 0)
+
+#---- ******female ----
+#1 = male; 2 = female
+table(HCAP_2016$ragender, useNA = "ifany")
+mean(HCAP_2016$ragender == 2)
+
+#---- ******hrs cognitive score ----
+summary(HCAP_2016$r13cogtot, useNA = "ifany")
+sd(HCAP_2016$r13cogtot, na.rm = TRUE)
 
 #---- ******coupled status ----
 table(HCAP_2016$h13cpl, useNA = "ifany")
