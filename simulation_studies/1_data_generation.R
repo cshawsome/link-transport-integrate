@@ -6,5 +6,9 @@ if (!require("pacman")){
 p_load("tidyverse")
 
 #---- read in ADAMS analytic dataset ----
-ADAMS <- read_csv(file = paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                        "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"))
+ADAMS <- rbind(read_csv(file = paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                        "data/ADAMS/cleaned/ADAMS_test.csv")), 
+               read_csv(file = paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                      "data/ADAMS/cleaned/ADAMS_train.csv")))
+
+
