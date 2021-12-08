@@ -12,21 +12,22 @@ source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/",
 #---- import data ----
 #---- **RAND ----
 rand_waves <- 13 #Corresponding to HCAP
-rand_variables <- 
-  c("hhidpn", 
-    #Health and health behaviors (ever/never stroke, ever/never
-    # hypertension, ever/never diabetes, ever/never cvd, ever/never cancer, 
-    # BMI, IADLs, ADLs, gross motor, fine motor, depressive symptoms, 
-    # self-reported change in memory, smokes now, number days drinking per week, 
-    # number drinks/day) 
-    paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "hibpe"), 
-    paste0("r", rand_waves, "diabe"), paste0("r", rand_waves, "hearte"),
-    paste0("r", rand_waves, "cancre"), paste0("r", rand_waves, "bmi"),
-    paste0("r", rand_waves, "iadla"), paste0("r", rand_waves, "adla"),
-    paste0("r", rand_waves, "grossa"), paste0("r", rand_waves, "finea"),
-    paste0("r", rand_waves, "cesd"), paste0("r", rand_waves, "pstmem"), 
-    paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"),
-    paste0("r", rand_waves, "drinkn"))
+
+rand_variables = 
+    #HHIDPN, gender, race, ethnicity
+  c("hhidpn", "ragender", "raracem", "rahispan", 
+    #Sampling variables: marital status, coupled household status,
+    paste0("r", rand_waves, "mstat"), paste0("h", hrs_waves, "cpl"), 
+    #Sociodemographics: age at beginning interview
+    paste0("r", hrs_waves, "agey_b"),
+    #Health and health behaviors: BMI, IADLs, stroke (ever/never)
+    paste0("r", hrs_waves, "bmi"), paste0("r", hrs_waves, "iadla"),
+    paste0("r", hrs_waves, "stroke"),
+    #Cognitive variables: serial 7s, immediate word recall, delayed word recall, 
+    # total MMSE score
+    paste0("r", hrs_waves, "ser7"),
+    paste0("r", hrs_waves, "imrc"), paste0("r", hrs_waves, "dlrc"), 
+    paste0("r", hrs_waves, "cogtot"))
 
 RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS/", 
                         "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
