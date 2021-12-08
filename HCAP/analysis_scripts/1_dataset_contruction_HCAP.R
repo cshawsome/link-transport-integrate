@@ -51,6 +51,27 @@ HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
   #Participated in 2016 HRS
   filter(PIWTYPE == 1)  
 
+#---- **HCAP ----
+#participant data
+HCAP_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                         "HCAP/HC16/HC16da/HC16HP_R.da")
+
+HCAP_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                         "HCAP/HC16/HC16sta/HC16HP_R.dct")
+
+#informant data
+HCAP_informant_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                                   "HCAP/HC16/HC16da/HC16HP_I.da")
+
+HCAP_informant_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
+                                   "HCAP/HC16/HC16sta/HC16HP_I.dct")
+
+HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") %>%
+  #join informant data
+  left_join(., read_da_dct(HCAP_informant_data_path, HCAP_informant_dict_path, 
+                           HHIDPN = "TRUE"), 
+            by = "HHIDPN")
+
 #---- **ADAMS tracker ----
 ADAMS_tracker_data_path <- 
   paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
