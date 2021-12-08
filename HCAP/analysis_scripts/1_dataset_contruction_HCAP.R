@@ -11,7 +11,7 @@ source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/",
 
 #---- import data ----
 #---- **RAND ----
-rand_waves <- seq(5, 9, by = 1) #Corresponding to ADAMS
+rand_waves <- 13 #Corresponding to HCAP
 rand_variables <- 
   c("hhidpn", 
     #Health and health behaviors (ever/never stroke, ever/never
@@ -37,6 +37,19 @@ colnames(RAND)[1] <- "HHIDPN" #For merging
 
 #Remove labeled data format
 val_labels(RAND) <- NULL
+
+#---- **HRS tracker ----
+HRS_tracker_data_path <- 
+  paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS_tracker/trk2018_3/", 
+         "TRK2018TR_R.da")
+HRS_tracker_dict_path <- 
+  paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS_tracker/trk2018_3/", 
+         "TRK2018TR_R.dct")
+
+HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path, 
+                           HHIDPN = "TRUE") %>% 
+  #Participated in 2016 HRS
+  filter(PIWTYPE == 1)  
 
 #---- **ADAMS tracker ----
 ADAMS_tracker_data_path <- 
