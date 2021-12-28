@@ -21,5 +21,7 @@ Sigma <- var(as.matrix(ADAMS %>% dplyr::select(all_of(cont_cols))))
 synthetic_data <- mvrnorm(n = nrow(ADAMS), mu = rep(0, length(cont_cols)), 
                           Sigma = Sigma)
 
+#test edit
+
 
 
