@@ -23,3 +23,4 @@ synthetic_data <- mvrnorm(n = nrow(ADAMS), mu = rep(0, length(cont_cols)),
 
 
 
+
