@@ -128,7 +128,7 @@ generate_synthetic <-
           
           #---- ****p(contingency table cell) ----
           pi_chain[, paste0(i, ":", b)] <- 
-            rdirichlet(1, alpha = as.numeric(unlist(posterior_counts)))
+            rdirichlet(1, alpha = as.numeric(unlist(posterior_count)))
           
           #---- ****contingency table count ----
           contingency_table <- rmultinom(n = 1, size = nrow(subset), 
