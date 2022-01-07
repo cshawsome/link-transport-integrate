@@ -3,7 +3,10 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "MASS")
+p_load("here", "tidyverse", "MASS")
+
+#---- source scripts ----
+source(here("functions", "read_da_dct.R"))
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/"
