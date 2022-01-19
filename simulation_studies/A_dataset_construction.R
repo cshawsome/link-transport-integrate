@@ -27,9 +27,16 @@ ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
   #filter to those who completed Wave A assessment (N = 856; dropped n = 314)
   filter(AASSESS == 1)
 
-#---- ****Dementia dx ----
-ADAMS_dem_dx <- 
+#---- ****dementia dx ----
+ADAMS_demdx_data_path <- 
+  paste0(path_to_box, "data/ADAMS/adams1a/adams1ada/ADAMS1AD_R.da")
+ADAMS_demdx_dict_path <- 
+  paste0(path_to_box, "data/ADAMS/adams1a/adams1asta/ADAMS1AD_R.dct")
 
+ADAMS_demdx <- read_da_dct(ADAMS_demdx_data_path, ADAMS_demdx_dict_path,
+                           HHIDPN = "TRUE") %>% 
+  dplyr::select("HHIDPN", "ADCCDX1")
+  
 #---- **join data ----
 
 #---- **data cleaning ----
