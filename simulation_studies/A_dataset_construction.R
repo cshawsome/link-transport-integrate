@@ -8,8 +8,33 @@ p_load("here", "tidyverse", "MASS")
 #---- source scripts ----
 source(here("functions", "read_da_dct.R"))
 
-#---- read in data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/"
+#---- ADAMS ----
+#---- **read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+#---- ****ADAMS tracker ----
+ADAMS_tracker_data_path <- 
+  paste0(path_to_box, "data/ADAMS/adams1trk/ADAMS1TRK_R.da")
+ADAMS_tracker_dict_path <- 
+  paste0(path_to_box, "data/ADAMS/adams1trk/adams1trksta/ADAMS1TRK_R.dct")
+
+ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
+                             HHIDPN = "TRUE") %>% 
+  #select variables
+  dplyr::select("HHIDPN", "AASSESS", "GENDER", "SELFCOG", "AYEAR", "AAMARRD", 
+                "AAGE", "ETHNIC", "EDYRS", "AACURRWK", "PROXCOG") %>%
+  #N = 1170
+  #filter to those who completed Wave A assessment (N = 856; dropped n = 314)
+  filter(AASSESS == 1)
+
+#---- ****Dementia dx ----
+ADAMS_dem_dx <- 
+
+#---- **join data ----
+
+#---- **data cleaning ----
+
+#---- OLD ----
 
 #---- **RAND ----
 rand_waves <- seq(5, 9, by = 1) #Corresponding to ADAMS +- 1 wave (for imputation)
