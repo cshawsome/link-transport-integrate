@@ -20,7 +20,10 @@ ADAMS_tracker_dict_path <-
 
 ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
                              HHIDPN = "TRUE") %>% 
-  #select variables
+  #select variables: ID, Wave A participation, HRS cognitive test at sampling, 
+  #                  Wave A interview year, Wave A marital status, Wave A age, 
+  #                  race/ethnicity, years of education, Wave A employment status, 
+  #                  HRS proxy cognition
   dplyr::select("HHIDPN", "AASSESS", "GENDER", "SELFCOG", "AYEAR", "AAMARRD", 
                 "AAGE", "ETHNIC", "EDYRS", "AACURRWK", "PROXCOG") %>%
   #N = 1170
@@ -62,6 +65,34 @@ ADAMS_proxy_dict_path <-
 ADAMS_proxy <- read_da_dct(ADAMS_proxy_data_path, ADAMS_proxy_dict_path,
                            HHIDPN = "TRUE") %>% 
   dplyr::select("HHIDPN", paste0("AGQ", c(seq(14, 29), 101)))
+
+#---- ****RAND variables ----
+rand_waves <- seq(5, 6, by = 1) #Corresponding to ADAMS
+rand_variables <- 
+  c("hhidpn", 
+    #Health and health behaviors (ever/never stroke, ever/never
+    # hypertension, ever/never diabetes, ever/never cvd, ever/never cancer, 
+    # BMI, IADLs, ADLs, gross motor, fine motor, depressive symptoms, 
+    # self-reported change in memory, smokes now, number days drinking per week, 
+    # number drinks/day) 
+    paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "hibpe"), 
+    paste0("r", rand_waves, "diabe"), paste0("r", rand_waves, "hearte"),
+    paste0("r", rand_waves, "cancre"), paste0("r", rand_waves, "bmi"),
+    paste0("r", rand_waves, "iadla"), paste0("r", rand_waves, "adla"),
+    paste0("r", rand_waves, "grossa"), paste0("r", rand_waves, "finea"),
+    paste0("r", rand_waves, "cesd"), paste0("r", rand_waves, "pstmem"), 
+    paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"),
+    paste0("r", rand_waves, "drinkn"))
+
+RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS/", 
+                        "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
+                 col_select = all_of(rand_variables)) %>% 
+  mutate_at("hhidpn", as.character)
+
+colnames(RAND)[1] <- "HHIDPN" #For merging
+
+#Remove labeled data format
+val_labels(RAND) <- NULL
 
 #---- **join data ----
 
