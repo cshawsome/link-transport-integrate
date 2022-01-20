@@ -267,6 +267,22 @@ ADAMS %<>% mutate_at(.vars = c("ANBNTTOT"),
 # #Sanity check
 # table(ADAMS$ANBNTTOT, useNA = "ifany")
 
+#---- ****10-word recall (immediate and delayed) ----
+# table(ADAMS$ANIMMCR1, useNA = "ifany")
+# table(ADAMS$ANDELCOR, useNA = "ifany")
+ADAMS %<>% 
+  mutate_at(.vars = c("ANIMMCR1", "ANIMMCR2", "ANIMMCR3", "ANDELCOR"), 
+            #Missing/refused  
+            function(x) ifelse(x > 10, NA, x)) %>% 
+  #Best of 3 immediate recall trials
+  mutate("ANIMMCR" = pmax(ANIMMCR1, ANIMMCR2, ANIMMCR3, na.rm = TRUE))
+
+# #Sanity check
+# View(ADAMS[, c("ANIMMCR1", "ANIMMCR2", "ANIMMCR3", "ANIMMCR")])
+# table(ADAMS$ANIMMCR, useNA = "ifany")
+# table(ADAMS$ANDELCOR, useNA = "ifany")
+
+
 #---- HCAP ----
 
 
