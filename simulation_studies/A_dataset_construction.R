@@ -315,6 +315,16 @@ ADAMS %<>% mutate_at(.vars = c("ANCPTOT", "ANRCPTOT"),
 # table(ADAMS$ANCPTOT, useNA = "ifany")
 # table(ADAMS$ANRCPTOT, useNA = "ifany")
 
+#---- ****symbol/digit modalities ----
+# table(ADAMS$ANSDMTOT, useNA = "ifany")
+ADAMS %<>% mutate_at(.vars = c("ANSDMTOT"),
+                     #Missing/refused
+                     function(x) ifelse(x > 90, NA, x))
+
+# #Sanity check
+# table(ADAMS$ANSDMTOT, useNA = "ifany")
+
+
 
 #---- HCAP ----
 
