@@ -199,15 +199,6 @@ ADAMS %<>%
 # table(ADAMS$ANMSETOT_norm, useNA = "ifany")
 # table(ADAMS$ANMSETOT_norm, useNA = "ifany")/nrow(ADAMS)
 
-#---- OLD ----
-
-#---- **ADAMS ----
-ADAMS <- rbind(read_csv(file = paste0(path_to_box, 
-                                      "Dissertation/data/ADAMS/cleaned/", 
-                                      "ADAMS_test.csv")), 
-               read_csv(file = paste0(path_to_box, 
-                                      "Dissertation/data/ADAMS/cleaned/", 
-                                      "ADAMS_train.csv")))
 
 
 
