@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "haven")
+p_load("tidyverse", "haven", "magrittr")
 
 #---- source scripts ----
 source(here("functions", "read_da_dct.R"))
@@ -138,7 +138,29 @@ ADAMS %<>%
 #table(ADAMS$AYEAR, useNA = "ifany")
 
 #---- ****HRS cognition ----
-table(ADAMS$SELFCOG, useNA = "ifany")
+# table(ADAMS$SELFCOG, useNA = "ifany")
+# table(ADAMS$SELFCOG, useNA = "ifany")/nrow(ADAMS)
+
+#---- ****marital status ----
+#table(ADAMS$AAMARRD, useNA = "ifany")
+
+ADAMS %<>% 
+  mutate("AAMARRD_label" = case_when(AAMARRD == 1 ~ "Single", 
+                                     AAMARRD == 2 ~ "Married or common law", 
+                                     AAMARRD == 3 ~ "Divorced", 
+                                     AAMARRD == 4 ~ "Separated", 
+                                     AAMARRD == 5 ~ "Widow", 
+                                     AAMARRD == 8 ~ "Don't Know")) %>%
+  mutate("AAMARRD_collapsed_label" = 
+           case_when(AAMARRD %in% c(1, 3, 4, 5) ~ "Not married/partnered", 
+                     AAMARRD == 2 ~ "Married/partnered")) %>% 
+  mutate("Married/partnered" = 
+           ifelse(AAMARRD_collapsed_label == "Married/partnered", 1, 0))
+
+# #Sanity check
+# table(ADAMS$AAMARRD_label, ADAMS$AAMARRD_collapsed_label, "useNA" = "ifany")
+# table(ADAMS$`Married/partnered`, useNA = "ifany")
+# table(ADAMS$`Married/partnered`, useNA = "ifany")/nrow(ADAMS)
 
 #---- OLD ----
 
