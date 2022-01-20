@@ -199,7 +199,7 @@ ADAMS %<>%
 # table(ADAMS$ANMSETOT_norm, useNA = "ifany")
 # table(ADAMS$ANMSETOT_norm, useNA = "ifany")/nrow(ADAMS)
 
-#---- **BWC 20 and 86 ----
+#---- ****BWC 20 and 86 ----
 # table(ADAMS$ANBWC201, useNA = "ifany")
 # table(ADAMS$ANBWC202, useNA = "ifany")
 # table(ADAMS$ANBWC861, useNA = "ifany")
@@ -225,6 +225,20 @@ ADAMS %<>% mutate("ANBWC20" = pmax(ANBWC201, ANBWC202, na.rm = TRUE),
 # table(ADAMS$ANBWC86, useNA = "ifany")
 # table(ADAMS$ANBWC20, useNA = "ifany")/nrow(ADAMS)
 # table(ADAMS$ANBWC86, useNA = "ifany")/nrow(ADAMS)
+
+#---- ****serial 7s ----
+#table(ADAMS$ANSER7T, useNA = "ifany")
+
+#Recode 
+ADAMS %<>% mutate_at(.vars = c("ANSER7T"), 
+                     #Missing/refused  
+                     function(x) ifelse(x > 5, NA, x))
+
+# #Sanity check
+# table(ADAMS$ANSER7T, useNA = "ifany")
+# table(ADAMS$ANSER7T, useNA = "ifany")/nrow(ADAMS)
+
+#---- HCAP ----
 
 
 
