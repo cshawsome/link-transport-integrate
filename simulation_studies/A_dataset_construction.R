@@ -348,12 +348,18 @@ ADAMS %<>% mutate_at(.vars = c("ANSMEM2"),
   mutate("ANSMEM2_collapsed_label" = 
            case_when(ANSMEM2_label %in% c("Much Better", "Better") ~ "Better", 
                      ANSMEM2_label == "Same" ~ "Same", 
-                     ANSMEM2_label %in% c("Worse", "Much Worse") ~ "Worse"))
+                     ANSMEM2_label %in% c("Worse", "Much Worse") ~ "Worse")) %>% 
+  mutate("ANSMEM2_Better" = ifelse(ANSMEM2_collapsed_label == "Better", 1, 0), 
+         "ANSMEM2_Same" = ifelse(ANSMEM2_collapsed_label == "Same", 1, 0), 
+         "ANSMEM2_Worse" = ifelse(ANSMEM2_collapsed_label == "Worse", 1, 0))
 
 # #Sanity check
 # table(ADAMS$ANSMEM2, useNA = "ifany")
 # table(ADAMS$ANSMEM2, ADAMS$ANSMEM2_label, useNA = "ifany")
 # table(ADAMS$ANSMEM2_label, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
+# table(ADAMS$ANSMEM2_Better, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
+# table(ADAMS$ANSMEM2_Same, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
+# table(ADAMS$ANSMEM2_Worse, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
 
 #---- **proxy cognition ----
 # table(ADAMS$AGQ14, useNA = "ifany")
