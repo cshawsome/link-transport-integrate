@@ -72,6 +72,7 @@ ADAMS_proxy_dict_path <-
 
 ADAMS_proxy <- read_da_dct(ADAMS_proxy_data_path, ADAMS_proxy_dict_path,
                            HHIDPN = "TRUE") %>% 
+  #select variables: IQCODE items, proxy type
   dplyr::select("HHIDPN", paste0("AGQ", c(seq(14, 29), 101)))
 
 #---- ****RAND variables ----
