@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "haven", "magrittr", "NormPsy")
+p_load("tidyverse", "haven", "labelled", "magrittr", "NormPsy")
 
 #---- source scripts ----
 source(here("functions", "read_da_dct.R"))
@@ -248,6 +248,15 @@ ADAMS %<>% mutate_at(.vars = c("ANPRES", "ANVCPRES"),
 # #Sanity check
 # table(ADAMS$ANPRES, useNA = "ifany")
 # table(ADAMS$ANVCPRES, useNA = "ifany")
+
+#---- ****animal naming ----
+#table(ADAMS$ANAFTOT, useNA = "ifany")
+ADAMS %<>% mutate_at(.vars = c("ANAFTOT"), 
+                     #Missing/refused  
+                     function(x) ifelse(x > 33, NA, x)) 
+
+# #Sanity check
+# table(ADAMS$ANAFTOT, useNA = "ifany")
 
 #---- HCAP ----
 
