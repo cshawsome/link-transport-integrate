@@ -21,9 +21,8 @@ ADAMS_tracker_dict_path <-
 ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
                              HHIDPN = "TRUE") %>% 
   #select variables: ID, Wave A participation, HRS cognitive test at sampling, 
-  #                  Wave A interview year, Wave A marital status, Wave A age, 
-  #                  race/ethnicity, years of education, Wave A employment status, 
-  #                  HRS proxy cognition
+  #                  interview year, marital status, age, race/ethnicity, 
+  #                  years of education, employment status, HRS proxy cognition
   dplyr::select("HHIDPN", "AASSESS", "GENDER", "SELFCOG", "AYEAR", "AAMARRD", 
                 "AAGE", "ETHNIC", "EDYRS", "AACURRWK", "PROXCOG") %>%
   #N = 1170
@@ -39,6 +38,15 @@ ADAMS_neuropsych_dict_path <-
 ADAMS_neuropsych <- 
   read_da_dct(ADAMS_neuropsych_data_path, ADAMS_neuropsych_dict_path,
               HHIDPN = "TRUE") %>% 
+  #select variables: ID, MMSE, backwards count (20), backwards count (86), 
+  #                  serial 7s, item naming (scissors), item naming (cactus), 
+  #                  President naming, VP naming, animal naming, 
+  #                  Boston naming test, immediate word recall, 
+  #                  delayed word recall, word list recognition (yes), 
+  #                  word list recognition (no), immediate story recall, 
+  #                  delayed story recall, immediate constructional praxis, 
+  #                  delayed constructional praxis, symbol/digit substitution, 
+  #                  trails A, trails B, subjective cognitive change
   dplyr::select("HHIDPN", "ANMSETOT", "ANBWC201", "ANBWC202", "ANBWC861", 
                 "ANBWC862", "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", 
                 "ANVCPRES", "ANAFTOT", "ANBNTTOT", "ANIMMCR1", "ANIMMCR2", 
