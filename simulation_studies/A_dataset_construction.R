@@ -238,6 +238,17 @@ ADAMS %<>% mutate_at(.vars = c("ANCACTUS", "ANSCISOR"),
 # table(ADAMS$ANCACTUS, useNA = "ifany")
 # table(ADAMS$ANSCISOR, useNA = "ifany")
 
+#---- **President and VP ----
+# table(ADAMS$ANPRES, useNA = "ifany")
+# table(ADAMS$ANVCPRES, useNA = "ifany")
+ADAMS %<>% mutate_at(.vars = c("ANPRES", "ANVCPRES"), 
+                     #Missing/refused  
+                     function(x) ifelse(x > 1, NA, x)) 
+
+# #Sanity check
+# table(ADAMS$ANPRES, useNA = "ifany")
+# table(ADAMS$ANVCPRES, useNA = "ifany")
+
 #---- HCAP ----
 
 
