@@ -38,6 +38,14 @@ ADAMS_demdx <- read_da_dct(ADAMS_demdx_data_path, ADAMS_demdx_dict_path,
   dplyr::select("HHIDPN", "ADCCDX1")
 
 #---- ****proxy measures ----
+ADAMS_proxy_data_path <- 
+  paste0(path_to_box, "data/ADAMS/adams1a/adams1ada/ADAMS1AG_R.da")
+ADAMS_proxy_dict_path <- 
+  paste0(path_to_box, "data/ADAMS/adams1a/adams1asta/ADAMS1AG_R.dct")
+
+ADAMS_proxy <- read_da_dct(ADAMS_proxy_data_path, ADAMS_proxy_dict_path,
+                           HHIDPN = "TRUE") %>% 
+  dplyr::select("HHIDPN", paste0("AGQ", c(seq(14, 29), 101)))
   
 #---- **join data ----
 
