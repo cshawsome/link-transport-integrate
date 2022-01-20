@@ -109,11 +109,33 @@ ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>%
 #table(ADAMS$GENDER, useNA = "ifany")
 ADAMS %<>% 
   mutate(GENDER_label = as.factor(ifelse(GENDER == 1, "Male", "Female"))) %>% 
-  mutate(GENDER_label = fct_relevel(GENDER_label, "Female"))
+  mutate(GENDER_label = fct_relevel(GENDER_label, "Female")) %>% 
+  mutate("Female" = ifelse(GENDER_label == "Female", 1, 0))
 
 # #Sanity check
 # table(ADAMS$GENDER, ADAMS$GENDER_label)
+# table(ADAMS$Female, useNA = "ifany")
 # levels(ADAMS$GENDER_label)
+
+#---- ****race/ethnicity ----
+#table(ADAMS$ETHNIC, useNA = "ifany")
+ADAMS %<>% 
+  mutate(ETHNIC_label = as.factor(case_when(ETHNIC == 1 ~ "White", 
+                                            ETHNIC == 2 ~ "Black", 
+                                            ETHNIC == 3 ~ "Hispanic"))) %>% 
+  mutate(ETHNIC_label = fct_relevel(ETHNIC_label, "White")) %>% 
+  mutate("White" = ifelse(ETHNIC_label == "White", 1, 0), 
+         "Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
+         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0))
+
+# #Sanity check
+# levels(ADAMS$ETHNIC_label)
+# table(ADAMS$ETHNIC_label, ADAMS$White, useNA = "ifany")
+# table(ADAMS$ETHNIC_label, ADAMS$Black, useNA = "ifany")
+# table(ADAMS$ETHNIC_label, ADAMS$Hispanic, useNA = "ifany")
+
+#---- ****HRS cognition ----
+table(ADAMS$SELFCOG, useNA = "ifany")
 
 #---- OLD ----
 
