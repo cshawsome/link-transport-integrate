@@ -324,7 +324,7 @@ ADAMS %<>% mutate_at(.vars = c("ANSDMTOT"),
 # #Sanity check
 # table(ADAMS$ANSDMTOT, useNA = "ifany")
 
-#---- **trails A and B ----
+#---- ****trails A and B ----
 # table(ADAMS$ANTMASEC, useNA = "ifany")
 # table(ADAMS$ANTMBSEC, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANTMASEC", "ANTMBSEC"),
@@ -334,6 +334,26 @@ ADAMS %<>% mutate_at(.vars = c("ANTMASEC", "ANTMBSEC"),
 # #Sanity check
 # table(ADAMS$ANTMASEC, useNA = "ifany")
 # table(ADAMS$ANTMBSEC, useNA = "ifany")
+
+#---- ****subjective cognitive change ----
+# table(ADAMS$ANSMEM2, useNA = "ifany")
+ADAMS %<>% mutate_at(.vars = c("ANSMEM2"),
+                     #Missing/refused
+                     function(x) ifelse(x > 5, NA, x)) %>% 
+  mutate("ANSMEM2_label" = case_when(ANSMEM2 == 1 ~ "Much Better", 
+                                     ANSMEM2 == 2 ~ "Better", 
+                                     ANSMEM2 == 3 ~ "Same", 
+                                     ANSMEM2 == 4 ~ "Worse", 
+                                     ANSMEM2 == 5 ~ "Much Worse")) %>% 
+  mutate("ANSMEM2_collapsed_label" = 
+           case_when(ANSMEM2_label %in% c("Much Better", "Better") ~ "Better", 
+                     ANSMEM2_label == "Same" ~ "Same", 
+                     ANSMEM2_label %in% c("Worse", "Much Worse") ~ "Worse"))
+
+# #Sanity check
+# table(ADAMS$ANSMEM2, useNA = "ifany")
+# table(ADAMS$ANSMEM2, ADAMS$ANSMEM2_label, useNA = "ifany")
+# table(ADAMS$ANSMEM2_label, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
 
 
 #---- HCAP ----
