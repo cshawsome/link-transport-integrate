@@ -293,7 +293,7 @@ ADAMS %<>% mutate_at(.vars = c("ANRECNO", "ANRECYES"),
 # table(ADAMS$ANRECNO, useNA = "ifany")
 # table(ADAMS$ANRECYES, useNA = "ifany")
 
-#---- **story recall (immediate and delayed) ----
+#---- ****story recall (immediate and delayed) ----
 # table(ADAMS$ANWM1TOT, useNA = "ifany")
 # table(ADAMS$ANWM2TOT, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANWM1TOT", "ANWM2TOT"), 
@@ -303,6 +303,18 @@ ADAMS %<>% mutate_at(.vars = c("ANWM1TOT", "ANWM2TOT"),
 # #Sanity check
 # table(ADAMS$ANWM1TOT, useNA = "ifany")
 # table(ADAMS$ANWM2TOT, useNA = "ifany")
+
+#---- ****constructional praxis (immediate and delayed) ----
+# table(ADAMS$ANCPTOT, useNA = "ifany")
+# table(ADAMS$ANRCPTOT, useNA = "ifany")
+ADAMS %<>% mutate_at(.vars = c("ANCPTOT", "ANRCPTOT"), 
+                     #Missing/refused  
+                     function(x) ifelse(x > 11, NA, x))
+
+# #Sanity check
+# table(ADAMS$ANCPTOT, useNA = "ifany")
+# table(ADAMS$ANRCPTOT, useNA = "ifany")
+
 
 #---- HCAP ----
 
