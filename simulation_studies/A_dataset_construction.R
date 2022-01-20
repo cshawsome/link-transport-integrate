@@ -324,6 +324,16 @@ ADAMS %<>% mutate_at(.vars = c("ANSDMTOT"),
 # #Sanity check
 # table(ADAMS$ANSDMTOT, useNA = "ifany")
 
+#---- **trails A and B ----
+# table(ADAMS$ANTMASEC, useNA = "ifany")
+# table(ADAMS$ANTMBSEC, useNA = "ifany")
+ADAMS %<>% mutate_at(.vars = c("ANTMASEC", "ANTMBSEC"),
+                     #Missing/refused
+                     function(x) ifelse(x > 900, NA, x))
+
+# #Sanity check
+# table(ADAMS$ANTMASEC, useNA = "ifany")
+# table(ADAMS$ANTMBSEC, useNA = "ifany")
 
 
 #---- HCAP ----
