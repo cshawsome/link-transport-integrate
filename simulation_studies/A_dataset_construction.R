@@ -27,6 +27,22 @@ ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
   #filter to those who completed Wave A assessment (N = 856; dropped n = 314)
   filter(AASSESS == 1)
 
+#---- ****neuropsych measures ----
+ADAMS_neuropsych_data_path <- 
+  paste0(path_to_box, "data/ADAMS/adams1a/adams1ada/ADAMS1AN_R.da")
+ADAMS_neuropsych_dict_path <- 
+  paste0(path_to_box, "data/ADAMS/adams1a/adams1asta/ADAMS1AN_R.dct")
+
+ADAMS_neuropsych <- 
+  read_da_dct(ADAMS_neuropsych_data_path, ADAMS_neuropsych_dict_path,
+              HHIDPN = "TRUE") %>% 
+  dplyr::select("HHIDPN", "ANMSETOT", "ANBWC201", "ANBWC202", "ANBWC861", 
+                "ANBWC862", "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", 
+                "ANVCPRES", "ANAFTOT", "ANBNTTOT", "ANIMMCR1", "ANIMMCR2", 
+                "ANIMMCR3", "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", 
+                "ANWM2TOT", "ANCPTOT", "ANRCPTOT", "ANSDMTOT", "ANTMASEC", 
+                "ANTMBSEC", "ANSMEM2")
+
 #---- ****dementia dx ----
 ADAMS_demdx_data_path <- 
   paste0(path_to_box, "data/ADAMS/adams1a/adams1ada/ADAMS1AD_R.da")
@@ -46,7 +62,7 @@ ADAMS_proxy_dict_path <-
 ADAMS_proxy <- read_da_dct(ADAMS_proxy_data_path, ADAMS_proxy_dict_path,
                            HHIDPN = "TRUE") %>% 
   dplyr::select("HHIDPN", paste0("AGQ", c(seq(14, 29), 101)))
-  
+
 #---- **join data ----
 
 #---- **data cleaning ----
