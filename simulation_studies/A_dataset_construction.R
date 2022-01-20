@@ -355,6 +355,17 @@ ADAMS %<>% mutate_at(.vars = c("ANSMEM2"),
 # table(ADAMS$ANSMEM2, ADAMS$ANSMEM2_label, useNA = "ifany")
 # table(ADAMS$ANSMEM2_label, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
 
+#---- **proxy cognition ----
+# table(ADAMS$AGQ14, useNA = "ifany")
+# table(ADAMS$AGQ29, useNA = "ifany")
+ADAMS %<>% mutate("avg_proxy_cog" = ADAMS %>% 
+                    dplyr::select(paste0("AGQ", seq(14, 29))) %>% 
+                    rowMeans(., na.rm = TRUE)) %>% 
+  mutate("avg_proxy_cog" = ifelse(is.nan(avg_proxy_cog), NA, avg_proxy_cog))
+
+# #Sanity check
+# View(ADAMS %>% dplyr::select(paste0("AGQ", seq(14, 29)), "avg_proxy_cog"))
+# table(ADAMS$avg_proxy_cog, useNA = "ifany")
 
 #---- HCAP ----
 
