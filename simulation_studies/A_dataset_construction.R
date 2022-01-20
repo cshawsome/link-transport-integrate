@@ -157,8 +157,11 @@ ADAMS %<>%
 # table(ADAMS$`Married/partnered`, useNA = "ifany")
 # table(ADAMS$`Married/partnered`, useNA = "ifany")/nrow(ADAMS)
 
-#---- age ----
+#---- ****age ----
 #table(ADAMS$AAGE, useNA = "ifany")
+
+#---- ****education ----
+#table(ADAMS$EDYRS, useNA = "ifany")
 
 #---- OLD ----
 
