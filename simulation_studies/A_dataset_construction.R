@@ -36,6 +36,8 @@ ADAMS_demdx_dict_path <-
 ADAMS_demdx <- read_da_dct(ADAMS_demdx_data_path, ADAMS_demdx_dict_path,
                            HHIDPN = "TRUE") %>% 
   dplyr::select("HHIDPN", "ADCCDX1")
+
+#---- ****proxy measures ----
   
 #---- **join data ----
 
