@@ -135,7 +135,6 @@ ADAMS %<>%
 
 #---- ****HRS cognition ----
 # table(ADAMS$SELFCOG, useNA = "ifany")
-# table(ADAMS$SELFCOG, useNA = "ifany")/nrow(ADAMS)
 
 #---- ****marital status ----
 #table(ADAMS$AAMARRD, useNA = "ifany")
@@ -155,7 +154,6 @@ ADAMS %<>%
 # #Sanity check
 # table(ADAMS$AAMARRD_label, ADAMS$AAMARRD_collapsed_label, "useNA" = "ifany")
 # table(ADAMS$`Married/partnered`, useNA = "ifany")
-# table(ADAMS$`Married/partnered`, useNA = "ifany")/nrow(ADAMS)
 
 #---- ****age ----
 #table(ADAMS$AAGE, useNA = "ifany")
@@ -184,7 +182,6 @@ ADAMS %<>%
 # table(ADAMS$AACURRWK_collapsed_label, ADAMS$Working, useNA = "ifany")
 # table(ADAMS$AACURRWK_collapsed_label, ADAMS$Retired, useNA = "ifany")
 # table(ADAMS$AACURRWK_collapsed_label, ADAMS$`Not working`, useNA = "ifany")
-# table(ADAMS$AACURRWK_collapsed_label, useNA = "ifany")/nrow(ADAMS)
 
 #---- ****MMSE ----
 #table(ADAMS$ANMSETOT, useNA = "ifany")
@@ -197,15 +194,12 @@ ADAMS %<>%
 # hist(ADAMS$ANMSETOT)
 # hist(ADAMS$ANMSETOT_norm)
 # table(ADAMS$ANMSETOT_norm, useNA = "ifany")
-# table(ADAMS$ANMSETOT_norm, useNA = "ifany")/nrow(ADAMS)
 
 #---- ****BWC 20 and 86 ----
 # table(ADAMS$ANBWC201, useNA = "ifany")
 # table(ADAMS$ANBWC202, useNA = "ifany")
 # table(ADAMS$ANBWC861, useNA = "ifany")
 # table(ADAMS$ANBWC862, useNA = "ifany")
-
-#Recode
 ADAMS %<>% 
   mutate_at(.vars = c("ANBWC201", "ANBWC202", "ANBWC861", "ANBWC862"), 
             #Missing/refused  
@@ -223,20 +217,26 @@ ADAMS %<>% mutate("ANBWC20" = pmax(ANBWC201, ANBWC202, na.rm = TRUE),
 # View(ADAMS[, c("ANBWC861", "ANBWC862", "ANBWC86")])
 # table(ADAMS$ANBWC20, useNA = "ifany")
 # table(ADAMS$ANBWC86, useNA = "ifany")
-# table(ADAMS$ANBWC20, useNA = "ifany")/nrow(ADAMS)
-# table(ADAMS$ANBWC86, useNA = "ifany")/nrow(ADAMS)
 
 #---- ****serial 7s ----
 #table(ADAMS$ANSER7T, useNA = "ifany")
-
-#Recode 
 ADAMS %<>% mutate_at(.vars = c("ANSER7T"), 
                      #Missing/refused  
                      function(x) ifelse(x > 5, NA, x))
 
 # #Sanity check
 # table(ADAMS$ANSER7T, useNA = "ifany")
-# table(ADAMS$ANSER7T, useNA = "ifany")/nrow(ADAMS)
+
+#---- ****object naming: cactus, scissors ----
+# table(ADAMS$ANCACTUS, useNA = "ifany")
+# table(ADAMS$ANSCISOR, useNA = "ifany")
+ADAMS %<>% mutate_at(.vars = c("ANCACTUS", "ANSCISOR"), 
+                     #Missing/refused  
+                     function(x) ifelse(x > 1, NA, x)) 
+
+# #Sanity check
+# table(ADAMS$ANCACTUS, useNA = "ifany")
+# table(ADAMS$ANSCISOR, useNA = "ifany")
 
 #---- HCAP ----
 
