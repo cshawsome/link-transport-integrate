@@ -199,6 +199,33 @@ ADAMS %<>%
 # table(ADAMS$ANMSETOT_norm, useNA = "ifany")
 # table(ADAMS$ANMSETOT_norm, useNA = "ifany")/nrow(ADAMS)
 
+#---- **BWC 20 and 86 ----
+# table(ADAMS$ANBWC201, useNA = "ifany")
+# table(ADAMS$ANBWC202, useNA = "ifany")
+# table(ADAMS$ANBWC861, useNA = "ifany")
+# table(ADAMS$ANBWC862, useNA = "ifany")
+
+#Recode
+ADAMS %<>% 
+  mutate_at(.vars = c("ANBWC201", "ANBWC202", "ANBWC861", "ANBWC862"), 
+            #Missing/refused  
+            function(x) ifelse(x > 6, NA, x)) %>% 
+  mutate_at(.vars = c("ANBWC201", "ANBWC202", "ANBWC861", "ANBWC862"), 
+            #restart
+            function(x) ifelse(x == 6, 0, x)) 
+
+#Take the higher score
+ADAMS %<>% mutate("ANBWC20" = pmax(ANBWC201, ANBWC202, na.rm = TRUE), 
+                  "ANBWC86" = pmax(ANBWC861, ANBWC862, na.rm = TRUE))
+
+# #Sanity check
+# View(ADAMS[, c("ANBWC201", "ANBWC202", "ANBWC20")])
+# View(ADAMS[, c("ANBWC861", "ANBWC862", "ANBWC86")])
+# table(ADAMS$ANBWC20, useNA = "ifany")
+# table(ADAMS$ANBWC86, useNA = "ifany")
+# table(ADAMS$ANBWC20, useNA = "ifany")/nrow(ADAMS)
+# table(ADAMS$ANBWC86, useNA = "ifany")/nrow(ADAMS)
+
 
 
 
