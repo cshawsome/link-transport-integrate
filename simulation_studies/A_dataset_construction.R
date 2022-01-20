@@ -238,7 +238,7 @@ ADAMS %<>% mutate_at(.vars = c("ANCACTUS", "ANSCISOR"),
 # table(ADAMS$ANCACTUS, useNA = "ifany")
 # table(ADAMS$ANSCISOR, useNA = "ifany")
 
-#---- **President and VP ----
+#---- ****President and VP ----
 # table(ADAMS$ANPRES, useNA = "ifany")
 # table(ADAMS$ANVCPRES, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANPRES", "ANVCPRES"), 
@@ -257,6 +257,15 @@ ADAMS %<>% mutate_at(.vars = c("ANAFTOT"),
 
 # #Sanity check
 # table(ADAMS$ANAFTOT, useNA = "ifany")
+
+#---- ****Boston naming test ----
+# table(ADAMS$ANBNTTOT, useNA = "ifany")
+ADAMS %<>% mutate_at(.vars = c("ANBNTTOT"), 
+                     #Missing/refused  
+                     function(x) ifelse(x > 15, NA, x)) 
+
+# #Sanity check
+# table(ADAMS$ANBNTTOT, useNA = "ifany")
 
 #---- HCAP ----
 
