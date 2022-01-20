@@ -99,8 +99,21 @@ RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/",
 val_labels(RAND) <- NULL
 
 #---- **join data ----
+ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>% 
+  left_join(., ADAMS_proxy, by = "HHIDPN") %>% 
+  left_join(., ADAMS_demdx, by = "HHIDPN") %>% 
+  left_join(., RAND, by = "HHIDPN")
 
 #---- **data cleaning ----
+#---- ****sex/gender ----
+#table(ADAMS$GENDER, useNA = "ifany")
+ADAMS %<>% 
+  mutate(GENDER_label = as.factor(ifelse(GENDER == 1, "Male", "Female"))) %>% 
+  mutate(GENDER_label = fct_relevel(GENDER_label, "Female"))
+
+# #Sanity check
+# table(ADAMS$GENDER, ADAMS$GENDER_label)
+# levels(ADAMS$GENDER_label)
 
 #---- OLD ----
 
