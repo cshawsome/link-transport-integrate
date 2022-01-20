@@ -134,6 +134,9 @@ ADAMS %<>%
 # table(ADAMS$ETHNIC_label, ADAMS$Black, useNA = "ifany")
 # table(ADAMS$ETHNIC_label, ADAMS$Hispanic, useNA = "ifany")
 
+#---- ****interview year ----
+#table(ADAMS$AYEAR, useNA = "ifany")
+
 #---- ****HRS cognition ----
 table(ADAMS$SELFCOG, useNA = "ifany")
 
