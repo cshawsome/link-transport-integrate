@@ -90,12 +90,10 @@ rand_variables <-
     paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"),
     paste0("r", rand_waves, "drinkn"))
 
-RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS/", 
-                        "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
+RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/", 
+                        "randhrs1992_2016v2.dta"), 
                  col_select = all_of(rand_variables)) %>% 
-  mutate_at("hhidpn", as.character)
-
-colnames(RAND)[1] <- "HHIDPN" #For merging
+  mutate_at("hhidpn", as.character) %>% rename("HHIDPN" = "hhidpn")
 
 #Remove labeled data format
 val_labels(RAND) <- NULL
