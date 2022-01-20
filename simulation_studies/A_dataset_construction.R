@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "haven", "magrittr")
+p_load("tidyverse", "haven", "magrittr", "NormPsy")
 
 #---- source scripts ----
 source(here("functions", "read_da_dct.R"))
@@ -186,7 +186,18 @@ ADAMS %<>%
 # table(ADAMS$AACURRWK_collapsed_label, ADAMS$`Not working`, useNA = "ifany")
 # table(ADAMS$AACURRWK_collapsed_label, useNA = "ifany")/nrow(ADAMS)
 
+#---- ****MMSE ----
+#table(ADAMS$ANMSETOT, useNA = "ifany")
+ADAMS %<>% 
+  mutate_at(.vars = "ANMSETOT", function(x) ifelse(x > 30, NA, x)) %>% 
+  #normalized MMSE
+  mutate("ANMSETOT_norm" = normMMSE(ANMSETOT))
 
+# #Sanity check
+# hist(ADAMS$ANMSETOT)
+# hist(ADAMS$ANMSETOT_norm)
+# table(ADAMS$ANMSETOT_norm, useNA = "ifany")
+# table(ADAMS$ANMSETOT_norm, useNA = "ifany")/nrow(ADAMS)
 
 #---- OLD ----
 
