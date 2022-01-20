@@ -282,6 +282,18 @@ ADAMS %<>%
 # table(ADAMS$ANIMMCR, useNA = "ifany")
 # table(ADAMS$ANDELCOR, useNA = "ifany")
 
+#---- ****word list recognition (yes/no) ----
+# table(ADAMS$ANRECNO, useNA = "ifany")
+# table(ADAMS$ANRECYES, useNA = "ifany")
+ADAMS %<>% mutate_at(.vars = c("ANRECNO", "ANRECYES"), 
+                     #Missing/refused  
+                     function(x) ifelse(x > 10, NA, x))
+
+# #Sanity check
+# table(ADAMS$ANRECNO, useNA = "ifany")
+# table(ADAMS$ANRECYES, useNA = "ifany")
+
+
 
 #---- HCAP ----
 
