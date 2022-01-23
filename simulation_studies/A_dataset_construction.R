@@ -62,7 +62,7 @@ ADAMS_demdx_dict_path <-
 
 ADAMS_demdx <- read_da_dct(ADAMS_demdx_data_path, ADAMS_demdx_dict_path,
                            HHIDPN = "TRUE") %>% 
-  dplyr::select("HHIDPN", "ADCCDX1")
+  dplyr::select("HHIDPN", "ADFDX1")
 
 #---- ****proxy measures ----
 ADAMS_proxy_data_path <- 
@@ -361,7 +361,7 @@ ADAMS %<>% mutate_at(.vars = c("ANSMEM2"),
 # table(ADAMS$ANSMEM2_Same, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
 # table(ADAMS$ANSMEM2_Worse, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
 
-#---- **proxy cognition ----
+#---- ****proxy cognition ----
 # table(ADAMS$AGQ14, useNA = "ifany")
 # table(ADAMS$AGQ29, useNA = "ifany")
 ADAMS %<>% mutate("avg_proxy_cog" = ADAMS %>% 
@@ -401,6 +401,43 @@ ADAMS %<>% mutate("avg_proxy_cog" = ADAMS %>%
 #       useNA = "ifany")
 # table(ADAMS$avg_proxy_cog_Worse, ADAMS$avg_proxy_cog_collapsed_label,
 #       useNA = "ifany")
+
+#---- ****dementia dx ----
+# table(ADAMS$ADFDX1, useNA = "ifany")
+ADAMS %<>% 
+  #collapse categories
+  mutate("Adem_dx_label_collapsed" = 
+           case_when(ADFDX1 %in% c(1, 2) ~ "Probable/Possible AD", 
+                     ADFDX1 %in% c(3, 4) ~ 
+                       "Probable/Possible Vascular Dementia", 
+                     ADFDX1 %in% c(5, 6, 7, 8, 11, 14, 23, 24, 25, 26, 27, 21, 
+                                   28, 29, 30, 33) ~ "Other",
+                     ADFDX1 %in% c(18, 32) ~ "Probable Dementia",
+                     ADFDX1 %in% c(10, 13, 15, 16, 17, 19) ~ "Dementia", 
+                     ADFDX1 %in% c(20, 22) ~ "MCI", 
+                     ADFDX1 == 31 ~ "Normal")) %>% 
+  #further collapsing categories
+  mutate("Adem_cat" = 
+           case_when(Adem_dx_label_collapsed %in% 
+                       c("Probable/Possible AD", 
+                         "Probable/Possible Vascular Dementia", 
+                         "Probable Dementia", "Dementia") ~ "Dementia",
+                     Adem_dx_label_collapsed == "Other" ~ "Other", 
+                     Adem_dx_label_collapsed == "MCI" ~ "MCI", 
+                     Adem_dx_label_collapsed == "Normal" ~ "Unimpaired")) %>% 
+  #dummy vars
+  mutate("Dementia" = ifelse(Adem_cat == "Dementia", 1, 0), 
+         "Other" = ifelse(Adem_cat == "Other", 1, 0), 
+         "MCI" = ifelse(Adem_cat == "MCI", 1, 0), 
+         "Unimpaired" = ifelse(Adem_cat == "Unimpaired", 1, 0))
+
+# #Sanity check
+# table(ADAMS$Adem_dx_label_collapsed, ADAMS$Adem_cat, useNA = "ifany")
+# table(ADAMS$Adem_cat, ADAMS$Dementia, useNA = "ifany")
+# table(ADAMS$Adem_cat, ADAMS$Other, useNA = "ifany")
+# table(ADAMS$Adem_cat, ADAMS$MCI, useNA = "ifany")
+# table(ADAMS$Adem_cat, ADAMS$Unimpaired, useNA = "ifany")
+
 
 #---- HCAP ----
 
