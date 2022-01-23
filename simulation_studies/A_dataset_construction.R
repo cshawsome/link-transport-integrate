@@ -367,11 +367,40 @@ ADAMS %<>% mutate_at(.vars = c("ANSMEM2"),
 ADAMS %<>% mutate("avg_proxy_cog" = ADAMS %>% 
                     dplyr::select(paste0("AGQ", seq(14, 29))) %>% 
                     rowMeans(., na.rm = TRUE)) %>% 
-  mutate("avg_proxy_cog" = ifelse(is.nan(avg_proxy_cog), NA, avg_proxy_cog))
+  mutate("avg_proxy_cog" = ifelse(is.nan(avg_proxy_cog), NA, avg_proxy_cog)) %>%
+  #floor to get whole numbers
+  mutate_at(.vars = c("avg_proxy_cog"), floor) %>% 
+  mutate("avg_proxy_cog_label" = 
+           case_when(avg_proxy_cog == 1 ~ "Much Better", 
+                     avg_proxy_cog == 2 ~ "Better", 
+                     avg_proxy_cog == 3 ~ "Same", 
+                     avg_proxy_cog == 4 ~ "Worse", 
+                     avg_proxy_cog == 5 ~ "Much Worse")) %>% 
+  mutate("avg_proxy_cog_collapsed_label" = 
+           case_when(avg_proxy_cog_label %in% 
+                       c("Much Better", "Better") ~ "Better", 
+                     avg_proxy_cog_label == "Same" ~ "Same", 
+                     avg_proxy_cog_label %in% 
+                       c("Worse", "Much Worse") ~ "Worse")) %>% 
+  mutate("avg_proxy_cog_Better" = 
+           ifelse(avg_proxy_cog_collapsed_label == "Better", 1, 0), 
+         "avg_proxy_cog_Same" = 
+           ifelse(avg_proxy_cog_collapsed_label == "Same", 1, 0), 
+         "avg_proxy_cog_Worse" = 
+           ifelse(avg_proxy_cog_collapsed_label == "Worse", 1, 0))
 
 # #Sanity check
 # View(ADAMS %>% dplyr::select(paste0("AGQ", seq(14, 29)), "avg_proxy_cog"))
 # table(ADAMS$avg_proxy_cog, useNA = "ifany")
+# table(ADAMS$avg_proxy_cog, ADAMS$avg_proxy_cog_label, useNA = "ifany")
+# table(ADAMS$avg_proxy_cog_label, ADAMS$avg_proxy_cog_collapsed_label,
+#       useNA = "ifany")
+# table(ADAMS$avg_proxy_cog_Better, ADAMS$avg_proxy_cog_collapsed_label,
+#       useNA = "ifany")
+# table(ADAMS$avg_proxy_cog_Same, ADAMS$avg_proxy_cog_collapsed_label,
+#       useNA = "ifany")
+# table(ADAMS$avg_proxy_cog_Worse, ADAMS$avg_proxy_cog_collapsed_label,
+#       useNA = "ifany")
 
 #---- HCAP ----
 
