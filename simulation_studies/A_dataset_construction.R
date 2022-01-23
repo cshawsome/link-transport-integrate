@@ -456,6 +456,27 @@ for(var in wave_updated_vars){
 #        filter(!is.na(Astroke)))
 # colnames(ADAMS)
 
+#---- **filter: missing all neurospych + general cognitive measures ----
+neuro_cog_measures <- c("SELFCOG", "ANMSETOT_norm", "ANBWC20", "ANBWC86", 
+                        "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", "ANVCPRES", 
+                        "ANAFTOT", "ANBNTTOT", "ANIMMCR", "ANDELCOR", "ANRECYES", 
+                        "ANRECNO", "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", 
+                        "ANSDMTOT", "ANTMASEC", "ANTMBSEC")
+
+ADAMS %<>% 
+  mutate("num_cog_measures" = 
+           rowSums(!is.na(ADAMS %>% 
+                            dplyr::select(all_of(neuro_cog_measures))))) %>% 
+  #N = 826; dropped n = 30
+  filter(num_cog_measures > 0)
+
+# #Sanity check
+# table(ADAMS$num_cog_measures, useNA = "ifany")
+
+#---- **summarize missingness ----
+colMeans(is.na(ADAMS))
+
+#---- **imputation-specific variables ----
 
 #---- HCAP ----
 
