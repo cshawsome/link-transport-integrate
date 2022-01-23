@@ -438,6 +438,24 @@ ADAMS %<>%
 # table(ADAMS$Adem_cat, ADAMS$MCI, useNA = "ifany")
 # table(ADAMS$Adem_cat, ADAMS$Unimpaired, useNA = "ifany")
 
+#---- ****health and health behaviors ----
+# table(ADAMS$AYEAR, useNA = "ifany")
+#For repeated measures, want to take the wave most representative of ADAMS wave
+wave_updated_vars <- c("stroke", "hibpe", "diabe", "hearte", "bmi", 
+                       "iadla", "adla", "cesd", "smoken", "drinkd", "drinkn")
+
+for(var in wave_updated_vars){
+  ADAMS %<>% 
+    mutate(!!paste0("A", var) := 
+             case_when(AYEAR %in% c(2001, 2002) ~ !!sym(paste0("r5", var)), 
+                       AYEAR %in% c(2003, 2004) ~ !!sym(paste0("r6", var))))
+}
+
+# #Sanity check
+# View(ADAMS[, c("AYEAR", paste0("r", seq(5, 6), "stroke"), "Astroke")] %>% 
+#        filter(!is.na(Astroke)))
+# colnames(ADAMS)
+
 
 #---- HCAP ----
 
