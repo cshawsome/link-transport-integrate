@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "haven", "labelled", "magrittr", "NormPsy")
+p_load("here", "tidyverse", "haven", "labelled", "magrittr", "NormPsy")
 
 #---- source scripts ----
 source(here("functions", "read_da_dct.R"))
@@ -401,6 +401,9 @@ ADAMS %<>% mutate("avg_proxy_cog" = ADAMS %>%
 #       useNA = "ifany")
 # table(ADAMS$avg_proxy_cog_Worse, ADAMS$avg_proxy_cog_collapsed_label,
 #       useNA = "ifany")
+
+#Distribution check
+View(ADAMS %>% filter(is.na(avg_proxy_cog)))
 
 #---- ****dementia dx ----
 # table(ADAMS$ADFDX1, useNA = "ifany")
