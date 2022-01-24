@@ -76,19 +76,28 @@ ADAMS_proxy <- read_da_dct(ADAMS_proxy_data_path, ADAMS_proxy_dict_path,
   dplyr::select("HHIDPN", paste0("AGQ", c(seq(14, 29), 101)))
 
 #---- ****RAND variables ----
-rand_waves <- seq(5, 6, by = 1) #Corresponding to ADAMS
+rand_waves <- seq(4, 7, by = 1) #Corresponding to ADAMS + imputation
+cog_test_waves <- seq(5, 7, by = 1) #Corresponding to ADAMS + imputation
 rand_variables <- 
-  c("hhidpn", 
+  c("hhidpn",
+    #Sociodemographics (marital status)
     #Health and health behaviors (ever/never stroke, ever/never
-    # hypertension, ever/never diabetes, ever/never cvd, BMI, IADLs, ADLs, 
-    # depressive symptoms, smokes now, number days drinking per week, 
-    # number drinks/day) 
+    #   hypertension, ever/never diabetes, ever/never cvd, BMI, IADLs, ADLs, 
+    #   smokes now, number days drinking per week, 
+    #   number drinks/day) 
+    #Cognitive tests (backwards count 20 and 86, item naming (scissors and 
+    #   cactus), immediate and delayed word recall, serial 7s, President naming, 
+    #   subjective cognitive decline)
     paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "hibpe"), 
     paste0("r", rand_waves, "diabe"), paste0("r", rand_waves, "hearte"),
     paste0("r", rand_waves, "bmi"), paste0("r", rand_waves, "iadla"), 
-    paste0("r", rand_waves, "adla"), paste0("r", rand_waves, "cesd"), 
-    paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"),
-    paste0("r", rand_waves, "drinkn"))
+    paste0("r", rand_waves, "adla"), paste0("r", rand_waves, "smoken"), 
+    paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"), 
+    paste0("r", cog_test_waves, "bwc20"), paste0("r", cog_test_waves, "bwc86"), 
+    paste0("r", cog_test_waves, "scis"), paste0("r", cog_test_waves, "cact"), 
+    paste0("r", cog_test_waves, "imrc"), paste0("r", cog_test_waves, "dlrc"),
+    paste0("r", cog_test_waves, "ser7"), paste0("r", cog_test_waves, "pres")
+    )
 
 RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/", 
                         "randhrs1992_2016v2.dta"), 
