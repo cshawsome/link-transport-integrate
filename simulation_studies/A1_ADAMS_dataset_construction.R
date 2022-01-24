@@ -402,8 +402,10 @@ ADAMS %<>% mutate("avg_proxy_cog" = ADAMS %>%
 # table(ADAMS$avg_proxy_cog_Worse, ADAMS$avg_proxy_cog_collapsed_label,
 #       useNA = "ifany")
 
-#Distribution check
-View(ADAMS %>% filter(is.na(avg_proxy_cog)))
+# #Distribution check: it is not the case that all those missing proxies are high
+# # functioning
+# ADAMS %>% filter(is.na(avg_proxy_cog)) %>% dplyr::select(ANMSETOT) %>% 
+#   table(., useNA = "ifany")
 
 #---- ****dementia dx ----
 # table(ADAMS$ADFDX1, useNA = "ifany")
