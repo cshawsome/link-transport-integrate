@@ -483,7 +483,7 @@ colMeans(is.na(ADAMS))
 
 #---- **imputation-specific variables ----
 
-#---- HCAP ----
+
 
 
 
