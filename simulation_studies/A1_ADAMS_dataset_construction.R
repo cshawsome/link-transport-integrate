@@ -478,6 +478,9 @@ ADAMS %<>%
 colMeans(is.na(ADAMS))
 
 #---- **imputation-specific variables ----
+#---- ****HRS married/partnered status ----
+# table(ADAMS$r5mpart, useNA = "ifany")
+
 #---- ****HRS BWC 20 and 86 ----
 # table(ADAMS$r5bwc20, useNA = "ifany")
 # table(ADAMS$r6bwc86, useNA = "ifany")
