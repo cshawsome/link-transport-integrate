@@ -80,16 +80,16 @@ rand_variables <-
   c("hhidpn",
     #Sociodemographics (marital status)
     #Health and health behaviors (ever/never stroke, ever/never
-    #   hypertension, ever/never diabetes, ever/never cvd, BMI, IADLs, ADLs, 
-    #   smokes now, number days drinking per week, 
-    #   number drinks/day) 
+    #   hypertension, ever/never diabetes, ever/never cvd, BMI, height, weight, 
+    #   IADLs, ADLs, smokes now, number days drinking per week, number drinks/day) 
     #Cognitive tests (backwards count 20 and 86, item naming (scissors and 
     #   cactus), immediate and delayed word recall, serial 7s, President naming, 
     #   subjective cognitive decline, total cognition score)
     paste0("r", cog_test_waves, "mpart"),
     paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "hibpe"), 
     paste0("r", rand_waves, "diabe"), paste0("r", rand_waves, "hearte"),
-    paste0("r", rand_waves, "bmi"), paste0("r", rand_waves, "iadla"), 
+    paste0("r", rand_waves, "bmi"), paste0("r", rand_waves, "height"), 
+    paste0("r", rand_waves, "weight"), paste0("r", rand_waves, "iadla"), 
     paste0("r", rand_waves, "adla"), paste0("r", rand_waves, "smoken"), 
     paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"), 
     paste0("r", cog_test_waves, "bwc20"), paste0("r", seq(5, 6), "bwc86"), 
@@ -574,4 +574,56 @@ for(wave in cog_test_waves){
 # table(ADAMS$r5pstmem, ADAMS$r5pstmem_Same, useNA = "ifany")
 # table(ADAMS$r5pstmem, ADAMS$r5pstmem_Worse, useNA = "ifany")
 # table(ADAMS$r6pstmem, ADAMS$r6pstmem_Better, useNA = "ifany")
+
+#---- sanity check health vars ----
+#---- **bmi ----
+bmi_vars <- paste0("r", rand_waves, "bmi")
+lapply(ADAMS[, bmi_vars], FUN = hist)
+lapply(ADAMS[, bmi_vars], FUN = table)
+lapply(ADAMS[, bmi_vars], FUN = which.max)
+
+#obs 297 is an outlier, so check height and weight data
+height_vars <- paste0("r", rand_waves, "height")
+weight_vars <- paste0("r", rand_waves, "weight")
+ADAMS[297, height_vars] # 3.08 ft
+mean(unlist(ADAMS[297, weight_vars])) # 139.5 lbs
+
+#set this person to missing for all their bmi data and all height data
+ADAMS[297, bmi_vars] <- NA
+ADAMS[297, height_vars] <- NA
+
+#check amount missingness in height/weight vs Abmi (18%)
+colMeans(is.na(ADAMS[, height_vars]))
+colMeans(is.na(ADAMS[, weight_vars]))
+
+#---- **height ----
+height_vars <- paste0("r", rand_waves, "height")
+lapply(ADAMS[, height_vars], FUN = hist)
+lapply(ADAMS[, height_vars], FUN = table)
+lapply(ADAMS[, height_vars], FUN = which.min)
+lapply(ADAMS[, height_vars], FUN = which.max)
+
+#obs 574 may be a low outlier, so check height data
+ADAMS[574, height_vars] # 4.4 ft, seems fine
+
+#obs 701 may be a high outlier, so check height data
+ADAMS[701, height_vars] # 6.3 ft, seems fine
+
+#---- **weight ----
+weight_vars <- paste0("r", rand_waves, "weight")
+lapply(ADAMS[, weight_vars], FUN = hist)
+lapply(ADAMS[, weight_vars], FUN = table)
+lapply(ADAMS[, weight_vars], FUN = function(x) min(x, na.rm = TRUE))
+lapply(ADAMS[, weight_vars], FUN = function(x) max(x, na.rm = TRUE))
+lapply(ADAMS[, weight_vars], FUN = which.min)
+
+#obs 409 may be a low outlier in wave 7
+ADAMS[409, weight_vars] # 57 lbs, seems like an error
+
+#set this person to missing for all their bmi data and all weight data
+ADAMS[409, c(bmi_vars, weight_vars)] <- NA
+
+#---- **drinking days ----
+
+#---- **drinks per day ----
 
