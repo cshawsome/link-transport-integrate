@@ -624,4 +624,10 @@ ADAMS[409, c(bmi_vars, weight_vars)] <- NA
 # lapply(ADAMS[, drinkd_vars], FUN = table)
 
 #---- **drinks per day ----
-
+# drinkn_vars <- paste0("r", rand_waves, "drinkn")
+# lapply(ADAMS[, drinkn_vars], FUN = table)
+# 
+# #who is this person with 16 drinks per day?? 
+# # I'm going to leave them in, cuz who's to say **shrug**
+# lapply(ADAMS[, drinkn_vars], FUN = which.max)
+# ADAMS[651, c(drinkd_vars, drinkn_vars)]
