@@ -45,14 +45,14 @@ ADAMS_neuropsych <-
   #                  delayed word recall, word list recognition (yes), 
   #                  word list recognition (no), immediate story recall, 
   #                  delayed story recall, immediate constructional praxis, 
-  #                  delayed constructional praxis, trails A, trails B, 
+  #                  delayed constructional praxis, trails A,
   #                  subjective cognitive change
   dplyr::select("HHIDPN", "ANMSETOT", "ANBWC201", "ANBWC202", "ANBWC861", 
                 "ANBWC862", "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", 
                 "ANVCPRES", "ANAFTOT", "ANBNTTOT", "ANIMMCR1", "ANIMMCR2", 
                 "ANIMMCR3", "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", 
                 "ANWM2TOT", "ANCPTOT", "ANRCPTOT", "ANTMASEC", 
-                "ANTMBSEC", "ANSMEM2")
+                "ANSMEM2")
 
 #---- ****dementia dx ----
 ADAMS_demdx_data_path <- 
@@ -325,10 +325,9 @@ ADAMS %<>% mutate_at(.vars = c("ANCPTOT", "ANRCPTOT"),
 # table(ADAMS$ANCPTOT, useNA = "ifany")
 # table(ADAMS$ANRCPTOT, useNA = "ifany")
 
-#---- ****trails A and B ----
+#---- ****trails A ----
 # table(ADAMS$ANTMASEC, useNA = "ifany")
-# table(ADAMS$ANTMBSEC, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANTMASEC", "ANTMBSEC"),
+ADAMS %<>% mutate_at(.vars = c("ANTMASEC"),
                      #Missing/refused
                      function(x) ifelse(x > 900, NA, x))
 
@@ -467,7 +466,7 @@ neuro_cog_measures <- c("SELFCOG", "ANMSETOT_norm", "ANBWC20", "ANBWC86",
                         "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", "ANVCPRES", 
                         "ANAFTOT", "ANBNTTOT", "ANIMMCR", "ANDELCOR", "ANRECYES", 
                         "ANRECNO", "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", 
-                        "ANTMASEC", "ANTMBSEC")
+                        "ANTMASEC")
 
 ADAMS %<>% 
   mutate("num_cog_measures" = 
