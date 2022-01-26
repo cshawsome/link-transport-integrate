@@ -457,7 +457,7 @@ ADAMS %<>%
 # table(ADAMS$AYEAR, useNA = "ifany")
 #For repeated measures, want to take the wave most representative of ADAMS wave
 wave_updated_vars <- c("stroke", "hibpe", "diabe", "hearte", "bmi", 
-                       "iadla", "adla", "cesd", "smoken", "drinkd", "drinkn")
+                       "iadla", "adla", "smoken", "drinkd", "drinkn")
 
 for(var in wave_updated_vars){
   ADAMS %<>% 
