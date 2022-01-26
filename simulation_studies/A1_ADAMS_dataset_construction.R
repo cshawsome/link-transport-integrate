@@ -643,7 +643,7 @@ remove <- c("AASSESS", "AACURRWK", "AACURRWK_collapsed_label", "AACURRWK_label",
             paste0("AGQ", c(seq(14, 29), 101)), "avg_proxy_cog", "ETHNIC",
             "avg_proxy_cog_label", "avg_proxy_cog_collapsed_label", "GENDER",
             paste0("ANBWC", c("201", "202", "861", "862")), "GENDER_label",
-            paste0("ANIMMCR", seq(1, 3)), "ETHNIC_label")
+            paste0("ANIMMCR", seq(1, 3)), "ETHNIC_label", "num_cog_measures")
 
 ADAMS %>% dplyr::select(-all_of(remove)) %>% 
   write_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_analytic.csv"))
