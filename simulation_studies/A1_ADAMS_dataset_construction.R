@@ -87,7 +87,8 @@ rand_variables <-
     #   number drinks/day) 
     #Cognitive tests (backwards count 20 and 86, item naming (scissors and 
     #   cactus), immediate and delayed word recall, serial 7s, President naming, 
-    #   subjective cognitive decline)
+    #   subjective cognitive decline, total cognition score)
+    paste0("r", cog_test_waves, "mpart"),
     paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "hibpe"), 
     paste0("r", rand_waves, "diabe"), paste0("r", rand_waves, "hearte"),
     paste0("r", rand_waves, "bmi"), paste0("r", rand_waves, "iadla"), 
@@ -96,8 +97,8 @@ rand_variables <-
     paste0("r", cog_test_waves, "bwc20"), paste0("r", cog_test_waves, "bwc86"), 
     paste0("r", cog_test_waves, "scis"), paste0("r", cog_test_waves, "cact"), 
     paste0("r", cog_test_waves, "imrc"), paste0("r", cog_test_waves, "dlrc"),
-    paste0("r", cog_test_waves, "ser7"), paste0("r", cog_test_waves, "pres")
-    )
+    paste0("r", cog_test_waves, "ser7"), paste0("r", cog_test_waves, "pres"), 
+    paste0("r", cog_test_waves, "pstmem"), paste0("r", cog_test_waves, "cogtot"))
 
 RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/", 
                         "randhrs1992_2016v2.dta"), 
@@ -106,6 +107,9 @@ RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/",
 
 #Remove labeled data format
 val_labels(RAND) <- NULL
+
+#---- ****HRS core ----
+
 
 #---- **join data ----
 ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>% 
