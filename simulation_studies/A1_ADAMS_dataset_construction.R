@@ -620,8 +620,8 @@ ADAMS[297, height_vars] <- NA
 ADAMS[409, c(bmi_vars, weight_vars)] <- NA
 
 #---- **drinking days ----
-drinkd_vars <- paste0("r", rand_waves, "drinkd")
-lapply(ADAMS[, drinkd_vars], FUN = table)
+# drinkd_vars <- paste0("r", rand_waves, "drinkd")
+# lapply(ADAMS[, drinkd_vars], FUN = table)
 
 #---- **drinks per day ----
 
