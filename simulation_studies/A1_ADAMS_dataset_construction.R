@@ -577,13 +577,13 @@ for(wave in cog_test_waves){
 
 #---- sanity check health vars ----
 #---- **bmi ----
-# bmi_vars <- paste0("r", rand_waves, "bmi")
+bmi_vars <- paste0("r", rand_waves, "bmi")
 # lapply(ADAMS[, bmi_vars], FUN = hist)
 # lapply(ADAMS[, bmi_vars], FUN = table)
 # lapply(ADAMS[, bmi_vars], FUN = which.max)
 # 
 # #obs 297 is an outlier, so check height and weight data
-# height_vars <- paste0("r", rand_waves, "height")
+height_vars <- paste0("r", rand_waves, "height")
 # weight_vars <- paste0("r", rand_waves, "weight")
 # ADAMS[297, height_vars] # 3.08 ft
 # mean(unlist(ADAMS[297, weight_vars])) # 139.5 lbs
@@ -606,7 +606,7 @@ ADAMS[297, height_vars] <- NA
 # ADAMS[701, height_vars] # 6.3 ft, seems fine
 
 #---- **weight ----
-# weight_vars <- paste0("r", rand_waves, "weight")
+weight_vars <- paste0("r", rand_waves, "weight")
 # lapply(ADAMS[, weight_vars], FUN = hist)
 # lapply(ADAMS[, weight_vars], FUN = table)
 # lapply(ADAMS[, weight_vars], FUN = function(x) min(x, na.rm = TRUE))
@@ -631,3 +631,10 @@ ADAMS[409, c(bmi_vars, weight_vars)] <- NA
 # # I'm going to leave them in, cuz who's to say **shrug**
 # lapply(ADAMS[, drinkn_vars], FUN = which.max)
 # ADAMS[651, c(drinkd_vars, drinkn_vars)]
+
+#---- save datasets ----
+#clean data
+ADAMS %>% write_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_clean.csv"))
+
+#pared-down analytic data
+
