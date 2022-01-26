@@ -478,6 +478,23 @@ ADAMS %<>%
 colMeans(is.na(ADAMS))
 
 #---- **imputation-specific variables ----
+#---- ****HRS BWC 20 and 86 ----
+# table(ADAMS$r5bwc20, useNA = "ifany")
+# table(ADAMS$r6bwc86, useNA = "ifany")
+# table(ADAMS$ANBWC20, useNA = "ifany")
+
+bwc_vars <- c(paste0("r", cog_test_waves, "bwc20"), 
+              paste0("r", seq(5, 6), "bwc86"))
+ADAMS %<>% 
+  mutate_at(.vars = all_of(bwc_vars), 
+            #Correct on 2nd try = correct
+            function(x) ifelse(x == 2, 1, x))
+
+# #Sanity check
+# table(ADAMS$r5bwc20, useNA = "ifany")
+# table(ADAMS$r6bwc86, useNA = "ifany")
+
+
 
 
 
