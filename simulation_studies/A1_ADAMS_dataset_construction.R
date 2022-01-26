@@ -517,6 +517,10 @@ ADAMS %<>%
 # table(ADAMS$ANPRES, useNA = "ifany")
 # table(ADAMS$r5pres, useNA = "ifany")
 
+#---- ****HRS serial 7s ----
+# table(ADAMS$ANSER7T, useNA = "ifany")
+# table(ADAMS$r5ser7, useNA = "ifany")
+
 #---- ****HRS subjective cognitive decline ----
 # table(ADAMS$r5pstmem, useNA = "ifany")
 for(wave in cog_test_waves){
