@@ -93,7 +93,7 @@ rand_variables <-
     paste0("r", rand_waves, "bmi"), paste0("r", rand_waves, "iadla"), 
     paste0("r", rand_waves, "adla"), paste0("r", rand_waves, "smoken"), 
     paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"), 
-    paste0("r", cog_test_waves, "bwc20"), paste0("r", cog_test_waves, "bwc86"), 
+    paste0("r", cog_test_waves, "bwc20"), paste0("r", seq(5, 6), "bwc86"), 
     paste0("r", cog_test_waves, "scis"), paste0("r", cog_test_waves, "cact"), 
     paste0("r", cog_test_waves, "imrc"), paste0("r", cog_test_waves, "dlrc"),
     paste0("r", cog_test_waves, "ser7"), paste0("r", cog_test_waves, "pres"), 
