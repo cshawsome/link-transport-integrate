@@ -24,7 +24,7 @@ ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
   #                  interview year, marital status, age, race/ethnicity, 
   #                  years of education, employment status, HRS proxy cognition
   dplyr::select("HHIDPN", "AASSESS", "GENDER", "SELFCOG", "AYEAR", "AAMARRD", 
-                "AAGE", "ETHNIC", "EDYRS", "AACURRWK", "PROXCOG") %>%
+                "AAGE", "ETHNIC", "EDYRS", "AACURRWK") %>%
   #N = 1170
   #filter to those who completed Wave A assessment (N = 856; dropped n = 314)
   filter(AASSESS == 1)
