@@ -637,4 +637,15 @@ ADAMS[409, c(bmi_vars, weight_vars)] <- NA
 ADAMS %>% write_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_clean.csv"))
 
 #pared-down analytic data
+remove <- c("AASSESS", "AACURRWK", "AACURRWK_collapsed_label", "AACURRWK_label", 
+            "AAMARRD", "AAMARRD_collapsed_label", "AAMARRD_label", "Adem_cat", 
+            "ADFDX1", "ANSMEM2", "ANSMEM2_collapsed_label", "ANSMEM2_label", 
+            paste0("AGQ", c(seq(14, 29), 101)), "avg_proxy_cog", "ETHNIC",
+            "avg_proxy_cog_label", "avg_proxy_cog_collapsed_label", "GENDER",
+            paste0("ANBWC", c("201", "202", "861", "862")), "GENDER_label",
+            paste0("ANIMMCR", seq(1, 3)), "ETHNIC_label")
+
+ADAMS %>% dplyr::select(-all_of(remove)) %>% 
+  write_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_analytic.csv"))
+
 
