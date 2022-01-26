@@ -40,19 +40,18 @@ ADAMS_neuropsych <-
               HHIDPN = "TRUE") %>% 
   #select variables: ID, MMSE, backwards count (20), backwards count (86), 
   #                  serial 7s, item naming (scissors), item naming (cactus), 
-  #                  President naming, VP naming, animal naming, 
-  #                  Boston naming test, immediate word recall, 
-  #                  delayed word recall, word list recognition (yes), 
-  #                  word list recognition (no), immediate story recall, 
-  #                  delayed story recall, immediate constructional praxis, 
+  #                  President naming, animal naming, Boston naming test, 
+  #                  immediate word recall, delayed word recall, 
+  #                  word list recognition (yes), word list recognition (no), 
+  #                  immediate story recall, delayed story recall, 
+  #                  immediate constructional praxis, 
   #                  delayed constructional praxis, trails A,
   #                  subjective cognitive change
   dplyr::select("HHIDPN", "ANMSETOT", "ANBWC201", "ANBWC202", "ANBWC861", 
                 "ANBWC862", "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", 
-                "ANVCPRES", "ANAFTOT", "ANBNTTOT", "ANIMMCR1", "ANIMMCR2", 
-                "ANIMMCR3", "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", 
-                "ANWM2TOT", "ANCPTOT", "ANRCPTOT", "ANTMASEC", 
-                "ANSMEM2")
+                "ANAFTOT", "ANBNTTOT", "ANIMMCR1", "ANIMMCR2", "ANIMMCR3", 
+                "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", "ANWM2TOT", 
+                "ANCPTOT", "ANRCPTOT", "ANTMASEC", "ANSMEM2")
 
 #---- ****dementia dx ----
 ADAMS_demdx_data_path <- 
@@ -248,16 +247,14 @@ ADAMS %<>% mutate_at(.vars = c("ANCACTUS", "ANSCISOR"),
 # table(ADAMS$ANCACTUS, useNA = "ifany")
 # table(ADAMS$ANSCISOR, useNA = "ifany")
 
-#---- ****President and VP ----
+#---- ****President naming ----
 # table(ADAMS$ANPRES, useNA = "ifany")
-# table(ADAMS$ANVCPRES, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANPRES", "ANVCPRES"), 
+ADAMS %<>% mutate_at(.vars = c("ANPRES"), 
                      #Missing/refused  
                      function(x) ifelse(x > 1, NA, x)) 
 
 # #Sanity check
 # table(ADAMS$ANPRES, useNA = "ifany")
-# table(ADAMS$ANVCPRES, useNA = "ifany")
 
 #---- ****animal naming ----
 #table(ADAMS$ANAFTOT, useNA = "ifany")
@@ -333,7 +330,6 @@ ADAMS %<>% mutate_at(.vars = c("ANTMASEC"),
 
 # #Sanity check
 # table(ADAMS$ANTMASEC, useNA = "ifany")
-# table(ADAMS$ANTMBSEC, useNA = "ifany")
 
 #---- ****subjective cognitive change ----
 # table(ADAMS$ANSMEM2, useNA = "ifany")
@@ -463,9 +459,9 @@ for(var in wave_updated_vars){
 
 #---- **filter: missing all neurospych + general cognitive measures ----
 neuro_cog_measures <- c("SELFCOG", "ANMSETOT_norm", "ANBWC20", "ANBWC86", 
-                        "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", "ANVCPRES", 
-                        "ANAFTOT", "ANBNTTOT", "ANIMMCR", "ANDELCOR", "ANRECYES", 
-                        "ANRECNO", "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", 
+                        "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", "ANAFTOT", 
+                        "ANBNTTOT", "ANIMMCR", "ANDELCOR", "ANRECYES", "ANRECNO", 
+                        "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", 
                         "ANTMASEC")
 
 ADAMS %<>% 
