@@ -8,11 +8,10 @@ p_load("here", "tidyverse", "haven", "labelled", "magrittr", "NormPsy")
 #---- source scripts ----
 source(here("functions", "read_da_dct.R"))
 
-#---- ADAMS ----
-#---- **read data ----
+#---- read data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-#---- ****ADAMS tracker ----
+#---- **ADAMS tracker ----
 ADAMS_tracker_data_path <- 
   paste0(path_to_box, "data/ADAMS/adams1trk/ADAMS1TRK_R.da")
 ADAMS_tracker_dict_path <- 
@@ -29,7 +28,7 @@ ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
   #filter to those who completed Wave A assessment (N = 856; dropped n = 314)
   filter(AASSESS == 1)
 
-#---- ****neuropsych measures ----
+#---- **neuropsych measures ----
 ADAMS_neuropsych_data_path <- 
   paste0(path_to_box, "data/ADAMS/adams1a/adams1ada/ADAMS1AN_R.da")
 ADAMS_neuropsych_dict_path <- 
@@ -53,7 +52,7 @@ ADAMS_neuropsych <-
                 "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", "ANWM2TOT", 
                 "ANCPTOT", "ANRCPTOT", "ANTMASEC", "ANSMEM2")
 
-#---- ****dementia dx ----
+#---- **dementia dx ----
 ADAMS_demdx_data_path <- 
   paste0(path_to_box, "data/ADAMS/adams1a/adams1ada/ADAMS1AD_R.da")
 ADAMS_demdx_dict_path <- 
@@ -63,7 +62,7 @@ ADAMS_demdx <- read_da_dct(ADAMS_demdx_data_path, ADAMS_demdx_dict_path,
                            HHIDPN = "TRUE") %>% 
   dplyr::select("HHIDPN", "ADFDX1")
 
-#---- ****proxy measures ----
+#---- **proxy measures ----
 ADAMS_proxy_data_path <- 
   paste0(path_to_box, "data/ADAMS/adams1a/adams1ada/ADAMS1AG_R.da")
 ADAMS_proxy_dict_path <- 
@@ -74,7 +73,7 @@ ADAMS_proxy <- read_da_dct(ADAMS_proxy_data_path, ADAMS_proxy_dict_path,
   #select variables: IQCODE items, proxy type
   dplyr::select("HHIDPN", paste0("AGQ", c(seq(14, 29), 101)))
 
-#---- ****RAND variables ----
+#---- **RAND variables ----
 rand_waves <- seq(4, 7, by = 1) #Corresponding to ADAMS + imputation
 cog_test_waves <- seq(5, 7, by = 1) #Corresponding to ADAMS + imputation
 rand_variables <- 
@@ -107,14 +106,14 @@ RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/",
 #Remove labeled data format
 val_labels(RAND) <- NULL
 
-#---- **join data ----
+#---- join data ----
 ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>% 
   left_join(., ADAMS_proxy, by = "HHIDPN") %>% 
   left_join(., ADAMS_demdx, by = "HHIDPN") %>% 
   left_join(., RAND, by = "HHIDPN")
 
-#---- **clean data ----
-#---- ****sex/gender ----
+#---- clean data ----
+#---- **sex/gender ----
 #table(ADAMS$GENDER, useNA = "ifany")
 ADAMS %<>% 
   mutate(GENDER_label = as.factor(ifelse(GENDER == 1, "Male", "Female"))) %>% 
@@ -124,7 +123,7 @@ ADAMS %<>%
 # table(ADAMS$GENDER, ADAMS$GENDER_label)
 # table(ADAMS$Female, useNA = "ifany")
 
-#---- ****race/ethnicity ----
+#---- **race/ethnicity ----
 #table(ADAMS$ETHNIC, useNA = "ifany")
 ADAMS %<>% 
   mutate(ETHNIC_label = as.factor(case_when(ETHNIC == 1 ~ "White", 
@@ -139,13 +138,13 @@ ADAMS %<>%
 # table(ADAMS$ETHNIC_label, ADAMS$Black, useNA = "ifany")
 # table(ADAMS$ETHNIC_label, ADAMS$Hispanic, useNA = "ifany")
 
-#---- ****interview year ----
+#---- **interview year ----
 #table(ADAMS$AYEAR, useNA = "ifany")
 
-#---- ****HRS cognition ----
+#---- **HRS cognition ----
 # table(ADAMS$SELFCOG, useNA = "ifany")
 
-#---- ****marital status ----
+#---- **marital status ----
 #table(ADAMS$AAMARRD, useNA = "ifany")
 ADAMS %<>% 
   mutate("AAMARRD_label" = case_when(AAMARRD == 1 ~ "Single", 
@@ -164,13 +163,13 @@ ADAMS %<>%
 # table(ADAMS$AAMARRD_label, ADAMS$AAMARRD_collapsed_label, "useNA" = "ifany")
 # table(ADAMS$`Married/partnered`, useNA = "ifany")
 
-#---- ****age ----
+#---- **age ----
 #table(ADAMS$AAGE, useNA = "ifany")
 
-#---- ****education ----
+#---- **education ----
 #table(ADAMS$EDYRS, useNA = "ifany")
 
-#---- ****employment status ----
+#---- **employment status ----
 #table(ADAMS$AACURRWK, useNA = "ifany")
 ADAMS %<>% 
   mutate("AACURRWK_label" = case_when(AACURRWK == 1 ~ "Working", 
@@ -192,7 +191,7 @@ ADAMS %<>%
 # table(ADAMS$AACURRWK_collapsed_label, ADAMS$Retired, useNA = "ifany")
 # table(ADAMS$AACURRWK_collapsed_label, ADAMS$`Not working`, useNA = "ifany")
 
-#---- ****MMSE ----
+#---- **MMSE ----
 #table(ADAMS$ANMSETOT, useNA = "ifany")
 ADAMS %<>% 
   mutate_at(.vars = "ANMSETOT", function(x) ifelse(x > 30, NA, x)) %>% 
@@ -204,7 +203,7 @@ ADAMS %<>%
 # hist(ADAMS$ANMSETOT_norm)
 # table(ADAMS$ANMSETOT_norm, useNA = "ifany")
 
-#---- ****BWC 20 and 86 ----
+#---- **BWC 20 and 86 ----
 # table(ADAMS$ANBWC201, useNA = "ifany")
 # table(ADAMS$ANBWC202, useNA = "ifany")
 # table(ADAMS$ANBWC861, useNA = "ifany")
@@ -227,7 +226,7 @@ ADAMS %<>% mutate("ANBWC20" = pmax(ANBWC201, ANBWC202, na.rm = TRUE),
 # table(ADAMS$ANBWC20, useNA = "ifany")
 # table(ADAMS$ANBWC86, useNA = "ifany")
 
-#---- ****serial 7s ----
+#---- **serial 7s ----
 #table(ADAMS$ANSER7T, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANSER7T"), 
                      #Missing/refused  
@@ -236,7 +235,7 @@ ADAMS %<>% mutate_at(.vars = c("ANSER7T"),
 # #Sanity check
 # table(ADAMS$ANSER7T, useNA = "ifany")
 
-#---- ****object naming: cactus, scissors ----
+#---- **object naming: cactus, scissors ----
 # table(ADAMS$ANCACTUS, useNA = "ifany")
 # table(ADAMS$ANSCISOR, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANCACTUS", "ANSCISOR"), 
@@ -247,7 +246,7 @@ ADAMS %<>% mutate_at(.vars = c("ANCACTUS", "ANSCISOR"),
 # table(ADAMS$ANCACTUS, useNA = "ifany")
 # table(ADAMS$ANSCISOR, useNA = "ifany")
 
-#---- ****President naming ----
+#---- **President naming ----
 # table(ADAMS$ANPRES, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANPRES"), 
                      #Missing/refused  
@@ -256,7 +255,7 @@ ADAMS %<>% mutate_at(.vars = c("ANPRES"),
 # #Sanity check
 # table(ADAMS$ANPRES, useNA = "ifany")
 
-#---- ****animal naming ----
+#---- **animal naming ----
 #table(ADAMS$ANAFTOT, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANAFTOT"), 
                      #Missing/refused  
@@ -265,7 +264,7 @@ ADAMS %<>% mutate_at(.vars = c("ANAFTOT"),
 # #Sanity check
 # table(ADAMS$ANAFTOT, useNA = "ifany")
 
-#---- ****Boston naming test ----
+#---- **Boston naming test ----
 # table(ADAMS$ANBNTTOT, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANBNTTOT"), 
                      #Missing/refused  
@@ -274,7 +273,7 @@ ADAMS %<>% mutate_at(.vars = c("ANBNTTOT"),
 # #Sanity check
 # table(ADAMS$ANBNTTOT, useNA = "ifany")
 
-#---- ****10-word recall (immediate and delayed) ----
+#---- **10-word recall (immediate and delayed) ----
 # table(ADAMS$ANIMMCR1, useNA = "ifany")
 # table(ADAMS$ANDELCOR, useNA = "ifany")
 ADAMS %<>% 
@@ -289,7 +288,7 @@ ADAMS %<>%
 # table(ADAMS$ANIMMCR, useNA = "ifany")
 # table(ADAMS$ANDELCOR, useNA = "ifany")
 
-#---- ****word list recognition (yes/no) ----
+#---- **word list recognition (yes/no) ----
 # table(ADAMS$ANRECNO, useNA = "ifany")
 # table(ADAMS$ANRECYES, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANRECNO", "ANRECYES"), 
@@ -300,7 +299,7 @@ ADAMS %<>% mutate_at(.vars = c("ANRECNO", "ANRECYES"),
 # table(ADAMS$ANRECNO, useNA = "ifany")
 # table(ADAMS$ANRECYES, useNA = "ifany")
 
-#---- ****story recall (immediate and delayed) ----
+#---- **story recall (immediate and delayed) ----
 # table(ADAMS$ANWM1TOT, useNA = "ifany")
 # table(ADAMS$ANWM2TOT, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANWM1TOT", "ANWM2TOT"), 
@@ -311,7 +310,7 @@ ADAMS %<>% mutate_at(.vars = c("ANWM1TOT", "ANWM2TOT"),
 # table(ADAMS$ANWM1TOT, useNA = "ifany")
 # table(ADAMS$ANWM2TOT, useNA = "ifany")
 
-#---- ****constructional praxis (immediate and delayed) ----
+#---- **constructional praxis (immediate and delayed) ----
 # table(ADAMS$ANCPTOT, useNA = "ifany")
 # table(ADAMS$ANRCPTOT, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANCPTOT", "ANRCPTOT"), 
@@ -322,7 +321,7 @@ ADAMS %<>% mutate_at(.vars = c("ANCPTOT", "ANRCPTOT"),
 # table(ADAMS$ANCPTOT, useNA = "ifany")
 # table(ADAMS$ANRCPTOT, useNA = "ifany")
 
-#---- ****trails A ----
+#---- **trails A ----
 # table(ADAMS$ANTMASEC, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANTMASEC"),
                      #Missing/refused
@@ -331,7 +330,7 @@ ADAMS %<>% mutate_at(.vars = c("ANTMASEC"),
 # #Sanity check
 # table(ADAMS$ANTMASEC, useNA = "ifany")
 
-#---- ****subjective cognitive change ----
+#---- **subjective cognitive change ----
 # table(ADAMS$ANSMEM2, useNA = "ifany")
 ADAMS %<>% mutate_at(.vars = c("ANSMEM2"),
                      #Missing/refused
@@ -357,7 +356,7 @@ ADAMS %<>% mutate_at(.vars = c("ANSMEM2"),
 # table(ADAMS$ANSMEM2_Same, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
 # table(ADAMS$ANSMEM2_Worse, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
 
-#---- ****proxy cognition ----
+#---- **proxy cognition ----
 # table(ADAMS$AGQ14, useNA = "ifany")
 # table(ADAMS$AGQ29, useNA = "ifany")
 ADAMS %<>% mutate("avg_proxy_cog" = ADAMS %>% 
@@ -403,7 +402,7 @@ ADAMS %<>% mutate("avg_proxy_cog" = ADAMS %>%
 # ADAMS %>% filter(is.na(avg_proxy_cog)) %>% dplyr::select(ANMSETOT) %>% 
 #   table(., useNA = "ifany")
 
-#---- ****dementia dx ----
+#---- **dementia dx ----
 # table(ADAMS$ADFDX1, useNA = "ifany")
 ADAMS %<>% 
   #collapse categories
@@ -439,7 +438,7 @@ ADAMS %<>%
 # table(ADAMS$Adem_cat, ADAMS$MCI, useNA = "ifany")
 # table(ADAMS$Adem_cat, ADAMS$Unimpaired, useNA = "ifany")
 
-#---- ****health and health behaviors ----
+#---- **health and health behaviors ----
 # table(ADAMS$AYEAR, useNA = "ifany")
 #For repeated measures, want to take the wave most representative of ADAMS wave
 wave_updated_vars <- c("stroke", "hibpe", "diabe", "hearte", "bmi", 
@@ -477,8 +476,8 @@ ADAMS %<>%
 #---- **summarize missingness ----
 colMeans(is.na(ADAMS))
 
-#---- **imputation-specific variables ----
-#---- ****ADAMS proxy type ----
+#---- imputation-specific variables ----
+#---- **ADAMS proxy type ----
 # table(ADAMS$AGQ101, useNA = "ifany")
 ADAMS %<>% 
   mutate("proxy_type_label" = case_when(AGQ101 == 1 ~ "Spouse", 
@@ -515,10 +514,10 @@ ADAMS %<>%
 # table(ADAMS$proxy_type_collapsed_label, ADAMS$proxy_Other_Relative, 
 #       useNA = "ifany")
 
-#---- ****HRS married/partnered status ----
+#---- **HRS married/partnered status ----
 # table(ADAMS$r5mpart, useNA = "ifany")
 
-#---- ****HRS BWC 20 and 86 ----
+#---- **HRS BWC 20 and 86 ----
 # table(ADAMS$r5bwc20, useNA = "ifany")
 # table(ADAMS$r6bwc86, useNA = "ifany")
 # table(ADAMS$ANBWC20, useNA = "ifany")
@@ -534,31 +533,31 @@ ADAMS %<>%
 # table(ADAMS$r5bwc20, useNA = "ifany")
 # table(ADAMS$r6bwc86, useNA = "ifany")
 
-#---- ****HRS object naming: cactus, scissors ----
+#---- **HRS object naming: cactus, scissors ----
 # table(ADAMS$ANCACTUS, useNA = "ifany")
 # table(ADAMS$ANSCISOR, useNA = "ifany")
 # table(ADAMS$r5scis, useNA = "ifany")
 # table(ADAMS$r5cact, useNA = "ifany")
 
-#---- ****HRS total cognition ----
+#---- **HRS total cognition ----
 # table(ADAMS$SELFCOG, useNA = "ifany")
 # table(ADAMS$r5cogtot, useNA = "ifany")
 
-#---- ****HRS 10-word recall (immediate and delayed) ----
+#---- **HRS 10-word recall (immediate and delayed) ----
 # table(ADAMS$ANIMMCR1, useNA = "ifany")
 # table(ADAMS$ANDELCOR, useNA = "ifany")
 # table(ADAMS$r5imrc, useNA = "ifany")
 # table(ADAMS$r5dlrc, useNA = "ifany")
 
-#---- ****HRS President naming ----
+#---- **HRS President naming ----
 # table(ADAMS$ANPRES, useNA = "ifany")
 # table(ADAMS$r5pres, useNA = "ifany")
 
-#---- ****HRS serial 7s ----
+#---- **HRS serial 7s ----
 # table(ADAMS$ANSER7T, useNA = "ifany")
 # table(ADAMS$r5ser7, useNA = "ifany")
 
-#---- ****HRS subjective cognitive decline ----
+#---- **HRS subjective cognitive decline ----
 # table(ADAMS$r5pstmem, useNA = "ifany")
 for(wave in cog_test_waves){
   ADAMS %<>%  
