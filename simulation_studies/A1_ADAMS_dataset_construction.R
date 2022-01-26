@@ -45,13 +45,13 @@ ADAMS_neuropsych <-
   #                  delayed word recall, word list recognition (yes), 
   #                  word list recognition (no), immediate story recall, 
   #                  delayed story recall, immediate constructional praxis, 
-  #                  delayed constructional praxis, symbol/digit substitution, 
-  #                  trails A, trails B, subjective cognitive change
+  #                  delayed constructional praxis, trails A, trails B, 
+  #                  subjective cognitive change
   dplyr::select("HHIDPN", "ANMSETOT", "ANBWC201", "ANBWC202", "ANBWC861", 
                 "ANBWC862", "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", 
                 "ANVCPRES", "ANAFTOT", "ANBNTTOT", "ANIMMCR1", "ANIMMCR2", 
                 "ANIMMCR3", "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", 
-                "ANWM2TOT", "ANCPTOT", "ANRCPTOT", "ANSDMTOT", "ANTMASEC", 
+                "ANWM2TOT", "ANCPTOT", "ANRCPTOT", "ANTMASEC", 
                 "ANTMBSEC", "ANSMEM2")
 
 #---- ****dementia dx ----
@@ -325,15 +325,6 @@ ADAMS %<>% mutate_at(.vars = c("ANCPTOT", "ANRCPTOT"),
 # table(ADAMS$ANCPTOT, useNA = "ifany")
 # table(ADAMS$ANRCPTOT, useNA = "ifany")
 
-#---- ****symbol/digit modalities ----
-# table(ADAMS$ANSDMTOT, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANSDMTOT"),
-                     #Missing/refused
-                     function(x) ifelse(x > 90, NA, x))
-
-# #Sanity check
-# table(ADAMS$ANSDMTOT, useNA = "ifany")
-
 #---- ****trails A and B ----
 # table(ADAMS$ANTMASEC, useNA = "ifany")
 # table(ADAMS$ANTMBSEC, useNA = "ifany")
@@ -476,7 +467,7 @@ neuro_cog_measures <- c("SELFCOG", "ANMSETOT_norm", "ANBWC20", "ANBWC86",
                         "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", "ANVCPRES", 
                         "ANAFTOT", "ANBNTTOT", "ANIMMCR", "ANDELCOR", "ANRECYES", 
                         "ANRECNO", "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", 
-                        "ANSDMTOT", "ANTMASEC", "ANTMBSEC")
+                        "ANTMASEC", "ANTMBSEC")
 
 ADAMS %<>% 
   mutate("num_cog_measures" = 
