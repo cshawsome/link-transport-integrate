@@ -494,10 +494,21 @@ ADAMS %<>%
 # table(ADAMS$r5bwc20, useNA = "ifany")
 # table(ADAMS$r6bwc86, useNA = "ifany")
 
+#---- ****HRS object naming: cactus, scissors ----
+# table(ADAMS$ANCACTUS, useNA = "ifany")
+# table(ADAMS$ANSCISOR, useNA = "ifany")
+# table(ADAMS$r5scis, useNA = "ifany")
+# table(ADAMS$r5cact, useNA = "ifany")
 
+#---- ****HRS total cognition ----
+# table(ADAMS$SELFCOG, useNA = "ifany")
+# table(ADAMS$r5cogtot, useNA = "ifany")
 
-
-
+#---- ****HRS 10-word recall (immediate and delayed) ----
+# table(ADAMS$ANIMMCR1, useNA = "ifany")
+# table(ADAMS$ANDELCOR, useNA = "ifany")
+# table(ADAMS$r5imrc, useNA = "ifany")
+# table(ADAMS$r5dlrc, useNA = "ifany")
 
 
 
