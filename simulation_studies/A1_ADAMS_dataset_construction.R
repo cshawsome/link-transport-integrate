@@ -478,6 +478,43 @@ ADAMS %<>%
 colMeans(is.na(ADAMS))
 
 #---- **imputation-specific variables ----
+#---- ****ADAMS proxy type ----
+# table(ADAMS$AGQ101, useNA = "ifany")
+ADAMS %<>% 
+  mutate("proxy_type_label" = case_when(AGQ101 == 1 ~ "Spouse", 
+                                        AGQ101 == 2 ~ "Child", 
+                                        AGQ101 == 3 ~ "Grandchild", 
+                                        AGQ101 == 4 ~ "Professional", 
+                                        AGQ101 == 5 ~ "Child-in-law", 
+                                        AGQ101 == 6 ~ "Sibling",
+                                        AGQ101 == 7 ~ "Niece/Nephew",
+                                        AGQ101 == 8 ~ "Sibling of Spouse", 
+                                        AGQ101 == 9 ~ "Parent/Parent-in-law",
+                                        AGQ101 == 10 ~ "Other Relative",
+                                        AGQ101 == 13 ~ "Other", 
+                                        AGQ101 == 15 ~ "Blank")) %>%
+  mutate("proxy_type_collapsed_label" = 
+           case_when(AGQ101 == 1 ~ "Spouse", 
+                     AGQ101 == 2 ~ "Child", 
+                     AGQ101 %in% c(3, 5, 6, 7, 8, 9, 10) ~ "Other Relative", 
+                     AGQ101 %in% c(4, 13) ~ "Other")) %>% 
+  mutate("proxy_Spouse" = 
+           ifelse(proxy_type_collapsed_label == "Spouse", 1, 0), 
+         "proxy_Child" = 
+           ifelse(proxy_type_collapsed_label == "Child", 1, 0), 
+         "proxy_Other_Relative" = 
+           ifelse(proxy_type_collapsed_label == "Other Relative", 1, 0),
+         "proxy_Other" = 
+           ifelse(proxy_type_collapsed_label == "Other", 1, 0))
+
+# #Sanity check
+# table(ADAMS$proxy_type_label, ADAMS$proxy_type_collapsed_label, useNA = "ifany")
+# table(ADAMS$proxy_type_collapsed_label, ADAMS$proxy_Spouse, useNA = "ifany")
+# table(ADAMS$proxy_type_collapsed_label, ADAMS$proxy_Child, useNA = "ifany")
+# table(ADAMS$proxy_type_collapsed_label, ADAMS$proxy_Other, useNA = "ifany")
+# table(ADAMS$proxy_type_collapsed_label, ADAMS$proxy_Other_Relative, 
+#       useNA = "ifany")
+
 #---- ****HRS married/partnered status ----
 # table(ADAMS$r5mpart, useNA = "ifany")
 
@@ -538,8 +575,4 @@ for(wave in cog_test_waves){
 # table(ADAMS$r5pstmem, ADAMS$r5pstmem_Same, useNA = "ifany")
 # table(ADAMS$r5pstmem, ADAMS$r5pstmem_Worse, useNA = "ifany")
 # table(ADAMS$r6pstmem, ADAMS$r6pstmem_Better, useNA = "ifany")
-
-
-
-
 
