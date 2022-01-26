@@ -11,15 +11,31 @@ ADAMS_analytic <-
   read_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_analytic.csv"))
 
 #---- check missings ----
-needs_imputing <- colSums(is.na(ADAMS_analytic))
+needs_imputing <- names(which(colSums(is.na(ADAMS_analytic)) != 0))
 
 #---- define imputation var types ----
-ADAMS_vars <- 
-time_updated_vars <- c("married_partnered", "not_married_partnered", 
-                       "widowed", "drinking_cat", "memrye_impute", 
-                       "stroke_impute", "hearte_impute", "lunge_impute", 
-                       "cancre_impute", "hibpe_impute", "diabe_impute", 
-                       "cesd", "BMI")
+ADAMS_vars <- c("SELFCOG", "AAGE", "EDYRS", "ANMSETOT", "ANSER7T", "ANSCISOR", 
+                "ANCACTUS", "ANPRES", "ANAFTOT", "ANBNTTOT", "ANDELCOR", 
+                "ANRECYES", )
+
+not_predictors <- c("HHIDPN", "AYEAR")
+
+#---- predictor matrix ----
+predict <- 
+  matrix(1, nrow = length(needs_imputing), ncol = ncol(ADAMS_analytic)) %>% 
+  set_rownames(needs_imputing) %>% set_colnames(colnames(ADAMS_analytic))
+
+#cannot predict themselves
+predict[needs_imputing, needs_imputing] <- 
+  (diag(x = 1, nrow = length(needs_imputing), 
+        ncol = length(needs_imputing)) == 0)*1
+
+#---- OLD ----
+  time_updated_vars <- c("married_partnered", "not_married_partnered", 
+                         "widowed", "drinking_cat", "memrye_impute", 
+                         "stroke_impute", "hearte_impute", "lunge_impute", 
+                         "cancre_impute", "hibpe_impute", "diabe_impute", 
+                         "cesd", "BMI")
 
 time_invariant_vars <- c("ed_cat", "black", "hispanic", "other", 
                          "female", "survtime", "death2018", "smoker", 
@@ -27,9 +43,7 @@ time_invariant_vars <- c("ed_cat", "black", "hispanic", "other",
 
 blocks <- c(apply(expand.grid("r", seq(4, 9), time_updated_vars), 1, 
                   paste, collapse = ""))
-predict <- matrix(1, nrow = length(blocks), ncol = ncol(data_wide)) %>% 
-  set_rownames(blocks) %>% 
-  set_colnames(colnames(data_wide))
+
 
 #---- **time-updated var models ----
 for(var in time_updated_vars){
@@ -64,9 +78,8 @@ predict[, c("HHIDPN", "intercept",
 # colSums(predict)
 # 
 #---- imputation ----
-data_imputed <- mice::mice(data = ADAMS_analytic, 
-             #m = 2, maxit = 2,
-             method = "pmm",
+data_imputed <- 
+  mice::mice(data = ADAMS_analytic, m = 2, maxit = 2, method = "pmm",
              predictorMatrix = predict, where = is.na(ADAMS_analytic), 
              blocks = as.list(rownames(predict)), seed = 20220126)
 
