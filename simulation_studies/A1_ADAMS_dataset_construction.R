@@ -513,6 +513,10 @@ ADAMS %<>%
 # table(ADAMS$r5imrc, useNA = "ifany")
 # table(ADAMS$r5dlrc, useNA = "ifany")
 
+#---- ****HRS President naming ----
+# table(ADAMS$ANPRES, useNA = "ifany")
+# table(ADAMS$r5pres, useNA = "ifany")
+
 
 
 
