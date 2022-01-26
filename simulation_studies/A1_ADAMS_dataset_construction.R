@@ -108,9 +108,6 @@ RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/",
 #Remove labeled data format
 val_labels(RAND) <- NULL
 
-#---- ****HRS core ----
-
-
 #---- **join data ----
 ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>% 
   left_join(., ADAMS_proxy, by = "HHIDPN") %>% 
