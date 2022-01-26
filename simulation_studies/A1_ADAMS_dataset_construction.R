@@ -517,6 +517,23 @@ ADAMS %<>%
 # table(ADAMS$ANPRES, useNA = "ifany")
 # table(ADAMS$r5pres, useNA = "ifany")
 
+#---- ****HRS subjective cognitive decline ----
+# table(ADAMS$r5pstmem, useNA = "ifany")
+for(wave in cog_test_waves){
+  ADAMS %<>%  
+    mutate(!!paste0("r", wave, "pstmem_Better") := 
+             ifelse(!!sym(paste0("r", wave, "pstmem")) == 1, 1, 0), 
+           !!paste0("r", wave, "pstmem_Same") := 
+             ifelse(!!sym(paste0("r", wave, "pstmem")) == 2, 1, 0), 
+           !!paste0("r", wave, "pstmem_Worse") := 
+             ifelse(!!sym(paste0("r", wave, "pstmem")) == 3, 1, 0))
+}
+
+# #Sanity check
+# table(ADAMS$r5pstmem, ADAMS$r5pstmem_Better, useNA = "ifany")
+# table(ADAMS$r5pstmem, ADAMS$r5pstmem_Same, useNA = "ifany")
+# table(ADAMS$r5pstmem, ADAMS$r5pstmem_Worse, useNA = "ifany")
+# table(ADAMS$r6pstmem, ADAMS$r6pstmem_Better, useNA = "ifany")
 
 
 
