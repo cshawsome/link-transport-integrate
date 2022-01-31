@@ -649,5 +649,3 @@ remove <- c("AASSESS", "AACURRWK", "AACURRWK_collapsed_label", "AACURRWK_label",
 
 ADAMS %>% dplyr::select(-all_of(remove)) %>% 
   write_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_analytic.csv"))
-
-
