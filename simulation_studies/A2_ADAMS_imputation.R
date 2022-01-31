@@ -77,6 +77,23 @@ predict[needs_imputing[which(needs_imputing %in% ADAMS_vars)], HRS_vars] <- 0
 #use HRS variables to predict each other: remove ADAMS predictors 
 predict[needs_imputing[which(needs_imputing %in% HRS_vars)], ADAMS_vars] <- 0
 
+#---- **ADAMS extra predictors ----
+predict["ANBWC20", paste0("r", cog_waves, "bwc20")] <- 1
+predict["ANBWC86", paste0("r", seq(5, 6), "bwc86")] <- 1
+predict["ANCACTUS", paste0("r", cog_waves, "cact")] <- 1
+predict["SELFCOG", paste0("r", cog_waves, "cogtot")] <- 1
+predict["ANDELCOR", paste0("r", cog_waves, "dlrc")] <- 1
+predict["ANIMMCR", paste0("r", cog_waves, "imrc")] <- 1
+predict["ANPRES", paste0("r", cog_waves, "pres")] <- 1
+predict["ANSCISOR", paste0("r", cog_waves, "scis")] <- 1
+predict["ANSER7T", paste0("r", cog_waves, "ser7")] <- 1
+predict[paste0("ANSMEM2_", c("Better", "Same", "Worse")), 
+        paste0("r", cog_waves, "pst_mem_Better")] <- 1
+predict[paste0("ANSMEM2_", c("Better", "Same", "Worse")), 
+        paste0("r", cog_waves, "pst_mem_Same")] <- 1
+predict[paste0("ANSMEM2_", c("Better", "Same", "Worse")), 
+        paste0("r", cog_waves, "pst_mem_Worse")] <- 1
+
 #---- **derived vars (do not impute) ----
 predict[c("ANMSETOT_norm", 
           paste0("A", c("stroke", "hibpe", "diabe", "hearte", "bmi", "iadla", 
@@ -91,41 +108,6 @@ rowSums(predict[c("ANMSETOT_norm",
                   paste0("A", c("stroke", "hibpe", "diabe", "hearte", "bmi", 
                                 "iadla", "adla", "smoken", "drinkd", "drinkn"))), 
 ])
-
-#---- OLD ----
-time_updated_vars <- c("married_partnered", "not_married_partnered", 
-                       "widowed", "drinking_cat", "memrye_impute", 
-                       "stroke_impute", "hearte_impute", "lunge_impute", 
-                       "cancre_impute", "hibpe_impute", "diabe_impute", 
-                       "cesd", "BMI")
-
-time_invariant_vars <- c("ed_cat", "black", "hispanic", "other", 
-                         "female", "survtime", "death2018", "smoker", 
-                         "observed")
-
-blocks <- c(apply(expand.grid("r", seq(4, 9), time_updated_vars), 1, 
-                  paste, collapse = ""))
-
-
-#---- **time-updated var models ----
-for(var in time_updated_vars){
-  #can't predict itself
-  predict[paste0("r", seq(4, 9), var), paste0("r", seq(4, 9), var)] <- 
-    (diag(x = 1, nrow = 6, ncol = 6) == 0)*1
-  
-  #can't predict in the same wave (all missing)
-  predictors <- time_updated_vars[which(time_updated_vars != var)]
-  for(predictor in predictors){
-    predict[paste0("r", seq(4, 9), var), 
-            paste0("r", seq(4, 9), predictor)] <- 
-      (diag(x = 1, nrow = 6, ncol = 6) == 0)*1
-  }
-  
-  #use time-updated age
-  predict[paste0("r", seq(4, 9), var), 
-          paste0("r", seq(4, 9), "age_y_int")] <- 
-    diag(x = 1, nrow = 6, ncol = 6)
-}
 
 #---- imputation ----
 data_imputed <- 
