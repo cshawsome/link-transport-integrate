@@ -50,7 +50,7 @@ not_predictors <- c("HHIDPN", "AYEAR", "White", "ANMSETOT_norm",
                     "Adrinkd", "Adrinkn")
 
 # #Sanity check
-# union_var_names <- c(ADAMS_vars, HRS_vars, not_predictors)
+# union_var_names <- c(sociodem_vars, ADAMS_vars, HRS_vars, not_predictors)
 # ncol(ADAMS_analytic) == length(union_var_names)
 # 
 # colnames(ADAMS_analytic)[which(!colnames(ADAMS_analytic) %in% union_var_names)]
