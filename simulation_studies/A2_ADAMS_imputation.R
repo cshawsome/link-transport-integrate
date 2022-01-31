@@ -14,11 +14,36 @@ ADAMS_analytic <-
 needs_imputing <- names(which(colSums(is.na(ADAMS_analytic)) != 0))
 
 #---- define imputation var types ----
+hrs_waves <- seq(4, 7)
+cog_waves <- seq(5, 7)
+
 ADAMS_vars <- c("SELFCOG", "AAGE", "EDYRS", "ANMSETOT", "ANSER7T", "ANSCISOR", 
                 "ANCACTUS", "ANPRES", "ANAFTOT", "ANBNTTOT", "ANDELCOR", 
-                "ANRECYES", )
+                "ANRECYES", "ANRECNO", "ANWM1TOT", "ANWM2TOT", "ANCPTOT", 
+                "ANRCPTOT", "ANTMASEC", "Female", "Black", "Hispanic", 
+                "Married/partnered", "Working", "Retired", "Not working", 
+                "ANBWC20", "ANBWC86", "ANIMMCR", "ANSMEM2_Better", 
+                "ANSMEM2_Same", "ANSMEM2_Worse", "avg_proxy_cog_Better", 
+                "avg_proxy_cog_Same", "avg_proxy_cog_Worse", "Dementia", "Other", 
+                "MCI", "proxy_Spouse", "proxy_Child", "proxy_Other_Relative", 
+                "proxy_Other")
 
-not_predictors <- c("HHIDPN", "AYEAR")
+HRS_vars <- c(paste0("r", cog_waves, "mpart"), paste0("r", hrs_waves, "bmi"), 
+              paste0("r", hrs_waves, "height"), paste0("r", hrs_waves, "weight"), 
+              paste0("r", hrs_waves, "smoken"), paste0("r", hrs_waves, "drinkd"), 
+              paste0("r", hrs_waves, "drinkn"), paste0("r", hrs_waves, "hibpe"), 
+              paste0("r", hrs_waves, "diabe"), paste0("r", hrs_waves, "hearte"), 
+              paste0("r", hrs_waves, "stroke"), paste0("r", hrs_waves, "adla"), 
+              paste0("r", hrs_waves, "iadla"), paste0("r", cog_waves, "imrc"), 
+              paste0("r", cog_waves, "dlrc"), paste0("r", cog_waves, "ser7"), 
+              paste0("r", cog_waves, "bwc20"), paste0("r", cog_waves, "bwc86"), 
+              paste0("r", cog_waves, "scis"), paste0("r", cog_waves, "cact"), 
+              paste0("r", cog_waves, "pres"), paste0("r", cog_waves, "cogtot"))
+
+not_predictors <- c("HHIDPN", "AYEAR", "White", "ANMSETOT_norm", 
+                    "Adem_dx_label_collapsed", "Unimpaired", "Astroke", "Ahibpe", 
+                    "Adiabe", "Ahearte", "Abmi", "Aiadla", "Aadla", "Asmoken", 
+                    "Adrinkd", "Adrinkn", )
 
 #---- predictor matrix ----
 predict <- 
@@ -31,11 +56,11 @@ predict[needs_imputing, needs_imputing] <-
         ncol = length(needs_imputing)) == 0)*1
 
 #---- OLD ----
-  time_updated_vars <- c("married_partnered", "not_married_partnered", 
-                         "widowed", "drinking_cat", "memrye_impute", 
-                         "stroke_impute", "hearte_impute", "lunge_impute", 
-                         "cancre_impute", "hibpe_impute", "diabe_impute", 
-                         "cesd", "BMI")
+time_updated_vars <- c("married_partnered", "not_married_partnered", 
+                       "widowed", "drinking_cat", "memrye_impute", 
+                       "stroke_impute", "hearte_impute", "lunge_impute", 
+                       "cancre_impute", "hibpe_impute", "diabe_impute", 
+                       "cesd", "BMI")
 
 time_invariant_vars <- c("ed_cat", "black", "hispanic", "other", 
                          "female", "survtime", "death2018", "smoker", 
