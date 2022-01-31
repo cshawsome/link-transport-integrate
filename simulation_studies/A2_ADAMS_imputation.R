@@ -36,14 +36,24 @@ HRS_vars <- c(paste0("r", cog_waves, "mpart"), paste0("r", hrs_waves, "bmi"),
               paste0("r", hrs_waves, "stroke"), paste0("r", hrs_waves, "adla"), 
               paste0("r", hrs_waves, "iadla"), paste0("r", cog_waves, "imrc"), 
               paste0("r", cog_waves, "dlrc"), paste0("r", cog_waves, "ser7"), 
-              paste0("r", cog_waves, "bwc20"), paste0("r", cog_waves, "bwc86"), 
+              paste0("r", cog_waves, "bwc20"), paste0("r", seq(5, 6), "bwc86"), 
               paste0("r", cog_waves, "scis"), paste0("r", cog_waves, "cact"), 
-              paste0("r", cog_waves, "pres"), paste0("r", cog_waves, "cogtot"))
+              paste0("r", cog_waves, "pres"), paste0("r", cog_waves, "cogtot"),
+              paste0("r", cog_waves, "pstmem_Better"), 
+              paste0("r", cog_waves, "pstmem_Same"), 
+              paste0("r", cog_waves, "pstmem_Worse"))
 
 not_predictors <- c("HHIDPN", "AYEAR", "White", "ANMSETOT_norm", 
                     "Adem_dx_label_collapsed", "Unimpaired", "Astroke", "Ahibpe", 
                     "Adiabe", "Ahearte", "Abmi", "Aiadla", "Aadla", "Asmoken", 
-                    "Adrinkd", "Adrinkn", )
+                    "Adrinkd", "Adrinkn")
+
+# #Sanity check
+# union_var_names <- c(ADAMS_vars, HRS_vars, not_predictors)
+# ncol(ADAMS_analytic) == length(union_var_names)
+# 
+# colnames(ADAMS_analytic)[which(!colnames(ADAMS_analytic) %in% union_var_names)]
+# union_var_names[which(!union_var_names %in% colnames(ADAMS_analytic))]
 
 #---- predictor matrix ----
 predict <- 
