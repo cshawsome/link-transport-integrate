@@ -645,7 +645,8 @@ remove <- c("AASSESS", "AACURRWK", "AACURRWK_collapsed_label", "AACURRWK_label",
             paste0("ANBWC", c("201", "202", "861", "862")), "GENDER_label",
             paste0("ANIMMCR", seq(1, 3)), "ETHNIC_label", "num_cog_measures", 
             "proxy_type_label", "proxy_type_collapsed_label", 
-            paste0("r", cog_test_waves, "pstmem"))
+            paste0("r", cog_test_waves, "pstmem"), 
+            paste0("r", rand_waves, "bmi"))
 
 ADAMS %>% dplyr::select(-all_of(remove)) %>% 
   write_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_analytic.csv"))
