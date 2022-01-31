@@ -17,12 +17,13 @@ needs_imputing <- names(which(colSums(is.na(ADAMS_analytic)) != 0))
 hrs_waves <- seq(4, 7)
 cog_waves <- seq(5, 7)
 
-ADAMS_vars <- c("SELFCOG", "AAGE", "EDYRS", "ANMSETOT", "ANSER7T", "ANSCISOR", 
-                "ANCACTUS", "ANPRES", "ANAFTOT", "ANBNTTOT", "ANDELCOR", 
-                "ANRECYES", "ANRECNO", "ANWM1TOT", "ANWM2TOT", "ANCPTOT", 
-                "ANRCPTOT", "ANTMASEC", "Female", "Black", "Hispanic", 
-                "Married/partnered", "Working", "Retired", "Not working", 
-                "ANBWC20", "ANBWC86", "ANIMMCR", "ANSMEM2_Better", 
+sociodem_vars <- c("AAGE", "EDYRS", "Female", "Black", "Hispanic", 
+                   "Married/partnered", "Working", "Retired", "Not working")
+
+ADAMS_vars <- c("SELFCOG", "ANMSETOT", "ANSER7T", "ANSCISOR", "ANCACTUS", 
+                "ANPRES", "ANAFTOT", "ANBNTTOT", "ANDELCOR", "ANRECYES", 
+                "ANRECNO", "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", 
+                "ANTMASEC", "ANBWC20", "ANBWC86", "ANIMMCR", "ANSMEM2_Better", 
                 "ANSMEM2_Same", "ANSMEM2_Worse", "avg_proxy_cog_Better", 
                 "avg_proxy_cog_Same", "avg_proxy_cog_Worse", "Dementia", "Other", 
                 "MCI", "proxy_Spouse", "proxy_Child", "proxy_Other_Relative", 
@@ -60,10 +61,21 @@ predict <-
   matrix(1, nrow = length(needs_imputing), ncol = ncol(ADAMS_analytic)) %>% 
   set_rownames(needs_imputing) %>% set_colnames(colnames(ADAMS_analytic))
 
-#cannot predict themselves
+#---- **cannot predict themselves ----
 predict[needs_imputing, needs_imputing] <- 
   (diag(x = 1, nrow = length(needs_imputing), 
         ncol = length(needs_imputing)) == 0)*1
+
+#---- **non-predictors ----
+predict[, not_predictors] <- 0
+
+#---- **ADAMS-ADAMS prediction ----
+#use ADAMS variables to predict each other: remove HRS predictors for now
+
+#---- **HRS-HRS prediction ----
+#use HRS variables to predict each other: remove ADAMS predictors 
+# (except sociodemographics) for now
+
 
 #---- OLD ----
 time_updated_vars <- c("married_partnered", "not_married_partnered", 
