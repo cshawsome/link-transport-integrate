@@ -69,17 +69,18 @@ predict[needs_imputing, needs_imputing] <-
 #---- **non-predictors ----
 predict[, not_predictors] <- 0
 
-#---- **derived vars (do not impute) ----
-predict[c("ANMSETOT_norm", paste0("A", c("stroke", "hibpe", "diabe", "hearte", 
-                                         "bmi", "iadla", "adla", "smoken", 
-                                         "drinkd", "drinkn"))), ] <- 0
-
 #---- **ADAMS-ADAMS prediction ----
 #use ADAMS variables to predict each other: remove HRS predictors for now
-
+predict[needs_imputing[which(needs_imputing %in% ADAMS_vars)], HRS_vars] <- 0
 
 #---- **HRS-HRS prediction ----
 #use HRS variables to predict each other: remove ADAMS predictors 
+predict[needs_imputing[which(needs_imputing %in% HRS_vars)], ADAMS_vars] <- 0
+
+#---- **derived vars (do not impute) ----
+predict[c("ANMSETOT_norm", 
+          paste0("A", c("stroke", "hibpe", "diabe", "hearte", "bmi", "iadla", 
+                        "adla", "smoken", "drinkd", "drinkn"))), ] <- 0
 
 #---- **sanity check ----
 #non-predictors should all be 0
@@ -89,7 +90,7 @@ colSums(predict[, not_predictors])
 rowSums(predict[c("ANMSETOT_norm", 
                   paste0("A", c("stroke", "hibpe", "diabe", "hearte", "bmi", 
                                 "iadla", "adla", "smoken", "drinkd", "drinkn"))), 
-                ])
+])
 
 #---- OLD ----
 time_updated_vars <- c("married_partnered", "not_married_partnered", 
