@@ -69,13 +69,27 @@ predict[needs_imputing, needs_imputing] <-
 #---- **non-predictors ----
 predict[, not_predictors] <- 0
 
+#---- **derived vars (do not impute) ----
+predict[c("ANMSETOT_norm", paste0("A", c("stroke", "hibpe", "diabe", "hearte", 
+                                         "bmi", "iadla", "adla", "smoken", 
+                                         "drinkd", "drinkn"))), ] <- 0
+
 #---- **ADAMS-ADAMS prediction ----
 #use ADAMS variables to predict each other: remove HRS predictors for now
 
+
 #---- **HRS-HRS prediction ----
 #use HRS variables to predict each other: remove ADAMS predictors 
-# (except sociodemographics) for now
 
+#---- **sanity check ----
+#non-predictors should all be 0
+colSums(predict[, not_predictors])
+
+#derived variables should not have anything predicting them
+rowSums(predict[c("ANMSETOT_norm", 
+                  paste0("A", c("stroke", "hibpe", "diabe", "hearte", "bmi", 
+                                "iadla", "adla", "smoken", "drinkd", "drinkn"))), 
+                ])
 
 #---- OLD ----
 time_updated_vars <- c("married_partnered", "not_married_partnered", 
@@ -112,18 +126,6 @@ for(var in time_updated_vars){
     diag(x = 1, nrow = 6, ncol = 6)
 }
 
-#Don't use these as predictors
-predict[, c("HHIDPN", "intercept", 
-            paste0("r", seq(3, 9), "conde_impute"), "white", "r3cesd", 
-            paste0("r", seq(3, 9), "shlt"), "age_death_y", 
-            "r4cesd_elevated", "r9cesd_elevated", "total_elevated_cesd",
-            "prop_elevated_cesd", "avg_cesd", "avg_cesd_elevated", 
-            "observed", paste0("r", seq(4, 9), "cesd_death2018"), 
-            paste0("r", seq(3, 8), "cesd_conde_impute"))] <- 0
-
-# #Sanity check
-# colSums(predict)
-# 
 #---- imputation ----
 data_imputed <- 
   mice::mice(data = ADAMS_analytic, m = 2, maxit = 2, method = "pmm",
