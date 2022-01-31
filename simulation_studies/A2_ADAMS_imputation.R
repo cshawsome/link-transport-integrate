@@ -88,11 +88,11 @@ predict["ANPRES", paste0("r", cog_waves, "pres")] <- 1
 predict["ANSCISOR", paste0("r", cog_waves, "scis")] <- 1
 predict["ANSER7T", paste0("r", cog_waves, "ser7")] <- 1
 predict[paste0("ANSMEM2_", c("Better", "Same", "Worse")), 
-        paste0("r", cog_waves, "pst_mem_Better")] <- 1
+        paste0("r", cog_waves, "pstmem_Better")] <- 1
 predict[paste0("ANSMEM2_", c("Better", "Same", "Worse")), 
-        paste0("r", cog_waves, "pst_mem_Same")] <- 1
+        paste0("r", cog_waves, "pstmem_Same")] <- 1
 predict[paste0("ANSMEM2_", c("Better", "Same", "Worse")), 
-        paste0("r", cog_waves, "pst_mem_Worse")] <- 1
+        paste0("r", cog_waves, "pstmem_Worse")] <- 1
 
 #---- **derived vars (do not impute) ----
 predict[c("ANMSETOT_norm", 
