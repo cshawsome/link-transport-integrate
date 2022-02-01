@@ -15,6 +15,9 @@ fast_impute <-
       data[where[, var] == 1 , var] <- avgs[var]
     }
     
+    #---- add intercept ----
+    data[, "intercept"] <- 1
+    
     #---- pre-allocate chain storage ---- 
     if(save == "yes"){
       #colnames are imputation number:iteration number:stat number
