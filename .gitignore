@@ -8,3 +8,6 @@ priors/*
 
 #Idk why this popped up
 .DS_Store
+
+#don't track MI data
+ADAMS/MI/*
