@@ -21,11 +21,11 @@ fast_impute <-
     #---- pre-allocate chain storage ---- 
     if(save == "yes"){
       #colnames are imputation number:iteration number:stat number
-      #stat number: 1 = mean; 2 = sd
       trace_data <- matrix(nrow = length(impute_vars), ncol = 2*m*maxit) %>% 
-        set_colnames(apply(expand.grid(seq(1:m), seq(1:maxit), seq(1, 2)), 
-                           1, paste, collapse = ":")) %>% 
+        set_colnames(apply(expand.grid(seq(1:m), seq(1:maxit), c("mean", "sd")), 
+                           1, paste0, collapse = ":")) %>% 
         set_rownames(impute_vars)
+      colnames(trace_data) <- gsub(" ", "", colnames(trace_data))  
     }
     
     #---- pre-allocate list of imputed datasets ----
