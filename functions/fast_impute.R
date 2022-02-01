@@ -85,7 +85,7 @@ fast_impute <-
                    names_sep = ":") %>% 
       mutate_at(.vars = c("iteration"), as.integer) %>%
       mutate_at(.vars = c("run"), 
-                function(x) factor(x, levels = seq(1, maxit)))
+                function(x) factor(x, levels = seq(1, m)))
     
     trace_plots <- 
       ggplot(plot_data, aes(x = iteration, y = value, color = run)) +
