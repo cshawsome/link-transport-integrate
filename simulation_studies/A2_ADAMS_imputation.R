@@ -95,23 +95,17 @@ predict[paste0("ANSMEM2_", c("Better", "Same", "Worse")),
         paste0("r", cog_waves, "pstmem_Worse")] <- 1
 
 #---- **derived vars (do not impute) ----
-predict[c("ANMSETOT_norm", 
-          paste0("A", c("stroke", "hibpe", "diabe", "hearte", "bmi", "iadla", 
-                        "adla", "smoken", "drinkd", "drinkn"))), ] <- 0
+remove <- c("ANMSETOT_norm", 
+            paste0("A", c("stroke", "hibpe", "diabe", "hearte", "bmi", "iadla", 
+                          "adla", "smoken", "drinkd", "drinkn"))) 
+
+predict <- predict[!rownames(predict) %in% remove, ]
 
 #---- **sanity check ----
 #non-predictors should all be 0
 colSums(predict[, not_predictors])
 
-#derived variables should not have anything predicting them
-rowSums(predict[c("ANMSETOT_norm", 
-                  paste0("A", c("stroke", "hibpe", "diabe", "hearte", "bmi", 
-                                "iadla", "adla", "smoken", "drinkd", "drinkn"))), 
-])
-
 #---- imputation ----
-data_imputed <- 
-  mice::mice(data = ADAMS_analytic, m = 2, maxit = 2, method = "pmm",
-             predictorMatrix = predict, where = is.na(ADAMS_analytic), 
-             blocks = as.list(rownames(predict)), seed = 20220126)
+data_imputed <- fast_impute(predictor_matrix = predict, data_wide, "PMM",
+                            m = 2, maxit = 5, save = "yes")
 
