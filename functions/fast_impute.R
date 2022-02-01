@@ -120,9 +120,12 @@ fast_impute(predictor_matrix = predict, data = ADAMS_analytic,
 end <- Sys.time() - start
 
 #test output
-test_where <- read_csv(file = here::here("ADAMS", "MI", "where.csv"))
-test_trace_data <- read_csv(file = here::here("ADAMS", "MI", "trace_data.csv"))
-test_impute_data <- readRDS(file = here::here("ADAMS", "MI", "MI_datasets"))
+test_where <- 
+  read_csv(file = paste0(path_to_box, "data/ADAMS/cleaned/MI/where.csv"))
+test_trace_data <- 
+  read_csv(file = paste0(path_to_box, "data/ADAMS/cleaned/MI/trace_data.csv"))
+test_impute_data <- 
+  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets"))
 
 
 
