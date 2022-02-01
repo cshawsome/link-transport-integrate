@@ -1,5 +1,5 @@
 fast_impute <- 
-  function(predictor_matrix, data, study_name, method, m, maxit, save = "no"){
+  function(predictor_matrix, data, study_name, method, m, maxit){
     
     #---- where matrix ----
     where <- is.na(data)*1  
@@ -19,14 +19,12 @@ fast_impute <-
     data[, "intercept"] <- 1
     
     #---- pre-allocate chain storage ---- 
-    if(save == "yes"){
-      #colnames are imputation number:iteration number:stat number
-      trace_data <- matrix(nrow = length(impute_vars), ncol = 2*m*maxit) %>% 
-        set_colnames(apply(expand.grid(seq(1:m), seq(1:maxit), c("mean", "sd")), 
-                           1, paste0, collapse = ":")) %>% 
-        set_rownames(impute_vars)
-      colnames(trace_data) <- gsub(" ", "", colnames(trace_data))  
-    }
+    #colnames are imputation number:iteration number:stat number
+    trace_data <- matrix(nrow = length(impute_vars), ncol = 2*m*maxit) %>% 
+      set_colnames(apply(expand.grid(seq(1:m), seq(1:maxit), c("mean", "sd")), 
+                         1, paste0, collapse = ":")) %>% 
+      set_rownames(impute_vars)
+    colnames(trace_data) <- gsub(" ", "", colnames(trace_data))  
     
     #---- pre-allocate list of imputed datasets ----
     impute_list <- list()
@@ -58,75 +56,71 @@ fast_impute <-
                                      which(predictor_matrix[var, ] == 1)]))))
           }
           
-          if(exists("trace_data")){
-            trace_data[var, paste0(c(run, iter, "mean"), collapse = ":")] <- 
-              mean(unlist(imputed_data[where[, var] == 1, var]))
-            trace_data[var, paste0(c(run, iter, "sd"), collapse = ":")] <- 
-              sd(unlist(imputed_data[where[, var] == 1, var]))
-          }
+          trace_data[var, paste0(c(run, iter, "mean"), collapse = ":")] <- 
+            mean(unlist(imputed_data[where[, var] == 1, var]))
+          trace_data[var, paste0(c(run, iter, "sd"), collapse = ":")] <- 
+            sd(unlist(imputed_data[where[, var] == 1, var]))
         }
       }
       impute_list[[run]] <- imputed_data
     }
     
     #---- save results ----
-    if(save == "yes"){
-      #create directory for results
-      dir.create(here::here(study_name, "MI"))
-      
-      #---- **where matrix ----
-      write_csv(as.data.frame(where), 
-                file = here::here(study_name, "MI", "where.csv"))
-      
-      #---- **trace plots data ----
-      trace_data %<>% as.data.frame() %>% 
-        rownames_to_column(var = "impute_vars")
-      
-      write_csv(trace_data,
-                file = here::here(study_name, "MI", "trace_data.csv"))
-      
-      #---- **trace plots ----
-      plot_data <- trace_data %>% 
-        pivot_longer(-"impute_vars", names_to = c("run", "iteration", "stat"), 
-                     names_sep = ":") 
-      
-      trace_plots <- 
-        ggplot(plot_data, aes(x = iteration, y = value, color = run)) +
-        geom_line(aes(group = run)) + theme_bw() + 
-        facet_wrap_paginate(impute_vars~stat, ncol = 2, nrow = 6, page = 1, 
-                            scales = "free", strip.position = "top")
-      
-      n = n_pages(trace_plots)
-      
-      pdf(paste0(here::here("ADAMS", "MI", "trace_plots.pdf")), paper = "letter", 
-          height = 10.5, width = 8)
-      
-      for(i in 1:n){
-        print(ggplot(plot_data, aes(x = iteration, y = value, color = run)) +
-                geom_line(aes(group = run)) + theme_bw() + 
-                facet_wrap_paginate(impute_vars~stat, ncol = 2, nrow = 6, 
-                                    page = i, scales = "free", 
-                                    strip.position = "top"))
-      }
-      
-      dev.off()
-      
-      #---- **imputed data ----
-      saveRDS(impute_list, 
-              file = here::here(study_name, "MI", "MI_datasets"))
+    #create directory for results
+    dir.create(here::here(study_name, "MI"))
+    
+    #---- **where matrix ----
+    write_csv(as.data.frame(where), 
+              file = here::here(study_name, "MI", "where.csv"))
+    
+    #---- **trace plots data ----
+    trace_data %<>% as.data.frame() %>% 
+      rownames_to_column(var = "impute_vars")
+    
+    write_csv(trace_data,
+              file = here::here(study_name, "MI", "trace_data.csv"))
+    
+    #---- **trace plots ----
+    plot_data <- trace_data %>% 
+      pivot_longer(-"impute_vars", names_to = c("run", "iteration", "stat"), 
+                   names_sep = ":") %>% 
+      mutate_at(.vars = c("iteration"), as.integer) %>%
+      mutate_at(.vars = c("run"), 
+                function(x) factor(x, levels = seq(1, maxit)))
+    
+    trace_plots <- 
+      ggplot(plot_data, aes(x = iteration, y = value, color = run)) +
+      geom_line(aes(group = run)) + theme_bw() + 
+      facet_wrap_paginate(impute_vars~stat, ncol = 2, nrow = 6, page = 1, 
+                          scales = "free", strip.position = "top")
+    
+    n = n_pages(trace_plots)
+    
+    pdf(paste0(here::here("ADAMS", "MI", "trace_plots.pdf")), paper = "letter", 
+        height = 10.5, width = 8)
+    
+    for(i in 1:n){
+      print(ggplot(plot_data, aes(x = iteration, y = value, color = run)) +
+              geom_line(aes(group = run)) + theme_bw() + 
+              facet_wrap_paginate(impute_vars~stat, ncol = 2, nrow = 6, 
+                                  page = i, scales = "free", 
+                                  strip.position = "top"))
     }
+    
+    dev.off()
+    
+    #---- **imputed data ----
+    saveRDS(impute_list, 
+            file = here::here(study_name, "MI", "MI_datasets"))
   }
 
 #---- function testing ----
 predictor_matrix <- predict
 data <- ADAMS_analytic
 
-fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
-            study_name = "ADAMS", method = "PMM", m = 2, maxit = 5, save = "no")
-
 start <- Sys.time()
 fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
-            study_name = "ADAMS", method = "PMM", m = 2, maxit = 10, save = "yes")
+            study_name = "ADAMS", method = "PMM", m = 2, maxit = 15)
 end <- Sys.time() - start
 
 #test output
