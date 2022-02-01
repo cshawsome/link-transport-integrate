@@ -15,42 +15,6 @@ fast_impute <-
       data[where[, var] == 1 , var] <- avgs[var]
     }
     
-    #---- **clean: drinking cat ----
-    data[, impute_vars[grep("drinking", impute_vars)]] <- 
-      round(data[, impute_vars[grep("drinking", impute_vars)]])
-    
-    #---- **draw: binary vars ----
-    data[, 
-              impute_vars[-grep(pattern = "cesd|BMI|drinking", impute_vars)]] <- 
-      apply(data[, impute_vars[-grep(pattern = "cesd|BMI|drinking", 
-                                          impute_vars)]] , 2, 
-            function(x) rbinom(n = length(x), size = 1, prob = x))
-    
-    #---- **clean: marriage cats ----
-    for(wave in seq(4, 9)){
-      vars <- c("married_partnered", "not_married_partnered", "widowed")
-      cols <- apply(expand.grid("r", wave, vars), 1, paste, collapse = "")
-      subset <- data[, cols]
-      
-      subset[, "sum"] <- rowSums(subset, na.rm = TRUE)
-      
-      for(row in 1:nrow(subset)){
-        if(subset[row, "sum"] == 1){
-          next
-        } else if(subset[row, "sum"] %in% c(0, 3)){
-          this_cat <- sample(c(1, 2, 3), size = 1)
-          subset[row, ] <- 0
-          subset[row, this_cat] <- 1
-        } else{
-          which_cols <- which(subset[row, ] == 1)
-          this_cat <- sample(which_cols, size = 1)
-          subset[row, ] <- 0
-          subset[row, this_cat] <- 1
-        }
-      }
-      data[, colnames(subset[, 1:3])] <- subset[, 1:3]
-    }
-    
     #---- pre-allocate chain storage ---- 
     if(save == "yes"){
       #colnames are imputation number:iteration number:stat number
