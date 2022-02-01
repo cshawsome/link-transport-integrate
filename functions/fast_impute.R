@@ -1,5 +1,5 @@
 fast_impute <- 
-  function(predictor_matrix, data, method, m, maxit, save = "no"){
+  function(predictor_matrix, data, study_name, method, m, maxit, save = "no"){
     
     #---- where matrix ----
     where <- is.na(data)*1  
@@ -59,10 +59,9 @@ fast_impute <-
           }
           
           if(exists("trace_data")){
-            #in the third slot: 1 = mean, 2 = sd
-            trace_data[var, paste0(c(run, iter, 1), collapse = ":")] <- 
+            trace_data[var, paste0(c(run, iter, "mean"), collapse = ":")] <- 
               mean(unlist(imputed_data[where[, var] == 1, var]))
-            trace_data[var, paste0(c(run, iter, 2), collapse = ":")] <- 
+            trace_data[var, paste0(c(run, iter, "sd"), collapse = ":")] <- 
               sd(unlist(imputed_data[where[, var] == 1, var]))
           }
         }
@@ -72,39 +71,64 @@ fast_impute <-
     
     #---- save results ----
     if(save == "yes"){
-      #where matrix
-      write_csv(as.data.frame(where), 
-                file = here::here("MI datasets", 
-                                  paste0("where_", tolower(method), "_", 
-                                         tolower(mechanism), 
-                                         as.numeric(sub("%","", 
-                                                        mask_percent)), 
-                                         ".csv")))
+      #create directory for results
+      dir.create(here::here(study_name, "MI"))
       
-      #trace_data plots data
-      write_csv(as.data.frame(trace_data), 
-                file = here::here("MI datasets", 
-                                  paste0("trace_data_", tolower(method), "_", 
-                                         tolower(mechanism), 
-                                         as.numeric(sub("%","", 
-                                                        mask_percent)),
-                                         ".csv")))
+      #---- **where matrix ----
+      write_csv(as.data.frame(where), 
+                file = here::here(study_name, "MI", "where.csv"))
+      
+      #---- **trace plots data ----
+      write_csv(as.data.frame(trace_data) %>% 
+                  rownames_to_column(var = "impute_vars"), 
+                file = here::here(study_name, "MI", "trace_data.csv"))
+      
+      #---- **trace plots ----
+      plot_data <- trace_data %>% as.data.frame() %>% 
+        pivot_longer(-"impute_vars", names_to = c("run", "iteration", "stat"), 
+                     names_sep = ":") 
+      
+      trace_plots <- 
+        ggplot(plot_data, aes(x = iteration, y = value, color = run)) +
+        geom_line(aes(group = run)) + theme_bw() + 
+        facet_wrap_paginate(impute_vars~stat, ncol = 2, nrow = 6, page = 1, 
+                            scales = "free", strip.position = "top")
+      
+      n = n_pages(trace_plots)
+      
+      pdf(paste0(here::here("ADAMS", "MI", "trace_plots.pdf")), paper = "letter", 
+          height = 10.5, width = 8)
+      
+      for(i in 1:n){
+        print(ggplot(plot_data, aes(x = iteration, y = value, color = run)) +
+                geom_line(aes(group = run)) + theme_bw() + 
+                facet_wrap_paginate(impute_vars~stat, ncol = 2, nrow = 6, 
+                                    page = i, scales = "free", 
+                                    strip.position = "top"))
+      }
+      
+      dev.off()
+      
+      #---- **imputed data ----
+      saveRDS(impute_list, 
+              file = here::here(study_name, "MI", "MI_datasets"))
     }
-    
-    #---- return ----
-    return(impute_list)
   }
 
 #---- function testing ----
 predictor_matrix <- predict
 data <- ADAMS_analytic
 
-test <- fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
-                    method = "PMM", m = 2, maxit = 5, save = "no")
+fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
+            study_name = "ADAMS", method = "PMM", m = 2, maxit = 5, save = "no")
 
+fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
+            study_name = "ADAMS", method = "PMM", m = 2, maxit = 5, save = "yes")
 
-
-
+#test output
+test_where <- read_csv(file = here::here("ADAMS", "MI", "where.csv"))
+test_trace_data <- read_csv(file = here::here("ADAMS", "MI", "trace_data.csv"))
+test_impute_data <- readRDS(file = here::here("ADAMS", "MI", "MI_datasets"))
 
 
 
