@@ -79,12 +79,14 @@ fast_impute <-
                 file = here::here(study_name, "MI", "where.csv"))
       
       #---- **trace plots data ----
-      write_csv(as.data.frame(trace_data) %>% 
-                  rownames_to_column(var = "impute_vars"), 
+      trace_plots %<>% as.data.frame() %>% 
+        rownames_to_column(var = "impute_vars")
+      
+      write_csv(trace_data,
                 file = here::here(study_name, "MI", "trace_data.csv"))
       
       #---- **trace plots ----
-      plot_data <- trace_data %>% as.data.frame() %>% 
+      plot_data <- trace_data %>% 
         pivot_longer(-"impute_vars", names_to = c("run", "iteration", "stat"), 
                      names_sep = ":") 
       
