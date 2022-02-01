@@ -122,8 +122,10 @@ data <- ADAMS_analytic
 fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
             study_name = "ADAMS", method = "PMM", m = 2, maxit = 5, save = "no")
 
+start <- Sys.time()
 fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
-            study_name = "ADAMS", method = "PMM", m = 2, maxit = 5, save = "yes")
+            study_name = "ADAMS", method = "PMM", m = 2, maxit = 10, save = "yes")
+end <- Sys.time() - start
 
 #test output
 test_where <- read_csv(file = here::here("ADAMS", "MI", "where.csv"))
