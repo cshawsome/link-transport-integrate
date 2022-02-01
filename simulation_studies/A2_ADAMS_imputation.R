@@ -3,7 +3,10 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "mice")
+p_load("here", "tidyverse", "miceFast", "ggforce", "stringr", "magrittr")
+
+#---- source scripts ----
+source(here::here("functions", "fast_impute.R"))
 
 #---- read data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -106,6 +109,7 @@ predict <- predict[!rownames(predict) %in% remove, ]
 colSums(predict[, not_predictors])
 
 #---- imputation ----
-data_imputed <- fast_impute(predictor_matrix = predict, data_wide, "PMM",
-                            m = 2, maxit = 5, save = "yes")
+fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
+            path_for_output = paste0(path_to_box, "data/ADAMS/cleaned/"),
+            method = "PMM", m = 25, maxit = 15)
 
