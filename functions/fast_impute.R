@@ -1,26 +1,28 @@
 fast_impute <- 
-  function(predictor_matrix, data_wide, method, mechanism, mask_percent, m, 
-           maxit, save = "no"){
+  function(predictor_matrix, data, method, m, maxit, save = "no"){
     
     #---- where matrix ----
-    where <- is.na(data_wide)*1  
+    where <- is.na(data)*1  
     impute_vars <- rownames(predictor_matrix)
     
     #---- imputation 0: mean imputation ----
-    avgs <- colMeans(data_wide[, -1], na.rm = TRUE)
+    # #check var types: only HHIDPN and Adem_dx_label_collapsed are non-numeric
+    # which(lapply(data, class) != "numeric")
+    avgs <- colMeans(data[, -(which(lapply(data, class) != "numeric"))], 
+                     na.rm = TRUE)
     
     for(var in impute_vars){
-      data_wide[where[, var] == 1 , var] <- avgs[var]
+      data[where[, var] == 1 , var] <- avgs[var]
     }
     
     #---- **clean: drinking cat ----
-    data_wide[, impute_vars[grep("drinking", impute_vars)]] <- 
-      round(data_wide[, impute_vars[grep("drinking", impute_vars)]])
+    data[, impute_vars[grep("drinking", impute_vars)]] <- 
+      round(data[, impute_vars[grep("drinking", impute_vars)]])
     
     #---- **draw: binary vars ----
-    data_wide[, 
+    data[, 
               impute_vars[-grep(pattern = "cesd|BMI|drinking", impute_vars)]] <- 
-      apply(data_wide[, impute_vars[-grep(pattern = "cesd|BMI|drinking", 
+      apply(data[, impute_vars[-grep(pattern = "cesd|BMI|drinking", 
                                           impute_vars)]] , 2, 
             function(x) rbinom(n = length(x), size = 1, prob = x))
     
@@ -28,7 +30,7 @@ fast_impute <-
     for(wave in seq(4, 9)){
       vars <- c("married_partnered", "not_married_partnered", "widowed")
       cols <- apply(expand.grid("r", wave, vars), 1, paste, collapse = "")
-      subset <- data_wide[, cols]
+      subset <- data[, cols]
       
       subset[, "sum"] <- rowSums(subset, na.rm = TRUE)
       
@@ -46,7 +48,7 @@ fast_impute <-
           subset[row, this_cat] <- 1
         }
       }
-      data_wide[, colnames(subset[, 1:3])] <- subset[, 1:3]
+      data[, colnames(subset[, 1:3])] <- subset[, 1:3]
     }
     
     #---- pre-allocate chain storage ---- 
@@ -64,7 +66,7 @@ fast_impute <-
     
     #---- imputation loop ----
     for(run in 1:m){
-      imputed_data <- data_wide
+      imputed_data <- data
       for(iter in 1:maxit){
         for(var in impute_vars){
           imputed_data[where[, var] == 1, var] <- NA
@@ -126,10 +128,12 @@ fast_impute <-
     return(impute_list)
   }
 
-# #---- function testing ----
-# test <- fast_impute(predictor_matrix = predict, data_wide, method = "JMVN",
-#                     mechanism = "MNAR", mask_percent = "10%", m = 2, maxit = 5,
-#                     save = "yes")
+#---- function testing ----
+predictor_matrix <- predict
+data <- ADAMS_analytic
+
+test <- fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
+                    method = "PMM", m = 2, maxit = 5, save = "no")
 
 
 
