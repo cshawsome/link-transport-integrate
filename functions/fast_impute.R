@@ -39,8 +39,8 @@ fast_impute <-
           imputed_data[where[, var] == 1, var] <- NA
           #---- **PMM ----
           if(method == "PMM"){
-            #fastMice will only do PMM is the outcome variable is factored
-            imputed_data[, var] <- as.factor(imputed_data[, var])
+            #fastMice will only do PMM if the outcome variable is factored
+            imputed_data[, var] <- factor(unlist(imputed_data[, var]))
             
             imputed_data[, var] <- 
               as.numeric(as.character(
@@ -61,9 +61,9 @@ fast_impute <-
           if(exists("trace_data")){
             #in the third slot: 1 = mean, 2 = sd
             trace_data[var, paste0(c(run, iter, 1), collapse = ":")] <- 
-              mean(imputed_data[where[, var] == 1, var])
+              mean(unlist(imputed_data[where[, var] == 1, var]))
             trace_data[var, paste0(c(run, iter, 2), collapse = ":")] <- 
-              sd(imputed_data[where[, var] == 1, var])
+              sd(unlist(imputed_data[where[, var] == 1, var]))
           }
         }
       }
