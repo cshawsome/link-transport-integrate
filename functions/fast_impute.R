@@ -112,20 +112,20 @@ fast_impute <-
     saveRDS(impute_list, file = paste0(path_for_output, "MI/MI_datasets"))
   }
 
-#---- function testing ----
-start <- Sys.time()
-fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
-            path_for_output = paste0(path_to_box, "data/ADAMS/cleaned/"), 
-            method = "PMM", m = 2, maxit = 15)
-end <- Sys.time() - start
-
-#test output
-test_where <- 
-  read_csv(file = paste0(path_to_box, "data/ADAMS/cleaned/MI/where.csv"))
-test_trace_data <- 
-  read_csv(file = paste0(path_to_box, "data/ADAMS/cleaned/MI/trace_data.csv"))
-test_impute_data <- 
-  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets"))
+# #---- function testing ----
+# start <- Sys.time()
+# fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
+#             path_for_output = paste0(path_to_box, "data/ADAMS/cleaned/"), 
+#             method = "PMM", m = 2, maxit = 15)
+# end <- Sys.time() - start
+# 
+# #test output
+# test_where <- 
+#   read_csv(file = paste0(path_to_box, "data/ADAMS/cleaned/MI/where.csv"))
+# test_trace_data <- 
+#   read_csv(file = paste0(path_to_box, "data/ADAMS/cleaned/MI/trace_data.csv"))
+# test_impute_data <- 
+#   readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets"))
 
 
 
