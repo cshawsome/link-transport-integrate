@@ -59,28 +59,92 @@ ADAMS_imputed <- lapply(ADAMS_imputed, rep_vars, health_vars)
 # View(test[, c("AYEAR", "r5adla", "r6adla", "Aadla")])
 # tail(colnames(test)) #only expect bmi_derived and drinks_per_week at end
 
+#---- **derive drinking category ----
+drinking_stat <- function(data){
+  data %<>% 
+    mutate("Adrink_cat" = 
+             case_when(Adrinks_per_week == 0 ~ 1,
+                       Female == 0 & 
+                         (Adrinks_per_week >= 1 & Adrinks_per_week < 14) ~ 2,
+                       Female == 1 &
+                         (Adrinks_per_week >= 1 & Adrinks_per_week < 7) ~ 2,
+                       Female == 0 &
+                         (Adrinks_per_week >= 14 | Adrinkn >= 4) ~ 3,
+                       Female == 1 &
+                         (Adrinks_per_week >= 7 | Adrinkn >= 3) ~ 3)) %>% 
+    mutate("Adrink_cat_label" = 
+             case_when(Adrink_cat == 1 ~ "No Drinking", 
+                       Adrink_cat == 2 ~ "Moderate Drinking", 
+                       Adrink_cat == 3 ~ "Heavy Drinking")) %>% 
+    mutate("Ano_drinking" = ifelse(Adrink_cat_label == "No Drinking", 1, 0), 
+           "Amoderate_drinking" = 
+             ifelse(Adrink_cat_label == "Moderate Drinking", 1, 0), 
+           "Aheavy_drinking" = 
+             ifelse(Adrink_cat_label == "Heavy Drinking", 1, 0))
+  
+  return(data)
+}
+
+ADAMS_imputed <- lapply(ADAMS_imputed, drinking_stat)
+
+# #Sanity check
+# test <- ADAMS_imputed[[1]]
+# table(test$Adrink_cat_label, test$Ano_drinking, useNA = "ifany")
+# table(test$Adrink_cat_label, test$Amoderate_drinking, useNA = "ifany")
+# table(test$Adrink_cat_label, test$Aheavy_drinking, useNA = "ifany")
+# View(test %>% 
+#        dplyr::select("Female", "Adrinks_per_week", "Adrinkn", "Adrink_cat_label"))
+# tail(colnames(test)) 
+
+#---- clean: multi-cat vars ----
+#working status, subjective cognitive decline, proxy cognition,  
+#make sure none are missing
+test <- ADAMS_imputed[[1]]
+colSums(is.na(test %>% 
+                dplyr::select("Working", "Not working", "Retired", 
+                              "avg_proxy_cog_Better", "avg_proxy_cog_Same", 
+                              "avg_proxy_cog_Worse", "ANSMEM2_Better", 
+                              "ANSMEM2_Same", "ANSMEM2_Worse")))
+
+#---- check if any datasets have more than one dummy indicator ----
+Working <- c("Working", "Not working", "Retired")
+Subjective <- c("ANSMEM2_Better", "ANSMEM2_Same", "ANSMEM2_Worse")
+Proxy <- c("avg_proxy_cog_Better", "avg_proxy_cog_Same", 
+           "avg_proxy_cog_Worse")
+
+dummy_var_check <- function(data, working_vars, subjective_vars, proxy_vars){
+  indicator <- vector(length = 3) 
+  names(indicator) = c("Working", "Subjective", "Proxy")
+  indicator["Working"] <- data %>% dplyr::select(all_of(working_vars)) %>% 
+    rowSums() %>% table() %>% as.data.frame() %>% nrow()
+  indicator["Subjective"] <- data %>% dplyr::select(all_of(subjective_vars)) %>% 
+    rowSums() %>% table() %>% as.data.frame() %>% nrow()
+  indicator["Proxy"] <- data %>% dplyr::select(all_of(proxy_vars)) %>% 
+    rowSums() %>% table() %>% as.data.frame() %>% nrow()
+  
+  return(indicator)
+}
+
+#The proxy subjective cognitive decline variable has some duplicates
+dummy_check_results <- 
+  lapply(ADAMS_imputed, dummy_var_check, Working, Subjective, Proxy) %>% 
+  do.call(rbind, .)
 
 
-test %<>% 
-  mutate("drinks_per_week" = Adrinkd*Adrinkn) %>%
-  mutate("DRINKcat" = 
-           case_when(drinks_per_week == 0 ~ 1,
-                     GENDER_label == "Male" &
-                       (drinks_per_week >= 1 & drinks_per_week < 14) ~ 2,
-                     GENDER_label == "Female" &
-                       (drinks_per_week >= 1 & drinks_per_week < 7) ~ 2,
-                     GENDER_label == "Male" &
-                       (drinks_per_week >= 14 | Adrinkn >= 4) ~ 3,
-                     GENDER_label == "Female" &
-                       (drinks_per_week >= 7 | Adrinkn >= 3) ~ 3)) %>% 
-  mutate("DRINKcat_label" = 
-           as.factor(case_when(DRINKcat == 1 ~ "No Drinking", 
-                               DRINKcat == 2 ~ "Moderate Drinking", 
-                               DRINKcat == 3 ~ "Heavy Drinking"))) %>% 
-  mutate(DRINKcat_label = fct_relevel(DRINKcat_label, "No Drinking", 
-                                      "Moderate Drinking"))
+  
 
-#---- define variable types ----
+#---- define predictor variable types ----
+#leave out ref categories for dummy variables: Working, White, 
+# avg_proxy_cog_Same
+sociodemographics <- c("Female", "Married/partnered", "Not Working", "Retired", 
+                       "AAGE", "EDYRS", "Black", "Hispanic")
+neuropsych <- c("ANAFTOT", "")
+gen_cog <- c("SELFCOG", "avg_proxy_cog_Better", "avg_proxy_cog_Worse")
+functional <- c("")
+health <- c("")
+
+outcome <- c("Unimpaired", "MCI", "Dementia", "Other")
+
 
 cog_waves <- seq(5, 7)
 
