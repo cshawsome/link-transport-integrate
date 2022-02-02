@@ -98,13 +98,13 @@ ADAMS_imputed <- lapply(ADAMS_imputed, drinking_stat)
 
 #---- clean: multi-cat vars ----
 #working status, subjective cognitive decline, proxy cognition,  
-#make sure none are missing
-test <- ADAMS_imputed[[1]]
-colSums(is.na(test %>% 
-                dplyr::select("Working", "Not working", "Retired", 
-                              "avg_proxy_cog_Better", "avg_proxy_cog_Same", 
-                              "avg_proxy_cog_Worse", "ANSMEM2_Better", 
-                              "ANSMEM2_Same", "ANSMEM2_Worse")))
+# #make sure none are missing
+# test <- ADAMS_imputed[[1]]
+# colSums(is.na(test %>% 
+#                 dplyr::select("Working", "Not working", "Retired", 
+#                               "avg_proxy_cog_Better", "avg_proxy_cog_Same", 
+#                               "avg_proxy_cog_Worse", "ANSMEM2_Better", 
+#                               "ANSMEM2_Same", "ANSMEM2_Worse")))
 
 #---- check if any datasets have more than one dummy indicator ----
 Working <- c("Working", "Not working", "Retired")
@@ -125,13 +125,37 @@ dummy_var_check <- function(data, working_vars, subjective_vars, proxy_vars){
   return(indicator)
 }
 
-#The proxy subjective cognitive decline variable has some duplicates
+#The subjective and proxy subjective cognitive decline variable has some 
+# duplicates
 dummy_check_results <- 
   lapply(ADAMS_imputed, dummy_var_check, Working, Subjective, Proxy) %>% 
   do.call(rbind, .)
 
-
+#might move this out to its own script
+select_cat <- function(data, vars){
+  max_cats <- length(vars)
+  data %<>% mutate("count" = rowSums(data[, vars]))
+  data[which(data$count %in% c(0, max_cats)), sample(vars, size = 1)] <- 1
   
+  probs <- which(!data$count %in% c(0, 1, max_cats))
+  if(length(probs) != 0){
+    for(row in 1:length(probs)){
+      which_cats <- vars[which(data[row, vars] == 1)]
+      data[row, vars] <- 0
+      data[row, sample(which_cats, size = 1)] <- 1
+    }
+  }
+  
+  return(data %>% dplyr::select(-one_of("count")))
+}
+
+ADAMS_imputed <- lapply(ADAMS_imputed, select_cat, Subjective)
+ADAMS_imputed <- lapply(ADAMS_imputed, select_cat, Proxy)
+
+# #Sanity check
+# dummy_recheck_results <- 
+#   lapply(ADAMS_imputed, dummy_var_check, Working, Subjective, Proxy) %>% 
+#   do.call(rbind, .)
 
 #---- define predictor variable types ----
 #leave out ref categories for dummy variables: Working, White, 
