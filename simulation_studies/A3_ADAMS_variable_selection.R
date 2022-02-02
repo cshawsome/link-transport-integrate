@@ -22,9 +22,9 @@ derive_vars <- function(data, waves){
              (!!sym(paste0("r", wave, "height"))*
                 !!sym(paste0("r", wave, "height")))) %>% 
       #---- **drinks per week ----
-      mutate(!!paste0("r", wave, "drinks_per_week") := 
-               !!sym(paste0("r", wave, "drinkd"))*
-               !!sym(paste0("r", wave, "drinkn")))
+    mutate(!!paste0("r", wave, "drinks_per_week") := 
+             !!sym(paste0("r", wave, "drinkd"))*
+             !!sym(paste0("r", wave, "drinkn")))
   }
   return(data)
 }
@@ -39,6 +39,27 @@ ADAMS_imputed <- lapply(ADAMS_imputed, derive_vars, hrs_waves)
 # tail(colnames(test))
 
 #---- representative health variables ----
+health_vars <- c("adla", "bmi_derived", "diabe", "drinks_per_week", "hearte", 
+                 "hibpe", "iadla", "smoken", "stroke")
+
+rep_vars <- function(data, vars){
+  for(var in vars){
+    data %<>% 
+      mutate(!!paste0("A", var) := 
+               case_when(AYEAR %in% c(2001, 2002) ~ !!sym(paste0("r5", var)), 
+                         AYEAR %in% c(2003, 2004) ~ !!sym(paste0("r6", var))))
+  }
+  return(data)
+}
+
+ADAMS_imputed <- lapply(ADAMS_imputed, rep_vars, health_vars)
+
+# #Sanity check
+# test <- ADAMS_imputed[[1]]
+# View(test[, c("AYEAR", "r5adla", "r6adla", "Aadla")])
+# tail(colnames(test)) #only expect bmi_derived and drinks_per_week at end
+
+
 
 test %<>% 
   mutate("drinks_per_week" = Adrinkd*Adrinkn) %>%
