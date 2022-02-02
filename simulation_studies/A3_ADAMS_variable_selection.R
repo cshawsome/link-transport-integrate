@@ -158,49 +158,19 @@ ADAMS_imputed <- lapply(ADAMS_imputed, select_cat, Proxy)
 #   do.call(rbind, .)
 
 #---- define predictor variable types ----
-#leave out ref categories for dummy variables: Working, White, 
-# avg_proxy_cog_Same
 sociodemographics <- c("Female", "Married/partnered", "Not Working", "Retired", 
                        "AAGE", "EDYRS", "Black", "Hispanic")
-neuropsych <- c("ANAFTOT", "")
-gen_cog <- c("SELFCOG", "avg_proxy_cog_Better", "avg_proxy_cog_Worse")
-functional <- c("")
-health <- c("")
+neuropsych <- c("ANAFTOT", "ANBNTTOT", "ANCPTOT", "ANRCPTOT", "ANMSETOT_norm", 
+                "ANRECNO", "ANRECYES", "ANTMASEC", "ANWM1TOT", "ANWM2TOT")
+gen_cog <- c("SELFCOG", "ANBWC20", "ANBWC86", "ANCACTUS", "ANDELCOR", "ANIMMCR",
+             "ANPRES", "ANSCISOR", "ANSER7T", "ANSMEM2_Better", "ANSMEM2_Worse", 
+             "avg_proxy_cog_Better", "avg_proxy_cog_Worse")
+functional <- c("Aadla", "Aiadla")
+health <- c("Adiabe", "Ahearte", "Ahibpe", "Asmoken", "Astroke", 
+            "Amoderate_drinking", "Aheavy_drinking", "Abmi_derived")
 
 outcome <- c("Unimpaired", "MCI", "Dementia", "Other")
 
-
-cog_waves <- seq(5, 7)
-
-sociodem_vars <- c("AAGE", "EDYRS", "Female", "Black", "Hispanic", 
-                   "Married/partnered", "Working", "Retired", "Not working")
-
-ADAMS_vars <- c("SELFCOG", "ANMSETOT", "ANSER7T", "ANSCISOR", "ANCACTUS", 
-                "ANPRES", "ANAFTOT", "ANBNTTOT", "ANDELCOR", "ANRECYES", 
-                "ANRECNO", "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", 
-                "ANTMASEC", "ANBWC20", "ANBWC86", "ANIMMCR", "ANSMEM2_Better", 
-                "ANSMEM2_Same", "ANSMEM2_Worse", "avg_proxy_cog_Better", 
-                "avg_proxy_cog_Same", "avg_proxy_cog_Worse", "Dementia", "Other", 
-                "MCI")
-
-HRS_vars <- c(paste0("r", cog_waves, "mpart"), paste0("r", hrs_waves, "height"), 
-              paste0("r", hrs_waves, "weight"), paste0("r", hrs_waves, "smoken"), 
-              paste0("r", hrs_waves, "drinkd"), paste0("r", hrs_waves, "drinkn"), 
-              paste0("r", hrs_waves, "hibpe"), paste0("r", hrs_waves, "diabe"), 
-              paste0("r", hrs_waves, "hearte"), paste0("r", hrs_waves, "stroke"), 
-              paste0("r", hrs_waves, "adla"), paste0("r", hrs_waves, "iadla"), 
-              paste0("r", cog_waves, "imrc"), paste0("r", cog_waves, "dlrc"), 
-              paste0("r", cog_waves, "ser7"), paste0("r", cog_waves, "bwc20"), 
-              paste0("r", seq(5, 6), "bwc86"), paste0("r", cog_waves, "scis"), 
-              paste0("r", cog_waves, "cact"), paste0("r", cog_waves, "pres"), 
-              paste0("r", cog_waves, "cogtot"), 
-              paste0("r", cog_waves, "pstmem_Better"), 
-              paste0("r", cog_waves, "pstmem_Same"), 
-              paste0("r", cog_waves, "pstmem_Worse"))
-
-not_predictors <- c("HHIDPN", "AYEAR", "White", "ANMSETOT_norm", 
-                    "Adem_dx_label_collapsed", "Unimpaired", "Astroke", "Ahibpe", 
-                    "Adiabe", "Ahearte", "Abmi", "Aiadla", "Aadla", "Asmoken", 
-                    "Adrinkd", "Adrinkn")
-
-
+#ID vars + vars that won't be used in models, but want to keep for summary stats 
+keep <- c("HHIDPN", "Working", "White", "ANSMEM2_Same", "avg_proxy_cog_Same", 
+          "Ano_drinking") 
