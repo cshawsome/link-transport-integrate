@@ -158,7 +158,7 @@ ADAMS_imputed <- lapply(ADAMS_imputed, select_cat, Proxy)
 #   do.call(rbind, .)
 
 #---- define predictor variable types ----
-sociodemographics <- c("Female", "Married/partnered", "Not Working", "Retired", 
+sociodemographics <- c("Female", "Married/partnered", "Not working", "Retired", 
                        "AAGE", "EDYRS", "Black", "Hispanic")
 neuropsych <- c("ANAFTOT", "ANBNTTOT", "ANCPTOT", "ANRCPTOT", "ANMSETOT_norm", 
                 "ANRECNO", "ANRECYES", "ANTMASEC", "ANWM1TOT", "ANWM2TOT")
@@ -174,3 +174,17 @@ outcome <- c("Unimpaired", "MCI", "Dementia", "Other")
 #ID vars + vars that won't be used in models, but want to keep for summary stats 
 keep <- c("HHIDPN", "Working", "White", "ANSMEM2_Same", "avg_proxy_cog_Same", 
           "Ano_drinking") 
+
+#---- keep vars in analytic datasets ----
+analysis_vars <- c(keep, sociodemographics, neuropsych, gen_cog, functional, 
+                   health, outcome)
+
+ADAMS_imputed_clean <- 
+  lapply(ADAMS_imputed, function(x) x %<>% dplyr::select(all_of(analysis_vars)))
+
+# #Sanity check
+# lapply(ADAMS_imputed_clean, ncol)
+
+#---- **save clean datasets ----
+saveRDS(ADAMS_imputed_clean, 
+        file = paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned"))
