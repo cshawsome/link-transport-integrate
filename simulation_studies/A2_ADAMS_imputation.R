@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "miceFast", "ggforce", "stringr", "magrittr")
+p_load("here", "tidyverse", "miceFast", "ggforce", "stringr", "magrittr")
 
 #---- source scripts ----
 source(here::here("functions", "fast_impute.R"))
