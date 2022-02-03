@@ -312,10 +312,10 @@ Z_score <- function(data, vars){
 
 ADAMS_imputed_clean <- lapply(ADAMS_imputed_clean, Z_score, standardize_vars)
 
-#Sanity check
-sapply(ADAMS_imputed_clean, ncol)
-test <- ADAMS_imputed_clean[[1]]
-tail(colnames(test))
+# #Sanity check
+# sapply(ADAMS_imputed_clean, ncol)
+# test <- ADAMS_imputed_clean[[1]]
+# tail(colnames(test))
 
 #---- **save clean datasets ----
 saveRDS(ADAMS_imputed_clean, 
