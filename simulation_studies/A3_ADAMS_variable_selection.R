@@ -61,46 +61,49 @@ unimpaired_v_impaired_preds <- unimpaired_v_impaired_summary$term
 
 #---- **Other vs. MCI or Dementia ----
 #conditional on being classified as impaired
-other_v_MCI_dem <- glm(Other ~ AAGE_Z + ANMSETOT_norm + ANBNTTOT_Z , 
+other_v_MCI_dem <- glm(Other ~ AAGE_Z + ANMSETOT_norm + ANIMMCR_Z + ANDELCOR_Z +
+                         ANRCPTOT_Z + Abmi_derived_Z, 
                        family = "binomial", 
-                       data = colSums(is.na(avg_ADAMS_imputed %>% filter(Unimpaired == 0)))
-                       
-                       #H_0 is that model fits
-                       p_val_other_v_MCI_dem <- 
-                         1 - pchisq(other_v_MCI_dem$deviance, other_v_MCI_dem$df.residual)
-                       
-                       other_v_MCI_dem_summary <- 
-                         tidy(other_v_MCI_dem, exponentiate = TRUE, conf.int = TRUE, 
-                              conf.level = 0.95) %>% mutate_if(is.numeric, round, 3) %>% as.data.frame()
-                       other_v_MCI_dem_summary
-                       
-                       other_v_MCI_dem_preds <- other_v_MCI_dem_summary$term
-                       
-                       #variables and groups in order of priority for model inclusion 
-                       # (based on conceptual model and prioritizing variables with least missingness
-                       # in unimputed datasets)
-                       #sociodemographics: "AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", 
-                       # "Not working", "Retired", "Married/partnered"
-                       # 
-                       #neuropsych_gen_cog: "ANMSETOT_norm", "ANBNTTOT_Z", "ANIMMCR_Z", "ANDELCOR_Z", 
-                       # "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", 
-                       # "ANWM2TOT_Z", "ANBWC20_Z", "ANBWC86_Z", "ANCPTOT_Z", "ANRCPTOT_Z", 
-                       # "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR",  "ANPRES", "ANSMEM2_Better", 
-                       # "ANSMEM2_Worse", "avg_proxy_cog_Better", "avg_proxy_cog_Worse"
-                       # 
-                       # functional: "Aadla", "Aiadla"
-                       # 
-                       # health: "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", 
-                       #   "Amoderate_drinking", "Aheavy_drinking"
-                       
-                       
-                       
-                       
-                       
-                       
-                       
-                       
-                       
-                       
-                       
-                       
+                       data = avg_ADAMS_imputed %>% filter(Unimpaired == 0))
+
+#check sample size (n = 519): Null deviance dof + 1
+summary(other_v_MCI_dem)
+
+#H_0 is that model fits
+p_val_other_v_MCI_dem <- 
+  1 - pchisq(other_v_MCI_dem$deviance, other_v_MCI_dem$df.residual)
+
+other_v_MCI_dem_summary <- 
+  tidy(other_v_MCI_dem, exponentiate = TRUE, conf.int = TRUE, 
+       conf.level = 0.95) %>% mutate_if(is.numeric, round, 3) %>% as.data.frame()
+other_v_MCI_dem_summary
+
+other_v_MCI_dem_preds <- other_v_MCI_dem_summary$term
+
+#variables and groups in order of priority for model inclusion 
+# (based on conceptual model and prioritizing variables with least missingness
+# in unimputed datasets)
+#sociodemographics: "AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", 
+# "Not working", "Retired", "Married/partnered"
+# 
+#neuropsych_gen_cog: "ANMSETOT_norm", "ANBNTTOT_Z", "ANIMMCR_Z", "ANDELCOR_Z", 
+# "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", 
+# "ANWM2TOT_Z", "ANBWC20_Z", "ANBWC86_Z", "ANCPTOT_Z", "ANRCPTOT_Z", 
+# "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR",  "ANPRES", "ANSMEM2_Better", 
+# "ANSMEM2_Worse", "avg_proxy_cog_Better", "avg_proxy_cog_Worse"
+# 
+# functional: "Aadla", "Aiadla"
+# 
+# health: "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", 
+#   "Amoderate_drinking", "Aheavy_drinking"
+
+
+
+
+
+
+
+
+
+
+
