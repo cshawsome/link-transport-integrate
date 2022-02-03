@@ -3,7 +3,8 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "miceFast", "ggforce", "stringr", "magrittr")
+p_load("here", "tidyverse", "miceFast", "ggforce", "stringr", "magrittr", 
+       "NormPsy")
 
 #---- source scripts ----
 source(here::here("functions", "fast_impute.R"))
@@ -140,6 +141,8 @@ derive_vars <- function(data, waves){
 }
 
 ADAMS_imputed <- lapply(ADAMS_imputed, derive_vars, hrs_waves)
+ADAMS_imputed <- lapply(ADAMS_imputed, function(x) x %<>% 
+                          mutate("ANMSETOT_norm" = normMMSE(ANMSETOT)))
 
 # #Sanity check
 # test <- ADAMS_imputed[[1]]
