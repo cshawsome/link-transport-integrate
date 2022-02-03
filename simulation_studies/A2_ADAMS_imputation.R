@@ -295,6 +295,28 @@ ADAMS_imputed_clean <-
 # #Sanity check
 # lapply(ADAMS_imputed_clean, ncol)
 
+#---- standardize continuous vars ----
+standardize_vars <- c("EDYRS", "ANAFTOT", "ANBNTTOT", "ANCPTOT", "ANRCPTOT",
+                      "ANRECNO", "ANRECYES", "ANTMASEC", "ANWM1TOT", "ANWM2TOT", 
+                      "SELFCOG", "ANBWC20", "ANBWC86", "ANDELCOR", "ANIMMCR", 
+                      "ANSER7T", "Aadla", "Aiadla")
+
+Z_score <- function(data, vars){
+  subset <- data %>% dplyr::select(all_of(vars)) %>% 
+    mutate_all(scale) %>% set_colnames(paste0(all_of(vars), "_Z"))
+  
+  data %<>% cbind(., subset)
+  
+  return(data)
+}
+
+ADAMS_imputed_clean <- lapply(ADAMS_imputed_clean, Z_score, standardize_vars)
+
+#Sanity check
+sapply(ADAMS_imputed_clean, ncol)
+test <- ADAMS_imputed_clean[[1]]
+tail(colnames(test))
+
 #---- **save clean datasets ----
 saveRDS(ADAMS_imputed_clean, 
         file = paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned"))
