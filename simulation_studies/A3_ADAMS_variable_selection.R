@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "broom")
+p_load("tidyverse", "broom", "sjPlot")
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -62,7 +62,7 @@ unimpaired_v_impaired_preds <- unimpaired_v_impaired_summary$term
 #---- **Other vs. MCI or Dementia ----
 #conditional on being classified as impaired
 other_v_MCI_dem <- glm(Other ~ AAGE_Z + ANMSETOT_norm + ANIMMCR_Z + ANDELCOR_Z +
-                         ANRCPTOT_Z + Abmi_derived_Z, 
+                         ANRCPTOT_Z, 
                        family = "binomial", 
                        data = avg_ADAMS_imputed %>% filter(Unimpaired == 0))
 
@@ -80,9 +80,29 @@ other_v_MCI_dem_summary
 
 other_v_MCI_dem_preds <- other_v_MCI_dem_summary$term
 
-#variables and groups in order of priority for model inclusion 
-# (based on conceptual model and prioritizing variables with least missingness
-# in unimputed datasets)
+#---- **MCI vs. Dementia ----
+#conditional as being classified as being impaired but not having other impairment
+MCI_v_dem <- glm(MCI ~ Black + Hispanic + ANMSETOT_norm +
+                   ANAFTOT_Z + ANRECNO_Z + ANBWC86_Z + Aadla + Abmi_derived_Z + 
+                   Astroke + Asmoken, 
+                 family = "binomial", 
+                 data = avg_ADAMS_imputed %>% 
+                   filter(Unimpaired == 0 & Other == 0))
+
+#check sample size (n = 371): Null deviance dof + 1
+summary(MCI_v_dem)
+
+#H_0 is that model fits
+p_val_MCI_v_dem <- 
+  1 - pchisq(MCI_v_dem$deviance, MCI_v_dem$df.residual)
+
+MCI_v_dem_summary <- 
+  tidy(MCI_v_dem, exponentiate = TRUE, conf.int = TRUE, 
+       conf.level = 0.95) %>% mutate_if(is.numeric, round, 3) %>% as.data.frame()
+MCI_v_dem_summary
+
+MCI_v_dem_preds <- MCI_v_dem_summary$term
+
 #sociodemographics: "AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", 
 # "Not working", "Retired", "Married/partnered"
 # 
@@ -96,6 +116,13 @@ other_v_MCI_dem_preds <- other_v_MCI_dem_summary$term
 # 
 # health: "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", 
 #   "Amoderate_drinking", "Aheavy_drinking"
+
+#---- **variable selection table ----
+tab_model(unimpaired_v_impaired, other_v_MCI_dem, MCI_v_dem, digits = 3, 
+          title = "", show.loglik = TRUE,
+          show.dev = TRUE,
+          file = paste0(path_to_box, "analyses/variable_selection/",
+                        "dem_class_multi_part_models.html"))
 
 
 
