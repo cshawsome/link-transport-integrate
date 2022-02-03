@@ -39,11 +39,14 @@ avg_ADAMS_imputed <- round(avg_ADAMS_imputed)
 # a 1 SD change in the continuous predictors
 
 #---- **Unimpaired vs. Impaired ----
-unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic +
-                               `Not working` + Retired + ANMSETOT_norm + 
-                               ANBNTTOT_Z + ANIMMCR_Z + ANAFTOT_Z + ANRECYES_Z + 
-                               ANBWC86_Z,
+unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic + 
+                               ANMSETOT_norm + ANBNTTOT_Z + ANIMMCR_Z + 
+                               ANAFTOT_Z + ANRECYES_Z + ANBWC86_Z + Aadla + 
+                               Astroke + Adiabe + Ahearte,
                              family = "binomial", data = avg_ADAMS_imputed)
+
+#check sample size (n = 826): Null deviance dof + 1
+summary(unimpaired_v_impaired)
 
 #H_0 is that model fits
 p_val_unimpaired_v_impaired <- 
@@ -51,19 +54,53 @@ p_val_unimpaired_v_impaired <-
 
 unimpaired_v_impaired_summary <- 
   tidy(unimpaired_v_impaired, exponentiate = TRUE, conf.int = TRUE, 
-     conf.level = 0.95) %>% mutate_if(is.numeric, round, 3) %>% as.data.frame()
+       conf.level = 0.95) %>% mutate_if(is.numeric, round, 3) %>% as.data.frame()
 unimpaired_v_impaired_summary
 
 unimpaired_v_impaired_preds <- unimpaired_v_impaired_summary$term
 
-
-
-
-
-
-
-
-
-
-
-
+#---- **Other vs. MCI or Dementia ----
+#conditional on being classified as impaired
+other_v_MCI_dem <- glm(Other ~ AAGE_Z + ANMSETOT_norm + ANBNTTOT_Z , 
+                       family = "binomial", 
+                       data = colSums(is.na(avg_ADAMS_imputed %>% filter(Unimpaired == 0)))
+                       
+                       #H_0 is that model fits
+                       p_val_other_v_MCI_dem <- 
+                         1 - pchisq(other_v_MCI_dem$deviance, other_v_MCI_dem$df.residual)
+                       
+                       other_v_MCI_dem_summary <- 
+                         tidy(other_v_MCI_dem, exponentiate = TRUE, conf.int = TRUE, 
+                              conf.level = 0.95) %>% mutate_if(is.numeric, round, 3) %>% as.data.frame()
+                       other_v_MCI_dem_summary
+                       
+                       other_v_MCI_dem_preds <- other_v_MCI_dem_summary$term
+                       
+                       #variables and groups in order of priority for model inclusion 
+                       # (based on conceptual model and prioritizing variables with least missingness
+                       # in unimputed datasets)
+                       #sociodemographics: "AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", 
+                       # "Not working", "Retired", "Married/partnered"
+                       # 
+                       #neuropsych_gen_cog: "ANMSETOT_norm", "ANBNTTOT_Z", "ANIMMCR_Z", "ANDELCOR_Z", 
+                       # "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", 
+                       # "ANWM2TOT_Z", "ANBWC20_Z", "ANBWC86_Z", "ANCPTOT_Z", "ANRCPTOT_Z", 
+                       # "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR",  "ANPRES", "ANSMEM2_Better", 
+                       # "ANSMEM2_Worse", "avg_proxy_cog_Better", "avg_proxy_cog_Worse"
+                       # 
+                       # functional: "Aadla", "Aiadla"
+                       # 
+                       # health: "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", 
+                       #   "Amoderate_drinking", "Aheavy_drinking"
+                       
+                       
+                       
+                       
+                       
+                       
+                       
+                       
+                       
+                       
+                       
+                       
