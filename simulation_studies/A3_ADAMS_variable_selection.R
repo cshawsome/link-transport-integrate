@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "broom", "sjPlot")
+p_load("tidyverse", "broom", "sjPlot", "gridExtra")
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -125,12 +125,64 @@ tab_model(unimpaired_v_impaired, other_v_MCI_dem, MCI_v_dem, digits = 3,
                         "dem_class_multi_part_models.html"))
 
 #---- distribution of predictors ----
-test <- ADAMS_imputed_clean[[1]]
+predictor_dists <- function(data, outcome, predictors){
+  if(outcome == "Unimpaired"){
+    model <- tidy(glm(as.formula(paste(outcome, paste0(predictors[-1], 
+                                                       collapse = " + "), 
+                                       sep = " ~ ")), 
+                      family = "binomial", 
+                      data = data)) 
+  } else if(outcome == "Other"){
+    model <- tidy(glm(as.formula(paste(outcome, paste0(predictors[-1], 
+                                                       collapse = " + "), 
+                                       sep = " ~ ")), 
+                      family = "binomial", 
+                      data = data %>% filter(Unimpaired == 0)))
+  } else{
+    model <- tidy(glm(as.formula(paste(outcome, paste0(predictors[-1], 
+                                                       collapse = " + "), 
+                                       sep = " ~ ")), 
+                      family = "binomial", 
+                      data = data %>% filter(Unimpaired == 0 & Other == 0)))
+  }
+  
+  return(model[, c("term", "estimate", "p.value")])
+}
 
+unimpaired_pred_dists <- 
+  lapply(ADAMS_imputed_clean, predictor_dists, "Unimpaired", 
+         unimpaired_preds) %>% do.call(rbind, .) %>% 
+  set_colnames(c("Predictor", "OR", "p-value"))
 
+other_pred_dists <- 
+  lapply(ADAMS_imputed_clean, predictor_dists, "Other", 
+         other_preds) %>% do.call(rbind, .) %>% 
+  set_colnames(c("Predictor", "OR", "p-value"))
 
+MCI_pred_dists <- 
+  lapply(ADAMS_imputed_clean, predictor_dists, "MCI", 
+         MCI_preds) %>% do.call(rbind, .) %>% 
+  set_colnames(c("Predictor", "OR", "p-value"))
 
-
-
+#---- **plot dists ----
+for(model in c("unimpaired", "other", "MCI")){
+  data <- get(paste0(model, "_pred_dists"))
+  
+  pdf(paste0(path_to_box, 
+             "analyses/variable_selection/", model, "_dists.pdf"), 
+      paper = "letter", height = 10.5, width = 8, onefile = TRUE)
+  
+  print(ggplot(data = unimpaired_pred_dists, aes(x = OR)) + 
+          geom_density() + theme_minimal() + 
+          ggtitle(paste0(model, " Model ORs")) + 
+          facet_wrap(vars(Predictor), scales = "free"))
+  
+  print(ggplot(data = unimpaired_pred_dists, aes(x = `p-value`)) + 
+          geom_density() + theme_minimal() + 
+          ggtitle(paste0(model, " Model p-values")) + 
+          facet_wrap(vars(Predictor), scales = "free"))
+  
+  dev.off()
+}
 
 
