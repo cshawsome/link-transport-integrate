@@ -57,7 +57,7 @@ unimpaired_v_impaired_summary <-
        conf.level = 0.95) %>% mutate_if(is.numeric, round, 3) %>% as.data.frame()
 unimpaired_v_impaired_summary
 
-unimpaired_v_impaired_preds <- unimpaired_v_impaired_summary$term
+unimpaired_preds <- unimpaired_v_impaired_summary$term
 
 #---- **Other vs. MCI or Dementia ----
 #conditional on being classified as impaired
@@ -78,7 +78,7 @@ other_v_MCI_dem_summary <-
        conf.level = 0.95) %>% mutate_if(is.numeric, round, 3) %>% as.data.frame()
 other_v_MCI_dem_summary
 
-other_v_MCI_dem_preds <- other_v_MCI_dem_summary$term
+other_preds <- other_v_MCI_dem_summary$term
 
 #---- **MCI vs. Dementia ----
 #conditional as being classified as being impaired but not having other impairment
@@ -101,7 +101,7 @@ MCI_v_dem_summary <-
        conf.level = 0.95) %>% mutate_if(is.numeric, round, 3) %>% as.data.frame()
 MCI_v_dem_summary
 
-MCI_v_dem_preds <- MCI_v_dem_summary$term
+MCI_preds <- MCI_v_dem_summary$term
 
 #sociodemographics: "AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", 
 # "Not working", "Retired", "Married/partnered"
@@ -124,8 +124,8 @@ tab_model(unimpaired_v_impaired, other_v_MCI_dem, MCI_v_dem, digits = 3,
           file = paste0(path_to_box, "analyses/variable_selection/",
                         "dem_class_multi_part_models.html"))
 
-
-
+#---- distribution of predictors ----
+test <- ADAMS_imputed_clean[[1]]
 
 
 
