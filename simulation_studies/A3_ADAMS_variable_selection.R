@@ -69,8 +69,8 @@ unimpaired_preds <- unimpaired_v_impaired_summary$term
 
 #---- **Other vs. MCI or Dementia ----
 #conditional on being classified as impaired
-other_v_MCI_dem <- glm(Other ~ AAGE_Z + ANMSETOT_norm + ANIMMCR_Z + ANDELCOR_Z +
-                         ANRCPTOT_Z, 
+other_v_MCI_dem <- glm(Other ~ AAGE_Z + ANMSETOT_norm_Z + ANIMMCR_Z + 
+                         ANDELCOR_Z + ANRCPTOT_Z, 
                        family = "binomial", 
                        data = avg_ADAMS_imputed %>% filter(Unimpaired == 0))
 
@@ -90,9 +90,8 @@ other_preds <- other_v_MCI_dem_summary$term
 
 #---- **MCI vs. Dementia ----
 #conditional as being classified as being impaired but not having other impairment
-MCI_v_dem <- glm(MCI ~ Black + Hispanic + ANMSETOT_norm +
-                   ANAFTOT_Z + ANRECNO_Z + ANBWC86_Z + Aadla_Z + Abmi_derived_Z + 
-                   Astroke + Asmoken, 
+MCI_v_dem <- glm(MCI ~ Black + Hispanic + ANMSETOT_norm_Z + ANAFTOT_Z + 
+                   ANRECNO_Z + ANBWC86_Z + Abmi_derived_Z + Astroke + Asmoken, 
                  family = "binomial", 
                  data = avg_ADAMS_imputed %>% 
                    filter(Unimpaired == 0 & Other == 0))
