@@ -32,7 +32,15 @@ ADAMS_imputed_clean <-
 #---- average MI datasets ----
 avg_ADAMS_imputed <- 
   Reduce("+", ADAMS_imputed_clean)/length(ADAMS_imputed_clean)
-avg_ADAMS_imputed <- round(avg_ADAMS_imputed)
+
+indicator_vars <- c("Working", "White", "ANSMEM2_Same", "avg_proxy_cog_Same", 
+                    "Ano_drinking", "Female", "Married/partnered", "Not working", 
+                    "Retired", "Black", "Hispanic", "ANPRES", "ANSCISOR",
+                    "ANSMEM2_Better", "ANSMEM2_Worse", "avg_proxy_cog_Better", 
+                    "avg_proxy_cog_Worse", "Adiabe", "Ahearte", "Ahibpe", 
+                    "Asmoken", "Astroke", "Amoderate_drinking", "Aheavy_drinking", 
+                    "Unimpaired", "MCI", "Dementia", "Other", "ANCACTUS")
+avg_ADAMS_imputed[, indicator_vars] <- round(avg_ADAMS_imputed[, indicator_vars])
 
 #---- models ----
 #Because we Z-scored continuous variables, the interpretations for beta are for 
@@ -40,7 +48,7 @@ avg_ADAMS_imputed <- round(avg_ADAMS_imputed)
 
 #---- **Unimpaired vs. Impaired ----
 unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic + 
-                               ANMSETOT_norm + ANBNTTOT_Z + ANIMMCR_Z + 
+                               ANMSETOT_norm_Z + ANBNTTOT_Z + ANIMMCR_Z + 
                                ANAFTOT_Z + ANRECYES_Z + ANBWC86_Z + Aadla_Z + 
                                Astroke + Adiabe + Ahearte,
                              family = "binomial", data = avg_ADAMS_imputed)
@@ -132,17 +140,20 @@ predictor_dists <- function(data, outcome, predictors){
 unimpaired_pred_dists <- 
   lapply(ADAMS_imputed_clean, predictor_dists, "Unimpaired", 
          unimpaired_preds) %>% do.call(rbind, .) %>% 
-  set_colnames(c("Predictor", "OR", "p-value"))
+  set_colnames(c("Predictor", "beta", "p-value")) %>% 
+  mutate("OR" = exp(beta))
 
 other_pred_dists <- 
   lapply(ADAMS_imputed_clean, predictor_dists, "Other", 
          other_preds) %>% do.call(rbind, .) %>% 
-  set_colnames(c("Predictor", "OR", "p-value"))
+  set_colnames(c("Predictor", "beta", "p-value")) %>% 
+  mutate("OR" = exp(beta))
 
 MCI_pred_dists <- 
   lapply(ADAMS_imputed_clean, predictor_dists, "MCI", 
          MCI_preds) %>% do.call(rbind, .) %>% 
-  set_colnames(c("Predictor", "OR", "p-value"))
+  set_colnames(c("Predictor", "beta", "p-value")) %>% 
+  mutate("OR" = exp(beta))
 
 #---- **plot dists ----
 for(model in c("unimpaired", "other", "MCI")){
@@ -164,5 +175,24 @@ for(model in c("unimpaired", "other", "MCI")){
   
   dev.off()
 }
+
+#---- classify predictors ----
+#classify predictors as making an individual more/less likely of being in 
+# impairment group with higher levels of that variable
+
+#---- **unimpaired preds ----
+less_likely_unimpaired <- c("(Intercept)", "AAGE_Z")
+more_likely_unimpaired <- c("Black", "Hispanic")
+
+#---- save estimates ----
+#---- **likelihood unimpaired ----
+
+#---- **LB preds ----
+#---- ****unimpaired preds ----
+more_likely_unimpaired <- c("")
+LB_unimpaired_preds <- 
+
+
+#---- **UB preds ----
 
 
