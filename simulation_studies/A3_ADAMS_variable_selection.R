@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "broom", "sjPlot", "gridExtra")
+p_load("tidyverse", "broom", "sjPlot", "gridExtra", "magrittr")
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
