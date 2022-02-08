@@ -41,7 +41,7 @@ avg_ADAMS_imputed <- round(avg_ADAMS_imputed)
 #---- **Unimpaired vs. Impaired ----
 unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic + 
                                ANMSETOT_norm + ANBNTTOT_Z + ANIMMCR_Z + 
-                               ANAFTOT_Z + ANRECYES_Z + ANBWC86_Z + Aadla + 
+                               ANAFTOT_Z + ANRECYES_Z + ANBWC86_Z + Aadla_Z + 
                                Astroke + Adiabe + Ahearte,
                              family = "binomial", data = avg_ADAMS_imputed)
 
@@ -83,7 +83,7 @@ other_preds <- other_v_MCI_dem_summary$term
 #---- **MCI vs. Dementia ----
 #conditional as being classified as being impaired but not having other impairment
 MCI_v_dem <- glm(MCI ~ Black + Hispanic + ANMSETOT_norm +
-                   ANAFTOT_Z + ANRECNO_Z + ANBWC86_Z + Aadla + Abmi_derived_Z + 
+                   ANAFTOT_Z + ANRECNO_Z + ANBWC86_Z + Aadla_Z + Abmi_derived_Z + 
                    Astroke + Asmoken, 
                  family = "binomial", 
                  data = avg_ADAMS_imputed %>% 
@@ -103,20 +103,6 @@ MCI_v_dem_summary
 
 MCI_preds <- MCI_v_dem_summary$term
 
-#sociodemographics: "AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", 
-# "Not working", "Retired", "Married/partnered"
-# 
-#neuropsych_gen_cog: "ANMSETOT_norm", "ANBNTTOT_Z", "ANIMMCR_Z", "ANDELCOR_Z", 
-# "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", 
-# "ANWM2TOT_Z", "ANBWC20_Z", "ANBWC86_Z", "ANCPTOT_Z", "ANRCPTOT_Z", 
-# "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR",  "ANPRES", "ANSMEM2_Better", 
-# "ANSMEM2_Worse", "avg_proxy_cog_Better", "avg_proxy_cog_Worse"
-# 
-# functional: "Aadla", "Aiadla"
-# 
-# health: "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", 
-#   "Amoderate_drinking", "Aheavy_drinking"
-
 #---- **variable selection table ----
 tab_model(unimpaired_v_impaired, other_v_MCI_dem, MCI_v_dem, digits = 3, 
           title = "", show.loglik = TRUE,
@@ -127,23 +113,17 @@ tab_model(unimpaired_v_impaired, other_v_MCI_dem, MCI_v_dem, digits = 3,
 #---- distribution of predictors ----
 predictor_dists <- function(data, outcome, predictors){
   if(outcome == "Unimpaired"){
-    model <- tidy(glm(as.formula(paste(outcome, paste0(predictors[-1], 
-                                                       collapse = " + "), 
-                                       sep = " ~ ")), 
-                      family = "binomial", 
-                      data = data)) 
+    model <- tidy(glm(as.formula(
+      paste(outcome, paste0(predictors[-1], collapse = " + "), sep = " ~ ")), 
+      family = "binomial", data = data)) 
   } else if(outcome == "Other"){
-    model <- tidy(glm(as.formula(paste(outcome, paste0(predictors[-1], 
-                                                       collapse = " + "), 
-                                       sep = " ~ ")), 
-                      family = "binomial", 
-                      data = data %>% filter(Unimpaired == 0)))
+    model <- tidy(glm(as.formula(
+      paste(outcome, paste0(predictors[-1], collapse = " + "), sep = " ~ ")), 
+      family = "binomial", data = data %>% filter(Unimpaired == 0)))
   } else{
-    model <- tidy(glm(as.formula(paste(outcome, paste0(predictors[-1], 
-                                                       collapse = " + "), 
-                                       sep = " ~ ")), 
-                      family = "binomial", 
-                      data = data %>% filter(Unimpaired == 0 & Other == 0)))
+    model <- tidy(glm(as.formula(
+      paste(outcome, paste0(predictors[-1], collapse = " + "), sep = " ~ ")), 
+      family = "binomial", data = data %>% filter(Unimpaired == 0 & Other == 0)))
   }
   
   return(model[, c("term", "estimate", "p.value")])
