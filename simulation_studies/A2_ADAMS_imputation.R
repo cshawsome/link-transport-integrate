@@ -299,10 +299,11 @@ ADAMS_imputed_clean <-
 # lapply(ADAMS_imputed_clean, ncol)
 
 #---- standardize continuous vars ----
-standardize_vars <- c("AAGE", "EDYRS", "ANAFTOT", "ANBNTTOT", "ANCPTOT", 
-                      "ANRCPTOT","ANRECNO", "ANRECYES", "ANTMASEC", "ANWM1TOT", 
-                      "ANWM2TOT", "SELFCOG", "ANBWC20", "ANBWC86", "ANDELCOR", 
-                      "ANIMMCR", "ANSER7T", "Aadla", "Aiadla", "Abmi_derived")
+standardize_vars <- c("AAGE", "EDYRS", "ANMSETOT_norm", "ANAFTOT", "ANBNTTOT", 
+                      "ANCPTOT", "ANRCPTOT","ANRECNO", "ANRECYES", "ANTMASEC", 
+                      "ANWM1TOT", "ANWM2TOT", "SELFCOG", "ANBWC20", "ANBWC86", 
+                      "ANDELCOR", "ANIMMCR", "ANSER7T", "Aadla", "Aiadla", 
+                      "Abmi_derived")
 
 Z_score <- function(data, vars){
   subset <- data %>% dplyr::select(all_of(vars)) %>% 
