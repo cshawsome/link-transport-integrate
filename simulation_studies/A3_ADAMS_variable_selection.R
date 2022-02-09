@@ -91,8 +91,7 @@ other_preds <- other_v_MCI_dem_summary$term
 #---- **MCI vs. Dementia ----
 #conditional as being classified as being impaired but not having other impairment
 MCI_v_dem <- glm(MCI ~ Black + Hispanic + ANMSETOT_norm_Z + ANAFTOT_Z + 
-                   SELFCOG_Z + avg_proxy_cog_Better + avg_proxy_cog_Worse + 
-                   Astroke + Asmoken, 
+                   SELFCOG_Z + Astroke + Asmoken, 
                  family = "binomial", 
                  data = avg_ADAMS_imputed %>% 
                    filter(Unimpaired == 0 & Other == 0))
