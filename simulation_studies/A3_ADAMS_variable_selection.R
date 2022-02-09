@@ -50,8 +50,7 @@ avg_ADAMS_imputed[, indicator_vars] <- round(avg_ADAMS_imputed[, indicator_vars]
 unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic + 
                                `Not working` + Retired + ANMSETOT_norm_Z + 
                                ANIMMCR_Z + ANAFTOT_Z + ANRECYES_Z + ANRECNO_Z + 
-                               SELFCOG_Z + Aadla_Z + Astroke + Adiabe + 
-                               Amoderate_drinking + Aheavy_drinking,
+                               SELFCOG_Z + Aadla_Z + Astroke + Adiabe,
                              family = "binomial", data = avg_ADAMS_imputed)
 
 #check sample size (n = 826): Null deviance dof + 1
@@ -71,8 +70,7 @@ unimpaired_preds <- unimpaired_v_impaired_summary$term
 #---- **Other vs. MCI or Dementia ----
 #conditional on being classified as impaired
 other_v_MCI_dem <- glm(Other ~ AAGE_Z + ANMSETOT_norm_Z + ANDELCOR_Z + 
-                         ANRECNO_Z + ANCACTUS + avg_proxy_cog_Better + 
-                         avg_proxy_cog_Worse, 
+                         ANRECNO_Z, 
                        family = "binomial", 
                        data = avg_ADAMS_imputed %>% filter(Unimpaired == 0))
 
@@ -165,12 +163,12 @@ for(model in c("unimpaired", "other", "MCI")){
              "analyses/variable_selection/", model, "_dists.pdf"), 
       paper = "letter", height = 10.5, width = 8, onefile = TRUE)
   
-  print(ggplot(data = unimpaired_pred_dists, aes(x = OR)) + 
+  print(ggplot(data = data, aes(x = OR)) + 
           geom_density() + theme_minimal() + 
           ggtitle(paste0(model, " Model ORs")) + 
           facet_wrap(vars(Predictor), scales = "free"))
   
-  print(ggplot(data = unimpaired_pred_dists, aes(x = `p-value`)) + 
+  print(ggplot(data = data, aes(x = `p-value`)) + 
           geom_density() + theme_minimal() + 
           ggtitle(paste0(model, " Model p-values")) + 
           facet_wrap(vars(Predictor), scales = "free"))
