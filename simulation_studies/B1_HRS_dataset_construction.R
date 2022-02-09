@@ -12,70 +12,25 @@ source(here("functions", "read_da_dct.R"))
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **HRS tracker ----
-ADAMS_tracker_data_path <- 
-  paste0(path_to_box, "data/ADAMS/adams1trk/ADAMS1TRK_R.da")
-ADAMS_tracker_dict_path <- 
-  paste0(path_to_box, "data/ADAMS/adams1trk/adams1trksta/ADAMS1TRK_R.dct")
+HRS_tracker_data_path <- 
+  paste0(path_to_box, "data/HRS_tracker/trk2018_3/TRK2018TR_R.da")
+HRS_tracker_dict_path <- 
+  paste0(path_to_box, "data/HRS_tracker/trk2018_3/TRK2018TR_R.dct")
 
-ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
-                             HHIDPN = "TRUE") %>% 
-  #select variables: ID, Wave A participation, HRS cognitive test at sampling, 
-  #                  interview year, marital status, age, race/ethnicity, 
-  #                  years of education, employment status, HRS proxy cognition
-  dplyr::select("HHIDPN", "AASSESS", "GENDER", "SELFCOG", "AYEAR", "AAMARRD", 
-                "AAGE", "ETHNIC", "EDYRS", "AACURRWK") %>%
-  #N = 1170
-  #filter to those who completed Wave A assessment (N = 856; dropped n = 314)
-  filter(AASSESS == 1)
-
-#---- **neuropsych measures ----
-ADAMS_neuropsych_data_path <- 
-  paste0(path_to_box, "data/ADAMS/adams1a/adams1ada/ADAMS1AN_R.da")
-ADAMS_neuropsych_dict_path <- 
-  paste0(path_to_box, "data/ADAMS/adams1a/adams1asta/ADAMS1AN_R.dct")
-
-ADAMS_neuropsych <- 
-  read_da_dct(ADAMS_neuropsych_data_path, ADAMS_neuropsych_dict_path,
-              HHIDPN = "TRUE") %>% 
-  #select variables: ID, MMSE, backwards count (20), backwards count (86), 
-  #                  serial 7s, item naming (scissors), item naming (cactus), 
-  #                  President naming, animal naming, Boston naming test, 
-  #                  immediate word recall, delayed word recall, 
-  #                  word list recognition (yes), word list recognition (no), 
-  #                  immediate story recall, delayed story recall, 
-  #                  immediate constructional praxis, 
-  #                  delayed constructional praxis, trails A,
-  #                  subjective cognitive change
-  dplyr::select("HHIDPN", "ANMSETOT", "ANBWC201", "ANBWC202", "ANBWC861", 
-                "ANBWC862", "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", 
-                "ANAFTOT", "ANBNTTOT", "ANIMMCR1", "ANIMMCR2", "ANIMMCR3", 
-                "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", "ANWM2TOT", 
-                "ANCPTOT", "ANRCPTOT", "ANTMASEC", "ANSMEM2")
-
-#---- **dementia dx ----
-ADAMS_demdx_data_path <- 
-  paste0(path_to_box, "data/ADAMS/adams1a/adams1ada/ADAMS1AD_R.da")
-ADAMS_demdx_dict_path <- 
-  paste0(path_to_box, "data/ADAMS/adams1a/adams1asta/ADAMS1AD_R.dct")
-
-ADAMS_demdx <- read_da_dct(ADAMS_demdx_data_path, ADAMS_demdx_dict_path,
+HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
                            HHIDPN = "TRUE") %>% 
-  dplyr::select("HHIDPN", "ADFDX1")
+  #select variables: ID, 2016 Wave participation, 2016 HCAP selection, 
+  # 2016 married/partnered status, sex/gender, age, race, ethnicity, 
+  dplyr::select("HHIDPN", "PIWTYPE", "HCAP_SELECT", "PCOUPLE", "GENDER", "PAGE", 
+                "RACE", "HISPANIC") %>%
+  #N = 43398
+  #filter to those who completed 2016 Wave interview (N = 20911; dropped n = 22487)
+  filter(PIWTYPE == 1)
 
-#---- **proxy measures ----
-ADAMS_proxy_data_path <- 
-  paste0(path_to_box, "data/ADAMS/adams1a/adams1ada/ADAMS1AG_R.da")
-ADAMS_proxy_dict_path <- 
-  paste0(path_to_box, "data/ADAMS/adams1a/adams1asta/ADAMS1AG_R.dct")
-
-ADAMS_proxy <- read_da_dct(ADAMS_proxy_data_path, ADAMS_proxy_dict_path,
-                           HHIDPN = "TRUE") %>% 
-  #select variables: IQCODE items, proxy type
-  dplyr::select("HHIDPN", paste0("AGQ", c(seq(14, 29), 101)))
+#---- **HRS Core ----
 
 #---- **RAND variables ----
-rand_waves <- seq(4, 7, by = 1) #Corresponding to ADAMS + imputation
-cog_test_waves <- seq(5, 7, by = 1) #Corresponding to ADAMS + imputation
+rand_waveS <- 13 #Corresponding to 2016 HRS
 rand_variables <- 
   c("hhidpn",
     #Sociodemographics (marital status)
