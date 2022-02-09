@@ -28,6 +28,15 @@ HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
   filter(PIWTYPE == 1)
 
 #---- **HRS Core ----
+HRS_core_data_path <- 
+  paste0(path_to_box, "data/HRS/Core_files/h16core/h16da/H16J_R.da")
+HRS_core_dict_path <- 
+  paste0(path_to_box, "data/HRS/Core_files/h16core/h16sta/H16J_R.dct")
+
+HRS_core <- read_da_dct(HRS_core_data_path, HRS_core_dict_path, 
+                        HHIDPN = "TRUE") %>% 
+  #select variables: ID, employment status 
+  dplyr::select("HHIDPN", "PJ005M1")
 
 #---- **RAND variables ----
 rand_waves <- 13 #Corresponding to 2016 HRS
