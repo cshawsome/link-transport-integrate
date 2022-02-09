@@ -48,9 +48,9 @@ avg_ADAMS_imputed[, indicator_vars] <- round(avg_ADAMS_imputed[, indicator_vars]
 
 #---- **Unimpaired vs. Impaired ----
 unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic + 
-                               `Not working` + Retired + ANMSETOT_norm_Z + 
-                               ANIMMCR_Z + ANAFTOT_Z + ANRECYES_Z + ANRECNO_Z + 
-                               SELFCOG_Z + Aadla_Z + Astroke + Adiabe,
+                               ANMSETOT_norm_Z + ANIMMCR_Z + ANAFTOT_Z + 
+                               ANRECYES_Z + ANRECNO_Z + SELFCOG_Z + Aadla_Z + 
+                               Astroke + Adiabe,
                              family = "binomial", data = avg_ADAMS_imputed)
 
 #check sample size (n = 826): Null deviance dof + 1
@@ -91,8 +91,7 @@ other_preds <- other_v_MCI_dem_summary$term
 #---- **MCI vs. Dementia ----
 #conditional as being classified as being impaired but not having other impairment
 MCI_v_dem <- glm(MCI ~ Black + Hispanic + ANMSETOT_norm_Z + ANAFTOT_Z + 
-                   SELFCOG_Z + avg_proxy_cog_Better + avg_proxy_cog_Worse + 
-                   Astroke + Asmoken, 
+                   SELFCOG_Z + Astroke + Asmoken, 
                  family = "binomial", 
                  data = avg_ADAMS_imputed %>% 
                    filter(Unimpaired == 0 & Other == 0))
@@ -175,6 +174,14 @@ for(model in c("unimpaired", "other", "MCI")){
   
   dev.off()
 }
+
+#---- contingency cell counts ----
+table(avg_ADAMS_imputed$Black, avg_ADAMS_imputed$Hispanic, 
+      avg_ADAMS_imputed$Astroke, avg_ADAMS_imputed$Adiabe, 
+      avg_ADAMS_imputed$Asmoken) %>% 
+  as.data.frame() %>% set_colnames(c("Black", "Hispanic", "Stroke", "Diabetes",
+                                     "Smoker", "Count")) %>% 
+  filter(!(Black == 1 & Hispanic == 1)) 
 
 #---- save estimates ----
 #---- **LB preds ----
