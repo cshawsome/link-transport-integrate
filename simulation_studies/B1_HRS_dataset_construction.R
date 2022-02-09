@@ -74,13 +74,13 @@ HRS %<>% mutate_at(.vars = "PCOUPLE", function(x) ifelse(x == 5, 0, 1))
 
 #---- **sex/gender ----
 #table(HRS$GENDER, useNA = "ifany")
-ADAMS %<>% 
+HRS %<>% 
   mutate(GENDER_label = as.factor(ifelse(GENDER == 1, "Male", "Female"))) %>% 
   mutate("Female" = ifelse(GENDER_label == "Female", 1, 0))
 
 # #Sanity check
-# table(ADAMS$GENDER, ADAMS$GENDER_label)
-# table(ADAMS$Female, useNA = "ifany")
+# table(HRS$GENDER, HRS$GENDER_label)
+# table(HRS$Female, useNA = "ifany")
 
 #---- **race/ethnicity ----
 #table(ADAMS$ETHNIC, useNA = "ifany")
