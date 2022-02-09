@@ -30,28 +30,13 @@ HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
 #---- **HRS Core ----
 
 #---- **RAND variables ----
-rand_waveS <- 13 #Corresponding to 2016 HRS
+rand_waves <- 13 #Corresponding to 2016 HRS
 rand_variables <- 
   c("hhidpn",
-    #Sociodemographics (marital status)
-    #Health and health behaviors (ever/never stroke, ever/never
-    #   hypertension, ever/never diabetes, ever/never cvd, BMI, height, weight, 
-    #   IADLs, ADLs, smokes now, number days drinking per week, number drinks/day) 
-    #Cognitive tests (backwards count 20 and 86, item naming (scissors and 
-    #   cactus), immediate and delayed word recall, serial 7s, President naming, 
-    #   subjective cognitive decline, total cognition score)
-    paste0("r", cog_test_waves, "mpart"),
-    paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "hibpe"), 
-    paste0("r", rand_waves, "diabe"), paste0("r", rand_waves, "hearte"),
-    paste0("r", rand_waves, "bmi"), paste0("r", rand_waves, "height"), 
-    paste0("r", rand_waves, "weight"), paste0("r", rand_waves, "iadla"), 
-    paste0("r", rand_waves, "adla"), paste0("r", rand_waves, "smoken"), 
-    paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"), 
-    paste0("r", cog_test_waves, "bwc20"), paste0("r", seq(5, 6), "bwc86"), 
-    paste0("r", cog_test_waves, "scis"), paste0("r", cog_test_waves, "cact"), 
-    paste0("r", cog_test_waves, "imrc"), paste0("r", cog_test_waves, "dlrc"),
-    paste0("r", cog_test_waves, "ser7"), paste0("r", cog_test_waves, "pres"), 
-    paste0("r", cog_test_waves, "pstmem"), paste0("r", cog_test_waves, "cogtot"))
+    #Health and health behaviors (ever/never stroke, ever/never diabetes, 
+    #smokes now)
+    paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "diabe"), 
+    paste0("r", rand_waves, "smoken"))
 
 RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/", 
                         "randhrs1992_2016v2.dta"), 
@@ -62,9 +47,7 @@ RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/",
 val_labels(RAND) <- NULL
 
 #---- join data ----
-ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>% 
-  left_join(., ADAMS_proxy, by = "HHIDPN") %>% 
-  left_join(., ADAMS_demdx, by = "HHIDPN") %>% 
+HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>% 
   left_join(., RAND, by = "HHIDPN")
 
 #---- clean data ----
