@@ -181,31 +181,30 @@ for(model in c("unimpaired", "other", "MCI")){
 # impairment group with higher levels of that variable
 
 #---- **unimpaired preds ----
-less_likely_unimpaired <- c("(Intercept)", "AAGE_Z", "Aadla_Z", "Astroke", 
-                            "Adiabe", "Ahearte")
-more_likely_unimpaired <- c("Black", "Hispanic", "ANMSETOT_norm_Z", "ANBNTTOT_Z", 
-                            "ANIMMCR_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANBWC86_Z")
+less_likely_unimpaired <- c("(Intercept)", "AAGE_Z", "Not working", "Retired", 
+                            "Aadla_Z", "Astroke", "Adiabe")
+more_likely_unimpaired <- c("Black", "Hispanic", "ANMSETOT_norm_Z", 
+                            "ANIMMCR_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", 
+                            "SELFCOG_Z")
 
 # #Sanity check
-# sum(length(less_likely_unimpaired), length(more_likely_unimpaired)) == 
+# sum(length(less_likely_unimpaired), length(more_likely_unimpaired)) ==
 #   length(unimpaired_preds)
 
 #---- **other preds ----
 less_likely_other <- c("(Intercept)", "AAGE_Z")
-more_likely_other <- c("ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", 
-                       "ANRCPTOT_Z")
+more_likely_other <- c("ANMSETOT_norm_Z", "ANRECNO_Z", "ANDELCOR_Z")
 
 # #Sanity check
 # sum(length(less_likely_other), length(more_likely_other)) == length(other_preds)
 
 #---- **MCI preds ----
-less_likely_MCI <- c("Aadla_Z", "Astroke", 
-                     "Adiabe", "Ahearte")
+less_likely_MCI <- c("Astroke", "avg_proxy_cog_Worse", "Asmoken")
 more_likely_MCI <- c("(Intercept)", "Black", "Hispanic", "ANMSETOT_norm_Z", 
-                     "ANAFTOT_Z", "ANRECYES_Z", "ANBWC86_Z")
+                     "ANAFTOT_Z", "SELFCOG_Z", "avg_proxy_cog_Better")
 
-#Sanity check
-sum(length(less_likely_MCI), length(more_likely_MCI)) == length(MCI_preds)
+# #Sanity check
+# sum(length(less_likely_MCI), length(more_likely_MCI)) == length(MCI_preds)
 
 #---- save estimates ----
 #---- **likelihood unimpaired ----
