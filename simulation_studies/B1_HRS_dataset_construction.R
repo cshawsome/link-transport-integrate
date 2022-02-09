@@ -83,6 +83,30 @@ HRS %<>%
 # table(HRS$GENDER, HRS$GENDER_label)
 # table(HRS$Female, useNA = "ifany")
 
+#---- **age ----
+# table(HRS$PAGE, useNA = "ifany")
+
+#restrict to 70+ (N = 7377, dropped n = 13,534)
+HRS %<>% filter(PAGE >= 70)
+
+#---- **race ----
+#table(HRS$RACE, useNA = "ifany")
+HRS %<>% 
+  mutate(RACE_label = as.factor(case_when(RACE == 1 ~ "White", 
+                                          RACE == 2 ~ "Black", 
+                                          RACE == 7 ~ "Other"))) %>% 
+  mutate("RACE_White" = ifelse(RACE_label == "White", 1, 0), 
+         "RACE_Black" = ifelse(RACE_label == "Black", 1, 0), 
+         "RACE_Other" = ifelse(RACE_label == "Other", 1, 0))
+
+# #Sanity check
+# table(HRS$RACE_label, HRS$RACE_White, useNA = "ifany")
+# table(HRS$RACE_label, HRS$RACE_Black, useNA = "ifany")
+# table(HRS$RACE_label, HRS$RACE_Other, useNA = "ifany")
+
+#---- **hispanic ----
+table(HRS$HISPANIC, useNA = "ifany")
+
 #---- **race/ethnicity ----
 #table(ADAMS$ETHNIC, useNA = "ifany")
 ADAMS %<>% 
@@ -97,9 +121,6 @@ ADAMS %<>%
 # table(ADAMS$ETHNIC_label, ADAMS$White, useNA = "ifany")
 # table(ADAMS$ETHNIC_label, ADAMS$Black, useNA = "ifany")
 # table(ADAMS$ETHNIC_label, ADAMS$Hispanic, useNA = "ifany")
-
-#---- **interview year ----
-#table(ADAMS$AYEAR, useNA = "ifany")
 
 #---- **HRS cognition ----
 # table(ADAMS$SELFCOG, useNA = "ifany")
