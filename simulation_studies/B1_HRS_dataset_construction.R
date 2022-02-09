@@ -60,6 +60,9 @@ HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>%
   left_join(., RAND, by = "HHIDPN")
 
 #---- clean data ----
+#---- **2016 HCAP selection ----
+# table(HRS$HCAP_SELECT, useNA = "ifany")
+
 #---- **sex/gender ----
 #table(ADAMS$GENDER, useNA = "ifany")
 ADAMS %<>% 
