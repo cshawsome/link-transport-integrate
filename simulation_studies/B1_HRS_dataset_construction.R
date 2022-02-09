@@ -105,7 +105,14 @@ HRS %<>%
 # table(HRS$RACE_label, HRS$RACE_Other, useNA = "ifany")
 
 #---- **hispanic ----
-table(HRS$HISPANIC, useNA = "ifany")
+#table(HRS$HISPANIC, useNA = "ifany")
+
+#change 5 = no to 0 = no, combine all hispanic types and set 0 = not obtained to NA
+HRS %<>% mutate("HISPANIC_indicator" = case_when(HISPANIC %in% c(1, 2, 3) ~ 1, 
+                                                 HISPANIC == 5 ~ 0))
+
+# #Sanity check
+# table(HRS$HISPANIC, HRS$HISPANIC_indicator, useNA = "ifany")
 
 #---- **race/ethnicity ----
 #table(ADAMS$ETHNIC, useNA = "ifany")
