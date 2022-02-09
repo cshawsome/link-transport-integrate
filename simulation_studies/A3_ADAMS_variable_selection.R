@@ -47,8 +47,11 @@ avg_ADAMS_imputed[, indicator_vars] <- round(avg_ADAMS_imputed[, indicator_vars]
 # a 1 SD change in the continuous predictors
 
 #---- **Unimpaired vs. Impaired ----
-unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic + EDYRS + 
-                               `Not working` + Retired + ANMS,
+unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic + 
+                               `Not working` + Retired + ANMSETOT_norm_Z + 
+                               ANIMMCR_Z + ANAFTOT_Z + ANRECYES_Z + ANRECNO_Z + 
+                               SELFCOG_Z + Aadla_Z + Astroke + Adiabe + 
+                               Amoderate_drinking + Aheavy_drinking,
                              family = "binomial", data = avg_ADAMS_imputed)
 
 #check sample size (n = 826): Null deviance dof + 1
@@ -67,8 +70,9 @@ unimpaired_preds <- unimpaired_v_impaired_summary$term
 
 #---- **Other vs. MCI or Dementia ----
 #conditional on being classified as impaired
-other_v_MCI_dem <- glm(Other ~ AAGE_Z + ANMSETOT_norm_Z + ANIMMCR_Z + 
-                         ANDELCOR_Z + ANRCPTOT_Z, 
+other_v_MCI_dem <- glm(Other ~ AAGE_Z + ANMSETOT_norm_Z + ANDELCOR_Z + 
+                         ANRECNO_Z + ANCACTUS + avg_proxy_cog_Better + 
+                         avg_proxy_cog_Worse, 
                        family = "binomial", 
                        data = avg_ADAMS_imputed %>% filter(Unimpaired == 0))
 
@@ -89,7 +93,8 @@ other_preds <- other_v_MCI_dem_summary$term
 #---- **MCI vs. Dementia ----
 #conditional as being classified as being impaired but not having other impairment
 MCI_v_dem <- glm(MCI ~ Black + Hispanic + ANMSETOT_norm_Z + ANAFTOT_Z + 
-                   ANRECNO_Z + ANBWC86_Z + Abmi_derived_Z + Astroke + Asmoken, 
+                   SELFCOG_Z + avg_proxy_cog_Better + avg_proxy_cog_Worse + 
+                   Astroke + Asmoken, 
                  family = "binomial", 
                  data = avg_ADAMS_imputed %>% 
                    filter(Unimpaired == 0 & Other == 0))
