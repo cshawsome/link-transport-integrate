@@ -176,45 +176,25 @@ for(model in c("unimpaired", "other", "MCI")){
   dev.off()
 }
 
-#---- classify predictors ----
-#classify predictors as making an individual more/less likely of being in 
-# impairment group with higher levels of that variable
-
-#---- **unimpaired preds ----
-less_likely_unimpaired <- c("(Intercept)", "AAGE_Z", "Not working", "Retired", 
-                            "Aadla_Z", "Astroke", "Adiabe")
-more_likely_unimpaired <- c("Black", "Hispanic", "ANMSETOT_norm_Z", 
-                            "ANIMMCR_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", 
-                            "SELFCOG_Z")
-
-# #Sanity check
-# sum(length(less_likely_unimpaired), length(more_likely_unimpaired)) ==
-#   length(unimpaired_preds)
-
-#---- **other preds ----
-less_likely_other <- c("(Intercept)", "AAGE_Z")
-more_likely_other <- c("ANMSETOT_norm_Z", "ANRECNO_Z", "ANDELCOR_Z")
-
-# #Sanity check
-# sum(length(less_likely_other), length(more_likely_other)) == length(other_preds)
-
-#---- **MCI preds ----
-less_likely_MCI <- c("Astroke", "avg_proxy_cog_Worse", "Asmoken")
-more_likely_MCI <- c("(Intercept)", "Black", "Hispanic", "ANMSETOT_norm_Z", 
-                     "ANAFTOT_Z", "SELFCOG_Z", "avg_proxy_cog_Better")
-
-# #Sanity check
-# sum(length(less_likely_MCI), length(more_likely_MCI)) == length(MCI_preds)
-
 #---- save estimates ----
-#---- **likelihood unimpaired ----
-
 #---- **LB preds ----
-#---- ****unimpaired preds ----
-more_likely_unimpaired <- c("")
-LB_unimpaired_preds <- 
-  
-  
-  #---- **UB preds ----
+#lower bound = least dementia
+LB_preds <- 
+  list("unimpaired" = unimpaired_pred_dists %>% group_by(Predictor) %>% 
+         summarise_at(.vars = "beta", max), 
+       "other" = other_pred_dists %>% group_by(Predictor) %>% 
+         summarise_at(.vars = "beta", max), 
+       "MCI" = MCI_pred_dists %>% group_by(Predictor) %>% 
+         summarise_at(.vars = "beta", max))
+
+#---- **UB preds ----
+#upper bound = most dementia
+LB_preds <- 
+  list("unimpaired" = unimpaired_pred_dists %>% group_by(Predictor) %>% 
+         summarise_at(.vars = "beta", min), 
+       "other" = other_pred_dists %>% group_by(Predictor) %>% 
+         summarise_at(.vars = "beta", min), 
+       "MCI" = MCI_pred_dists %>% group_by(Predictor) %>% 
+         summarise_at(.vars = "beta", min))
 
 
