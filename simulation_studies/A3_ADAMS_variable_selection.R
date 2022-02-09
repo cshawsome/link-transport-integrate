@@ -18,15 +18,15 @@ ADAMS_imputed_clean <-
 #sociodemographics: "AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", 
 # "Not working", "Retired", "Married/partnered"
 # 
-#neuropsych_gen_cog: "ANMSETOT_norm", "ANBNTTOT_Z", "ANIMMCR_Z", "ANDELCOR_Z", 
+#neuropsych_gen_cog: "ANMSETOT_norm_Z", "ANBNTTOT_Z", "ANIMMCR_Z", "ANDELCOR_Z", 
 # "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", 
 # "ANWM2TOT_Z", "ANBWC20_Z", "ANBWC86_Z", "ANCPTOT_Z", "ANRCPTOT_Z", 
 # "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR",  "ANPRES", "ANSMEM2_Better", 
 # "ANSMEM2_Worse", "avg_proxy_cog_Better", "avg_proxy_cog_Worse"
 # 
-# functional: "Aadla", "Aiadla"
+#functional: "Aadla_Z", "Aiadla_Z"
 # 
-# health: "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", 
+#health: "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", 
 #   "Amoderate_drinking", "Aheavy_drinking"
 
 #---- average MI datasets ----
@@ -47,10 +47,8 @@ avg_ADAMS_imputed[, indicator_vars] <- round(avg_ADAMS_imputed[, indicator_vars]
 # a 1 SD change in the continuous predictors
 
 #---- **Unimpaired vs. Impaired ----
-unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic + 
-                               ANMSETOT_norm_Z + ANBNTTOT_Z + ANIMMCR_Z + 
-                               ANAFTOT_Z + ANRECYES_Z + ANBWC86_Z + Aadla_Z + 
-                               Astroke + Adiabe + Ahearte,
+unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic + EDYRS + 
+                               `Not working` + Retired + ANMS,
                              family = "binomial", data = avg_ADAMS_imputed)
 
 #check sample size (n = 826): Null deviance dof + 1
@@ -180,8 +178,31 @@ for(model in c("unimpaired", "other", "MCI")){
 # impairment group with higher levels of that variable
 
 #---- **unimpaired preds ----
-less_likely_unimpaired <- c("(Intercept)", "AAGE_Z")
-more_likely_unimpaired <- c("Black", "Hispanic")
+less_likely_unimpaired <- c("(Intercept)", "AAGE_Z", "Aadla_Z", "Astroke", 
+                            "Adiabe", "Ahearte")
+more_likely_unimpaired <- c("Black", "Hispanic", "ANMSETOT_norm_Z", "ANBNTTOT_Z", 
+                            "ANIMMCR_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANBWC86_Z")
+
+# #Sanity check
+# sum(length(less_likely_unimpaired), length(more_likely_unimpaired)) == 
+#   length(unimpaired_preds)
+
+#---- **other preds ----
+less_likely_other <- c("(Intercept)", "AAGE_Z")
+more_likely_other <- c("ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", 
+                       "ANRCPTOT_Z")
+
+# #Sanity check
+# sum(length(less_likely_other), length(more_likely_other)) == length(other_preds)
+
+#---- **MCI preds ----
+less_likely_MCI <- c("Aadla_Z", "Astroke", 
+                     "Adiabe", "Ahearte")
+more_likely_MCI <- c("(Intercept)", "Black", "Hispanic", "ANMSETOT_norm_Z", 
+                     "ANAFTOT_Z", "ANRECYES_Z", "ANBWC86_Z")
+
+#Sanity check
+sum(length(less_likely_MCI), length(more_likely_MCI)) == length(MCI_preds)
 
 #---- save estimates ----
 #---- **likelihood unimpaired ----
@@ -190,8 +211,8 @@ more_likely_unimpaired <- c("Black", "Hispanic")
 #---- ****unimpaired preds ----
 more_likely_unimpaired <- c("")
 LB_unimpaired_preds <- 
-
-
-#---- **UB preds ----
+  
+  
+  #---- **UB preds ----
 
 
