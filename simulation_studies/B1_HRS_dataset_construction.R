@@ -115,47 +115,27 @@ HRS %<>% mutate("HISPANIC_indicator" = case_when(HISPANIC %in% c(1, 2, 3) ~ 1,
 # table(HRS$HISPANIC, HRS$HISPANIC_indicator, useNA = "ifany")
 
 #---- **race/ethnicity ----
-#table(ADAMS$ETHNIC, useNA = "ifany")
-ADAMS %<>% 
-  mutate(ETHNIC_label = as.factor(case_when(ETHNIC == 1 ~ "White", 
-                                            ETHNIC == 2 ~ "Black", 
-                                            ETHNIC == 3 ~ "Hispanic"))) %>% 
+HRS %<>% 
+  mutate(ETHNIC_label = 
+           case_when(HISPANIC_indicator == 1 ~ "Hispanic",
+                     HISPANIC_indicator == 0 & RACE_label == "White" ~ "White",
+                     HISPANIC_indicator == 0 & RACE_label == "Black" ~ "Black", 
+                     HISPANIC_indicator == 0 & RACE_label == "Other" ~ "Other")) %>% 
   mutate("White" = ifelse(ETHNIC_label == "White", 1, 0), 
          "Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
-         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0))
+         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0), 
+         "Other" = ifelse(ETHNIC_label == "Other", 1, 0))
 
 # #Sanity check
-# table(ADAMS$ETHNIC_label, ADAMS$White, useNA = "ifany")
-# table(ADAMS$ETHNIC_label, ADAMS$Black, useNA = "ifany")
-# table(ADAMS$ETHNIC_label, ADAMS$Hispanic, useNA = "ifany")
+# table(HRS$ETHNIC_label, HRS$White, useNA = "ifany")
+# table(HRS$ETHNIC_label, HRS$Black, useNA = "ifany")
+# table(HRS$ETHNIC_label, HRS$Hispanic, useNA = "ifany")
+# table(HRS$ETHNIC_label, HRS$Other, useNA = "ifany")
 
-#---- **HRS cognition ----
-# table(ADAMS$SELFCOG, useNA = "ifany")
+#restrict to White, Black, Hispanic (to align with ADAMS data) 
+# (N = 7166, dropped n = 171)
 
-#---- **marital status ----
-#table(ADAMS$AAMARRD, useNA = "ifany")
-ADAMS %<>% 
-  mutate("AAMARRD_label" = case_when(AAMARRD == 1 ~ "Single", 
-                                     AAMARRD == 2 ~ "Married or common law", 
-                                     AAMARRD == 3 ~ "Divorced", 
-                                     AAMARRD == 4 ~ "Separated", 
-                                     AAMARRD == 5 ~ "Widow", 
-                                     AAMARRD == 8 ~ "Don't Know")) %>%
-  mutate("AAMARRD_collapsed_label" = 
-           case_when(AAMARRD %in% c(1, 3, 4, 5) ~ "Not married/partnered", 
-                     AAMARRD == 2 ~ "Married/partnered")) %>% 
-  mutate("Married/partnered" = 
-           ifelse(AAMARRD_collapsed_label == "Married/partnered", 1, 0))
-
-# #Sanity check
-# table(ADAMS$AAMARRD_label, ADAMS$AAMARRD_collapsed_label, "useNA" = "ifany")
-# table(ADAMS$`Married/partnered`, useNA = "ifany")
-
-#---- **age ----
-#table(ADAMS$AAGE, useNA = "ifany")
-
-#---- **education ----
-#table(ADAMS$EDYRS, useNA = "ifany")
+HRS %<>% filter(Other == 0)
 
 #---- **employment status ----
 #table(ADAMS$AACURRWK, useNA = "ifany")
@@ -178,253 +158,6 @@ ADAMS %<>%
 # table(ADAMS$AACURRWK_collapsed_label, ADAMS$Working, useNA = "ifany")
 # table(ADAMS$AACURRWK_collapsed_label, ADAMS$Retired, useNA = "ifany")
 # table(ADAMS$AACURRWK_collapsed_label, ADAMS$`Not working`, useNA = "ifany")
-
-#---- **MMSE ----
-#table(ADAMS$ANMSETOT, useNA = "ifany")
-ADAMS %<>% 
-  mutate_at(.vars = "ANMSETOT", function(x) ifelse(x > 30, NA, x)) %>% 
-  #normalized MMSE
-  mutate("ANMSETOT_norm" = normMMSE(ANMSETOT))
-
-# #Sanity check
-# hist(ADAMS$ANMSETOT)
-# hist(ADAMS$ANMSETOT_norm)
-# table(ADAMS$ANMSETOT_norm, useNA = "ifany")
-
-#---- **BWC 20 and 86 ----
-# table(ADAMS$ANBWC201, useNA = "ifany")
-# table(ADAMS$ANBWC202, useNA = "ifany")
-# table(ADAMS$ANBWC861, useNA = "ifany")
-# table(ADAMS$ANBWC862, useNA = "ifany")
-ADAMS %<>% 
-  mutate_at(.vars = c("ANBWC201", "ANBWC202", "ANBWC861", "ANBWC862"), 
-            #Missing/refused  
-            function(x) ifelse(x > 6, NA, x)) %>% 
-  mutate_at(.vars = c("ANBWC201", "ANBWC202", "ANBWC861", "ANBWC862"), 
-            #restart
-            function(x) ifelse(x == 6, 0, x)) 
-
-#Take the higher score
-ADAMS %<>% mutate("ANBWC20" = pmax(ANBWC201, ANBWC202, na.rm = TRUE), 
-                  "ANBWC86" = pmax(ANBWC861, ANBWC862, na.rm = TRUE))
-
-# #Sanity check
-# View(ADAMS[, c("ANBWC201", "ANBWC202", "ANBWC20")])
-# View(ADAMS[, c("ANBWC861", "ANBWC862", "ANBWC86")])
-# table(ADAMS$ANBWC20, useNA = "ifany")
-# table(ADAMS$ANBWC86, useNA = "ifany")
-
-#---- **serial 7s ----
-#table(ADAMS$ANSER7T, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANSER7T"), 
-                     #Missing/refused  
-                     function(x) ifelse(x > 5, NA, x))
-
-# #Sanity check
-# table(ADAMS$ANSER7T, useNA = "ifany")
-
-#---- **object naming: cactus, scissors ----
-# table(ADAMS$ANCACTUS, useNA = "ifany")
-# table(ADAMS$ANSCISOR, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANCACTUS", "ANSCISOR"), 
-                     #Missing/refused  
-                     function(x) ifelse(x > 1, NA, x)) 
-
-# #Sanity check
-# table(ADAMS$ANCACTUS, useNA = "ifany")
-# table(ADAMS$ANSCISOR, useNA = "ifany")
-
-#---- **President naming ----
-# table(ADAMS$ANPRES, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANPRES"), 
-                     #Missing/refused  
-                     function(x) ifelse(x > 1, NA, x)) 
-
-# #Sanity check
-# table(ADAMS$ANPRES, useNA = "ifany")
-
-#---- **animal naming ----
-#table(ADAMS$ANAFTOT, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANAFTOT"), 
-                     #Missing/refused  
-                     function(x) ifelse(x > 33, NA, x)) 
-
-# #Sanity check
-# table(ADAMS$ANAFTOT, useNA = "ifany")
-
-#---- **Boston naming test ----
-# table(ADAMS$ANBNTTOT, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANBNTTOT"), 
-                     #Missing/refused  
-                     function(x) ifelse(x > 15, NA, x)) 
-
-# #Sanity check
-# table(ADAMS$ANBNTTOT, useNA = "ifany")
-
-#---- **10-word recall (immediate and delayed) ----
-# table(ADAMS$ANIMMCR1, useNA = "ifany")
-# table(ADAMS$ANDELCOR, useNA = "ifany")
-ADAMS %<>% 
-  mutate_at(.vars = c("ANIMMCR1", "ANIMMCR2", "ANIMMCR3", "ANDELCOR"), 
-            #Missing/refused  
-            function(x) ifelse(x > 10, NA, x)) %>% 
-  #Best of 3 immediate recall trials
-  mutate("ANIMMCR" = pmax(ANIMMCR1, ANIMMCR2, ANIMMCR3, na.rm = TRUE))
-
-# #Sanity check
-# View(ADAMS[, c("ANIMMCR1", "ANIMMCR2", "ANIMMCR3", "ANIMMCR")])
-# table(ADAMS$ANIMMCR, useNA = "ifany")
-# table(ADAMS$ANDELCOR, useNA = "ifany")
-
-#---- **word list recognition (yes/no) ----
-# table(ADAMS$ANRECNO, useNA = "ifany")
-# table(ADAMS$ANRECYES, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANRECNO", "ANRECYES"), 
-                     #Missing/refused  
-                     function(x) ifelse(x > 10, NA, x))
-
-# #Sanity check
-# table(ADAMS$ANRECNO, useNA = "ifany")
-# table(ADAMS$ANRECYES, useNA = "ifany")
-
-#---- **story recall (immediate and delayed) ----
-# table(ADAMS$ANWM1TOT, useNA = "ifany")
-# table(ADAMS$ANWM2TOT, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANWM1TOT", "ANWM2TOT"), 
-                     #Missing/refused  
-                     function(x) ifelse(x > 37, NA, x))
-
-# #Sanity check
-# table(ADAMS$ANWM1TOT, useNA = "ifany")
-# table(ADAMS$ANWM2TOT, useNA = "ifany")
-
-#---- **constructional praxis (immediate and delayed) ----
-# table(ADAMS$ANCPTOT, useNA = "ifany")
-# table(ADAMS$ANRCPTOT, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANCPTOT", "ANRCPTOT"), 
-                     #Missing/refused  
-                     function(x) ifelse(x > 11, NA, x))
-
-# #Sanity check
-# table(ADAMS$ANCPTOT, useNA = "ifany")
-# table(ADAMS$ANRCPTOT, useNA = "ifany")
-
-#---- **trails A ----
-# table(ADAMS$ANTMASEC, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANTMASEC"),
-                     #Missing/refused
-                     function(x) ifelse(x > 900, NA, x))
-
-# #Sanity check
-# table(ADAMS$ANTMASEC, useNA = "ifany")
-
-#---- **subjective cognitive change ----
-# table(ADAMS$ANSMEM2, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANSMEM2"),
-                     #Missing/refused
-                     function(x) ifelse(x > 5, NA, x)) %>% 
-  mutate("ANSMEM2_label" = case_when(ANSMEM2 == 1 ~ "Much Better", 
-                                     ANSMEM2 == 2 ~ "Better", 
-                                     ANSMEM2 == 3 ~ "Same", 
-                                     ANSMEM2 == 4 ~ "Worse", 
-                                     ANSMEM2 == 5 ~ "Much Worse")) %>% 
-  mutate("ANSMEM2_collapsed_label" = 
-           case_when(ANSMEM2_label %in% c("Much Better", "Better") ~ "Better", 
-                     ANSMEM2_label == "Same" ~ "Same", 
-                     ANSMEM2_label %in% c("Worse", "Much Worse") ~ "Worse")) %>% 
-  mutate("ANSMEM2_Better" = ifelse(ANSMEM2_collapsed_label == "Better", 1, 0), 
-         "ANSMEM2_Same" = ifelse(ANSMEM2_collapsed_label == "Same", 1, 0), 
-         "ANSMEM2_Worse" = ifelse(ANSMEM2_collapsed_label == "Worse", 1, 0))
-
-# #Sanity check
-# table(ADAMS$ANSMEM2, useNA = "ifany")
-# table(ADAMS$ANSMEM2, ADAMS$ANSMEM2_label, useNA = "ifany")
-# table(ADAMS$ANSMEM2_label, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
-# table(ADAMS$ANSMEM2_Better, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
-# table(ADAMS$ANSMEM2_Same, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
-# table(ADAMS$ANSMEM2_Worse, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
-
-#---- **proxy cognition ----
-# table(ADAMS$AGQ14, useNA = "ifany")
-# table(ADAMS$AGQ29, useNA = "ifany")
-ADAMS %<>% mutate("avg_proxy_cog" = ADAMS %>% 
-                    dplyr::select(paste0("AGQ", seq(14, 29))) %>% 
-                    rowMeans(., na.rm = TRUE)) %>% 
-  mutate("avg_proxy_cog" = ifelse(is.nan(avg_proxy_cog), NA, avg_proxy_cog)) %>%
-  #floor to get whole numbers
-  mutate_at(.vars = c("avg_proxy_cog"), floor) %>% 
-  mutate("avg_proxy_cog_label" = 
-           case_when(avg_proxy_cog == 1 ~ "Much Better", 
-                     avg_proxy_cog == 2 ~ "Better", 
-                     avg_proxy_cog == 3 ~ "Same", 
-                     avg_proxy_cog == 4 ~ "Worse", 
-                     avg_proxy_cog == 5 ~ "Much Worse")) %>% 
-  mutate("avg_proxy_cog_collapsed_label" = 
-           case_when(avg_proxy_cog_label %in% 
-                       c("Much Better", "Better") ~ "Better", 
-                     avg_proxy_cog_label == "Same" ~ "Same", 
-                     avg_proxy_cog_label %in% 
-                       c("Worse", "Much Worse") ~ "Worse")) %>% 
-  mutate("avg_proxy_cog_Better" = 
-           ifelse(avg_proxy_cog_collapsed_label == "Better", 1, 0), 
-         "avg_proxy_cog_Same" = 
-           ifelse(avg_proxy_cog_collapsed_label == "Same", 1, 0), 
-         "avg_proxy_cog_Worse" = 
-           ifelse(avg_proxy_cog_collapsed_label == "Worse", 1, 0))
-
-# #Sanity check
-# View(ADAMS %>% dplyr::select(paste0("AGQ", seq(14, 29)), "avg_proxy_cog"))
-# table(ADAMS$avg_proxy_cog, useNA = "ifany")
-# table(ADAMS$avg_proxy_cog, ADAMS$avg_proxy_cog_label, useNA = "ifany")
-# table(ADAMS$avg_proxy_cog_label, ADAMS$avg_proxy_cog_collapsed_label,
-#       useNA = "ifany")
-# table(ADAMS$avg_proxy_cog_Better, ADAMS$avg_proxy_cog_collapsed_label,
-#       useNA = "ifany")
-# table(ADAMS$avg_proxy_cog_Same, ADAMS$avg_proxy_cog_collapsed_label,
-#       useNA = "ifany")
-# table(ADAMS$avg_proxy_cog_Worse, ADAMS$avg_proxy_cog_collapsed_label,
-#       useNA = "ifany")
-
-# #Distribution check: it is not the case that all those missing proxies are high
-# # functioning
-# ADAMS %>% filter(is.na(avg_proxy_cog)) %>% dplyr::select(ANMSETOT) %>% 
-#   table(., useNA = "ifany")
-
-#---- **dementia dx ----
-# table(ADAMS$ADFDX1, useNA = "ifany")
-ADAMS %<>% 
-  #collapse categories
-  mutate("Adem_dx_label_collapsed" = 
-           case_when(ADFDX1 %in% c(1, 2) ~ "Probable/Possible AD", 
-                     ADFDX1 %in% c(3, 4) ~ 
-                       "Probable/Possible Vascular Dementia", 
-                     ADFDX1 %in% c(5, 6, 7, 8, 11, 14, 23, 24, 25, 26, 27, 21, 
-                                   28, 29, 30, 33) ~ "Other",
-                     ADFDX1 %in% c(18, 32) ~ "Probable Dementia",
-                     ADFDX1 %in% c(10, 13, 15, 16, 17, 19) ~ "Dementia", 
-                     ADFDX1 %in% c(20, 22) ~ "MCI", 
-                     ADFDX1 == 31 ~ "Normal")) %>% 
-  #further collapsing categories
-  mutate("Adem_cat" = 
-           case_when(Adem_dx_label_collapsed %in% 
-                       c("Probable/Possible AD", 
-                         "Probable/Possible Vascular Dementia", 
-                         "Probable Dementia", "Dementia") ~ "Dementia",
-                     Adem_dx_label_collapsed == "Other" ~ "Other", 
-                     Adem_dx_label_collapsed == "MCI" ~ "MCI", 
-                     Adem_dx_label_collapsed == "Normal" ~ "Unimpaired")) %>% 
-  #dummy vars
-  mutate("Dementia" = ifelse(Adem_cat == "Dementia", 1, 0), 
-         "Other" = ifelse(Adem_cat == "Other", 1, 0), 
-         "MCI" = ifelse(Adem_cat == "MCI", 1, 0), 
-         "Unimpaired" = ifelse(Adem_cat == "Unimpaired", 1, 0))
-
-# #Sanity check
-# table(ADAMS$Adem_dx_label_collapsed, ADAMS$Adem_cat, useNA = "ifany")
-# table(ADAMS$Adem_cat, ADAMS$Dementia, useNA = "ifany")
-# table(ADAMS$Adem_cat, ADAMS$Other, useNA = "ifany")
-# table(ADAMS$Adem_cat, ADAMS$MCI, useNA = "ifany")
-# table(ADAMS$Adem_cat, ADAMS$Unimpaired, useNA = "ifany")
 
 #---- **health and health behaviors ----
 # table(ADAMS$AYEAR, useNA = "ifany")
