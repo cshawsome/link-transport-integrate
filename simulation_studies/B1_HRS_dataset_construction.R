@@ -62,6 +62,7 @@ HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>%
 #---- clean data ----
 #---- **2016 HCAP selection ----
 # table(HRS$HCAP_SELECT, useNA = "ifany")
+# table(HRS$HCAP_SELECT, useNA = "ifany")/nrow(HRS)
 
 #---- **2016 couple status ----
 # table(HRS$PCOUPLE, useNA = "ifany")
