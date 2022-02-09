@@ -177,6 +177,7 @@ for(model in c("unimpaired", "other", "MCI")){
 }
 
 #---- contingency cell counts ----
+#full table
 table(avg_ADAMS_imputed$Black, avg_ADAMS_imputed$Hispanic, 
       avg_ADAMS_imputed$`Not working`, avg_ADAMS_imputed$Retired,
       avg_ADAMS_imputed$Astroke, avg_ADAMS_imputed$Adiabe, 
@@ -191,6 +192,15 @@ table(avg_ADAMS_imputed$Black, avg_ADAMS_imputed$Hispanic,
   filter(!(`Proxy Cog Better` == 1 & `Proxy Cog Worse` == 1)) %>% 
   write_csv(paste0(path_to_box, 
                    "analyses/variable_selection/full_contingency.csv"))
+
+#simplified table
+table(avg_ADAMS_imputed$Black, avg_ADAMS_imputed$Hispanic, 
+      avg_ADAMS_imputed$Astroke) %>% 
+  as.data.frame() %>% 
+  set_colnames(c("Black", "Hispanic", "Stroke", "Count")) %>% 
+  filter(!(Black == 1 & Hispanic == 1)) %>% 
+  write_csv(paste0(path_to_box, 
+                   "analyses/variable_selection/simplified_contingency.csv"))
 
 #---- save estimates ----
 #---- **LB preds ----
