@@ -180,15 +180,12 @@ for(model in c("unimpaired", "other", "MCI")){
 table(avg_ADAMS_imputed$Black, avg_ADAMS_imputed$Hispanic, 
       avg_ADAMS_imputed$`Not working`, avg_ADAMS_imputed$Retired,
       avg_ADAMS_imputed$Astroke, avg_ADAMS_imputed$Adiabe, 
-      avg_ADAMS_imputed$Asmoken, avg_ADAMS_imputed$avg_proxy_cog_Better, 
-      avg_ADAMS_imputed$avg_proxy_cog_Worse) %>% 
+      avg_ADAMS_imputed$Asmoken) %>% 
   as.data.frame() %>% 
   set_colnames(c("Black", "Hispanic", "Not Working", "Retired", "Stroke", 
-                 "Diabetes", "Smoker", "Proxy Cog Better", "Proxy Cog Worse",
-                 "Count")) %>% 
+                 "Diabetes", "Smoker", "Count")) %>% 
   filter(!(Black == 1 & Hispanic == 1)) %>% 
   filter(!(`Not Working` == 1 & Retired == 1)) %>%
-  filter(!(`Proxy Cog Better` == 1 & `Proxy Cog Worse` == 1)) %>% 
   write_csv(paste0(path_to_box, 
                    "analyses/variable_selection/full_contingency.csv"))
 
