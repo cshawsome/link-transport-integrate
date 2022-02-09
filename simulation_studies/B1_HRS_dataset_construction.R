@@ -63,8 +63,17 @@ HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>%
 #---- **2016 HCAP selection ----
 # table(HRS$HCAP_SELECT, useNA = "ifany")
 
+#---- **2016 couple status ----
+# table(HRS$PCOUPLE, useNA = "ifany")
+
+#change 5 = no to 0 = no
+HRS %<>% mutate_at(.vars = "PCOUPLE", function(x) ifelse(x == 5, 0, 1))
+
+# #Sanity check
+# table(HRS$PCOUPLE, useNA = "ifany")
+
 #---- **sex/gender ----
-#table(ADAMS$GENDER, useNA = "ifany")
+#table(HRS$GENDER, useNA = "ifany")
 ADAMS %<>% 
   mutate(GENDER_label = as.factor(ifelse(GENDER == 1, "Male", "Female"))) %>% 
   mutate("Female" = ifelse(GENDER_label == "Female", 1, 0))
