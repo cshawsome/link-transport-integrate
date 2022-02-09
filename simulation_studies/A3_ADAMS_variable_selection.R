@@ -189,7 +189,7 @@ LB_preds <-
 
 #---- **UB preds ----
 #upper bound = most dementia
-LB_preds <- 
+UB_preds <- 
   list("unimpaired" = unimpaired_pred_dists %>% group_by(Predictor) %>% 
          summarise_at(.vars = "beta", min), 
        "other" = other_pred_dists %>% group_by(Predictor) %>% 
@@ -197,4 +197,5 @@ LB_preds <-
        "MCI" = MCI_pred_dists %>% group_by(Predictor) %>% 
          summarise_at(.vars = "beta", min))
 
-
+saveRDS(LB_preds, paste0(path_to_box, "analyses/variable_selection/LB_preds"))
+saveRDS(UB_preds, paste0(path_to_box, "analyses/variable_selection/UB_preds"))
