@@ -83,8 +83,9 @@ lasso_reg <- function(data, var_list){
   return(list("models" = model_list, "lambdas" = lambda_vec))
 }
 
-test_list <- ADAMS_imputed_clean[1:2]
+start <- Sys.time()
 variable_selection <- lapply(test_list, lasso_reg, var_list)
+end <- Sys.time() - start
 
 #---- OLD ----
 
