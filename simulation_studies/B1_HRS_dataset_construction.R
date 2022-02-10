@@ -22,7 +22,7 @@ HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
   #select variables: ID, 2016 Wave participation, 2016 HCAP selection, 
   # 2016 married/partnered status, sex/gender, age, race, ethnicity, 
   dplyr::select("HHIDPN", "PIWTYPE", "HCAP_SELECT", "PCOUPLE", "GENDER", "PAGE", 
-                "RACE", "HISPANIC") %>%
+                "RACE", "HISPANIC", "SCHLYRS") %>%
   #N = 43398
   #filter to those who completed 2016 Wave interview (N = 20911; dropped n = 22487)
   filter(PIWTYPE == 1)
@@ -136,6 +136,12 @@ HRS %<>%
 # (N = 7166, dropped n = 171)
 
 HRS %<>% filter(Other == 0)
+
+#---- **education ----
+table(HRS$SCHLYRS, useNA = "ifany")
+
+#drop missing years of education (N = 7162, dropped n = 4)
+HRS %<>% filter(SCHLYRS < 99)
 
 #---- **employment status ----
 #table(ADAMS$AACURRWK, useNA = "ifany")
