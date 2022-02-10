@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "broom", "sjPlot", "gridExtra", "magrittr")
+p_load("tidyverse", "broom", "sjPlot", "gridExtra", "magrittr", "glmnet")
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -18,16 +18,75 @@ ADAMS_imputed_clean <-
 #sociodemographics: "AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", 
 # "Not working", "Retired", "Married/partnered"
 # 
-#neuropsych_gen_cog: "ANMSETOT_norm_Z", "ANBNTTOT_Z", "ANIMMCR_Z", "ANDELCOR_Z", 
-# "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", 
-# "ANWM2TOT_Z", "ANBWC20_Z", "ANBWC86_Z", "ANCPTOT_Z", "ANRCPTOT_Z", 
-# "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR",  "ANPRES", "ANSMEM2_Better", 
-# "ANSMEM2_Worse", "avg_proxy_cog_Better", "avg_proxy_cog_Worse"
+# neuropsych_gen_cog: "ANMSETOT_norm_Z", "ANBNTTOT_Z", "ANIMMCR_Z", "ANDELCOR_Z",
+# "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z",
+# "ANWM2TOT_Z", "ANBWC20_Z", "ANBWC86_Z", "ANCPTOT_Z", "ANRCPTOT_Z",
+# "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR",  "ANPRES", "ANSMEM2_Better",
+# "ANSMEM2_Worse"
 # 
-#functional: "Aadla_Z", "Aiadla_Z"
+# functional: "Aadla_Z", "Aiadla_Z"
 # 
-#health: "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", 
+# health: "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken",
 #   "Amoderate_drinking", "Aheavy_drinking"
+
+#Because we Z-scored continuous variables, the interpretations for beta are for 
+# a 1 SD change in the continuous predictors
+
+var_list <- c("AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", "Not working", 
+              "Retired", "Married/partnered", "ANMSETOT_norm_Z", "ANBNTTOT_Z", 
+              "ANIMMCR_Z", "ANDELCOR_Z", "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", 
+              "ANRECNO_Z", "ANWM1TOT_Z","ANWM2TOT_Z", "ANBWC20_Z", "ANBWC86_Z", 
+              "ANCPTOT_Z", "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", 
+              "ANSCISOR",  "ANPRES", "ANSMEM2_Better", "ANSMEM2_Worse", 
+              "Aadla_Z", "Aiadla_Z", "Abmi_derived_Z", "Astroke", "Adiabe", 
+              "Ahearte", "Ahibpe", "Asmoken", "Amoderate_drinking", 
+              "Aheavy_drinking")
+
+#---- variable selection ----
+#---- **best lambda function ----
+#choose the best lambda for lasso regression based on 1000 runs of 10-fold CV
+best_lambda <- function(x, y){
+  cv_model <- cv.glmnet(x, y, alpha = 1)
+  min_lambda <- cv_model$lambda.min
+  return(min_lambda)
+}
+
+#---- **lasso regression function ----
+lasso_reg <- function(data, var_list){
+  #---- preallocate for results ----
+  model_list <- list()
+  lambda_vec <- vector(length = 3) %>% 
+    set_names(c("Unimpaired", "Other", "MCI"))
+
+  for(class in c("Unimpaired", "Other", "MCI")){
+    if(class == "Unimpaired"){
+      model_data <- data
+    } else if(class == "Other"){
+      model_data <- data %>% filter(Unimpaired == 0)
+    } else{
+      model_data <- data %>% filter(Unimpaired == 0 & Other == 0)
+    }
+    
+    #---- define outcome and predictor variables ----
+    y <- model_data[, class]
+    x <- data.matrix(model_data[, var_list])
+    
+    #---- choose best lambda ----
+    lambda <- median(replicate(1000, best_lambda(x, y)))
+    
+    #---- store results ----
+    model_list[[class]] <- 
+      glmnet(x, y, alpha = 1, lambda = lambda)
+    
+    lambda_vec[class] <- lambda
+  }
+  return(list("models" = model_list, "lambdas" = lambda_vec))
+}
+
+test_list <- ADAMS_imputed_clean[1:2]
+variable_selection <- lapply(test_list, lasso_reg, var_list)
+
+#---- OLD ----
 
 #---- average MI datasets ----
 avg_ADAMS_imputed <- 
@@ -43,8 +102,7 @@ indicator_vars <- c("Working", "White", "ANSMEM2_Same", "avg_proxy_cog_Same",
 avg_ADAMS_imputed[, indicator_vars] <- round(avg_ADAMS_imputed[, indicator_vars])
 
 #---- models ----
-#Because we Z-scored continuous variables, the interpretations for beta are for 
-# a 1 SD change in the continuous predictors
+
 
 #---- **Unimpaired vs. Impaired ----
 unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic + 
