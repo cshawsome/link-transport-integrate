@@ -88,27 +88,35 @@ variable_selection <- lapply(ADAMS_imputed_clean, lasso_reg, var_list)
 end <- Sys.time() - start
 
 #---- **list predictors ----
-test <- variable_selection[[1]]
-
 selected_vars <- 
-  matrix(nrow = length(variable_selection), ncol = (1 + 3*25)) %>% 
+  matrix(nrow = (length(var_list) + 1), ncol = (1 + 3*25)) %>% 
   as.data.frame() %>%
-  set_colnames(c("Variable", paste0("Unimpaired_", "Other_", "MCI_", seq(1, 25))) %>% 
-  mutate("Variable" = var_list)
+  set_colnames(c("Variable", 
+                 str_replace(apply(expand_grid(c("Unimpaired", "Other", "MCI"), 
+                                               seq(1, 25)) %>% 
+                                     set_colnames(c("model", "number")) %>% 
+                                     arrange(number), 1, paste0, 
+                                   collapse = "_"), " ", ""))) %>% 
+  mutate("Variable" = c("(Intercept)", var_list))
 
-for(model in c("Unimpaired", "Other", "MCI")){
-  
+
+for(m in 1:25){
+  for(model in c("Unimpaired", "Other", "MCI")){
+    selected_vars[, paste0(model, "_", m)] <- 
+      as.vector(coef(variable_selection[[m]]$models[[model]]))
+  }  
 }
 
-expand_grid(c("Unimpaired", "Other", "MCI"), seq(1, 25)) %>% 
-  set_colnames(c("model", "number")) %>% arrange(number) %>% 
-  
-
-
+#remove variables that are never selected
+selected_vars %<>% mutate("times_selected" = rowSums(selected_vars[, -1])) %>% 
+  filter(times_selected != 0)
 
 #---- **save results ----
-saveRDS(variable_selection, 
-        paste0(path_to_box, "analyses/variable_selection/ADAMS_lasso_models"))
+saveRDS(variable_selection, paste0(path_to_box, "analyses/variable_selection/", 
+                                   "ADAMS_lasso_models"))
+
+write_csv(selected_vars, paste0(path_to_box, "analyses/variable_selection/", 
+                                "model_coefficients.csv"))
 
 #---- OLD ----
 
