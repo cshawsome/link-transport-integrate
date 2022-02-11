@@ -84,7 +84,7 @@ lasso_reg <- function(data, var_list){
 }
 
 start <- Sys.time()
-variable_selection <- lapply(test_list, lasso_reg, var_list)
+variable_selection <- lapply(ADAMS_imputed_clean, lasso_reg, var_list)
 end <- Sys.time() - start
 
 #---- OLD ----
