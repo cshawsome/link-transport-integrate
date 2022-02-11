@@ -57,7 +57,7 @@ lasso_reg <- function(data, var_list){
   model_list <- list()
   lambda_vec <- vector(length = 3) %>% 
     set_names(c("Unimpaired", "Other", "MCI"))
-
+  
   for(class in c("Unimpaired", "Other", "MCI")){
     if(class == "Unimpaired"){
       model_data <- data
@@ -86,6 +86,29 @@ lasso_reg <- function(data, var_list){
 start <- Sys.time()
 variable_selection <- lapply(ADAMS_imputed_clean, lasso_reg, var_list)
 end <- Sys.time() - start
+
+#---- **list predictors ----
+test <- variable_selection[[1]]
+
+selected_vars <- 
+  matrix(nrow = length(variable_selection), ncol = (1 + 3*25)) %>% 
+  as.data.frame() %>%
+  set_colnames(c("Variable", paste0("Unimpaired_", "Other_", "MCI_", seq(1, 25))) %>% 
+  mutate("Variable" = var_list)
+
+for(model in c("Unimpaired", "Other", "MCI")){
+  
+}
+
+expand_grid(c("Unimpaired", "Other", "MCI"), seq(1, 25)) %>% 
+  set_colnames(c("model", "number")) %>% arrange(number) %>% 
+  
+
+
+
+#---- **save results ----
+saveRDS(variable_selection, 
+        paste0(path_to_box, "analyses/variable_selection/ADAMS_lasso_models"))
 
 #---- OLD ----
 
