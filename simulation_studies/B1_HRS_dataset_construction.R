@@ -144,12 +144,6 @@ HRS %<>%
 
 HRS %<>% filter(Other == 0)
 
-#---- **education ----
-table(HRS$SCHLYRS, useNA = "ifany")
-
-#drop missing years of education (N = 7162, dropped n = 4)
-HRS %<>% filter(SCHLYRS < 99)
-
 #---- **employment status ----
 #table(ADAMS$AACURRWK, useNA = "ifany")
 ADAMS %<>% 
