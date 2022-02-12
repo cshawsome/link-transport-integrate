@@ -182,7 +182,7 @@ HRS %>% write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_clean.csv"))
 #pared-down analytic data
 remove <- c("PIWTYPE", "RACE", "RACE_label", "RACE_White", "RACE_Black", 
             "RACE_Other", "HISPANIC", "HISPANIC_indicator", "ETHNIC_label", 
-            "Other", "GENDER", "GENDER_label")
+            "Other", "GENDER", "GENDER_label", "PJ005M1_collapsed_label")
 
 HRS %>% dplyr::select(-all_of(remove)) %>% 
   write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
