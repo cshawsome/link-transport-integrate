@@ -145,26 +145,31 @@ HRS %<>%
 HRS %<>% filter(Other == 0)
 
 #---- **employment status ----
-#table(ADAMS$AACURRWK, useNA = "ifany")
-ADAMS %<>% 
-  mutate("AACURRWK_label" = case_when(AACURRWK == 1 ~ "Working", 
-                                      AACURRWK == 2 ~ "Retired", 
-                                      AACURRWK == 3 ~ "Semi-retired", 
-                                      AACURRWK == 4 ~ "Disabled", 
-                                      AACURRWK == 5 ~ "Unemployed")) %>%
-  mutate("AACURRWK_collapsed_label" = 
-           case_when(AACURRWK %in% c(1, 3) ~ "Working", 
-                     AACURRWK == 2 ~ "Retired", 
-                     AACURRWK %in% c(4, 5) ~ "Not working")) %>% 
-  mutate("Working" = ifelse(AACURRWK_collapsed_label == "Working", 1, 0), 
-         "Retired" = ifelse(AACURRWK_collapsed_label == "Retired", 1, 0), 
-         "Not working" = ifelse(AACURRWK_collapsed_label == "Not working", 1, 0))
+#table(HRS$PJ005M1, useNA = "ifany")
+HRS %<>% 
+  mutate("PJ005M1_label" = 
+           case_when(PJ005M1 == 1 ~ "Working now", 
+                     PJ005M1 == 2 ~ "Unemployed and looking for work", 
+                     PJ005M1 == 3 ~ "Temporarily laid off", 
+                     PJ005M1 == 4 ~ "Disabled", 
+                     PJ005M1 == 5 ~ "Retired", 
+                     PJ005M1 == 6 ~ "Homemaker", 
+                     PJ005M1 == 7 ~ "Other", 
+                     PJ005M1 == 8 ~ "On leave")) %>%
+  mutate("PJ005M1_collapsed_label" = 
+           case_when(PJ005M1 == 1 ~ "Working", 
+                     PJ005M1 == 5 ~ "Retired", 
+                     PJ005M1 %in% c(2, 3, 4, 6, 7, 8) ~ "Not working")) %>% 
+  mutate("Working" = ifelse(PJ005M1_collapsed_label == "Working", 1, 0), 
+         "Retired" = ifelse(PJ005M1_collapsed_label == "Retired", 1, 0), 
+         "Not working" = ifelse(PJ005M1_collapsed_label == "Not working", 1, 0))
 
 # #Sanity check
-# table(ADAMS$AACURRWK_label, ADAMS$AACURRWK_collapsed_label, "useNA" = "ifany")
-# table(ADAMS$AACURRWK_collapsed_label, ADAMS$Working, useNA = "ifany")
-# table(ADAMS$AACURRWK_collapsed_label, ADAMS$Retired, useNA = "ifany")
-# table(ADAMS$AACURRWK_collapsed_label, ADAMS$`Not working`, useNA = "ifany")
+# table(HRS$PJ005M1, HRS$PJ005M1_label, "useNA" = "ifany")
+# table(HRS$PJ005M1_label, HRS$PJ005M1_collapsed_label, "useNA" = "ifany")
+# table(HRS$PJ005M1_collapsed_label, HRS$Working, useNA = "ifany")
+# table(HRS$PJ005M1_collapsed_label, HRS$Retired, useNA = "ifany")
+# table(HRS$PJ005M1_collapsed_label, HRS$`Not working`, useNA = "ifany")
 
 #---- **health and health behaviors ----
 # table(ADAMS$AYEAR, useNA = "ifany")
