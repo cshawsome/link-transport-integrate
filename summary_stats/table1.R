@@ -8,6 +8,56 @@ p_load("here", "tidyverse", "magrittr", "haven", "stringr", "NormPsy")
 
 options(scipen = 999)
 
+#---- read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+HRS_analytic <- 
+  read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
+
+#---- HRS ----
+#---- **analytic ----
+nrow(HRS_analytic)
+
+#---- ****HCAP selection ----
+table(HRS_analytic$HCAP_SELECT, useNA = "ifany")
+table(HRS_analytic$HCAP_SELECT, useNA = "ifany")/nrow(HRS_analytic)
+
+#---- ****married/partnered ----
+table(HRS_analytic$PCOUPLE, useNA = "ifany")
+table(HRS_analytic$PCOUPLE, useNA = "ifany")/nrow(HRS_analytic)
+
+#---- ****female ----
+table(HRS_analytic$Female, useNA = "ifany")
+table(HRS_analytic$Female, useNA = "ifany")/nrow(HRS_analytic)
+
+#---- ****age ----
+summary(HRS_analytic$PAGE)
+
+#---- ****race/ethnicity ----
+table(HRS_analytic$White, useNA = "ifany")
+table(HRS_analytic$White, useNA = "ifany")/nrow(HRS_analytic)
+
+table(HRS_analytic$Black, useNA = "ifany")
+table(HRS_analytic$Black, useNA = "ifany")/nrow(HRS_analytic)
+
+table(HRS_analytic$Hispanic, useNA = "ifany")
+table(HRS_analytic$Hispanic, useNA = "ifany")/nrow(HRS_analytic)
+
+#---- ****employment ----
+table(HRS_analytic$Working, useNA = "ifany")
+table(HRS_analytic$Working, useNA = "ifany")/nrow(HRS_analytic)
+
+table(HRS_analytic$Retired, useNA = "ifany")
+table(HRS_analytic$Retired, useNA = "ifany")/nrow(HRS_analytic)
+
+table(HRS_analytic$`Not working`, useNA = "ifany")
+table(HRS_analytic$`Not working`, useNA = "ifany")/nrow(HRS_analytic)
+
+#---- **CC ----
+HRS_CC <- na.omit(HRS_analytic)
+nrow(HRS_CC)
+
+#---- OLD ----
+
 #---- source scripts ----
 #custom read da dct function
 source(paste0("/Users/CrystalShaw/Desktop/Git Repos/useful-scripts/R/", 
