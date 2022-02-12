@@ -39,7 +39,7 @@ HRS_core <- read_da_dct(HRS_core_data_path, HRS_core_dict_path,
   dplyr::select("HHIDPN", "PJ005M1")
 
 #---- **RAND variables ----
-rand_waves <- 13 #Corresponding to 2016 HRS
+rand_waves <- seq(13) #Corresponding to 2016 HRS +-1 for imputation
 rand_variables <- 
   c("hhidpn",
     #Cognition (object naming (scissors and cactus), president naming, 
@@ -55,7 +55,7 @@ rand_variables <-
     paste0("r", rand_waves, "drinkn"))
 
 RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/", 
-                        "randhrs1992_2016v2.dta"), 
+                        "randhrs1992_2018v1.dta"), 
                  col_select = all_of(rand_variables)) %>% 
   mutate_at("hhidpn", as.character) %>% rename("HHIDPN" = "hhidpn")
 
@@ -171,43 +171,8 @@ HRS %<>%
 # table(HRS$PJ005M1_collapsed_label, HRS$Retired, useNA = "ifany")
 # table(HRS$PJ005M1_collapsed_label, HRS$`Not working`, useNA = "ifany")
 
-#---- **health and health behaviors ----
-# table(ADAMS$AYEAR, useNA = "ifany")
-#For repeated measures, want to take the wave most representative of ADAMS wave
-wave_updated_vars <- c("stroke", "hibpe", "diabe", "hearte", "bmi", 
-                       "iadla", "adla", "smoken", "drinkd", "drinkn")
-
-for(var in wave_updated_vars){
-  ADAMS %<>% 
-    mutate(!!paste0("A", var) := 
-             case_when(AYEAR %in% c(2001, 2002) ~ !!sym(paste0("r5", var)), 
-                       AYEAR %in% c(2003, 2004) ~ !!sym(paste0("r6", var))))
-}
-
-# #Sanity check
-# View(ADAMS[, c("AYEAR", paste0("r", seq(5, 6), "stroke"), "Astroke")] %>% 
-#        filter(!is.na(Astroke)))
-# colnames(ADAMS)
-
-#---- **filter: missing all neurospych + general cognitive measures ----
-neuro_cog_measures <- c("SELFCOG", "ANMSETOT_norm", "ANBWC20", "ANBWC86", 
-                        "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", "ANAFTOT", 
-                        "ANBNTTOT", "ANIMMCR", "ANDELCOR", "ANRECYES", "ANRECNO", 
-                        "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", 
-                        "ANTMASEC")
-
-ADAMS %<>% 
-  mutate("num_cog_measures" = 
-           rowSums(!is.na(ADAMS %>% 
-                            dplyr::select(all_of(neuro_cog_measures))))) %>% 
-  #N = 826; dropped n = 30
-  filter(num_cog_measures > 0)
-
-# #Sanity check
-# table(ADAMS$num_cog_measures, useNA = "ifany")
-
 #---- **summarize missingness ----
-colMeans(is.na(ADAMS))
+colMeans(is.na(HRS))
 
 #---- imputation-specific variables ----
 #---- **ADAMS proxy type ----
