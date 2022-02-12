@@ -39,7 +39,8 @@ HRS_core <- read_da_dct(HRS_core_data_path, HRS_core_dict_path,
   dplyr::select("HHIDPN", "PJ005M1")
 
 #---- **RAND variables ----
-rand_waves <- seq(13) #Corresponding to 2016 HRS +-1 for imputation
+rand_waves <- seq(12, 14) #Corresponding to 2016 HRS +-1 for imputation
+cog_waves <- seq(11, 13) #no 2018 cognitive data yet, so go back 2 years
 rand_variables <- 
   c("hhidpn",
     #Cognition (object naming (scissors and cactus), president naming, 
@@ -47,8 +48,8 @@ rand_variables <-
     #Health and health behaviors (ever/never stroke, ever/never diabetes, 
     # ever/never CVD, ever/never hypertension, smokes now, 
     # drinking days per week, number of drinks per day)
-    paste0("r", rand_waves, "cact"), paste0("r", rand_waves, "scis"), 
-    paste0("r", rand_waves, "pres"), paste0("r", rand_waves, "pstmem"),
+    paste0("r", cog_waves, "cact"), paste0("r", cog_waves, "scis"), 
+    paste0("r", cog_waves, "pres"), paste0("r", cog_waves, "pstmem"),
     paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "diabe"), 
     paste0("r", rand_waves, "hearte"), paste0("r", rand_waves, "hibpe"), 
     paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"), 
@@ -174,177 +175,14 @@ HRS %<>%
 #---- **summarize missingness ----
 colMeans(is.na(HRS))
 
-#---- imputation-specific variables ----
-#---- **ADAMS proxy type ----
-# table(ADAMS$AGQ101, useNA = "ifany")
-ADAMS %<>% 
-  mutate("proxy_type_label" = case_when(AGQ101 == 1 ~ "Spouse", 
-                                        AGQ101 == 2 ~ "Child", 
-                                        AGQ101 == 3 ~ "Grandchild", 
-                                        AGQ101 == 4 ~ "Professional", 
-                                        AGQ101 == 5 ~ "Child-in-law", 
-                                        AGQ101 == 6 ~ "Sibling",
-                                        AGQ101 == 7 ~ "Niece/Nephew",
-                                        AGQ101 == 8 ~ "Sibling of Spouse", 
-                                        AGQ101 == 9 ~ "Parent/Parent-in-law",
-                                        AGQ101 == 10 ~ "Other Relative",
-                                        AGQ101 == 13 ~ "Other", 
-                                        AGQ101 == 15 ~ "Blank")) %>%
-  mutate("proxy_type_collapsed_label" = 
-           case_when(AGQ101 == 1 ~ "Spouse", 
-                     AGQ101 == 2 ~ "Child", 
-                     AGQ101 %in% c(3, 5, 6, 7, 8, 9, 10) ~ "Other Relative", 
-                     AGQ101 %in% c(4, 13) ~ "Other")) %>% 
-  mutate("proxy_Spouse" = 
-           ifelse(proxy_type_collapsed_label == "Spouse", 1, 0), 
-         "proxy_Child" = 
-           ifelse(proxy_type_collapsed_label == "Child", 1, 0), 
-         "proxy_Other_Relative" = 
-           ifelse(proxy_type_collapsed_label == "Other Relative", 1, 0),
-         "proxy_Other" = 
-           ifelse(proxy_type_collapsed_label == "Other", 1, 0))
-
-# #Sanity check
-# table(ADAMS$proxy_type_label, ADAMS$proxy_type_collapsed_label, useNA = "ifany")
-# table(ADAMS$proxy_type_collapsed_label, ADAMS$proxy_Spouse, useNA = "ifany")
-# table(ADAMS$proxy_type_collapsed_label, ADAMS$proxy_Child, useNA = "ifany")
-# table(ADAMS$proxy_type_collapsed_label, ADAMS$proxy_Other, useNA = "ifany")
-# table(ADAMS$proxy_type_collapsed_label, ADAMS$proxy_Other_Relative, 
-#       useNA = "ifany")
-
-#---- **HRS married/partnered status ----
-# table(ADAMS$r5mpart, useNA = "ifany")
-
-#---- **HRS BWC 20 and 86 ----
-# table(ADAMS$r5bwc20, useNA = "ifany")
-# table(ADAMS$r6bwc86, useNA = "ifany")
-# table(ADAMS$ANBWC20, useNA = "ifany")
-
-bwc_vars <- c(paste0("r", cog_test_waves, "bwc20"), 
-              paste0("r", seq(5, 6), "bwc86"))
-ADAMS %<>% 
-  mutate_at(.vars = all_of(bwc_vars), 
-            #Correct on 2nd try = correct
-            function(x) ifelse(x == 2, 1, x))
-
-# #Sanity check
-# table(ADAMS$r5bwc20, useNA = "ifany")
-# table(ADAMS$r6bwc86, useNA = "ifany")
-
-#---- **HRS object naming: cactus, scissors ----
-# table(ADAMS$ANCACTUS, useNA = "ifany")
-# table(ADAMS$ANSCISOR, useNA = "ifany")
-# table(ADAMS$r5scis, useNA = "ifany")
-# table(ADAMS$r5cact, useNA = "ifany")
-
-#---- **HRS total cognition ----
-# table(ADAMS$SELFCOG, useNA = "ifany")
-# table(ADAMS$r5cogtot, useNA = "ifany")
-
-#---- **HRS 10-word recall (immediate and delayed) ----
-# table(ADAMS$ANIMMCR1, useNA = "ifany")
-# table(ADAMS$ANDELCOR, useNA = "ifany")
-# table(ADAMS$r5imrc, useNA = "ifany")
-# table(ADAMS$r5dlrc, useNA = "ifany")
-
-#---- **HRS President naming ----
-# table(ADAMS$ANPRES, useNA = "ifany")
-# table(ADAMS$r5pres, useNA = "ifany")
-
-#---- **HRS serial 7s ----
-# table(ADAMS$ANSER7T, useNA = "ifany")
-# table(ADAMS$r5ser7, useNA = "ifany")
-
-#---- **HRS subjective cognitive decline ----
-# table(ADAMS$r5pstmem, useNA = "ifany")
-for(wave in cog_test_waves){
-  ADAMS %<>%  
-    mutate(!!paste0("r", wave, "pstmem_Better") := 
-             ifelse(!!sym(paste0("r", wave, "pstmem")) == 1, 1, 0), 
-           !!paste0("r", wave, "pstmem_Same") := 
-             ifelse(!!sym(paste0("r", wave, "pstmem")) == 2, 1, 0), 
-           !!paste0("r", wave, "pstmem_Worse") := 
-             ifelse(!!sym(paste0("r", wave, "pstmem")) == 3, 1, 0))
-}
-
-# #Sanity check
-# table(ADAMS$r5pstmem, ADAMS$r5pstmem_Better, useNA = "ifany")
-# table(ADAMS$r5pstmem, ADAMS$r5pstmem_Same, useNA = "ifany")
-# table(ADAMS$r5pstmem, ADAMS$r5pstmem_Worse, useNA = "ifany")
-# table(ADAMS$r6pstmem, ADAMS$r6pstmem_Better, useNA = "ifany")
-
-#---- sanity check health vars ----
-#---- **bmi ----
-bmi_vars <- paste0("r", rand_waves, "bmi")
-# lapply(ADAMS[, bmi_vars], FUN = hist)
-# lapply(ADAMS[, bmi_vars], FUN = table)
-# lapply(ADAMS[, bmi_vars], FUN = which.max)
-# 
-# #obs 297 is an outlier, so check height and weight data
-height_vars <- paste0("r", rand_waves, "height")
-# weight_vars <- paste0("r", rand_waves, "weight")
-# ADAMS[297, height_vars] # 3.08 ft
-# mean(unlist(ADAMS[297, weight_vars])) # 139.5 lbs
-
-#set this person to missing for all their bmi data and all height data
-ADAMS[297, bmi_vars] <- NA
-ADAMS[297, height_vars] <- NA
-
-#---- **height ----
-# height_vars <- paste0("r", rand_waves, "height")
-# lapply(ADAMS[, height_vars], FUN = hist)
-# lapply(ADAMS[, height_vars], FUN = table)
-# lapply(ADAMS[, height_vars], FUN = which.min)
-# lapply(ADAMS[, height_vars], FUN = which.max)
-# 
-# #obs 574 may be a low outlier, so check height data
-# ADAMS[574, height_vars] # 4.4 ft, seems fine
-# 
-# #obs 701 may be a high outlier, so check height data
-# ADAMS[701, height_vars] # 6.3 ft, seems fine
-
-#---- **weight ----
-weight_vars <- paste0("r", rand_waves, "weight")
-# lapply(ADAMS[, weight_vars], FUN = hist)
-# lapply(ADAMS[, weight_vars], FUN = table)
-# lapply(ADAMS[, weight_vars], FUN = function(x) min(x, na.rm = TRUE))
-# lapply(ADAMS[, weight_vars], FUN = function(x) max(x, na.rm = TRUE))
-# lapply(ADAMS[, weight_vars], FUN = which.min)
-# 
-# #obs 409 may be a low outlier in wave 7
-# ADAMS[409, weight_vars] # 57 lbs, seems like an error
-
-#set this person to missing for all their bmi data and all weight data
-ADAMS[409, c(bmi_vars, weight_vars)] <- NA
-
-#---- **drinking days ----
-# drinkd_vars <- paste0("r", rand_waves, "drinkd")
-# lapply(ADAMS[, drinkd_vars], FUN = table)
-
-#---- **drinks per day ----
-# drinkn_vars <- paste0("r", rand_waves, "drinkn")
-# lapply(ADAMS[, drinkn_vars], FUN = table)
-# 
-# #who is this person with 16 drinks per day?? 
-# # I'm going to leave them in, cuz who's to say **shrug**
-# lapply(ADAMS[, drinkn_vars], FUN = which.max)
-# ADAMS[651, c(drinkd_vars, drinkn_vars)]
-
 #---- save datasets ----
 #clean data
-ADAMS %>% write_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_clean.csv"))
+HRS %>% write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_clean.csv"))
 
 #pared-down analytic data
-remove <- c("AASSESS", "AACURRWK", "AACURRWK_collapsed_label", "AACURRWK_label", 
-            "AAMARRD", "AAMARRD_collapsed_label", "AAMARRD_label", "Adem_cat", 
-            "ADFDX1", "ANSMEM2", "ANSMEM2_collapsed_label", "ANSMEM2_label", 
-            paste0("AGQ", c(seq(14, 29), 101)), "avg_proxy_cog", "ETHNIC",
-            "avg_proxy_cog_label", "avg_proxy_cog_collapsed_label", "GENDER",
-            paste0("ANBWC", c("201", "202", "861", "862")), "GENDER_label",
-            paste0("ANIMMCR", seq(1, 3)), "ETHNIC_label", "num_cog_measures", 
-            "proxy_type_label", "proxy_type_collapsed_label", 
-            paste0("r", cog_test_waves, "pstmem"), 
-            paste0("r", rand_waves, "bmi"))
+remove <- c("PIWTYPE", "RACE", "RACE_label", "RACE_White", "RACE_Black", 
+            "RACE_Other", "HISPANIC", "HISPANIC_indicator", "ETHNIC_label", 
+            "Other", "GENDER", "GENDER_label")
 
-ADAMS %>% dplyr::select(-all_of(remove)) %>% 
-  write_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_analytic.csv"))
+HRS %>% dplyr::select(-all_of(remove)) %>% 
+  write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
