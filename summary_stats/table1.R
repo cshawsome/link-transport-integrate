@@ -56,6 +56,42 @@ table(HRS_analytic$`Not working`, useNA = "ifany")/nrow(HRS_analytic)
 HRS_CC <- na.omit(HRS_analytic)
 nrow(HRS_CC)
 
+#---- ****HCAP selection ----
+table(HRS_CC$HCAP_SELECT, useNA = "ifany")
+table(HRS_CC$HCAP_SELECT, useNA = "ifany")/nrow(HRS_CC)
+
+#---- ****married/partnered ----
+table(HRS_CC$PCOUPLE, useNA = "ifany")
+table(HRS_CC$PCOUPLE, useNA = "ifany")/nrow(HRS_CC)
+
+#---- ****female ----
+table(HRS_CC$Female, useNA = "ifany")
+table(HRS_CC$Female, useNA = "ifany")/nrow(HRS_CC)
+
+#---- ****age ----
+hist(HRS_CC$PAGE)
+summary(HRS_CC$PAGE)
+
+#---- ****race/ethnicity ----
+table(HRS_CC$White, useNA = "ifany")
+table(HRS_CC$White, useNA = "ifany")/nrow(HRS_CC)
+
+table(HRS_CC$Black, useNA = "ifany")
+table(HRS_CC$Black, useNA = "ifany")/nrow(HRS_CC)
+
+table(HRS_CC$Hispanic, useNA = "ifany")
+table(HRS_CC$Hispanic, useNA = "ifany")/nrow(HRS_CC)
+
+#---- ****employment ----
+table(HRS_CC$Working, useNA = "ifany")
+table(HRS_CC$Working, useNA = "ifany")/nrow(HRS_CC)
+
+table(HRS_CC$Retired, useNA = "ifany")
+table(HRS_CC$Retired, useNA = "ifany")/nrow(HRS_CC)
+
+table(HRS_CC$`Not working`, useNA = "ifany")
+table(HRS_CC$`Not working`, useNA = "ifany")/nrow(HRS_CC)
+
 #---- OLD ----
 
 #---- source scripts ----
