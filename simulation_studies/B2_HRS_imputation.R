@@ -42,12 +42,14 @@ set.seed(20220211)
 start <- Sys.time()
 fast_impute(predictor_matrix = predict, data = HRS_analytic, 
             path_for_output = paste0(path_to_box, "data/HRS/cleaned/"),
-            method = "PMM", m = 75, maxit = 15)
+            method = "PMM", m = 2, maxit = 15)
 end <- Sys.time() - start
 
 #---- read in results ----
-ADAMS_imputed <- 
-  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets"))
+HRS_imputed <- 
+  readRDS(paste0(path_to_box, "data/HRS/cleaned/MI/MI_datasets"))
+
+#---- OLD ----
 
 #---- derive post-imputation variables ----
 hrs_waves <- seq(4, 7)
