@@ -40,8 +40,37 @@ ADAMS_imputed_clean %<>%
 # head(ADAMS_imputed_clean[[25]]$cell_ID)
 
 #---- parameter estimation ----
-continuous_vars <- c("AAGE", "EDYRS", "ANMSETOT_norm", "ANBNTTOT", "ANIMMCR", 
-                     "ANDELCOR", "ANSER7T", "ANAFTOT", "")
+continuous_vars <- selected_vars[str_detect(selected_vars, "_Z")] %>% 
+  str_remove_all(., "_Z")
+
+normal_parameter_list <- list() 
 
 #---- **Normal distribution ----
-
+for(cell in cell_IDs){
+  filtered_data <- 
+    lapply(ADAMS_imputed_clean, function(x) x %>% filter(cell_ID == cell))
+  
+  #counts are going to differ across datasets because stroke is imputed
+  min_count <- lapply(filtered_data, nrow) %>% unlist() %>% min()
+  filtered_data <- 
+    lapply(filtered_data, function(x) 
+      sample_n(x, size = min_count, replace = FALSE) %>% 
+        dplyr::select(all_of(continuous_vars)))
+  
+  #---- **mean matrix ----
+  M = Reduce("+", filtered_data)/length(filtered_data)
+  
+  #---- **row covariance ----
+  #independent because independent observations
+  U = diag(1, nrow = min_count, ncol = min_count)
+  
+  #---- **column covariance ----
+  #center matrices and take (matrix)^T(matrix)
+  centered_data <- lapply(filtered_data, function(x) x - M)
+  prod_data <- lapply(centered_data, function(x) 
+    t(as.matrix(x)) %*% as.matrix(x))
+  V = Reduce("+", prod_data)/(min_count*length(prod_data))
+  
+  #---- **save values ----
+  normal_parameter_list[[cell]] <- list("M" = M, "U" = U, "V" = V)
+}
