@@ -12,6 +12,8 @@ ADAMS_imputed_clean <-
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
 #---- cell IDs ----
+#Merge Black, Hispanic, and Stroke (ever/never)
+# Ex: 001 is a white participant with a history of stroke
 sample <- ADAMS_imputed_clean[[1]]
 cell_IDs <- 
   as.data.frame(table(sample$Black, sample$Hispanic, sample$Astroke)) %>%
