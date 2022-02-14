@@ -7,10 +7,12 @@ p_load("tidyverse")
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+#---- **ADAMS imputed data ----
 ADAMS_imputed_clean <- 
   readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned")) 
 
-#---- read in variable selection results ----
+#---- **variable selection results ----
 selected_vars <- 
   read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
                   "model_coefficients.csv")) %>% 
