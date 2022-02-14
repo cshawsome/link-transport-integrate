@@ -71,6 +71,11 @@ for(cell in cell_IDs){
     t(as.matrix(x)) %*% as.matrix(x))
   V = Reduce("+", prod_data)/(min_count*length(prod_data))
   
-  #---- **save values ----
+  #---- **store in list ----
   normal_parameter_list[[cell]] <- list("M" = M, "U" = U, "V" = V)
 }
+
+#---- **save parameters ----
+saveRDS(normal_parameter_list, paste0(path_to_box, "analyses/simulation_study/", 
+                                      "continuous_distribution_parameters/", 
+                                      "normal_parameters"))
