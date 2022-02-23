@@ -42,6 +42,15 @@ var_list <- c("AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", "Not working",
               "Ahearte", "Ahibpe", "Asmoken", "Amoderate_drinking", 
               "Aheavy_drinking")
 
+#---- stack data and add weights ----
+ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
+  mutate("weights" = 1/nrow(ADAMS_imputed_stacked))
+
+# #Sanity check
+# nrow(ADAMS_imputed_stacked) == 25*nrow(ADAMS_imputed_clean[[1]])
+# 1/nrow(ADAMS_imputed_stacked)
+# table(ADAMS_imputed_stacked$weights, useNA = "ifany")
+
 #---- variable selection ----
 #---- **best lambda function ----
 #choose the best lambda for lasso regression based on 1000 runs of 10-fold CV
