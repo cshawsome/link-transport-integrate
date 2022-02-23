@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse")
+p_load("here", "tidyverse", "LaplacesDemon")
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -35,5 +35,32 @@ cell_IDs <-
 HRS_analytic %<>% 
   unite("cell_ID", c("Black", "Hispanic", "r13stroke"), sep = "", remove = FALSE)
 
-#Sanity check
-head(HRS_analytic$cell_ID)
+# #Sanity check
+# head(HRS_analytic$cell_ID)
+# table(HRS_analytic$cell_ID)
+
+#---- synthetic data ----
+#---- **multivariate normal ----
+cell_counts <- table(HRS_analytic$cell_ID) 
+
+for(ID in cell_IDs){
+  HRS_analytic
+}
+
+ID = "000"
+start_1 <- Sys.time()
+test_1 <- matrixNormal::rmatnorm(s = 1, 
+                               M = as.matrix(normal_parameter_list[[ID]]$M), 
+                               U = as.matrix(normal_parameter_list[[ID]]$U),
+                               V = as.matrix(normal_parameter_list[[ID]]$V))
+end_1 <- Sys.time() - start_1
+
+start_2 <- Sys.time()
+test_2 <- LaplacesDemon::rmatrixnorm(M = as.matrix(normal_parameter_list[[ID]]$M), 
+                                     U = as.matrix(normal_parameter_list[[ID]]$U),
+                                     V = as.matrix(normal_parameter_list[[ID]]$V))
+end_2 <- Sys.time() - start_2
+
+
+
+#---- predicted impairment ----
