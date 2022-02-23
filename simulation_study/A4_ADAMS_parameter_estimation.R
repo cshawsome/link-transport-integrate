@@ -35,35 +35,33 @@ continuous_vars <- selected_vars[str_detect(selected_vars, "_Z")] %>%
 normal_parameter_list <- list() 
 
 #---- **Normal distribution ----
-for(cell in cell_IDs){
+for(group in c("Unimpaired", "Other", "MCI")){
   filtered_data <- 
-    lapply(ADAMS_imputed_clean, function(x) x %>% filter(cell_ID == cell))
+    ADAMS_imputed_stacked[which(ADAMS_imputed_stacked[, group] == 1), ]
   
-  #counts are going to differ across datasets because stroke is imputed
-  min_count <- lapply(filtered_data, nrow) %>% unlist() %>% min()
-  filtered_data <- 
-    lapply(filtered_data, function(x) 
-      sample_n(x, size = min_count, replace = FALSE) %>% 
-        dplyr::select(all_of(continuous_vars)))
+  #---- ****predictors and outcomes ----
+  X <- as.matrix(filtered_data[, c("Black", "Hispanic", "Astroke")] %>% 
+                   mutate("Intercept" = 1)) 
+  Y <- as.matrix(filtered_data[, continuous_vars])
   
-  #---- **mean matrix ----
-  M = Reduce("+", filtered_data)/length(filtered_data)
+  #---- ****beta_hat ----
+  beta_hat <- solve(t(X)%*%X)%*%t(X)%*%Y
   
-  #---- **row covariance ----
-  #independent because independent observations
+  #---- ****row covariance ----
   U = diag(1, nrow = min_count, ncol = min_count)
   
-  #---- **column covariance ----
+  #---- ****column covariance ----
   #center matrices and take (matrix)^T(matrix)
   centered_data <- lapply(filtered_data, function(x) x - M)
   prod_data <- lapply(centered_data, function(x) 
     t(as.matrix(x)) %*% as.matrix(x))
   V = Reduce("+", prod_data)/(min_count*length(prod_data))
   
-  #---- **store in list ----
-  normal_parameter_list[[cell]] <- list("M" = M, "U" = U, "V" = V)
+  #---- ****store in list ----
+  normal_parameter_list[[group]] <- 
+    list("beta_center" = beta_hat, "row_cov" = XtX_inv, 
+         "sigma_center" = sigma_hat, "sigma_dof" = dof)
 }
-
 #---- **save parameters ----
 saveRDS(normal_parameter_list, paste0(path_to_box, "analyses/simulation_study/", 
                                       "continuous_distribution_parameters/", 
