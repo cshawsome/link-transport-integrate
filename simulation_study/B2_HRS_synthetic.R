@@ -11,7 +11,7 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 #---- **HRS analytic dataset ----
 HRS_analytic <- 
   read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv")) %>%
-  #complete-case for now
+  #complete-case data
   na.omit()
 
 #---- **continuous distribution parameters ----
