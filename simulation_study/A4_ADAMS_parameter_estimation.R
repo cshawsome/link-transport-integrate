@@ -18,28 +18,15 @@ selected_vars <-
                   "model_coefficients.csv")) %>% 
   dplyr::select("Variable") %>% unlist()
 
-#---- cell IDs ----
+#---- **stack data and add cell IDs ----
 #Merge Black, Hispanic, and Stroke (ever/never)
 # Ex: 001 is a white participant with a history of stroke
-sample <- ADAMS_imputed_clean[[1]]
-cell_IDs <- 
-  as.data.frame(table(sample$Black, sample$Hispanic, sample$Astroke)) %>%
-  set_colnames(c("Black", "Hispanic", "Stroke", "Count")) %>% 
-  filter(!(Black == 1 & Hispanic == 1)) %>% 
-  unite("cell_ID", c("Black", "Hispanic", "Stroke"), sep = "") %>% 
-  dplyr::select("cell_ID") %>% unlist()
+ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
+  unite("cell_ID", c("Black", "Hispanic", "Astroke"), sep = "", remove = FALSE)
 
-#add column to all MI datasets
-ADAMS_imputed_clean %<>% 
-  lapply(., function(x) x %<>% 
-           unite("cell_ID", c("Black", "Hispanic", "Astroke"), sep = "", 
-                 remove = FALSE))
-
-# #Sanity check
-# colnames(ADAMS_imputed_clean[[1]])
-# head(ADAMS_imputed_clean[[1]]$cell_ID)
-# colnames(ADAMS_imputed_clean[[25]])
-# head(ADAMS_imputed_clean[[25]]$cell_ID)
+#Sanity check
+nrow(ADAMS_imputed_stacked) == 25*nrow(ADAMS_imputed_clean[[1]])
+table(ADAMS_imputed_stacked$cell_ID, useNA = "ifany")
 
 #---- parameter estimation ----
 continuous_vars <- selected_vars[str_detect(selected_vars, "_Z")] %>% 
