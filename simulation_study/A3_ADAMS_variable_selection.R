@@ -44,11 +44,11 @@ var_list <- c("AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", "Not working",
 
 #---- stack data and add weights ----
 ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
-  mutate("weights" = 1/nrow(ADAMS_imputed_stacked))
+  mutate("weights" = 1/length(ADAMS_imputed_clean))
 
 # #Sanity check
 # nrow(ADAMS_imputed_stacked) == 25*nrow(ADAMS_imputed_clean[[1]])
-# 1/nrow(ADAMS_imputed_stacked)
+# 1/length(ADAMS_imputed_clean)
 # table(ADAMS_imputed_stacked$weights, useNA = "ifany")
 
 #---- variable selection ----
@@ -99,23 +99,16 @@ end <- Sys.time() - start
 
 #---- **list predictors ----
 selected_vars <- 
-  matrix(nrow = (length(var_list) + 1), ncol = (1 + 3*25)) %>% 
+  matrix(nrow = (length(var_list) + 1), ncol = (1 + 3)) %>% 
   as.data.frame() %>%
-  set_colnames(c("Variable", 
-                 str_replace(apply(expand_grid(c("Unimpaired", "Other", "MCI"), 
-                                               seq(1, 25)) %>% 
-                                     set_colnames(c("model", "number")) %>% 
-                                     arrange(number), 1, paste0, 
-                                   collapse = "_"), " ", ""))) %>% 
+  set_colnames(c("Variable", "Unimpaired", "Other", "MCI")) %>% 
   mutate("Variable" = c("(Intercept)", var_list))
 
+for(model in c("Unimpaired", "Other", "MCI")){
+  selected_vars[, model] <- 
+    as.vector(coef(variable_selection$models[[model]]))
+}  
 
-for(m in 1:25){
-  for(model in c("Unimpaired", "Other", "MCI")){
-    selected_vars[, paste0(model, "_", m)] <- 
-      as.vector(coef(variable_selection[[m]]$models[[model]]))
-  }  
-}
 
 #remove variables that are never selected
 selected_vars %<>% mutate("times_selected" = rowSums(selected_vars[, -1])) %>% 
