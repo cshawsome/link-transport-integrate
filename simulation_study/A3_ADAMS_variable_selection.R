@@ -54,8 +54,8 @@ ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>%
 #---- variable selection ----
 #---- **best lambda function ----
 #choose the best lambda for lasso regression based on 1000 runs of 10-fold CV
-best_lambda <- function(x, y){
-  cv_model <- cv.glmnet(x, y, alpha = 1)
+best_lambda <- function(x, y, weights){
+  cv_model <- cv.glmnet(x, y, alpha = 1, weights = weights)
   min_lambda <- cv_model$lambda.min
   return(min_lambda)
 }
@@ -79,13 +79,14 @@ lasso_reg <- function(data, var_list){
     #---- define outcome and predictor variables ----
     y <- model_data[, class]
     x <- data.matrix(model_data[, var_list])
+    weights <- data.matrix(model_data[, "weights"])
     
     #---- choose best lambda ----
-    lambda <- median(replicate(1000, best_lambda(x, y)))
+    lambda <- median(replicate(1000, best_lambda(x, y, weights)))
     
     #---- store results ----
     model_list[[class]] <- 
-      glmnet(x, y, alpha = 1, lambda = lambda)
+      glmnet(x, y, alpha = 1, lambda = lambda, weights = weights)
     
     lambda_vec[class] <- lambda
   }
@@ -93,7 +94,7 @@ lasso_reg <- function(data, var_list){
 }
 
 start <- Sys.time()
-variable_selection <- lapply(ADAMS_imputed_clean, lasso_reg, var_list)
+variable_selection <- lasso_reg(ADAMS_imputed_stacked, var_list)
 end <- Sys.time() - start
 
 #---- **list predictors ----
@@ -128,19 +129,6 @@ write_csv(selected_vars, paste0(path_to_box, "analyses/variable_selection/",
                                 "model_coefficients.csv"))
 
 #---- OLD ----
-# #---- average MI datasets ----
-# avg_ADAMS_imputed <- 
-#   Reduce("+", ADAMS_imputed_clean)/length(ADAMS_imputed_clean)
-# 
-# indicator_vars <- c("Working", "White", "ANSMEM2_Same", "avg_proxy_cog_Same", 
-#                     "Ano_drinking", "Female", "Married/partnered", "Not working", 
-#                     "Retired", "Black", "Hispanic", "ANPRES", "ANSCISOR",
-#                     "ANSMEM2_Better", "ANSMEM2_Worse", "avg_proxy_cog_Better", 
-#                     "avg_proxy_cog_Worse", "Adiabe", "Ahearte", "Ahibpe", 
-#                     "Asmoken", "Astroke", "Amoderate_drinking", "Aheavy_drinking", 
-#                     "Unimpaired", "MCI", "Dementia", "Other", "ANCACTUS")
-# avg_ADAMS_imputed[, indicator_vars] <- round(avg_ADAMS_imputed[, indicator_vars])
-# 
 # #---- models ----
 # 
 # 
