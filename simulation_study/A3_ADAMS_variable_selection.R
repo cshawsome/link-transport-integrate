@@ -109,22 +109,24 @@ for(model in c("Unimpaired", "Other", "MCI")){
     as.vector(coef(variable_selection$models[[model]]))
 }  
 
+#---- **truncate decimals ----
+#truncate at 2 decimal places
+selected_vars[, 2:4] <- trunc(selected_vars[, 2:4]*10^2)/10^2
 
 #remove variables that are never selected
 selected_vars %<>% mutate("times_selected" = rowSums(selected_vars[, -1])) %>% 
   filter(times_selected != 0)
 
 #---- **save results ----
-saveRDS(variable_selection, paste0(path_to_box, "analyses/variable_selection/", 
-                                   "ADAMS_lasso_models"))
+saveRDS(variable_selection, paste0(path_to_box, "analyses/simulation_study/", 
+                                   "variable_selection/ADAMS_lasso_models"))
 
-write_csv(selected_vars, paste0(path_to_box, "analyses/variable_selection/", 
-                                "model_coefficients.csv"))
+write_csv(selected_vars %>% dplyr::select(-one_of("times_selected")), 
+          paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
+                 "model_coefficients.csv"))
 
 #---- OLD ----
 # #---- models ----
-# 
-# 
 # #---- **Unimpaired vs. Impaired ----
 # unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic + 
 #                                `Not working` + Retired + ANMSETOT_norm_Z + 
