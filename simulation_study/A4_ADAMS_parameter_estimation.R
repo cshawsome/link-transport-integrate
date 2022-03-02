@@ -44,7 +44,7 @@ for(group in c("Unimpaired", "Other", "MCI")){
     ADAMS_imputed_stacked[which(ADAMS_imputed_stacked[, group] == 1), ]
   
   #---- ****predictors and outcomes ----
-  X <- as.matrix(filtered_data[, c("Black", "Hispanic", "Astroke")] %>% 
+  X <- as.matrix(filtered_data[, c("black", "hispanic", "stroke")] %>% 
                    mutate("Intercept" = 1)) 
   Y <- as.matrix(filtered_data[, continuous_vars])
   
