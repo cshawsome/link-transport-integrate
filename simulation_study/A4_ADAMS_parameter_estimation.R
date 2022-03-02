@@ -8,11 +8,12 @@ p_load("tidyverse")
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
-
 #---- **ADAMS imputed data ----
 ADAMS_imputed_clean <- 
-  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned")) 
+  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned"))
+
+#---- **variable labels ----
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 
 #---- **variable selection results ----
 selected_vars <- 
