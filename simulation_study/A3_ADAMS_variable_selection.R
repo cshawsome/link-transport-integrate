@@ -11,6 +11,8 @@ ADAMS_imputed_clean <-
   readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
+
 #---- variable list ----
 #variables and groups in order of priority for model inclusion 
 # (based on conceptual model and prioritizing variables with least missingness
@@ -117,11 +119,15 @@ selected_vars[, 2:4] <- trunc(selected_vars[, 2:4]*10^2)/10^2
 selected_vars %<>% mutate("times_selected" = rowSums(selected_vars[, -1])) %>% 
   filter(times_selected != 0)
 
+#----**relabel vars ----
+selected_vars %<>% left_join(., variable_labels, by = c("Variable" = "ADAMS")) 
+
 #---- **save results ----
 saveRDS(variable_selection, paste0(path_to_box, "analyses/simulation_study/", 
                                    "variable_selection/ADAMS_lasso_models"))
 
-write_csv(selected_vars %>% dplyr::select(-one_of("times_selected")), 
+write_csv(selected_vars %>% 
+            dplyr::select(c("data_label", "Unimpaired", "Other", "MCI")), 
           paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
                  "model_coefficients.csv"))
 
