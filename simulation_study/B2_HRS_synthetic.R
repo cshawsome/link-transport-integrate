@@ -18,8 +18,12 @@ normal_parameter_list <-
                  "continuous_distribution_parameters/", 
                  "normal_parameters"))
 
+#---- source functions ----
+source(here("simulation_study", "functions", "generate_synthetic_continuous.R"))
+
 #---- synthetic data ----
 #---- **multivariate normal ----
+
 
 for(ID in cell_IDs){
   HRS_analytic
