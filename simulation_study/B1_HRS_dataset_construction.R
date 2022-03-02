@@ -19,9 +19,9 @@ HRS_tracker_dict_path <-
 
 HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
                            HHIDPN = "TRUE") %>% 
-  #select variables: ID, 2016 Wave participation, 2016 HCAP selection, 
-  # 2016 married/partnered status, sex/gender, age, race, ethnicity, 
-  dplyr::select("HHIDPN", "PIWTYPE", "HCAP_SELECT", "PCOUPLE", "GENDER", "PAGE", 
+  #select variables: ID, 2016 Wave participation, 2016 married/partnered status, 
+  # sex/gender, age, race, ethnicity, 
+  dplyr::select("HHIDPN", "PIWTYPE", "PCOUPLE", "GENDER", "PAGE", 
                 "RACE", "HISPANIC", "SCHLYRS") %>%
   #N = 43398
   #filter to those who completed 2016 Wave interview (N = 20911; dropped n = 22487)
