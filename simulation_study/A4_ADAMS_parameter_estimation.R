@@ -24,9 +24,9 @@ selected_vars <-
 ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
   unite("cell_ID", c("Black", "Hispanic", "Astroke"), sep = "", remove = FALSE)
 
-#Sanity check
-nrow(ADAMS_imputed_stacked) == 25*nrow(ADAMS_imputed_clean[[1]])
-table(ADAMS_imputed_stacked$cell_ID, useNA = "ifany")
+# #Sanity check
+# nrow(ADAMS_imputed_stacked) == 25*nrow(ADAMS_imputed_clean[[1]])
+# table(ADAMS_imputed_stacked$cell_ID, useNA = "ifany")
 
 #---- parameter estimation ----
 continuous_vars <- selected_vars[str_detect(selected_vars, "_Z")] %>% 
@@ -44,18 +44,20 @@ for(group in c("Unimpaired", "Other", "MCI")){
                    mutate("Intercept" = 1)) 
   Y <- as.matrix(filtered_data[, continuous_vars])
   
-  #---- ****beta_hat ----
-  beta_hat <- solve(t(X)%*%X)%*%t(X)%*%Y
-  
   #---- ****row covariance ----
-  U = diag(1, nrow = min_count, ncol = min_count)
+  XtX_inv <- solve(t(X)%*%X)
   
-  #---- ****column covariance ----
+  #---- ****beta_hat ----
+  beta_hat <- XtX_inv%*%t(X)%*%Y
+  
+  #---- ****sigma_hat ----
   #center matrices and take (matrix)^T(matrix)
-  centered_data <- lapply(filtered_data, function(x) x - M)
-  prod_data <- lapply(centered_data, function(x) 
-    t(as.matrix(x)) %*% as.matrix(x))
-  V = Reduce("+", prod_data)/(min_count*length(prod_data))
+  centered_data <- Y - X%*%beta_hat
+  sigma_hat <- t(centered_data)%*%centered_data
+  
+  #---- ****dof ----
+  #dof = n + p + 1 - q
+  dof = nrow(Y) + ncol(beta_hat) + 1 - nrow(beta_hat)
   
   #---- ****store in list ----
   normal_parameter_list[[group]] <- 
