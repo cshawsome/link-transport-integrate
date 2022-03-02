@@ -167,7 +167,31 @@ HRS %<>%
 # table(HRS$PJ005M1_collapsed_label, HRS$Retired, useNA = "ifany")
 # table(HRS$PJ005M1_collapsed_label, HRS$`Not working`, useNA = "ifany")
 
-#---- **summarize missingness ----
+#---- derive variables ----
+#---- **drinking behavior ----
+HRS %<>% 
+  mutate("drinks_per_week" = r13drinkd*r13drinkn) %>%
+  mutate("drink_cat" = 
+           case_when(drinks_per_week == 0 ~ 1,
+                     Female == 0 & 
+                       (drinks_per_week >= 1 & drinks_per_week < 14) ~ 2,
+                     Female == 1 &
+                       (drinks_per_week >= 1 & drinks_per_week < 7) ~ 2,
+                     Female == 0 &
+                       (drinks_per_week >= 14 | r13drinkn >= 4) ~ 3,
+                     Female == 1 &
+                       (drinks_per_week >= 7 | r13drinkn >= 3) ~ 3)) %>% 
+  mutate("drink_cat_label" = 
+           case_when(drink_cat == 1 ~ "No Drinking", 
+                     drink_cat == 2 ~ "Moderate Drinking", 
+                     drink_cat == 3 ~ "Heavy Drinking")) %>% 
+  mutate("no_drinking" = ifelse(drink_cat_label == "No Drinking", 1, 0), 
+         "moderate_drinking" = 
+           ifelse(drink_cat_label == "Moderate Drinking", 1, 0), 
+         "heavy_drinking" = 
+           ifelse(drink_cat_label == "Heavy Drinking", 1, 0))
+
+#---- summarize missingness ----
 colMeans(is.na(HRS))
 
 #---- save datasets ----
@@ -178,7 +202,8 @@ HRS %>% write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_clean.csv"))
 remove <- c("PIWTYPE", "PAGE", "RACE", "RACE_label", "RACE_White", "RACE_Black", 
             "RACE_Other", "HISPANIC", "HISPANIC_indicator", "ETHNIC_label", 
             "Other", "GENDER", "GENDER_label", "PJ005M1", "PJ005M1_label", 
-            "PJ005M1_collapsed_label")
+            "PJ005M1_collapsed_label", "drinks_per_week", "drink_cat", 
+            "drink_cat_label")
 
 HRS %>% dplyr::select(-all_of(remove)) %>% na.omit() %>%
   write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
