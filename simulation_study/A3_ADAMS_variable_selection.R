@@ -15,7 +15,7 @@ ADAMS_imputed_clean <-
 #variables and groups in order of priority for model inclusion 
 # (based on conceptual model and prioritizing variables with least missingness
 # in unimputed datasets)
-#sociodemographics: "AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", 
+#sociodemographics: "AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS_Z", 
 # "Not working", "Retired", "Married/partnered"
 # 
 # neuropsych_gen_cog: "ANMSETOT_norm_Z", "ANBNTTOT_Z", "ANIMMCR_Z", "ANDELCOR_Z",
@@ -32,7 +32,7 @@ ADAMS_imputed_clean <-
 #Because we Z-scored continuous variables, the interpretations for beta are for 
 # a 1 SD change in the continuous predictors
 
-var_list <- c("AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS", "Not working", 
+var_list <- c("AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS_Z", "Not working", 
               "Retired", "Married/partnered", "ANMSETOT_norm_Z", "ANBNTTOT_Z", 
               "ANIMMCR_Z", "ANDELCOR_Z", "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", 
               "ANRECNO_Z", "ANWM1TOT_Z","ANWM2TOT_Z", "ANBWC20_Z", "ANBWC86_Z", 
