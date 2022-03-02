@@ -8,6 +8,8 @@ p_load("tidyverse")
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
+
 #---- **ADAMS imputed data ----
 ADAMS_imputed_clean <- 
   readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned")) 
@@ -16,14 +18,16 @@ ADAMS_imputed_clean <-
 selected_vars <- 
   read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
                   "model_coefficients.csv")) %>% 
-  dplyr::select("Variable") %>% unlist()
+  dplyr::select("data_label") %>% unlist()
 
 #---- **stack data and add cell IDs ----
 #Merge Black, Hispanic, and Stroke (ever/never)
 # Ex: 001 is a white participant with a history of stroke
 ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
-  unite("cell_ID", c("Black", "Hispanic", "Astroke"), sep = "", remove = FALSE)
-
+  unite("cell_ID", c("Black", "Hispanic", "Astroke"), sep = "", 
+        remove = FALSE) %>% 
+  rename_at(vars(variable_labels$ADAMS[-1]), ~ variable_labels$data_label[-1])
+  
 # #Sanity check
 # nrow(ADAMS_imputed_stacked) == 25*nrow(ADAMS_imputed_clean[[1]])
 # table(ADAMS_imputed_stacked$cell_ID, useNA = "ifany")
