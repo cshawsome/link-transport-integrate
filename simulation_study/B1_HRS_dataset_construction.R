@@ -22,7 +22,7 @@ HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
   #select variables: ID, 2016 Wave participation, 2016 married/partnered status, 
   # sex/gender, age, race, ethnicity, 
   dplyr::select("HHIDPN", "PIWTYPE", "PCOUPLE", "GENDER", "PAGE", 
-                "RACE", "HISPANIC", "SCHLYRS") %>%
+                "RACE", "HISPANIC") %>%
   #N = 43398
   #filter to those who completed 2016 Wave interview (N = 20911; dropped n = 22487)
   filter(PIWTYPE == 1)
@@ -39,8 +39,7 @@ HRS_core <- read_da_dct(HRS_core_data_path, HRS_core_dict_path,
   dplyr::select("HHIDPN", "PJ005M1")
 
 #---- **RAND variables ----
-rand_waves <- seq(12, 14) #Corresponding to 2016 HRS +-1 for imputation
-cog_waves <- seq(11, 13) #no 2018 cognitive data yet, so go back 2 years
+rand_waves <- 13
 rand_variables <- 
   c("hhidpn",
     #Cognition (object naming (scissors and cactus), president naming, 
@@ -48,8 +47,8 @@ rand_variables <-
     #Health and health behaviors (ever/never stroke, ever/never diabetes, 
     # ever/never CVD, ever/never hypertension, smokes now, 
     # drinking days per week, number of drinks per day)
-    paste0("r", cog_waves, "cact"), paste0("r", cog_waves, "scis"), 
-    paste0("r", cog_waves, "pres"), paste0("r", cog_waves, "pstmem"),
+    paste0("r", rand_waves, "cact"), paste0("r", rand_waves, "scis"), 
+    paste0("r", rand_waves, "pres"), paste0("r", rand_waves, "pstmem"),
     paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "diabe"), 
     paste0("r", rand_waves, "hearte"), paste0("r", rand_waves, "hibpe"), 
     paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"), 
@@ -68,10 +67,6 @@ HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>%
   left_join(., RAND, by = "HHIDPN")
 
 #---- clean data ----
-#---- **2016 HCAP selection ----
-# table(HRS$HCAP_SELECT, useNA = "ifany")
-# table(HRS$HCAP_SELECT, useNA = "ifany")/nrow(HRS)
-
 #---- **2016 couple status ----
 # table(HRS$PCOUPLE, useNA = "ifany")
 
@@ -185,5 +180,5 @@ remove <- c("PIWTYPE", "RACE", "RACE_label", "RACE_White", "RACE_Black",
             "Other", "GENDER", "GENDER_label", "PJ005M1", "PJ005M1_label", 
             "PJ005M1_collapsed_label")
 
-HRS %>% dplyr::select(-all_of(remove)) %>% 
+HRS %>% dplyr::select(-all_of(remove)) %>% na.omit() %>%
   write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
