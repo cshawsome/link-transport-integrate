@@ -203,7 +203,7 @@ remove <- c("PIWTYPE", "PAGE", "RACE", "RACE_label", "RACE_White", "RACE_Black",
             "RACE_Other", "HISPANIC", "HISPANIC_indicator", "ETHNIC_label", 
             "Other", "GENDER", "GENDER_label", "PJ005M1", "PJ005M1_label", 
             "PJ005M1_collapsed_label", "drinks_per_week", "drink_cat", 
-            "drink_cat_label")
+            "drink_cat_label", "r13drinkd", "r13drinkn")
 
 HRS %>% dplyr::select(-all_of(remove)) %>% na.omit() %>%
   write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
