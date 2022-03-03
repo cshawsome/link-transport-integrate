@@ -15,6 +15,7 @@ generate_synthetic_continuous <-
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
       synthetic_data %<>% mutate({{group}} := 0)
     }
+    
     #---- **Unimpaired ----
     synthetic_data[1:round(unimpaired_prop*sample_size), "Unimpaired"] <- 1
     
@@ -33,11 +34,44 @@ generate_synthetic_continuous <-
     last_1 <- sample_size
     synthetic_data[first_1:last_1, "Other"] <- 1
     
+    #---- reformat synthetic data ----
+    synthetic_data %<>% as.matrix()  
+    
+    #---- generate synthetic data ----
+    #---- **normal distribution ----
+    if(dist == "normal"){
+      #---- ****shell for continuous vars ----
+      synthetic_data %<>% 
+        cbind(., matrix(nrow = sample_size, 
+                        ncol = ncol(parameters$Unimpaired$beta_center)) %>%
+                set_colnames(colnames(parameters$Unimpaired$beta_center)))
+      
+      for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+        subset <- synthetic_data[synthetic_data[, "Unimpaired"] == 1, ]
+        
+        #---- ****sigma | Y ----
+        sigma <- riwish(v = normal_parameter_list[[group]]$sigma_dof, 
+                        S = normal_parameter_list[[group]]$sigma_center)
+        
+        #---- ****beta | sigma, Y ----
+        beta <- matrix.normal(M = normal_parameter_list[[group]]$beta_center, 
+                              U = normal_parameter_list[[group]]$row_cov, 
+                              V = sigma)
+        
+        #---- ****predicted Y ----
+        X = subset[, rownames(beta)]
+        Y = X%*%beta
+        
+      }
+    } else{
+      stop("Invalid distribution argument. Please choose from: \"normal\".")
+    }
+    
     #---- return values ----
     return(synthetic_data)
   }
 
-#Testing
+#---- testing ----
 data <- HRS_analytic
 sample_size <- 2000
 unimpaired_prop = 0.3
