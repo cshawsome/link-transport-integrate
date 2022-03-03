@@ -47,7 +47,7 @@ generate_synthetic_continuous <-
                 set_colnames(colnames(parameters$Unimpaired$beta_center)))
       
       for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-        subset <- synthetic_data[synthetic_data[, "Unimpaired"] == 1, ]
+        subset <- synthetic_data[synthetic_data[, group] == 1, ]
         
         #---- ****sigma | Y ----
         sigma <- riwish(v = normal_parameter_list[[group]]$sigma_dof, 
@@ -60,8 +60,7 @@ generate_synthetic_continuous <-
         
         #---- ****predicted Y ----
         X = subset[, rownames(beta)]
-        Y = X%*%beta
-        
+        synthetic_data[synthetic_data[, group] == 1, colnames(beta)] = X%*%beta
       }
     } else{
       stop("Invalid distribution argument. Please choose from: \"normal\".")
@@ -71,18 +70,18 @@ generate_synthetic_continuous <-
     return(synthetic_data)
   }
 
-#---- testing ----
-data <- HRS_analytic
-sample_size <- 2000
-unimpaired_prop = 0.3
-mci_prop = 0.3
-dementia_prop = 0.3
-dist <- "normal"
-parameters <- normal_parameter_list
-
-test <- 
-  generate_synthetic_continuous(data, sample_size, unimpaired_prop = 0.3, 
-                                mci_prop = 0.3, dementia_prop = 0.3, dist, 
-                                parameters)
+# #---- testing ----
+# data <- HRS_analytic
+# sample_size <- 2000
+# unimpaired_prop = 0.3
+# mci_prop = 0.3
+# dementia_prop = 0.3
+# dist <- "normal"
+# parameters <- normal_parameter_list
+# 
+# test <- 
+#   generate_synthetic_continuous(data, sample_size, unimpaired_prop = 0.3, 
+#                                 mci_prop = 0.3, dementia_prop = 0.3, dist, 
+#                                 parameters)
 
 
