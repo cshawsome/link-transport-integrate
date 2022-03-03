@@ -1,6 +1,17 @@
+#---- Package loading + options ----
+if (!require("pacman")){
+  install.packages("pacman", repos='http://cran.us.r-project.org')
+}
+
+p_load("tidyverse", "magrittr", "wesanderson", "devtools")
+install_github("thomasp85/patchwork")
+
 #---- Figure X: comparing ADAMS with synthetic HRS ----
 #---- **read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+#---- **variable labels ----
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 
 #---- ****ADAMS imputed data ----
 ADAMS_imputed_clean <- 
@@ -8,11 +19,20 @@ ADAMS_imputed_clean <-
 
 #stack data and rename variables
 ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
-  rename_at(vars(variable_labels$ADAMS[-1]), ~ variable_labels$data_label[-1])
+  rename_at(vars(variable_labels$ADAMS), ~ variable_labels$data_label)
 
 #---- ****synthetic HRS ----
 synthetic_normal_1000 <- 
   read_csv(paste0(path_to_box, "analyses/simulation_study/", "synthetic_data/", 
                   "synthetic_normal_1000.csv"))
+
+#---- **define plot variables ----
+continuous_vars <- colnames(ADAMS_imputed_stacked)[
+  str_detect(colnames(ADAMS_imputed_stacked), "_Z")] %>% 
+  str_remove_all(., "_Z")
+
+#---- **ADAMS plots ----
+
+
 
 
