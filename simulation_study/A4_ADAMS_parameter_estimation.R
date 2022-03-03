@@ -40,7 +40,7 @@ continuous_vars <- selected_vars[str_detect(selected_vars, "_Z")] %>%
 normal_parameter_list <- list() 
 
 #---- **Normal distribution ----
-for(group in c("Unimpaired", "Other", "MCI")){
+for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
   filtered_data <- 
     ADAMS_imputed_stacked[which(ADAMS_imputed_stacked[, group] == 1), ]
   
