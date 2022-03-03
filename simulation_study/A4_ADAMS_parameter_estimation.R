@@ -27,7 +27,7 @@ selected_vars <-
 ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
   unite("cell_ID", c("Black", "Hispanic", "Astroke"), sep = "", 
         remove = FALSE) %>% 
-  rename_at(vars(variable_labels$ADAMS[-1]), ~ variable_labels$data_label[-1])
+  rename_at(vars(variable_labels$ADAMS), ~ variable_labels$data_label)
   
 # #Sanity check
 # nrow(ADAMS_imputed_stacked) == 25*nrow(ADAMS_imputed_clean[[1]])
