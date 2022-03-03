@@ -15,10 +15,25 @@ generate_synthetic_continuous <-
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
       synthetic_data %<>% mutate({{group}} := 0)
     }
-    
+    #---- **Unimpaired ----
     synthetic_data[1:round(unimpaired_prop*sample_size), "Unimpaired"] <- 1
-    synthetic_data[1:round(unimpaired_prop*sample_size), "MCI"] <- 1
     
+    #---- **MCI ----
+    first_1 <- max(which(synthetic_data$Unimpaired == 1)) + 1
+    last_1 <- first_1 + round(mci_prop*sample_size)
+    synthetic_data[first_1:last_1, "MCI"] <- 1
+    
+    #---- **Dementia ----
+    first_1 <- max(which(synthetic_data$MCI == 1)) + 1
+    last_1 <- first_1 + round(dementia_prop*sample_size)
+    synthetic_data[first_1:last_1, "Dementia"] <- 1
+    
+    #---- **Other ----
+    first_1 <- max(which(synthetic_data$Dementia == 1)) + 1
+    last_1 <- sample_size
+    synthetic_data[first_1:last_1, "Other"] <- 1
+    
+    #---- return values ----
     return(synthetic_data)
   }
 
