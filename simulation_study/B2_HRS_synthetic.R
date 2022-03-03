@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "LaplacesDemon")
+p_load("here", "tidyverse", "LaplacesDemon", "MBSP")
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -11,6 +11,11 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 #---- **HRS analytic dataset ----
 HRS_analytic <- 
   read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv")) 
+
+#---- **variable labels ----
+variable_labels <- 
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
+  filter(HRS %in% colnames(HRS_analytic)) 
 
 #---- **continuous distribution parameters ----
 normal_parameter_list <- 
@@ -21,28 +26,11 @@ normal_parameter_list <-
 #---- source functions ----
 source(here("simulation_study", "functions", "generate_synthetic_continuous.R"))
 
+#---- format data ----
+HRS_analytic %<>% mutate("Intercept" = 1) %>% 
+  rename_at(vars(variable_labels$HRS), ~ variable_labels$data_label)
+
 #---- synthetic data ----
+set.seed(20220303)
 #---- **multivariate normal ----
 
-
-for(ID in cell_IDs){
-  HRS_analytic
-}
-
-ID = "000"
-start_1 <- Sys.time()
-test_1 <- matrixNormal::rmatnorm(s = 1, 
-                               M = as.matrix(normal_parameter_list[[ID]]$M), 
-                               U = as.matrix(normal_parameter_list[[ID]]$U),
-                               V = as.matrix(normal_parameter_list[[ID]]$V))
-end_1 <- Sys.time() - start_1
-
-start_2 <- Sys.time()
-test_2 <- LaplacesDemon::rmatrixnorm(M = as.matrix(normal_parameter_list[[ID]]$M), 
-                                     U = as.matrix(normal_parameter_list[[ID]]$U),
-                                     V = as.matrix(normal_parameter_list[[ID]]$V))
-end_2 <- Sys.time() - start_2
-
-
-
-#---- predicted impairment ----
