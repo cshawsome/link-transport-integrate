@@ -34,8 +34,7 @@ ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>%
 # table(ADAMS_imputed_stacked$cell_ID, useNA = "ifany")
 
 #---- parameter estimation ----
-continuous_vars <- selected_vars[str_detect(selected_vars, "_Z")] %>% 
-  str_remove_all(., "_Z")
+continuous_vars <- selected_vars[str_detect(selected_vars, "_Z")] 
 
 normal_parameter_list <- list() 
 
@@ -61,8 +60,9 @@ for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
   sigma_hat <- t(centered_data)%*%centered_data
   
   #---- ****dof ----
-  #dof = n + p + 1 - q
-  dof = nrow(Y) + ncol(beta_hat) + 1 - nrow(beta_hat)
+  #dof = n/25 + p + 1 - q
+  # dividing by 25 because sample size is artificially inflated due to stacking
+  dof = nrow(Y)/25 + ncol(beta_hat) + 1 - nrow(beta_hat)
   
   #---- ****store in list ----
   normal_parameter_list[[group]] <- 
