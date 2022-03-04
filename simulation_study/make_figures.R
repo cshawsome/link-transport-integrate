@@ -28,17 +28,16 @@ synthetic_normal_1000 <-
 
 #---- **define plot variables ----
 continuous_vars <- colnames(ADAMS_imputed_stacked)[
-  str_detect(colnames(ADAMS_imputed_stacked), "_Z")] %>% 
-  str_remove_all(., "_Z")
+  str_detect(colnames(ADAMS_imputed_stacked), "_Z")] 
 
 #---- **ADAMS plots ----
 plot_data <- ADAMS_imputed_stacked %>% 
-  dplyr::select(c("age", "Unimpaired", "MCI", "Dementia", "Other")) %>% 
-  pivot_longer(cols = -c("age"), names_to = "Group") %>% filter(value == 1)
+  dplyr::select(c("age_Z", "Unimpaired", "MCI", "Dementia", "Other")) %>% 
+  pivot_longer(cols = -c("age_Z"), names_to = "Group") %>% filter(value == 1)
 
-ggplot(data = plot_data, aes(x = age, color = Group, fill = Group)) + 
+ggplot(data = plot_data, aes(x = age_Z, color = Group, fill = Group)) + 
   geom_density(alpha = 0.5) + theme_minimal() + 
-  xlab(unlist(variable_labels[which(variable_labels$data_label == "age"), 
+  xlab(unlist(variable_labels[which(variable_labels$data_label == "age_Z"), 
                        "figure_label"])) + 
   theme(text = element_text(size = 8)) + 
   scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
@@ -49,12 +48,12 @@ ggplot(data = plot_data, aes(x = age, color = Group, fill = Group)) +
 
 #---- **synthetic HRS plots ----
 plot_data <- synthetic_normal_1000 %>% 
-  dplyr::select(c("age", "Unimpaired", "MCI", "Dementia", "Other")) %>% 
-  pivot_longer(cols = -c("age"), names_to = "Group") %>% filter(value == 1)
+  dplyr::select(c("age_Z", "Unimpaired", "MCI", "Dementia", "Other")) %>% 
+  pivot_longer(cols = -c("age_Z"), names_to = "Group") %>% filter(value == 1)
 
-ggplot(data = plot_data, aes(x = age, color = Group, fill = Group)) + 
+ggplot(data = plot_data, aes(x = age_Z, color = Group, fill = Group)) + 
   geom_density(alpha = 0.5) + theme_minimal() + 
-  xlab(unlist(variable_labels[which(variable_labels$data_label == "age"), 
+  xlab(unlist(variable_labels[which(variable_labels$data_label == "age_Z"), 
                               "figure_label"])) + 
   theme(text = element_text(size = 8)) + 
   scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
@@ -62,6 +61,5 @@ ggplot(data = plot_data, aes(x = age, color = Group, fill = Group)) +
   scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
                     guide = guide_legend(reverse = TRUE)) + 
   theme(legend.position = "bottom") 
-
 
 
