@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "wesanderson", "devtools")
+p_load("tidyverse", "magrittr", "wesanderson", "devtools", "here")
 install_github("thomasp85/patchwork")
 
 #---- Figure X: comparing ADAMS with synthetic HRS ----
@@ -12,6 +12,9 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
+
+#---- **color palette ----
+color_palette <- read_csv(here("color_palette.csv"))
 
 #---- ****ADAMS imputed data ----
 ADAMS_imputed_clean <- 
@@ -40,17 +43,25 @@ plot_data <- ADAMS_imputed_stacked %>%
                names_to = "Group") %>% filter(value == 1) %>% 
   rename_at(vars(plot_labels$data_label), ~ plot_labels$figure_label) %>% 
   dplyr::select(-c("value")) %>% 
-  pivot_longer(-c("Group"), names_to = "Variable")
+  pivot_longer(-c("Group"), names_to = "Variable") %>% 
+  left_join(color_palette) %>% 
+  mutate("order" = case_when(Group == "Unimpaired" ~ 1, 
+                             Group == "MCI" ~ 2, 
+                             Group == "Dementia" ~ 3, 
+                             Group == "Other" ~ 4))
 
-ggplot(data = plot_data, aes(x = value, color = Group, fill = Group)) + 
+plot_data$Color <- reorder(plot_data$Color, plot_data$order)
+plot_data$Group <- reorder(plot_data$Group, plot_data$order)
+
+ggplot(data = plot_data, aes(x = value, color = Color, fill = Color)) + 
   geom_density(alpha = 0.5) + theme_minimal() + 
   theme(text = element_text(size = 10)) + 
-  scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
-                     guide = guide_legend(reverse = TRUE)) + 
-  scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
-                    guide = guide_legend(reverse = TRUE)) + 
+  scale_color_identity(guide = "legend", labels = levels(plot_data$Group)) + 
+  scale_fill_identity(guide = "legend", labels = levels(plot_data$Group)) +
   theme(legend.position = "bottom") + xlab("") + 
-  facet_wrap(vars(Variable), scales = "free", ncol = 4)
+  facet_wrap(vars(Variable), scales = "free", ncol = 4) +
+  guides(fill = guide_legend(title = "Group")) +
+  guides(color = guide_legend(title = "Group"))
 
 ggsave(filename = "ADAMS_mix_Z.jpeg", plot = last_plot(), 
        path = paste0(path_to_box, "figures/simulation_study/"), 
@@ -64,17 +75,25 @@ plot_data <- synthetic_normal_1000 %>%
                names_to = "Group") %>% filter(value == 1) %>% 
   rename_at(vars(plot_labels$data_label), ~ plot_labels$figure_label) %>% 
   dplyr::select(-c("value")) %>% 
-  pivot_longer(-c("Group"), names_to = "Variable")
+  pivot_longer(-c("Group"), names_to = "Variable") %>% 
+  left_join(color_palette) %>% 
+  mutate("order" = case_when(Group == "Unimpaired" ~ 1, 
+                             Group == "MCI" ~ 2, 
+                             Group == "Dementia" ~ 3, 
+                             Group == "Other" ~ 4))
 
-ggplot(data = plot_data, aes(x = value, color = Group, fill = Group)) + 
+plot_data$Color <- reorder(plot_data$Color, plot_data$order)
+plot_data$Group <- reorder(plot_data$Group, plot_data$order)
+
+ggplot(data = plot_data, aes(x = value, color = Color, fill = Color)) + 
   geom_density(alpha = 0.5) + theme_minimal() + 
   theme(text = element_text(size = 10)) + 
-  scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
-                     guide = guide_legend(reverse = TRUE)) + 
-  scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
-                    guide = guide_legend(reverse = TRUE)) + 
+  scale_color_identity(guide = "legend", labels = levels(plot_data$Group)) + 
+  scale_fill_identity(guide = "legend", labels = levels(plot_data$Group)) +
   theme(legend.position = "bottom") + xlab("") + 
-  facet_wrap(vars(Variable), scales = "free", ncol = 4)
+  facet_wrap(vars(Variable), scales = "free", ncol = 4) +
+  guides(fill = guide_legend(title = "Group")) +
+  guides(color = guide_legend(title = "Group"))
 
 ggsave(filename = "synthetic_normal_mix_Z.jpeg", plot = last_plot(), 
        path = paste0(path_to_box, "figures/simulation_study/"), 
