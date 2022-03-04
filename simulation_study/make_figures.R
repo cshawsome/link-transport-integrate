@@ -32,7 +32,36 @@ continuous_vars <- colnames(ADAMS_imputed_stacked)[
   str_remove_all(., "_Z")
 
 #---- **ADAMS plots ----
+plot_data <- ADAMS_imputed_stacked %>% 
+  dplyr::select(c("age", "Unimpaired", "MCI", "Dementia", "Other")) %>% 
+  pivot_longer(cols = -c("age"), names_to = "Group") %>% filter(value == 1)
 
+ggplot(data = plot_data, aes(x = age, color = Group, fill = Group)) + 
+  geom_density(alpha = 0.5) + theme_minimal() + 
+  xlab(unlist(variable_labels[which(variable_labels$data_label == "age"), 
+                       "figure_label"])) + 
+  theme(text = element_text(size = 8)) + 
+  scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
+                     guide = guide_legend(reverse = TRUE)) + 
+  scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
+                    guide = guide_legend(reverse = TRUE)) + 
+  theme(legend.position = "bottom") 
+
+#---- **synthetic HRS plots ----
+plot_data <- synthetic_normal_1000 %>% 
+  dplyr::select(c("age", "Unimpaired", "MCI", "Dementia", "Other")) %>% 
+  pivot_longer(cols = -c("age"), names_to = "Group") %>% filter(value == 1)
+
+ggplot(data = plot_data, aes(x = age, color = Group, fill = Group)) + 
+  geom_density(alpha = 0.5) + theme_minimal() + 
+  xlab(unlist(variable_labels[which(variable_labels$data_label == "age"), 
+                              "figure_label"])) + 
+  theme(text = element_text(size = 8)) + 
+  scale_color_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
+                     guide = guide_legend(reverse = TRUE)) + 
+  scale_fill_manual(values = wes_palette("Darjeeling1")[c(1, 3, 5, 2)], 
+                    guide = guide_legend(reverse = TRUE)) + 
+  theme(legend.position = "bottom") 
 
 
 
