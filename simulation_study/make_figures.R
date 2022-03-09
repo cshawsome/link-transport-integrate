@@ -36,7 +36,7 @@ continuous_vars <- colnames(synthetic_normal_1000)[
 plot_labels <- variable_labels %>% filter(data_label %in% continuous_vars) 
 
 #---- **ADAMS plots ----
-plot_data <- ADAMS_imputed_stacked %>% 
+plot_data <- ADAMS_imputed_stacked[1:nrow(ADAMS_imputed_clean[[1]]), ] %>% 
   dplyr::select(c(all_of(continuous_vars), 
                   "Unimpaired", "MCI", "Dementia", "Other")) %>% 
   pivot_longer(cols = c("Unimpaired", "MCI", "Dementia", "Other"), 
