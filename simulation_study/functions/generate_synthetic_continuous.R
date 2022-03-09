@@ -1,9 +1,13 @@
 generate_synthetic_continuous <- 
   function(data, sample_size, unimpaired_prop = 0.25, mci_prop = 0.25, 
-           dementia_prop = 0.25, dist, parameters){
+           dementia_prop = 0.25, dist, parameters, path_to_results){
     #---- check parameters ----
     if(sum(unimpaired_prop, mci_prop, dementia_prop) > 1){
       stop("Impairment proportions sum to more than 1. Please check values.") 
+    }
+    
+    if(!dir.exists(path_to_results)){
+      dir.create(path_to_results, recursive = TRUE)
     }
     
     #--- bootstrap data ----
@@ -33,6 +37,10 @@ generate_synthetic_continuous <-
     first_1 <- max(which(synthetic_data$Dementia == 1)) + 1
     last_1 <- sample_size
     synthetic_data[first_1:last_1, "Other"] <- 1
+    
+    #---- scenario name ----
+    scenario_name <- tolower(names(which.max(
+      colSums(synthetic_data[, c("Unimpaired", "MCI", "Dementia", "Other")]))))
     
     #---- reformat synthetic data ----
     synthetic_data %<>% as.matrix()  
@@ -71,7 +79,9 @@ generate_synthetic_continuous <-
     }
     
     #---- return values ----
-    return(synthetic_data)
+    write_csv(as.data.frame(synthetic_data), 
+              paste0(path_to_results, "synthetic_", dist, "_", sample_size, 
+                     "_", scenario_name, ".csv"))
   }
 
 # #---- testing ----
@@ -82,10 +92,11 @@ generate_synthetic_continuous <-
 # dementia_prop = 0.35
 # dist <- "normal"
 # parameters <- normal_parameter_list
+# path_to_results = paste0(path_to_box, "analyses/simulation_study/", 
+#                          "synthetic_data/")
 # 
-test <-
-  generate_synthetic_continuous(data, sample_size, unimpaired_prop,
-                                mci_prop, dementia_prop, dist,
-                                parameters)
+# generate_synthetic_continuous(data, sample_size, unimpaired_prop,
+#                               mci_prop, dementia_prop, dist,
+#                               parameters, path_to_results)
 
 

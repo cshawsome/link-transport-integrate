@@ -32,14 +32,24 @@ HRS_analytic %<>% mutate("Intercept" = 1) %>%
 
 #---- synthetic data ----
 set.seed(20220303)
-#---- **multivariate normal ----
-synthetic_normal_1000 <- 
+#---- **normal ----
+#---- ****compare with ADAMS ----
+synthetic_normal_1000_ADAMS_props <- 
   generate_synthetic_continuous(HRS_analytic, sample_size = 1000, 
                                 unimpaired_prop = 0.35, mci_prop = 0.10, 
                                 dementia_prop = 0.35, dist = "normal", 
-                                parameters = normal_parameter_list)
+                                parameters = normal_parameter_list, 
+                                path_to_results = 
+                                  paste0(path_to_box, "analyses/", 
+                                         "simulation_study/synthetic_data/", 
+                                         "ADAMS_props/"))
 
-write_csv(as.data.frame(synthetic_normal_1000), 
-          paste0(path_to_box, "analyses/simulation_study/", "synthetic_data/", 
-                 "synthetic_normal_1000.csv"))
+#---- ****500 mostly unimpaired ----
+synthetic_normal_500_unimpaired <- 
+  generate_synthetic_continuous(HRS_analytic, sample_size = 500, 
+                                unimpaired_prop = 0.50, mci_prop = 0.20, 
+                                dementia_prop = 0.20, dist = "normal", 
+                                parameters = normal_parameter_list) 
+
+
 
