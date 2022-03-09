@@ -44,11 +44,13 @@ generate_synthetic_continuous(HRS_analytic, sample_size = 1000,
                                        "ADAMS_props/"))
 
 #---- ****500 mostly unimpaired ----
-synthetic_normal_500_unimpaired <- 
-  generate_synthetic_continuous(HRS_analytic, sample_size = 500, 
-                                unimpaired_prop = 0.50, mci_prop = 0.20, 
-                                dementia_prop = 0.20, dist = "normal", 
-                                parameters = normal_parameter_list) 
+generate_synthetic_continuous(HRS_analytic, sample_size = 500, 
+                              unimpaired_prop = 0.50, mci_prop = 0.20, 
+                              dementia_prop = 0.20, dist = "normal", 
+                              parameters = normal_parameter_list, 
+                              path_to_results = 
+                                paste0(path_to_box, "analyses/", 
+                                       "simulation_study/synthetic_data/")) 
 
 
 
