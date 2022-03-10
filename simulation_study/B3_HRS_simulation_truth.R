@@ -9,8 +9,8 @@ p_load("here", "tidyverse", "broom")
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 synthetic_data <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/synthetic_data/", 
-                  "synthetic_normal_500_unimpaired.csv"))
+  read_csv(paste0(path_to_box, "analyses/simulation_study/synthetic_data/HRS/", 
+                  "HRS_synthetic_normal_500_unimpaired.csv"))
 
 #---- analytic models ----
 truth <- glm(Dementia ~ age_Z + female + edyrs_Z + black + hispanic, 
