@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "here")
+p_load("tidyverse", "magrittr", "here", "miceFast")
 
 options(scipen = 999)
 
@@ -25,7 +25,7 @@ selected_vars <-
   read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
                   "model_coefficients.csv")) 
 
-#---- impute data ----
+#---- imputation ----
 #---- **pare down list of vars based on ADAMS variable selection ----
 remove <- c("ANRECNO", paste0("r", seq(4, 7), "iadla"), "avg_proxy_cog_Better", 
             "avg_proxy_cog_Same", "avg_proxy_cog_Worse", "proxy_Spouse", 
@@ -76,28 +76,28 @@ not_predictors <- c("HHIDPN", "AYEAR", "White", "ANMSETOT_norm",
 # colnames(ADAMS_subset)[which(!colnames(ADAMS_subset) %in% union_var_names)]
 # union_var_names[which(!union_var_names %in% colnames(ADAMS_subset))]
 
-#---- predictor matrix ----
+#---- **predictor matrix ----
 predict <- 
   matrix(1, nrow = length(needs_imputing), ncol = ncol(ADAMS_subset)) %>% 
   set_rownames(needs_imputing) %>% set_colnames(colnames(ADAMS_subset))
 
-#---- **cannot predict themselves ----
+#---- ****cannot predict themselves ----
 predict[needs_imputing, needs_imputing] <- 
   (diag(x = 1, nrow = length(needs_imputing), 
         ncol = length(needs_imputing)) == 0)*1
 
-#---- **non-predictors ----
+#---- ****non-predictors ----
 predict[, not_predictors] <- 0
 
-#---- **ADAMS-ADAMS prediction ----
+#---- ****ADAMS-ADAMS prediction ----
 #use ADAMS variables to predict each other: remove HRS predictors for now
 predict[needs_imputing[which(needs_imputing %in% ADAMS_vars)], HRS_vars] <- 0
 
-#---- **HRS-HRS prediction ----
+#---- ****HRS-HRS prediction ----
 #use HRS variables to predict each other: remove ADAMS predictors 
 predict[needs_imputing[which(needs_imputing %in% HRS_vars)], ADAMS_vars] <- 0
 
-#---- **ADAMS extra predictors ----
+#---- ****ADAMS extra predictors ----
 predict["ANBWC20", paste0("r", cog_waves, "bwc20")] <- 1
 predict["ANBWC86", paste0("r", seq(5, 6), "bwc86")] <- 1
 predict["ANCACTUS", paste0("r", cog_waves, "cact")] <- 1
@@ -114,18 +114,18 @@ predict[paste0("ANSMEM2_", c("Better", "Same", "Worse")),
 predict[paste0("ANSMEM2_", c("Better", "Same", "Worse")), 
         paste0("r", cog_waves, "pstmem_Worse")] <- 1
 
-#---- **derived vars (do not impute) ----
+#---- ****derived vars (do not impute) ----
 remove <- c("ANMSETOT_norm", 
             paste0("A", c("stroke", "hibpe", "diabe", "hearte", "bmi", "iadla", 
                           "adla", "smoken", "drinkd", "drinkn"))) 
 
 predict <- predict[!rownames(predict) %in% remove, ]
 
-#---- **sanity check ----
+#---- ****sanity check ----
 #non-predictors should all be 0
 colSums(predict[, not_predictors])
 
-#---- imputation ----
+#---- **impute data ----
 set.seed(20220310)
 start <- Sys.time()
 fast_impute(predictor_matrix = predict, data = ADAMS_subset, 
