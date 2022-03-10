@@ -6,8 +6,12 @@ generate_synthetic_continuous <-
       stop("Impairment proportions sum to more than 1. Please check values.") 
     }
     
-    if(!dir.exists(path_to_results)){
-      dir.create(path_to_results, recursive = TRUE)
+    if(!dir.exists(paste0(path_to_results, "HRS/"))){
+      dir.create(paste0(path_to_results, "HRS/"), recursive = TRUE)
+    }
+    
+    if(!dir.exists(paste0(path_to_results, "HCAP/"))){
+      dir.create(paste0(path_to_results, "HCAP/"), recursive = TRUE)
     }
     
     #--- bootstrap data ----
@@ -79,9 +83,16 @@ generate_synthetic_continuous <-
     }
     
     #---- return values ----
+    #---- **synthetic HRS ----
     write_csv(as.data.frame(synthetic_data), 
-              paste0(path_to_results, "synthetic_", dist, "_", sample_size, 
-                     "_", scenario_name, ".csv"))
+              paste0(path_to_results, "/HRS/HRS_synthetic_", dist, "_", 
+                     sample_size, "_", scenario_name, ".csv"))
+    
+    #---- **synthetic HCAP ----
+    write_csv(as.data.frame(synthetic_data) %>% group_by(married_partnered) %>% 
+                slice_sample(prop = 0.5), 
+              paste0(path_to_results, "/HCAP/HCAP_synthetic_", dist, "_", 
+                     0.5*sample_size, "_", scenario_name, ".csv"))
   }
 
 # #---- testing ----
@@ -92,7 +103,7 @@ generate_synthetic_continuous <-
 # dementia_prop = 0.35
 # dist <- "normal"
 # parameters <- normal_parameter_list
-# path_to_results = paste0(path_to_box, "analyses/simulation_study/", 
+# path_to_results = paste0(path_to_box, "analyses/simulation_study/",
 #                          "synthetic_data/")
 # 
 # generate_synthetic_continuous(data, sample_size, unimpaired_prop,
