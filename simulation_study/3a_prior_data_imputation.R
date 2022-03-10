@@ -17,14 +17,6 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 ADAMS_analytic <- 
   read_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_analytic.csv"))
 
-#---- **variable labels ----
-variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
-
-#---- **variable selection results ----
-selected_vars <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
-                  "model_coefficients.csv")) 
-
 #---- imputation ----
 #---- **pare down list of vars based on ADAMS variable selection ----
 remove <- c("ANRECNO", paste0("r", seq(4, 7), "iadla"), "avg_proxy_cog_Better", 
@@ -133,70 +125,3 @@ fast_impute(predictor_matrix = predict, data = ADAMS_subset,
             method = "PMM", m = 100, maxit = 15)
 end <- Sys.time() - start
 
-#---- OLD ----
-
-#---- predictors ----
-#unimpaired model predictors
-unimpaired_preds <- c("AAGE", "Black", "Hispanic", "ANMSETOT_norm", "ANSER7T", 
-                      "ANIMMCR", "ANRECYES", "ANWM1TOT", "proxy_cog")
-
-#other model predictors
-other_preds <- c("AAGE", "ANMSETOT_norm", "ANIMMCR", "ANDELCOR")
-
-#mci model predictors
-mci_preds <- c("ANMSETOT_norm", "ANIMMCR", "Aiadla", "Astroke", "Abmi")
-
-#---- model ----
-bootstrap_models <- function(prop){
-  subsample <- sample_frac(ADAMS_subset, size = prop, replace = TRUE)
-  
-  unimpaired_model <- 
-    glm(formula(paste("AUnimpaired ~ ", 
-                      paste(unimpaired_preds, collapse = " + "), 
-                      collapse = "")), family = "binomial", data = subsample)
-  
-  other_model <- 
-    glm(formula(paste("AOther ~ ", paste(other_preds, collapse = " + "), 
-                      collapse = "")), family = "binomial", data = subsample %>% 
-          filter(AUnimpaired == 0))
-  
-  mci_model <- 
-    glm(formula(paste("AMCI ~ ", paste(mci_preds, collapse = " + "), 
-                      collapse = "")), family = "binomial", data = subsample %>% 
-          filter(AUnimpaired == 0 & AOther == 0)) 
-  
-  return(list("unimpaired_betas" = coefficients(unimpaired_model),
-              "other_betas" = coefficients(other_model), 
-              "mci_betas" = coefficients(mci_model), 
-              "unimpaired_cov" = as.vector(vcov(unimpaired_model)), 
-              "other_cov" = as.vector(vcov(other_model)), 
-              "mci_cov" = as.vector(vcov(mci_model))))
-}
-
-bootstrap_runs <- replicate(10000, bootstrap_models(prop = 1), simplify = FALSE)
-
-#---- check distributions ----
-for(group in c("unimpaired", "other", "mci")){
-  data <- lapply(bootstrap_runs, "[[", paste0(group, "_betas")) %>% 
-    do.call(rbind, .) %>% t() %>% as.data.frame() 
-  
-  for(var in rownames(data)){
-    show(hist(as.numeric(data[var, ]), main = paste0(group, " ", var)))
-  }
-}
-
-#---- format output ----
-for(est in c("betas", "cov")){
-  for(group in c("unimpaired", "other", "mci")){
-    data <- lapply(bootstrap_runs, "[[", paste0(group, "_", est)) %>% 
-      do.call(rbind, .) %>% t() %>% as.data.frame() 
-    
-    if(est == "betas"){
-      data %<>% mutate("preds" = c("(Intercept)", get(paste0(group, "_preds"))))
-    }
-    
-    data %>% 
-      write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                       "ADAMS_test/latent_class_", group, "_", est, ".csv"))
-  }
-}
