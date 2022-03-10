@@ -7,20 +7,46 @@ p_load("tidyverse", "magrittr", "here")
 
 options(scipen = 999)
 
-#---- read in training data ----
-ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/ADAMS/cleaned/ADAMS_train.csv"))
+#---- read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+#---- **prior imputed clean ----
+prior_imputed_clean <- 
+  readRDS(paste0(path_to_box, 
+                 "data/ADAMS/prior_data/MI/MI_datasets_cleaned")) %>%
+  lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
+
+#---- **variable labels ----
+variable_labels <- 
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
+  filter(ADAMS %in% colnames(prior_imputed_clean[[1]]))
+
+#---- **selected variables ----
+selected_vars <- 
+  read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
+                  "model_coefficients.csv")) 
+
+#---- relabel columns ----
+prior_imputed_clean <- 
+  lapply(prior_imputed_clean, 
+         function(x) rename_at(x, vars(variable_labels$ADAMS), ~ 
+                                 variable_labels$data_label)) 
 
 #---- predictors ----
 #unimpaired model predictors
-unimpaired_preds <- c("AAGE", "Black", "Hispanic", "ANMSETOT_norm", "ANSER7T", 
-                      "ANIMMCR", "ANRECYES", "ANWM1TOT", "proxy_cog")
+unimpaired_preds <- selected_vars %>% 
+  filter(data_label != "(Intercept)" & Unimpaired != 0) %>% 
+  dplyr::select(data_label) %>% unlist()
 
 #other model predictors
-other_preds <- c("AAGE", "ANMSETOT_norm", "ANIMMCR", "ANDELCOR")
+other_preds <- selected_vars %>% 
+  filter(data_label != "(Intercept)" & Other != 0) %>% 
+  dplyr::select(data_label) %>% unlist()
 
 #mci model predictors
-mci_preds <- c("ANMSETOT_norm", "ANIMMCR", "Aiadla", "Astroke", "Abmi")
+mci_preds <- selected_vars %>% 
+  filter(data_label != "(Intercept)" & MCI != 0) %>% 
+  dplyr::select(data_label) %>% unlist()
 
 #---- model ----
 bootstrap_models <- function(prop){
