@@ -1,6 +1,11 @@
 fast_impute <- 
   function(predictor_matrix, data, path_for_output, method, m, maxit){
     
+    #---- check filepath ----
+    if(!dir.exists(path_for_output)){
+      dir.create(path_for_output, recursive = TRUE)
+    }
+    
     #---- where matrix ----
     where <- is.na(data)*1  
     impute_vars <- rownames(predictor_matrix)
