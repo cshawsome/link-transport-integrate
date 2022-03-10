@@ -48,24 +48,22 @@ mci_preds <- selected_vars %>%
   filter(data_label != "(Intercept)" & MCI != 0) %>% 
   dplyr::select(data_label) %>% unlist()
 
-#---- model ----
-bootstrap_models <- function(prop){
-  subsample <- sample_frac(ADAMS_subset, size = prop, replace = TRUE)
-  
+#---- models ----
+model_function <- function(data, unimpaired_pred, other_preds, mci_preds){
   unimpaired_model <- 
-    glm(formula(paste("AUnimpaired ~ ", 
+    glm(formula(paste("Unimpaired ~ ", 
                       paste(unimpaired_preds, collapse = " + "), 
-                      collapse = "")), family = "binomial", data = subsample)
+                      collapse = "")), family = "binomial", data = data)
   
   other_model <- 
-    glm(formula(paste("AOther ~ ", paste(other_preds, collapse = " + "), 
-                      collapse = "")), family = "binomial", data = subsample %>% 
-          filter(AUnimpaired == 0))
+    glm(formula(paste("Other ~ ", paste(other_preds, collapse = " + "), 
+                      collapse = "")), family = "binomial", data = data %>% 
+          filter(Unimpaired == 0))
   
   mci_model <- 
-    glm(formula(paste("AMCI ~ ", paste(mci_preds, collapse = " + "), 
-                      collapse = "")), family = "binomial", data = subsample %>% 
-          filter(AUnimpaired == 0 & AOther == 0)) 
+    glm(formula(paste("MCI ~ ", paste(mci_preds, collapse = " + "), 
+                      collapse = "")), family = "binomial", data = data %>% 
+          filter(Unimpaired == 0 & Other == 0)) 
   
   return(list("unimpaired_betas" = coefficients(unimpaired_model),
               "other_betas" = coefficients(other_model), 
@@ -75,11 +73,13 @@ bootstrap_models <- function(prop){
               "mci_cov" = as.vector(vcov(mci_model))))
 }
 
-bootstrap_runs <- replicate(10000, bootstrap_models(prop = 1), simplify = FALSE)
+estimates <- 
+  lapply(prior_imputed_clean, model_function, unimpaired_preds, other_preds, 
+         mci_preds) 
 
 #---- check distributions ----
 for(group in c("unimpaired", "other", "mci")){
-  data <- lapply(bootstrap_runs, "[[", paste0(group, "_betas")) %>% 
+  data <- lapply(estimates, "[[", paste0(group, "_betas")) %>% 
     do.call(rbind, .) %>% t() %>% as.data.frame() 
   
   for(var in rownames(data)){
@@ -90,7 +90,7 @@ for(group in c("unimpaired", "other", "mci")){
 #---- format output ----
 for(est in c("betas", "cov")){
   for(group in c("unimpaired", "other", "mci")){
-    data <- lapply(bootstrap_runs, "[[", paste0(group, "_", est)) %>% 
+    data <- lapply(estimates, "[[", paste0(group, "_", est)) %>% 
       do.call(rbind, .) %>% t() %>% as.data.frame() 
     
     if(est == "betas"){
@@ -98,7 +98,7 @@ for(est in c("betas", "cov")){
     }
     
     data %>% 
-      write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-                       "ADAMS_test/latent_class_", group, "_", est, ".csv"))
+      write_csv(paste0(path_to_box, "data/ADAMS/", "prior_data/latent_class_", 
+                       group, "_", est, ".csv"))
   }
 }
