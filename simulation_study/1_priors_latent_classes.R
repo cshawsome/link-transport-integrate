@@ -7,6 +7,9 @@ p_load("tidyverse", "magrittr", "here")
 
 options(scipen = 999)
 
+#---- source scripts ----
+source(here::here("functions", "fast_impute.R"))
+
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
@@ -75,8 +78,8 @@ not_predictors <- c("HHIDPN", "AYEAR", "White", "ANMSETOT_norm",
 
 #---- predictor matrix ----
 predict <- 
-  matrix(1, nrow = length(needs_imputing), ncol = ncol(ADAMS_analytic)) %>% 
-  set_rownames(needs_imputing) %>% set_colnames(colnames(ADAMS_analytic))
+  matrix(1, nrow = length(needs_imputing), ncol = ncol(ADAMS_subset)) %>% 
+  set_rownames(needs_imputing) %>% set_colnames(colnames(ADAMS_subset))
 
 #---- **cannot predict themselves ----
 predict[needs_imputing, needs_imputing] <- 
@@ -123,14 +126,12 @@ predict <- predict[!rownames(predict) %in% remove, ]
 colSums(predict[, not_predictors])
 
 #---- imputation ----
-set.seed(20220202)
+set.seed(20220310)
 start <- Sys.time()
-fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
-            path_for_output = paste0(path_to_box, "data/ADAMS/cleaned/"),
-            method = "PMM", m = 25, maxit = 15)
+fast_impute(predictor_matrix = predict, data = ADAMS_subset, 
+            path_for_output = paste0(path_to_box, "data/ADAMS/prior_data/"),
+            method = "PMM", m = 10, maxit = 15)
 end <- Sys.time() - start
-
-
 
 #---- OLD ----
 
