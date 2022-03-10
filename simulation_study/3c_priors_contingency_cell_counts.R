@@ -8,11 +8,32 @@ p_load("tidyverse", "magrittr")
 options(scipen = 999)
 
 #---- read in data ----
-ADAMS_subset <- read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/ADAMS/cleaned/ADAMS_train.csv"))
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-#Categorical vars (notation from Schafer 1997)
-W <- c("Black", "Hispanic", "Astroke")
+#---- **prior imputed clean ----
+prior_imputed_clean <- 
+  readRDS(paste0(path_to_box, 
+                 "data/ADAMS/prior_data/MI/MI_datasets_cleaned")) %>%
+  lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
+
+#---- **variable labels ----
+variable_labels <- 
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
+  filter(ADAMS %in% colnames(prior_imputed_clean[[1]]))
+
+#---- relabel columns ----
+prior_imputed_clean <- 
+  lapply(prior_imputed_clean, 
+         function(x) rename_at(x, vars(variable_labels$ADAMS), ~ 
+                                 variable_labels$data_label)) 
+
+#---- categorical vars ----
+#notation from Schafer 1997
+W <- c("black", "hispanic", "stroke")
+
+
+
+#---- OLD ----
 
 #---- cross-class race/ethnicity x stroke ----
 overall_data_counts <- as.data.frame(table(ADAMS_subset$ETHNIC_label, 
