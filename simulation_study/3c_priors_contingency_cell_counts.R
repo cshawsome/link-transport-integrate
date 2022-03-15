@@ -31,6 +31,60 @@ prior_imputed_clean <-
 #notation from Schafer 1997
 W <- c("black", "hispanic", "stroke")
 
+#---- imputation props ----
+imputation_props <- 
+  matrix(0, nrow = 6*4, #num contingency cells * impairment categories
+         ncol = (length(prior_imputed_clean) + 2)) %>% 
+  as.data.frame() %>% 
+  set_colnames(c(seq(1, length(prior_imputed_clean)), "group", "cell"))
+imputation_props[, "group"] <- 
+  rep(c("Unimpaired", "MCI", "Dementia", "Other"), each = 6)
+
+test <- prior_imputed_clean[[1]] %>% dplyr::select(all_of(W)) %>% 
+  unite("cell_ID", everything(), sep = "", remove = FALSE)
+
+cells <- 
+  as.data.frame(table(prior_imputed_clean[[1]]$ETHNIC_label, ADAMS_subset$Astroke)) %>% 
+  unite("cell", c("Var1", "Var2"), sep = ":")
+
+bootstrap_props[, "cell"] <- rep(cells$cell, 4)
+
+for(b in 1:B){
+  sample <- sample_n(ADAMS_subset, size = nrow(ADAMS_subset), replace = TRUE)
+  for(group in unique(ADAMS_subset$Adem_dx_cat)){
+    sub_sample <- sample %>% filter(Adem_dx_cat == group) 
+    
+    counts <- 
+      as.data.frame(table(sub_sample$ETHNIC_label, sub_sample$Astroke)) %>% 
+      unite("cell", c("Var1", "Var2"), sep = ":")
+    
+    bootstrap_props[
+      which(bootstrap_props$group == group & 
+              bootstrap_props$cell %in% counts$cell), b] <- 
+      counts$Freq/nrow(sub_sample)
+  }
+}
+
+bootstrap_props_plot_data <- bootstrap_props %>% mutate("truth" = 0) 
+
+for(group in unique(ADAMS_subset$Adem_dx_cat)){
+  true_counts <- get(paste0(group, "_data_counts"))
+  bootstrap_props_plot_data[
+    which(bootstrap_props_plot_data$group == group & 
+            bootstrap_props_plot_data$cell %in% true_counts$cell), "truth"] <- 
+    true_counts$prop
+}
+
+bootstrap_props_plot_data %<>% 
+  mutate("cat" = rep(c("Black + No Stroke", "Hispanic + No Stroke", 
+                       "White + No Stroke", "Black + Stroke", 
+                       "Hispanic + Stroke", "White + Stroke"), 4)) %>% 
+  pivot_longer(-c("group", "cell", "truth", "cat")) %>% 
+  mutate("color" = case_when(group == "Unimpaired" ~ "#00a389", 
+                             group == "Other" ~ "#28bed9", 
+                             group == "MCI" ~ "#fdab00", 
+                             group == "Dementia" ~ "#ff0000"))
+
 
 
 #---- OLD ----
@@ -100,9 +154,9 @@ bootstrap_props_plot_data %<>%
 #---- **plots ----
 #---- ****create directories ----
 for(dem_group in unique(ADAMS_subset$Adem_dx_cat)){
- dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_test/", 
-                   "prior_predictive_checks/cell_props/group_specific/", 
-                   tolower(dem_group)), recursive = TRUE) 
+  dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_test/", 
+                    "prior_predictive_checks/cell_props/group_specific/", 
+                    tolower(dem_group)), recursive = TRUE) 
 }
 
 #---- ****create plot ----
