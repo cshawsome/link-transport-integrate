@@ -57,7 +57,9 @@ A = do.call(cbind, list(
   #stroke main effect
   rep(c(0, 1), each = 3)))
 
-cells <- A %>% as.data.frame() %>% unite("cells", -1, sep = "")
+cells <- A %>% as.data.frame() %>% unite("cells", -1, sep = "") %>% 
+  dplyr::select(-"V1") %>% table() %>% as.data.frame() %>% 
+  dplyr::select(-"Freq") %>% set_colnames("cells")
 
 #---- estimates ----
 test <- prior_imputed_clean[[1]]
@@ -65,17 +67,16 @@ test <- prior_imputed_clean[[1]]
 estimate_cont_priors <- function(data, W, Z){
   for(group in c("Unimpaired", "MCI", "Other", "Dementia")){
     #---- **filter data ----
-    subset <- data %>% filter(!!sym(group) == 1)
+    subset <- data %>% filter(!!sym(group) == 1) 
     
     #---- U (contingency cell) ----
     contingency_table_temp <- subset %>% 
       unite("cell_ID", all_of(W), sep = "") %>% dplyr::select(cell_ID) %>% 
-      table() %>% as.data.frame() %>% set_colnames(c("cell", "Freq"))
+      table() %>% as.data.frame() %>% set_colnames(c("cells", "Freq")) 
   
     if(nrow(contingency_table_temp) < 6){
-      contingency_table <- data.frame("cell" = cells$cell) %>% 
+      contingency_table <- data.frame("cells" = cells$cell) %>% 
         left_join(., contingency_table_temp)
-      
       contingency_table[is.na(contingency_table)] <- 0
     } else{
       contingency_table <- contingency_table_temp
