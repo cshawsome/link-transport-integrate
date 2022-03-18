@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr")
+p_load("tidyverse", "magrittr", "here")
 
 options(scipen = 999)
 
@@ -32,162 +32,51 @@ prior_imputed_clean <-
 W <- c("black", "hispanic", "stroke")
 
 #---- imputation props ----
-imputation_props <- 
-  matrix(0, nrow = 6*4, #num contingency cells * impairment categories
-         ncol = (length(prior_imputed_clean) + 2)) %>% 
-  as.data.frame() %>% 
-  set_colnames(c(seq(1, length(prior_imputed_clean)), "group", "cell"))
-imputation_props[, "group"] <- 
-  rep(c("Unimpaired", "MCI", "Dementia", "Other"), each = 6)
-
-test <- prior_imputed_clean[[1]] %>% dplyr::select(all_of(W)) %>% 
-  unite("cell_ID", everything(), sep = "", remove = FALSE)
-
-cells <- 
-  as.data.frame(table(prior_imputed_clean[[1]]$ETHNIC_label, ADAMS_subset$Astroke)) %>% 
-  unite("cell", c("Var1", "Var2"), sep = ":")
-
-bootstrap_props[, "cell"] <- rep(cells$cell, 4)
-
-for(b in 1:B){
-  sample <- sample_n(ADAMS_subset, size = nrow(ADAMS_subset), replace = TRUE)
-  for(group in unique(ADAMS_subset$Adem_dx_cat)){
-    sub_sample <- sample %>% filter(Adem_dx_cat == group) 
-    
-    counts <- 
-      as.data.frame(table(sub_sample$ETHNIC_label, sub_sample$Astroke)) %>% 
-      unite("cell", c("Var1", "Var2"), sep = ":")
-    
-    bootstrap_props[
-      which(bootstrap_props$group == group & 
-              bootstrap_props$cell %in% counts$cell), b] <- 
-      counts$Freq/nrow(sub_sample)
-  }
+get_props <- function(data, W){
+  counts <- data %>% unite("cell_ID", all_of(W), sep = "", remove = FALSE) %>% 
+    dplyr::select("cell_ID", "Unimpaired", "MCI", "Dementia", "Other") %>% 
+    pivot_longer(-c("cell_ID")) %>% filter(value == 1) %>% group_by(name) %>% 
+    table() %>% as.data.frame() %>% dplyr::select(-"value") 
+  
+  counts %<>% 
+    left_join(., counts %>% group_by(name) %>% summarize_at("Freq", sum), 
+              by = "name") %>% mutate("props" = Freq.x/Freq.y) %>% 
+    dplyr::select(-contains("Freq"))
 }
 
-bootstrap_props_plot_data <- bootstrap_props %>% mutate("truth" = 0) 
+imputation_props <- lapply(prior_imputed_clean, get_props, W) %>% 
+  reduce(left_join, by = c("cell_ID", "name")) %>% 
+  set_colnames(c("cell_ID", "group", seq(1, length(prior_imputed_clean))))
 
-for(group in unique(ADAMS_subset$Adem_dx_cat)){
-  true_counts <- get(paste0(group, "_data_counts"))
-  bootstrap_props_plot_data[
-    which(bootstrap_props_plot_data$group == group & 
-            bootstrap_props_plot_data$cell %in% true_counts$cell), "truth"] <- 
-    true_counts$prop
-}
+#---- plots ----
+#---- **read in data ----
+#---- ****cell ID key ----
+cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv"))
+#---- ****color palette ----
+color_palette <- read_csv(here("color_palette.csv"))
 
-bootstrap_props_plot_data %<>% 
-  mutate("cat" = rep(c("Black + No Stroke", "Hispanic + No Stroke", 
-                       "White + No Stroke", "Black + Stroke", 
-                       "Hispanic + Stroke", "White + Stroke"), 4)) %>% 
-  pivot_longer(-c("group", "cell", "truth", "cat")) %>% 
-  mutate("color" = case_when(group == "Unimpaired" ~ "#00a389", 
-                             group == "Other" ~ "#28bed9", 
-                             group == "MCI" ~ "#fdab00", 
-                             group == "Dementia" ~ "#ff0000"))
+#---- **join data ----
+imputation_props_plot_data <- left_join(imputation_props, cell_ID_key) %>% 
+  left_join(., color_palette, by = c("group" = "Group")) %>% 
+  pivot_longer(-c("group", "cell_ID", "cell_name", "Color")) %>% 
+  mutate_at("group", function(x) 
+    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
+  mutate_at("cell_name", function(x) 
+    factor(x, levels = c("White | No Stroke", "White | Stroke", 
+                         "Black | No Stroke", "Black | Stroke", 
+                         "Hispanic | No Stroke", "Hispanic | Stroke")))
 
+#---- **make plot ----
+colors <- color_palette$Color
+names(colors) <- color_palette$Group
 
+ggplot(data = imputation_props_plot_data , aes(x = value)) + 
+  geom_histogram(aes(fill = group, color = group)) + theme_bw() + 
+  xlab("Proportion") + facet_grid(rows = vars(cell_name), cols = vars(group), 
+                                  scales = "free") + 
+  scale_color_manual(values = colors) + scale_fill_manual(values = colors) + 
+  theme(legend.position = "none")
 
-#---- OLD ----
-
-#---- cross-class race/ethnicity x stroke ----
-overall_data_counts <- as.data.frame(table(ADAMS_subset$ETHNIC_label, 
-                                           ADAMS_subset$Astroke)) %>% 
-  mutate("prop" = Freq/sum(Freq))
-
-for(group in unique(ADAMS_subset$Adem_dx_cat)){
-  subset <- ADAMS_subset %>% filter(Adem_dx_cat == group)
-  assign(paste0(group, "_data_counts"), 
-         as.data.frame(table(subset$ETHNIC_label, 
-                             subset$Astroke)) %>% 
-           mutate("prop" = Freq/sum(Freq)) %>% 
-           unite("cell", c("Var1", "Var2"), sep = ":")) 
-}
-
-#---- bootstrap props ----
-B = 10000
-bootstrap_props <- matrix(0, nrow = 6*4, ncol = (B + 2)) %>% 
-  as.data.frame() %>% set_colnames(c(seq(1, B), "group", "cell"))
-bootstrap_props[, "group"] <- rep(unique(ADAMS_subset$Adem_dx_cat), each = 6)
-
-cells <- 
-  as.data.frame(table(ADAMS_subset$ETHNIC_label, ADAMS_subset$Astroke)) %>% 
-  unite("cell", c("Var1", "Var2"), sep = ":")
-
-bootstrap_props[, "cell"] <- rep(cells$cell, 4)
-
-for(b in 1:B){
-  sample <- sample_n(ADAMS_subset, size = nrow(ADAMS_subset), replace = TRUE)
-  for(group in unique(ADAMS_subset$Adem_dx_cat)){
-    sub_sample <- sample %>% filter(Adem_dx_cat == group) 
-    
-    counts <- 
-      as.data.frame(table(sub_sample$ETHNIC_label, sub_sample$Astroke)) %>% 
-      unite("cell", c("Var1", "Var2"), sep = ":")
-    
-    bootstrap_props[
-      which(bootstrap_props$group == group & 
-              bootstrap_props$cell %in% counts$cell), b] <- 
-      counts$Freq/nrow(sub_sample)
-  }
-}
-
-bootstrap_props_plot_data <- bootstrap_props %>% mutate("truth" = 0) 
-
-for(group in unique(ADAMS_subset$Adem_dx_cat)){
-  true_counts <- get(paste0(group, "_data_counts"))
-  bootstrap_props_plot_data[
-    which(bootstrap_props_plot_data$group == group & 
-            bootstrap_props_plot_data$cell %in% true_counts$cell), "truth"] <- 
-    true_counts$prop
-}
-
-bootstrap_props_plot_data %<>% 
-  mutate("cat" = rep(c("Black + No Stroke", "Hispanic + No Stroke", 
-                       "White + No Stroke", "Black + Stroke", 
-                       "Hispanic + Stroke", "White + Stroke"), 4)) %>% 
-  pivot_longer(-c("group", "cell", "truth", "cat")) %>% 
-  mutate("color" = case_when(group == "Unimpaired" ~ "#00a389", 
-                             group == "Other" ~ "#28bed9", 
-                             group == "MCI" ~ "#fdab00", 
-                             group == "Dementia" ~ "#ff0000"))
-
-#---- **plots ----
-#---- ****create directories ----
-for(dem_group in unique(ADAMS_subset$Adem_dx_cat)){
-  dir.create(paste0("/Users/CrystalShaw/Box/Dissertation/figures/ADAMS_test/", 
-                    "prior_predictive_checks/cell_props/group_specific/", 
-                    tolower(dem_group)), recursive = TRUE) 
-}
-
-#---- ****create plot ----
-for(dem_group in unique(bootstrap_props_plot_data$group)){
-  for(category in unique(bootstrap_props_plot_data$cat)){
-    subset <- bootstrap_props_plot_data %>% 
-      filter(group == dem_group & cat == category)
-    ggplot(data = subset , aes(x = value)) + 
-      geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-      xlab("Proportion") + ggtitle(category) + 
-      geom_vline(xintercept = subset$truth, color = unique(subset$color), 
-                 size = 2)
-    
-    ggsave(filename = paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                             "ADAMS_test/prior_predictive_checks/cell_props/", 
-                             "group_specific/", tolower(dem_group), "/", 
-                             tolower(dem_group), "_", category, "_prop.jpeg"), 
-           width = 5, height = 3, units = "in")
-  } 
-}
-
-bootstrap_props %>% as.data.frame() %>% 
-  mutate("group_number" = case_when(group == "Unimpaired" ~ 1, 
-                                    group == "Other" ~ 2, 
-                                    group == "MCI" ~ 3, 
-                                    group == "Dementia" ~ 4)) %>%
-  write_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/ADAMS_test/", 
-                   "bootstrap_cell_props.csv"))
-
-
-
-
-
-
+ggsave(filename = "prior_cell_props.jpeg", plot = last_plot(), 
+       path = paste0(path_to_box, "figures/simulation_study/"), 
+       width = 8, height = 8, units = "in", device = "jpeg")
