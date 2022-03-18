@@ -8,30 +8,44 @@ p_load("tidyverse", "magrittr", "here", "MCMCpack")
 options(scipen = 999)
 
 #---- read in data ----
-#Categorical vars (notation from Schafer 1997)
-W <- c("ETHNIC_label", "Astroke")
-#Continuous vars (notation from Schafer 1997)
-Z <- c("AAGE", "ANMSETOT_norm", "ANSER7T", "ANIMMCR", "ANRECYES", "ANWM1TOT", 
-       "proxy_cog", "ANDELCOR", "Aiadla", "Abmi")
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-group <- c("Adem_dx_cat")
+#---- **prior imputed clean ----
+prior_imputed_clean <- 
+  readRDS(paste0(path_to_box, 
+                 "data/ADAMS/prior_data/MI/MI_datasets_cleaned")) %>%
+  lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
-ADAMS_train <- 
-  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                  "data/ADAMS/cleaned/ADAMS_train.csv")) %>% 
-  mutate("group_number" = case_when(Adem_dx_cat == "Unimpaired" ~ 1, 
-                                    Adem_dx_cat == "Other" ~ 2, 
-                                    Adem_dx_cat == "MCI" ~ 3, 
-                                    Adem_dx_cat == "Dementia" ~ 4))
+#---- **variable labels ----
+variable_labels <- 
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
+  filter(ADAMS %in% colnames(prior_imputed_clean[[1]]))
 
+#---- relabel columns ----
+prior_imputed_clean <- 
+  lapply(prior_imputed_clean, 
+         function(x) rename_at(x, vars(variable_labels$ADAMS), ~ 
+                                 variable_labels$data_label)) 
+
+#---- **variable selection results ----
+selected_vars <- 
+  read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
+                  "model_coefficients.csv")) %>% 
+  dplyr::select("data_label") %>% unlist()
+
+#---- ****classify vars ----
+#notation from Schafer 1997
+W <- c("black", "hispanic", "stroke")
+
+#continuous vars (notation from Schafer 1997)
+Z <- selected_vars[str_detect(selected_vars, "Z")]
+
+#---- **prior: cell counts ----
 alpha_0_dist <- 
-  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/ADAMS_test/", 
-                  "bootstrap_cell_props.csv")) 
+  read_csv(paste0(path_to_box, "data/ADAMS/prior_data/", 
+                  "imputation_cell_props.csv")) 
 
-#---- arrange data ----
-ADAMS_train %<>% arrange(Astroke, desc(Black), desc(Hispanic))
-
-#---- A (contrasts) ----
+#---- define A (contrasts) ----
 #categorical vars contrasts matrix
 A = do.call(cbind, list(
   #intercept
@@ -43,38 +57,21 @@ A = do.call(cbind, list(
   #stroke main effect
   rep(c(0, 1), each = 3)))
 
-#---- pre-allocate ----
-cells <- 
-  as.data.frame(table(ADAMS_train$ETHNIC_label, ADAMS_train$Astroke)) %>% 
-  unite("cell", c("Var1", "Var2"), sep = ":")
+cells <- A %>% as.data.frame() %>% unite("cells", -1, sep = "")
 
-B = 10000
-priors_beta <- as.data.frame(matrix(nrow = (10*4*4) , ncol = B)) %>% 
-  set_colnames(seq(1, B)) %>% 
-  mutate("group" = rep(unique(ADAMS_train$Adem_dx_cat), each = 40), 
-         "group_number" = rep(c(4, 3, 2, 1), each = 40)) 
-priors_V_inv <- as.data.frame(matrix(nrow = (4*4*4), ncol = B)) %>% 
-  set_colnames(seq(1, B)) %>% 
-  mutate("group" = rep(unique(ADAMS_train$Adem_dx_cat), each = 16), 
-         "group_number" = rep(c(4, 3, 2, 1), each = 16)) 
-priors_Sigma <- as.data.frame(matrix(nrow = (10*10*4), ncol = B)) %>% 
-  set_colnames(seq(1, B)) %>% 
-  mutate("group" = rep(unique(ADAMS_train$Adem_dx_cat), each = 100), 
-         "group_number" = rep(c(4, 3, 2, 1), each = 100)) 
+#---- estimates ----
+test <- prior_imputed_clean[[1]]
 
-for(b in 1:B){
-  sample <- sample_n(ADAMS_train, size = nrow(ADAMS_train), replace = TRUE)
-  
-  for(group in seq(1, 4)){
-    #---- filter data ----
-    subset <- sample %>% filter(group_number == group) %>% 
-      arrange(Astroke, desc(Black), desc(Hispanic))
+estimate_cont_priors <- function(data, W, Z){
+  for(group in c("Unimpaired", "MCI", "Other", "Dementia")){
+    #---- **filter data ----
+    subset <- data %>% filter(!!sym(group) == 1)
     
     #---- U (contingency cell) ----
-    contingency_table_temp <- 
-      as.data.frame(table(subset$ETHNIC_label, subset$Astroke)) %>% 
-      unite("cell", c("Var1", "Var2"), sep = ":")
-    
+    contingency_table_temp <- subset %>% 
+      unite("cell_ID", all_of(W), sep = "") %>% dplyr::select(cell_ID) %>% 
+      table() %>% as.data.frame()
+  
     if(nrow(contingency_table_temp) < 6){
       contingency_table <- tibble("cells" = cells$cell, "Freq" = 0)
       contingency_table[which(contingency_table_temp$cell %in% 
@@ -124,6 +121,52 @@ for(b in 1:B){
     priors_Sigma[which(priors_Sigma$group_number == group), b] <- 
       as.vector(t(residual) %*% residual)
   }
+}
+
+
+
+#---- OLD ----
+
+group <- c("Adem_dx_cat")
+
+ADAMS_train <- 
+  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                  "data/ADAMS/cleaned/ADAMS_train.csv")) %>% 
+  mutate("group_number" = case_when(Adem_dx_cat == "Unimpaired" ~ 1, 
+                                    Adem_dx_cat == "Other" ~ 2, 
+                                    Adem_dx_cat == "MCI" ~ 3, 
+                                    Adem_dx_cat == "Dementia" ~ 4))
+
+
+
+#---- arrange data ----
+ADAMS_train %<>% arrange(Astroke, desc(Black), desc(Hispanic))
+
+
+
+#---- pre-allocate ----
+cells <- 
+  as.data.frame(table(ADAMS_train$ETHNIC_label, ADAMS_train$Astroke)) %>% 
+  unite("cell", c("Var1", "Var2"), sep = ":")
+
+B = 10000
+priors_beta <- as.data.frame(matrix(nrow = (10*4*4) , ncol = B)) %>% 
+  set_colnames(seq(1, B)) %>% 
+  mutate("group" = rep(unique(ADAMS_train$Adem_dx_cat), each = 40), 
+         "group_number" = rep(c(4, 3, 2, 1), each = 40)) 
+priors_V_inv <- as.data.frame(matrix(nrow = (4*4*4), ncol = B)) %>% 
+  set_colnames(seq(1, B)) %>% 
+  mutate("group" = rep(unique(ADAMS_train$Adem_dx_cat), each = 16), 
+         "group_number" = rep(c(4, 3, 2, 1), each = 16)) 
+priors_Sigma <- as.data.frame(matrix(nrow = (10*10*4), ncol = B)) %>% 
+  set_colnames(seq(1, B)) %>% 
+  mutate("group" = rep(unique(ADAMS_train$Adem_dx_cat), each = 100), 
+         "group_number" = rep(c(4, 3, 2, 1), each = 100)) 
+
+for(b in 1:B){
+  sample <- sample_n(ADAMS_train, size = nrow(ADAMS_train), replace = TRUE)
+  
+  
 }
 
 #---- save ----
