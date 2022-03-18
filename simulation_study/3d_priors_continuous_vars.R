@@ -65,9 +65,9 @@ cells <- A %>% as.data.frame() %>% unite("cells", -1, sep = "") %>%
 test <- prior_imputed_clean[[1]]
 
 estimate_cont_priors <- function(data, W, Z){
-  for(group in c("Unimpaired", "MCI", "Other", "Dementia")){
+  for(class in c("Unimpaired", "MCI", "Other", "Dementia")){
     #---- **filter data ----
-    subset <- data %>% filter(!!sym(group) == 1) 
+    subset <- data %>% filter(!!sym(class) == 1) 
     
     #---- U (contingency cell) ----
     contingency_table_temp <- subset %>% 
@@ -98,9 +98,9 @@ estimate_cont_priors <- function(data, W, Z){
     
     #---- **draw new UtU if needed ----
     while(det(t(A) %*% UtU %*% A) < 1e-9){
-      random_draw <- sample(seq(1, 10000), size = 1)
-      new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
-        filter(group_number == group)
+      random_draw <- sample(seq(1, (ncol(alpha_0_dist) - 2)), size = 1)
+      new_props <- alpha_0_dist[, c(random_draw, "group")] %>% 
+        filter(group == class)
       
       UtU <- diag(round(unlist(new_counts[, 1])*nrow(subset)))
     }
