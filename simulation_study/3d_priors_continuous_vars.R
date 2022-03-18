@@ -70,13 +70,13 @@ estimate_cont_priors <- function(data, W, Z){
     #---- U (contingency cell) ----
     contingency_table_temp <- subset %>% 
       unite("cell_ID", all_of(W), sep = "") %>% dplyr::select(cell_ID) %>% 
-      table() %>% as.data.frame()
+      table() %>% as.data.frame() %>% set_colnames(c("cell", "Freq"))
   
     if(nrow(contingency_table_temp) < 6){
-      contingency_table <- tibble("cells" = cells$cell, "Freq" = 0)
-      contingency_table[which(contingency_table_temp$cell %in% 
-                                contingency_table$cells), "Freq"] <- 
-        contingency_table_temp$Freq
+      contingency_table <- data.frame("cell" = cells$cell) %>% 
+        left_join(., contingency_table_temp)
+      
+      contingency_table[is.na(contingency_table)] <- 0
     } else{
       contingency_table <- contingency_table_temp
     }
