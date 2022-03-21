@@ -12,8 +12,8 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **prior imputed clean ----
 prior_imputed_clean <- 
-  readRDS(paste0(path_to_box, 
-                 "data/ADAMS/prior_data/MI/MI_datasets_cleaned")) %>%
+  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
+                 "MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
 #---- **variable labels ----
@@ -47,7 +47,7 @@ get_props <- function(data, W){
 imputation_props <- lapply(prior_imputed_clean, get_props, W) %>% 
   reduce(left_join, by = c("cell_ID", "name")) %>% 
   set_colnames(c("cell_ID", "group", seq(1, length(prior_imputed_clean)))) %>% 
-  write_csv(paste0(path_to_box, "data/ADAMS/prior_data/", 
+  write_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
                    "imputation_cell_props.csv"))
 
 #---- plots ----
