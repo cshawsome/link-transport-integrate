@@ -49,12 +49,12 @@ alpha_0_dist <-
                   "imputation_cell_props.csv")) 
 
 #--- ****beta and sigma ----
-priors_beta <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                            "priors/ADAMS_test/priors_beta.csv")) 
-prior_V_inv <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                            "priors/ADAMS_test/priors_V_inv.csv")) 
-prior_Sigma <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                            "priors/ADAMS_test/priors_Sigma.csv")) 
+priors_beta <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
+                            "prior_data/priors_beta.csv")) 
+prior_V_inv <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
+                               "prior_data/priors_V_inv.csv"))  
+prior_Sigma <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
+                               "prior_data/priors_Sigma.csv")) 
 
 #---- **contrasts matrix ----
 A = do.call(cbind, list(
