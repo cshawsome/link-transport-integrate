@@ -8,7 +8,8 @@ p_load("tidyverse", "broom", "sjPlot", "gridExtra", "magrittr", "glmnet")
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 ADAMS_imputed_clean <- 
-  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned")) %>%
+  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
+                 "MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
