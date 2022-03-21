@@ -50,7 +50,7 @@ alpha_0_dist <-
 
 #--- ****beta and sigma ----
 priors_beta <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
-                            "prior_data/priors_beta.csv")) 
+                               "prior_data/priors_beta.csv")) 
 prior_V_inv <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
                                "prior_data/priors_V_inv.csv"))  
 prior_Sigma <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
@@ -67,22 +67,21 @@ nu_0 <- 65
 kappa_0 <- c(0.85, 0.85, 0.85, 0.85)
 
 #---- **run checks ----
-ADAMS_prior_predictive_checks_props(unimpaired_preds, other_preds, mci_preds, 
-                                    categorical_vars = W, continuous_vars = Z, 
-                                    id_var = "HHIDPN", 
-                                    dementia_var = "Adem_dx_cat", 
-                                    dataset_to_copy, num_synthetic = 1000, 
-                                    unimpaired_betas, unimpaired_cov, 
-                                    other_betas, other_cov, mci_betas, mci_cov, 
-                                    alpha_0_dist, prior_Sigma, prior_V_inv, 
-                                    prior_beta, nu_0, kappa_0, 
-                                    contrasts_matrix = A, 
-                                    orig_means = ADAMS_means, 
-                                    orig_sds = ADAMS_sds, 
-                                    path_to_folder = 
-                                      paste0("/Users/CrystalShaw/Box/",
-                                             "Dissertation/figures/ADAMS_test/", 
-                                             "prior_predictive_checks/"))
+prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
+                        categorical_vars = W, continuous_vars = Z, 
+                        id_var = "HHIDPN", 
+                        dementia_var = "Adem_dx_cat", 
+                        dataset_to_copy, num_synthetic = 10, 
+                        unimpaired_betas, unimpaired_cov, 
+                        other_betas, other_cov, mci_betas, mci_cov, 
+                        alpha_0_dist, prior_Sigma, prior_V_inv, 
+                        prior_beta, nu_0, kappa_0, 
+                        contrasts_matrix = A, 
+                        path_to_folder = 
+                          paste0(path_to_box,
+                                 "figures/simulation_study/", 
+                                 "HCAP_normal_250_unimpaired/", 
+                                 "prior_predictive_checks/"))
 
 #---- OLD ----
 
