@@ -5,9 +5,31 @@ if (!require("pacman")){
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
        "locfit", "MBSP", "wesanderson", "RColorBrewer", "devtools", "gifski", 
-       "transformr", "moments", "vroom", "qdapRegex")
+       "transformr", "moments", "qdapRegex")
 install_github("thomasp85/gganimate")
 library(gganimate)
+
+#---- read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+#---- **dataset to copy ----
+#dataset we're trying to create synthetic versions of
+dataset_to_copy <- 
+  read_csv(paste0(path_to_box, "analyses/simulation_study/synthetic_data/HCAP/", 
+                  "HCAP_synthetic_normal_250_unimpaired.csv"))
+
+#---- **variable labels ----
+variable_labels <- 
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
+
+#---- define vars ----
+#categorical vars (notation from Schafer 1997)
+W <- c("black", "hispanic", "stroke")
+
+#continuous vars (notation from Schafer 1997)
+Z <- colnames(dataset_to_copy)[str_detect(colnames(dataset_to_copy), "_Z")]
+
+#---- OLD ----
 
 #---- source functions ----
 source(here::here("ADAMS", "analysis_scripts", "functions", 
@@ -18,9 +40,6 @@ source(here::here("ADAMS", "analysis_scripts", "functions",
                   "ADAMS_posterior_predictive_checks.R"))
 
 #---- read in data ----
-#dataset we're trying to copy
-dataset_to_copy <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                "data/ADAMS/cleaned/ADAMS_test.csv"))
 
 #complete dataset
 ADAMS_data <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/", 
