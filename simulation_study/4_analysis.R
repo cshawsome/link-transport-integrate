@@ -45,8 +45,8 @@ for(group in c("unimpaired", "mci", "other")){
 
 #---- ****contingency cells ----
 alpha_0_dist <- 
-  vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/priors/", 
-               "ADAMS_test/bootstrap_cell_props.csv")) 
+  read_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                  "imputation_cell_props.csv")) 
 
 #--- ****beta and sigma ----
 priors_beta <- vroom(paste0("/Users/CrystalShaw/Box/Dissertation/data/",
