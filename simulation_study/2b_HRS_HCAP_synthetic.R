@@ -24,7 +24,8 @@ normal_parameter_list <-
                  "normal_parameters"))
 
 #---- source functions ----
-source(here("simulation_study", "functions", "generate_synthetic_continuous.R"))
+source(here("simulation_study", "functions", 
+            "generate_synthetic_continuous_function.R"))
 
 #---- format data ----
 HRS_analytic %<>% mutate("Intercept" = 1) %>% 
