@@ -147,16 +147,12 @@ estimate_cont_priors <- function(data, W, Z, A){
 }
 
 #---- **estimate values ----
-test <- lapply(prior_imputed_clean, estimate_cont_priors, W, Z, A)
+all_priors <- lapply(prior_imputed_clean, estimate_cont_priors, W, Z, A)
 
-for(list in 1:length(test[[1]])){
-  
+for(list in 1:length(all_priors[[1]])){
+  name <- names(all_priors[[1]][[list]])[1]
+  lapply(all_priors, function(x) x[[list]]) %>% 
+    reduce(left_join, by = "group") %>% 
+    set_colnames(c("group", seq(1, length(prior_imputed_clean)))) %>% 
+    write_csv(paste0(path_to_box, "data/ADAMS/prior_data/priors_", name, ".csv"))
 }
-
-#---- save ----
-write_csv(priors_beta, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                              "priors/ADAMS_test/priors_beta.csv"))
-write_csv(priors_V_inv, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                               "priors/ADAMS_test/priors_V_inv.csv"))
-write_csv(priors_Sigma, paste0("/Users/CrystalShaw/Box/Dissertation/data/",
-                               "priors/ADAMS_test/priors_Sigma.csv"))
