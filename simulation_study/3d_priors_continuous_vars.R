@@ -21,7 +21,7 @@ variable_labels <-
   read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
   filter(ADAMS %in% colnames(prior_imputed_clean[[1]]))
 
-#---- relabel columns ----
+#---- ****relabel columns ----
 prior_imputed_clean <- 
   lapply(prior_imputed_clean, 
          function(x) rename_at(x, vars(variable_labels$ADAMS), ~ 
@@ -45,17 +45,9 @@ alpha_0_dist <-
   read_csv(paste0(path_to_box, "data/ADAMS/prior_data/", 
                   "imputation_cell_props.csv")) 
 
-#---- define A (contrasts) ----
+#---- **contrasts matrix ----
 #categorical vars contrasts matrix
-A = do.call(cbind, list(
-  #intercept
-  rep(1, 6),
-  #race/ethnicity main effect: Black
-  rep(c(0, 1, 0), 2),
-  #race/ethnicity main effect: Hispanic
-  rep(c(0, 0, 1), 2),
-  #stroke main effect
-  rep(c(0, 1), each = 3)))
+A = read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix
 
 cells <- A %>% as.data.frame() %>% unite("cells", -1, sep = "") %>% 
   dplyr::select(-"V1") %>% table() %>% as.data.frame() %>% 
