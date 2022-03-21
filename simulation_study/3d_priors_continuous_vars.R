@@ -64,12 +64,31 @@ cells <- A %>% as.data.frame() %>% unite("cells", -1, sep = "") %>%
 #---- estimates ----
 test <- prior_imputed_clean[[1]]
 
-estimate_cont_priors <- function(data, W, Z){
+estimate_cont_priors <- function(data, W, Z, A){
+  #---- **pre-allocate ----
+  priors_V_inv <- 
+    as.data.frame(matrix(nrow = (ncol(A)*ncol(A)*4), ncol = 1)) %>% 
+    set_colnames("V_inv") %>% 
+    mutate("group" = rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
+                         each = ncol(A)*ncol(A))) 
+  
+  priors_beta <- 
+    as.data.frame(matrix(nrow = (length(Z)*ncol(A)*4) , ncol = 1)) %>% 
+    set_colnames("beta") %>% 
+    mutate("group" = rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
+                         each = length(Z)*ncol(A)))
+  
+  priors_Sigma <- 
+    as.data.frame(matrix(nrow = (length(Z)*length(Z)*4), ncol = 1)) %>% 
+    set_colnames("Sigma") %>% 
+    mutate("group" = rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
+                         each = length(Z)*length(Z))) 
+    
   for(class in c("Unimpaired", "MCI", "Other", "Dementia")){
     #---- **filter data ----
     subset <- data %>% filter(!!sym(class) == 1) 
     
-    #---- U (contingency cell) ----
+    #---- **U (contingency cell) ----
     contingency_table_temp <- subset %>% 
       unite("cell_ID", all_of(W), sep = "") %>% dplyr::select(cell_ID) %>% 
       table() %>% as.data.frame() %>% set_colnames(c("cells", "Freq")) 
@@ -105,68 +124,32 @@ estimate_cont_priors <- function(data, W, Z){
       UtU <- diag(round(unlist(new_counts[, 1])*nrow(subset)))
     }
     
-    #---- beta hat ----
+    #---- **beta hat ----
     continuous_covariates <- subset %>% dplyr::select(all_of(Z)) %>% as.matrix
     
     V_inv <- t(A) %*% UtU %*% A
     V <- solve(V_inv)
-    priors_V_inv[which(priors_V_inv$group_number == group), b] <- 
+    priors_V_inv[which(priors_V_inv$group == class), "V_inv"] <- 
       as.vector(V_inv)
     
     beta_hat <- V %*% t(A) %*% t(U) %*% continuous_covariates
-    priors_beta[which(priors_beta$group_number == group), b] <- 
+    priors_beta[which(priors_beta$group == class), "beta"] <- 
       as.vector(beta_hat)
     
-    #---- Sigma hat ----
+    #---- **Sigma hat ----
     residual <- continuous_covariates - U %*% A %*% beta_hat
-    priors_Sigma[which(priors_Sigma$group_number == group), b] <- 
+    priors_Sigma[which(priors_Sigma$group == class), "Sigma"] <- 
       as.vector(t(residual) %*% residual)
   }
+  
+  #---- **return values ----
+  return(list(priors_V_inv, priors_beta, priors_Sigma))
 }
 
+#---- **estimate values ----
+test <- lapply(prior_imputed_clean, estimate_cont_priors, W, Z, A)
 
-
-#---- OLD ----
-
-group <- c("Adem_dx_cat")
-
-ADAMS_train <- 
-  read_csv(paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                  "data/ADAMS/cleaned/ADAMS_train.csv")) %>% 
-  mutate("group_number" = case_when(Adem_dx_cat == "Unimpaired" ~ 1, 
-                                    Adem_dx_cat == "Other" ~ 2, 
-                                    Adem_dx_cat == "MCI" ~ 3, 
-                                    Adem_dx_cat == "Dementia" ~ 4))
-
-
-
-#---- arrange data ----
-ADAMS_train %<>% arrange(Astroke, desc(Black), desc(Hispanic))
-
-
-
-#---- pre-allocate ----
-cells <- 
-  as.data.frame(table(ADAMS_train$ETHNIC_label, ADAMS_train$Astroke)) %>% 
-  unite("cell", c("Var1", "Var2"), sep = ":")
-
-B = 10000
-priors_beta <- as.data.frame(matrix(nrow = (10*4*4) , ncol = B)) %>% 
-  set_colnames(seq(1, B)) %>% 
-  mutate("group" = rep(unique(ADAMS_train$Adem_dx_cat), each = 40), 
-         "group_number" = rep(c(4, 3, 2, 1), each = 40)) 
-priors_V_inv <- as.data.frame(matrix(nrow = (4*4*4), ncol = B)) %>% 
-  set_colnames(seq(1, B)) %>% 
-  mutate("group" = rep(unique(ADAMS_train$Adem_dx_cat), each = 16), 
-         "group_number" = rep(c(4, 3, 2, 1), each = 16)) 
-priors_Sigma <- as.data.frame(matrix(nrow = (10*10*4), ncol = B)) %>% 
-  set_colnames(seq(1, B)) %>% 
-  mutate("group" = rep(unique(ADAMS_train$Adem_dx_cat), each = 100), 
-         "group_number" = rep(c(4, 3, 2, 1), each = 100)) 
-
-for(b in 1:B){
-  sample <- sample_n(ADAMS_train, size = nrow(ADAMS_train), replace = TRUE)
-  
+for(list in 1:length(test[[1]])){
   
 }
 
