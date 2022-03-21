@@ -81,7 +81,7 @@ estimate_cont_priors <- function(data, W, Z, A){
     set_colnames("Sigma") %>% 
     mutate("group" = rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
                          each = length(Z)*length(Z))) 
-    
+  
   for(class in c("Unimpaired", "MCI", "Other", "Dementia")){
     #---- **filter data ----
     subset <- data %>% filter(!!sym(class) == 1) 
@@ -90,7 +90,7 @@ estimate_cont_priors <- function(data, W, Z, A){
     contingency_table_temp <- subset %>% 
       unite("cell_ID", all_of(W), sep = "") %>% dplyr::select(cell_ID) %>% 
       table() %>% as.data.frame() %>% set_colnames(c("cells", "Freq")) 
-  
+    
     if(nrow(contingency_table_temp) < 6){
       contingency_table <- data.frame("cells" = cells$cell) %>% 
         left_join(., contingency_table_temp)
@@ -147,10 +147,42 @@ estimate_cont_priors <- function(data, W, Z, A){
 #---- **estimate values ----
 all_priors <- lapply(prior_imputed_clean, estimate_cont_priors, W, Z, A)
 
-for(list in 1:length(all_priors[[1]])){
-  name <- names(all_priors[[1]][[list]])[1]
-  lapply(all_priors, function(x) x[[list]]) %>% 
-    reduce(left_join, by = "group") %>% 
-    set_colnames(c("group", seq(1, length(prior_imputed_clean)))) %>% 
-    write_csv(paste0(path_to_box, "data/ADAMS/prior_data/priors_", name, ".csv"))
+#---- **pre-allocate ----
+priors_V_inv <- 
+  as.data.frame(matrix(nrow = (ncol(A)*ncol(A)*4), 
+                       ncol = length(prior_imputed_clean))) %>% 
+  set_colnames(seq(1:length(prior_imputed_clean))) %>% 
+  mutate("group" = rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
+                       each = ncol(A)*ncol(A))) 
+
+priors_beta <- 
+  as.data.frame(matrix(nrow = (length(Z)*ncol(A)*4) , 
+                       ncol = length(prior_imputed_clean))) %>% 
+  set_colnames(seq(1:length(prior_imputed_clean))) %>% 
+  mutate("group" = rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
+                       each = length(Z)*ncol(A)))
+
+priors_Sigma <- 
+  as.data.frame(matrix(nrow = (length(Z)*length(Z)*4), 
+                       ncol = length(prior_imputed_clean))) %>% 
+  set_colnames(seq(1:length(prior_imputed_clean))) %>% 
+  mutate("group" = rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
+                       each = length(Z)*length(Z))) 
+
+for(index in 1:length(all_priors)){
+  list <- all_priors[[index]]
+  priors_V_inv[which(priors_V_inv$group == list[[1]]$group), index] <- 
+    list[[1]]$V_inv
+  priors_beta[which(priors_beta$group == list[[2]]$group), index] <- 
+    list[[2]]$beta
+  priors_Sigma[which(priors_Sigma$group == list[[3]]$group), index] <- 
+    list[[3]]$Sigma
 }
+
+#---- **save results ----
+write_csv(priors_V_inv, paste0(path_to_box, "data/ADAMS/prior_data/", 
+                               "priors_V_inv.csv"))
+write_csv(priors_beta, paste0(path_to_box, "data/ADAMS/prior_data/", 
+                              "priors_beta.csv"))
+write_csv(priors_Sigma, paste0(path_to_box, "data/ADAMS/prior_data/", 
+                               "priors_Sigma.csv"))
