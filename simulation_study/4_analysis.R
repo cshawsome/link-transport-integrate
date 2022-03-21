@@ -66,14 +66,6 @@ nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
 kappa_0 <- c(0.85, 0.85, 0.85, 0.85)
 
-#---- **original means and variances ----
-ADAMS_data %<>% 
-  dplyr::select("HHIDPN", all_of(W), all_of(Z[, "var"]), "Adem_dx_cat") %>% 
-  filter(HHIDPN %in% dataset_to_copy$HHIDPN)
-
-ADAMS_means <- colMeans(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])))
-ADAMS_sds <- apply(ADAMS_data %>% dplyr::select(all_of(Z[, "var"])), 2, sd)
-
 #---- **run checks ----
 ADAMS_prior_predictive_checks_props(unimpaired_preds, other_preds, mci_preds, 
                                     categorical_vars = W, continuous_vars = Z, 
