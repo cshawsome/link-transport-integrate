@@ -57,15 +57,8 @@ prior_Sigma <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
                                "prior_data/priors_Sigma.csv")) 
 
 #---- **contrasts matrix ----
-A = do.call(cbind, list(
-  #intercept
-  rep(1, 6),
-  #race/ethnicity main effect: Black
-  rep(c(1, 0, 0), 2),
-  #race/ethnicity main effect: Hispanic
-  rep(c(0, 1, 0), 2),
-  #stroke main effect
-  rep(c(0, 1), each = 3)))
+A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
+  as.matrix()
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
