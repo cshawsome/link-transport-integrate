@@ -12,8 +12,8 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **prior imputed clean ----
 prior_imputed_clean <- 
-  readRDS(paste0(path_to_box, 
-                 "data/ADAMS/prior_data/MI/MI_datasets_cleaned")) %>%
+  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
+                 "MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
 #---- **variable labels ----
@@ -47,7 +47,8 @@ alpha_0_dist <-
 
 #---- **contrasts matrix ----
 #categorical vars contrasts matrix
-A = read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix
+A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
+  as.matrix()
 
 cells <- A %>% as.data.frame() %>% unite("cells", -1, sep = "") %>% 
   dplyr::select(-"V1") %>% table() %>% as.data.frame() %>% 
@@ -172,9 +173,9 @@ for(index in 1:length(all_priors)){
 }
 
 #---- **save results ----
-write_csv(priors_V_inv, paste0(path_to_box, "data/ADAMS/prior_data/", 
-                               "priors_V_inv.csv"))
-write_csv(priors_beta, paste0(path_to_box, "data/ADAMS/prior_data/", 
-                              "priors_beta.csv"))
-write_csv(priors_Sigma, paste0(path_to_box, "data/ADAMS/prior_data/", 
-                               "priors_Sigma.csv"))
+write_csv(priors_V_inv, paste0(path_to_box, "analyses/simulation_study/", 
+                               "prior_data/priors_V_inv.csv"))
+write_csv(priors_beta, paste0(path_to_box, "analyses/simulation_study/", 
+                              "prior_data/priors_beta.csv"))
+write_csv(priors_Sigma, paste0(path_to_box, "analyses/simulation_study/", 
+                               "prior_data/priors_Sigma.csv"))
