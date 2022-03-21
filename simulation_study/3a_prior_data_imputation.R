@@ -321,5 +321,6 @@ ADAMS_imputed_clean <- lapply(ADAMS_imputed_clean, Z_score, standardize_vars)
 
 #---- **save clean datasets ----
 saveRDS(ADAMS_imputed_clean, 
-        file = paste0(path_to_box, "data/ADAMS/prior_data/MI/MI_datasets_cleaned"))
+        file = paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
+                      "MI_datasets_cleaned"))
 
