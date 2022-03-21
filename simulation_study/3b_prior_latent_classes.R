@@ -12,8 +12,8 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **prior imputed clean ----
 prior_imputed_clean <- 
-  readRDS(paste0(path_to_box, 
-                 "data/ADAMS/prior_data/MI/MI_datasets_cleaned")) %>%
+  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
+                 "MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
 #---- **variable labels ----
@@ -98,7 +98,7 @@ for(est in c("betas", "cov")){
     }
     
     data %>% 
-      write_csv(paste0(path_to_box, "data/ADAMS/", "prior_data/latent_class_", 
-                       group, "_", est, ".csv"))
+      write_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                       "latent_class_", group, "_", est, ".csv"))
   }
 }
