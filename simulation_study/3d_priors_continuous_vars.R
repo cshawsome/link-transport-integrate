@@ -62,8 +62,6 @@ cells <- A %>% as.data.frame() %>% unite("cells", -1, sep = "") %>%
   dplyr::select(-"Freq") %>% set_colnames("cells")
 
 #---- estimates ----
-test <- prior_imputed_clean[[1]]
-
 estimate_cont_priors <- function(data, W, Z, A){
   #---- **pre-allocate ----
   priors_V_inv <- 
