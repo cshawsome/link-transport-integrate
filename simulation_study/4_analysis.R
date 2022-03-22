@@ -27,8 +27,10 @@ dataset_to_copy <-
   mutate("(Intercept)" = 1)
 
 #---- **variable labels ----
-variable_labels <- 
-  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
+
+#---- **cell ID key ----
+cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) 
 
 #---- define vars ----
 #categorical vars (notation from Schafer 1997)
@@ -92,6 +94,24 @@ prior_predictive_checks(unimpaired_preds, other_preds, mci_preds,
                                  "HCAP_normal_250_unimpaired/", 
                                  "prior_predictive_checks/"))
 
+#---- generate synthetic data ----
+generate_synthetic_props(warm_up = 500, run_number = 1, 
+                         starting_props = c(0.25, 0.25, 0.25, 0.25),
+                         unimpaired_preds, other_preds, mci_preds, 
+                         categorical_vars = W, continuous_vars = Z, 
+                         id_var = "HHIDPN", dementia_var = "Adem_dx_cat", 
+                         dataset_to_copy, num_synthetic = 1000, 
+                         unimpaired_betas, unimpaired_cov, other_betas, 
+                         other_cov, mci_betas, mci_cov, alpha_0_dist, 
+                         prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
+                         contrasts_matrix = A,
+                         path_to_analyses_folder = 
+                           paste0("/Users/CrystalShaw/Box/Dissertation/", 
+                                  "analyses/", "ADAMS_test/"), 
+                         path_to_figures_folder = 
+                           paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
+                                  "ADAMS_test/"))
+
 #---- OLD ----
 
 #---- source functions ----
@@ -118,22 +138,7 @@ generate_synthetic_props(warm_up = 500, run_number = 1,
                            paste0("/Users/CrystalShaw/Box/Dissertation/", 
                                   "figures/ADAMS_test/"))
 
-generate_synthetic_props(warm_up = 500, run_number = 2, 
-                         starting_props = c(0.25, 0.25, 0.25, 0.25),
-                         unimpaired_preds, other_preds, mci_preds, 
-                         categorical_vars = W, continuous_vars = Z, 
-                         id_var = "HHIDPN", dementia_var = "Adem_dx_cat", 
-                         dataset_to_copy, num_synthetic = 1000, 
-                         unimpaired_betas, unimpaired_cov, other_betas, 
-                         other_cov, mci_betas, mci_cov, alpha_0_dist, 
-                         prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
-                         contrasts_matrix = A,
-                         path_to_analyses_folder = 
-                           paste0("/Users/CrystalShaw/Box/Dissertation/", 
-                                  "analyses/", "ADAMS_test/"), 
-                         path_to_figures_folder = 
-                           paste0("/Users/CrystalShaw/Box/Dissertation/figures/", 
-                                  "ADAMS_test/"))
+
 
 generate_synthetic_props(warm_up = 500, run_number = 3, 
                          starting_props = c(0.10, 0.20, 0.30, 0.40),

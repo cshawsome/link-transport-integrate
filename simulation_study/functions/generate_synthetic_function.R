@@ -1,7 +1,7 @@
 generate_synthetic <- 
   function(warm_up, run_number, starting_props, 
            unimpaired_preds, other_preds, mci_preds, categorical_vars, 
-           continuous_vars, id_var, dataset_to_copy, num_synthetic, 
+           continuous_vars, id_var, dataset_to_copy, cell_ID_key, num_synthetic, 
            unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
            mci_cov, alpha_0_dist, count = "no", prior_Sigma, prior_V_inv, 
            prior_beta, nu_0, kappa_0, contrasts_matrix,
@@ -421,7 +421,7 @@ generate_synthetic <-
   }
 
 #---- test function ----
-warm_up = 500 
+warm_up = 2 
 run_number = 1 
 starting_props = c(0.25, 0.25, 0.25, 0.25)
 unimpaired_preds = unimpaired_preds
@@ -446,7 +446,7 @@ nu_0 = nu_0
 kappa_0 = kappa_0 
 contrasts_matrix = A
 path_to_analyses_folder = 
-  paste0(path_to_box, "simulation_study/analyses/HCAP_normal_250_unimpaired/") 
+  paste0(path_to_box, "analyses/simulation_study/HCAP_normal_250_unimpaired/") 
 path_to_figures_folder = 
   paste0(path_to_box, "figures/simulation_study/HCAP_normal_250_unimpaired/") 
 
