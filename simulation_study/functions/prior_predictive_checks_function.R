@@ -56,10 +56,14 @@ prior_predictive_checks <-
                   synthetic_sample$group_num == 0 ~ "Dementia")
       
       #pre-allocate: ncol = num impairement groups * num contingency cells
-      # nrow = 
-      mu <- matrix(0, ncol = 4*6, nrow = 10) %>%
-        set_colnames(apply(expand.grid(seq(1, 4), seq(1, 6)), 1, paste0,
-                           collapse = ":"))
+      # these are contingency-cell specific means for continuous variables by
+      # impairment class
+      mu <- matrix(0, ncol = 4*nrow(contrasts_matrix), 
+                   nrow = length(continuous_vars)) %>%
+        set_colnames(apply(
+          expand.grid(c("Unimpaired", "MCI", "Dementia", "Other"), 
+                      seq(1, nrow(contrasts_matrix))), 1, paste0,
+          collapse = ":"))
       
       #figure out max sampling index-- could use any prior distribution
       max_index <- 
@@ -77,8 +81,9 @@ prior_predictive_checks <-
           filter(group == class)
         
         #---- **p(contingency table cell) ----
-        pi <- rdirichlet(1, alpha = as.numeric(unlist(prior_counts[, 1]))*
-                           nrow(subset))
+        pi <- 
+          MCMCpack::rdirichlet(1, alpha = as.numeric(unlist(prior_counts[, 1]))*
+                                 nrow(subset))
         
         #---- **contingency table count ----
         contingency_table <- rmultinom(n = 1, size = nrow(subset), prob = pi)
@@ -137,11 +142,7 @@ prior_predictive_checks <-
         #---- **draw data ----
         #reformat contingency table
         table <- contingency_table %>% as.data.frame() %>%
-          cbind(do.call(cbind, list(
-            #Black              #Hispanic           
-            rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2),
-            #Stroke
-            c(rep(0, 3), rep(1, 3))))) %>% set_colnames(c("Count", W))
+          cbind(., contrasts_matrix[, -1]) %>% rename("Count" = "V1")
         
         for(j in 1:nrow(table)){
           if(table[j, "Count"] == 0){next}
@@ -152,24 +153,25 @@ prior_predictive_checks <-
           }
           #continuous data
           if(table[j, "Count"] == 1){
-            subset[index:(index - 1 + table[j, "Count"]), continuous_vars["var"]] <-
+            subset[index:(index - 1 + table[j, "Count"]), continuous_vars] <-
               t(as.matrix(mvrnorm(n = table[j, "Count"],
-                                  mu = mu[, paste0(i, ":", j)], Sigma = sig_Y)))
+                                  mu = mu[, paste0(class, ":", j)], 
+                                  Sigma = sig_Y)))
           } else{
-            subset[index:(index - 1 + table[j, "Count"]), continuous_vars["var"]] <-
+            subset[index:(index - 1 + table[j, "Count"]), continuous_vars] <-
               mvrnorm(n = table[j, "Count"],
-                      mu = mu[, paste0(i, ":", j)], Sigma = sig_Y)
+                      mu = mu[, paste0(class, ":", j)], Sigma = sig_Y)
           }
         }
-        assign(paste0("Z_", i), subset[, all_of(Z[, "var"])])
+        assign(paste0("Z_", class), subset[, all_of(continuous_vars)])
       }
       
       #---- **return ----
       return(list("Group" = synthetic_sample$Group,
-                  "Z_unimpaired" = Z_1 %>% mutate("color" = "#00a389"), 
-                  "Z_other" = Z_2 %>% mutate("color" = "#28bed9"), 
-                  "Z_mci" = Z_3 %>% mutate("color" = "#fdab00"),
-                  "Z_dementia" = Z_4 %>% mutate("color" = "#ff0000")))
+                  "Z_unimpaired" = Z_Unimpaired %>% mutate("color" = "#00a389"), 
+                  "Z_other" = Z_Other %>% mutate("color" = "#28bed9"), 
+                  "Z_mci" = Z_MCI %>% mutate("color" = "#fdab00"),
+                  "Z_dementia" = Z_Dementia %>% mutate("color" = "#ff0000")))
     }
     
     #---- multiruns ----
