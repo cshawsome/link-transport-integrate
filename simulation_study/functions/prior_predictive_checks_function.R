@@ -8,15 +8,16 @@ prior_predictive_checks <-
     #---- create folders for results ----
     dir.create(paste0(path_to_folder, "impairment_classes/"), recursive = TRUE)
     
-    for(class in unlist(unique(dataset_to_copy[, dementia_var]))){
+    for(class in c("unimpaired", "mci", "dementia", "other")){
       dir.create(paste0(path_to_folder, "continuous_vars/", 
                         tolower(class)), recursive = TRUE)
     }
     
     #---- select variables ----
-    vars <- unique(c(unimpaired_preds, other_preds, mci_preds, dementia_var))
+    vars <- unique(c(unimpaired_preds, other_preds, mci_preds, 
+                     "Unimpaired", "MCI", "Dementia", "Other"))
     
-    synthetic_sample <- dataset_to_copy %>% 
+    synthetic_sample <- dataset_to_copy %>%  
       dplyr::select(all_of(id_var), all_of(vars)) %>% 
       #pre-allocate columns
       mutate("Group" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
