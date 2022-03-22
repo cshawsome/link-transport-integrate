@@ -55,7 +55,8 @@ prior_predictive_checks <-
                   synthetic_sample$group_num == 3 ~ "MCI", 
                   synthetic_sample$group_num == 0 ~ "Dementia")
       
-      #pre-allocate
+      #pre-allocate: ncol = num impairement groups * num contingency cells
+      # nrow = 
       mu <- matrix(0, ncol = 4*6, nrow = 10) %>%
         set_colnames(apply(expand.grid(seq(1, 4), seq(1, 6)), 1, paste0,
                            collapse = ":"))
@@ -111,7 +112,7 @@ prior_predictive_checks <-
         Sigma_prior <- prior_Sigma[, c(as.character(random_draw), "group")] %>% 
           filter(group == class)
         sig_Y <- riwish(v = (nu_0), S = matrix(unlist(Sigma_prior[, 1]), 
-                                               nrow = length(Z)))
+                                               nrow = length(continuous_vars)))
         
         #---- **beta_0 ----
         V_0_inv <- prior_V_inv[, c(as.character(random_draw), "group")] %>% 
@@ -128,10 +129,10 @@ prior_predictive_checks <-
                                       sig_Y/kappa_0[class])
         
         #---- **compute mu ----
-        mu[, paste0(i, ":", seq(1, 6))] <-
+        mu[, paste0(class, ":", seq(1, 6))] <-
           t(contrasts_matrix %*% 
               matrix(beta_Sigma_Y, nrow = ncol(contrasts_matrix), 
-                     ncol = nrow(Z), byrow = FALSE))
+                     ncol = length(continuous_vars), byrow = FALSE))
         
         #---- **draw data ----
         #reformat contingency table
@@ -149,13 +150,13 @@ prior_predictive_checks <-
           } else{
             index = sum(table[1:(j - 1), "Count"]) + 1
           }
-          #Z (continuous data)
+          #continuous data
           if(table[j, "Count"] == 1){
-            subset[index:(index - 1 + table[j, "Count"]), Z[, "var"]] <-
+            subset[index:(index - 1 + table[j, "Count"]), continuous_vars["var"]] <-
               t(as.matrix(mvrnorm(n = table[j, "Count"],
                                   mu = mu[, paste0(i, ":", j)], Sigma = sig_Y)))
           } else{
-            subset[index:(index - 1 + table[j, "Count"]), Z[, "var"]] <-
+            subset[index:(index - 1 + table[j, "Count"]), continuous_vars["var"]] <-
               mvrnorm(n = table[j, "Count"],
                       mu = mu[, paste0(i, ":", j)], Sigma = sig_Y)
           }
