@@ -60,12 +60,17 @@ prior_predictive_checks <-
         set_colnames(apply(expand.grid(seq(1, 4), seq(1, 6)), 1, paste0,
                            collapse = ":"))
       
+      #figure out max sampling index-- could use any prior distribution
+      max_index <- 
+        colnames(alpha_0_dist)[str_detect(colnames(alpha_0_dist), "[0-9]+")] %>% 
+        as.numeric() %>% max()
+      
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
         #---- **contingency cells ----
-        subset <- synthetic_sample %>% filter(Group == i)
+        subset <- synthetic_sample %>% filter(Group == class)
         prior_counts <- 
-          alpha_0_dist[, c(sample(seq(1, ncol(alpha_0_dist) - 3), size = 1), 
-                           ncol(alpha_0_dist))] %>% 
+          alpha_0_dist[, c(as.character(sample(seq(1, max_index), size = 1)), 
+                           "group"] %>% 
           filter(group_number == i)
         
         #---- **p(contingency table cell) ----
