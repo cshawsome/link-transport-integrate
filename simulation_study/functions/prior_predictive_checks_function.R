@@ -20,12 +20,12 @@ prior_predictive_checks <-
     synthetic_sample <- dataset_to_copy %>%  
       dplyr::select(all_of(id_var), all_of(vars)) %>% 
       #pre-allocate columns
-      mutate("Group" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
+      mutate("Group" = NA, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
     
     generate_data <- function(){
       #---- latent class ----
-      group = 1
-      synthetic_sample[, "Group"] <- 0
+      group_vec = c("Unimpaired", "MCI", "Dementia", "Other")
+      group_index = 1
       
       for(model in c("unimpaired", "other", "mci")){
         subset_index <- which(synthetic_sample$Group == 0)
