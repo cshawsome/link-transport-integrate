@@ -16,7 +16,8 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 #dataset we're trying to create synthetic versions of
 dataset_to_copy <- 
   read_csv(paste0(path_to_box, "analyses/simulation_study/synthetic_data/HCAP/", 
-                  "HCAP_synthetic_normal_250_unimpaired.csv"))
+                  "HCAP_synthetic_normal_250_unimpaired.csv")) %>% 
+  mutate("(Intercept)" = 1)
 
 #---- **variable labels ----
 variable_labels <- 
