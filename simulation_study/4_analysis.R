@@ -65,7 +65,8 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 #DOF for inverse wishart
 nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
-kappa_0 <- c(0.85, 0.85, 0.85, 0.85)
+kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>% 
+  set_names(c("Unimpaired", "MCI", "Dementia", "Other"))
 
 #---- **run checks ----
 prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 

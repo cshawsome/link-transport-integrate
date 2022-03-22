@@ -114,17 +114,18 @@ prior_predictive_checks <-
                                                nrow = length(Z)))
         
         #---- **beta_0 ----
-        V_0_inv <- prior_V_inv[, c(random_draw, ncol(prior_V_inv))] %>% 
-          filter(group_number == i)
-        beta_0 <- priors_beta[, c(random_draw, ncol(priors_beta))] %>% 
-          filter(group_number == i)
+        V_0_inv <- prior_V_inv[, c(as.character(random_draw), "group")] %>% 
+          filter(group == class)
+        beta_0 <- priors_beta[, c(as.character(random_draw), "group")] %>% 
+          filter(group == class)
         
         #as matrices
-        V_0_inv <- matrix(unlist(V_0_inv[, 1]), nrow = 4)
+        V_0_inv <- matrix(unlist(V_0_inv[, 1]), nrow = ncol(contrasts_matrix))
         beta_0 <- matrix(unlist(beta_0[, 1]), nrow = nrow(V_0_inv))
         
         #---- **draw beta | Sigma----
-        beta_Sigma_Y <- matrix.normal(beta_0, solve(V_0_inv), sig_Y/kappa_0[i])
+        beta_Sigma_Y <- matrix.normal(beta_0, solve(V_0_inv), 
+                                      sig_Y/kappa_0[class])
         
         #---- **compute mu ----
         mu[, paste0(i, ":", seq(1, 6))] <-
