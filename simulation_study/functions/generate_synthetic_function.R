@@ -176,9 +176,9 @@ generate_synthetic <-
                    nrow = nrow(V_inv), ncol = ncol(V_inv))
           beta_0 <- 
             matrix(unlist(priors_beta[which(priors_beta$group_number == i), 
-                                              random_draw]), 
-                           nrow = nrow(V_inv),  
-                           ncol = ncol(continuous_covariates))
+                                      random_draw]), 
+                   nrow = nrow(V_inv),  
+                   ncol = ncol(continuous_covariates))
           
           M <- solve(V_inv + kappa_0[i]*V_0_inv)
           m <-  t(A) %*% t(U) %*% continuous_covariates - 
@@ -419,6 +419,36 @@ generate_synthetic <-
               file = paste0(path_to_analyses_folder, "diagnostics_data/", 
                             "run_", run_number, "/ADAMSA_mu_chain_data.csv"))
   }
+
+#---- test function ----
+warm_up = 500 
+run_number = 1 
+starting_props = c(0.25, 0.25, 0.25, 0.25)
+unimpaired_preds = unimpaired_preds
+other_preds = other_preds
+mci_preds = mci_preds
+categorical_vars = W 
+continuous_vars = Z 
+id_var = "HHIDPN" 
+dataset_to_copy = dataset_to_copy
+num_synthetic = 10 
+unimpaired_betas = unimpaired_betas
+unimpaired_cov = unimpaired_cov
+other_betas = other_betas
+other_cov = other_cov
+mci_betas = mci_betas
+mci_cov = mci_cov
+alpha_0_dist = alpha_0_dist 
+prior_Sigma = prior_Sigma
+prior_V_inv = prior_V_inv
+prior_beta = prior_beta
+nu_0 = nu_0
+kappa_0 = kappa_0 
+contrasts_matrix = A
+path_to_analyses_folder = 
+  paste0(path_to_box, "simulation_study/analyses/HCAP_normal_250_unimpaired/") 
+path_to_figures_folder = 
+  paste0(path_to_box, "figures/simulation_study/HCAP_normal_250_unimpaired/") 
 
 
 
