@@ -66,12 +66,14 @@ prior_predictive_checks <-
         as.numeric() %>% max()
       
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+        #---- **index for random draws ----
+        random_draw <- sample(seq(1, max_index), size = 1)
+        
         #---- **contingency cells ----
         subset <- synthetic_sample %>% filter(Group == class)
         prior_counts <- 
-          alpha_0_dist[, c(as.character(sample(seq(1, max_index), size = 1)), 
-                           "group"] %>% 
-          filter(group_number == i)
+          alpha_0_dist[, c(as.character(random_draw), "group")] %>% 
+          filter(group == class)
         
         #---- **p(contingency table cell) ----
         pi <- rdirichlet(1, alpha = as.numeric(unlist(prior_counts[, 1]))*
@@ -83,9 +85,11 @@ prior_predictive_checks <-
         
         #---- **draw new UtU if needed ----
         while(det(t(contrasts_matrix) %*% UtU %*% contrasts_matrix) < 1e-9){
-          random_draw <- sample(seq(1, ncol(alpha_0_dist) - 3), size = 1)
-          new_counts <- alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
-            filter(group_number == i)
+          #---- ****new random draw index ----
+          random_draw <- sample(seq(1, max_index), size = 1)
+          new_counts <- 
+            alpha_0_dist[, c(as.character(random_draw), "group")] %>% 
+            filter(group == class)
           
           UtU <- diag(unlist(new_counts[, 1])*nrow(subset))
         }
@@ -104,11 +108,10 @@ prior_predictive_checks <-
         }
         
         #---- **draw Sigma_0----
-        random_draw <- sample(seq(1, ncol(prior_Sigma) - 2), size = 1)
-        Sigma_prior <- prior_Sigma[, c(random_draw, ncol(prior_Sigma))] %>% 
-          filter(group_number == i)
+        Sigma_prior <- prior_Sigma[, c(as.character(random_draw), "group")] %>% 
+          filter(group == class)
         sig_Y <- riwish(v = (nu_0), S = matrix(unlist(Sigma_prior[, 1]), 
-                                               nrow = nrow(Z)))
+                                               nrow = length(Z)))
         
         #---- **beta_0 ----
         V_0_inv <- prior_V_inv[, c(random_draw, ncol(prior_V_inv))] %>% 
