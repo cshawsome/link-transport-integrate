@@ -60,7 +60,7 @@ prior_predictive_checks <-
         set_colnames(apply(expand.grid(seq(1, 4), seq(1, 6)), 1, paste0,
                            collapse = ":"))
       
-      for(i in 1:4){
+      for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
         #---- **contingency cells ----
         subset <- synthetic_sample %>% filter(Group == i)
         prior_counts <- 
