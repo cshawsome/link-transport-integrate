@@ -1,10 +1,10 @@
 generate_synthetic <- 
   function(warm_up, run_number, starting_props, 
            unimpaired_preds, other_preds, mci_preds, categorical_vars, 
-           continuous_vars, id_var, dementia_var, dataset_to_copy, 
-           num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 
-           other_cov, mci_betas, mci_cov, alpha_0_dist, count = "no", 
-           prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, contrasts_matrix,
+           continuous_vars, id_var, dataset_to_copy, num_synthetic, 
+           unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
+           mci_cov, alpha_0_dist, count = "no", prior_Sigma, prior_V_inv, 
+           prior_beta, nu_0, kappa_0, contrasts_matrix,
            path_to_analyses_folder, path_to_figures_folder){
     #---- generate subfolders for results ----
     dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
@@ -441,7 +441,7 @@ mci_cov = mci_cov
 alpha_0_dist = alpha_0_dist 
 prior_Sigma = prior_Sigma
 prior_V_inv = prior_V_inv
-prior_beta = prior_beta
+prior_beta = priors_beta
 nu_0 = nu_0
 kappa_0 = kappa_0 
 contrasts_matrix = A
