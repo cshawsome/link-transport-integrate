@@ -20,11 +20,11 @@ generate_synthetic <-
     B = warm_up + synthetic_sets
     
     #---- count contingency cells ----
-    cross_class_label <- 
-      table(dataset_to_copy$ETHNIC_label, dataset_to_copy$Astroke) %>% 
-      as.data.frame() %>% 
-      mutate("Stroke" = ifelse(Var2 == 0, "No Stroke", "Stroke")) %>% 
-      unite("Cell Label", c("Var1", "Stroke"), sep = " | ", remove = FALSE)
+    cross_class_label <- dataset_to_copy %>% 
+      dplyr::select(all_of(categorical_vars)) %>% 
+      unite("cell_ID", everything(), sep = "") %>% table() %>% 
+      as.data.frame() %>% set_colnames(c("cell_ID", "count")) %>% 
+      left_join(cell_ID_key)
     
     #---- chain storage ----
     model_gamma_chain <- 
@@ -431,6 +431,7 @@ categorical_vars = W
 continuous_vars = Z 
 id_var = "HHIDPN" 
 dataset_to_copy = dataset_to_copy
+cell_ID_key = cell_ID_key
 num_synthetic = 10 
 unimpaired_betas = unimpaired_betas
 unimpaired_cov = unimpaired_cov
