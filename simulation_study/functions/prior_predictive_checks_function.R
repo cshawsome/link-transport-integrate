@@ -280,7 +280,6 @@ prior_predictive_checks <-
 # categorical_vars = W 
 # continuous_vars = Z 
 # id_var = "HHIDPN" 
-# #dementia_var 
 # dataset_to_copy = dataset_to_copy 
 # num_synthetic = 10
 # unimpaired_betas = unimpaired_betas
