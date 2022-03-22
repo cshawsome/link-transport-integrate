@@ -183,37 +183,33 @@ prior_predictive_checks <-
     #---- plots ----
     #---- **dem class ----
     to_copy_dementia_plot_data <- 
-      as.data.frame(table(dataset_to_copy[, dementia_var])) %>% 
-      mutate("prop" = Freq/sum(Freq))
-    
+      as.data.frame(table(
+        dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
+      pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
+      
     dem_sub <- lapply(synthetic, "[[", "Group") %>% do.call(cbind, .) %>% 
       set_colnames(seq(1, runs)) %>% as.data.frame() %>%
-      pivot_longer(everything()) %>% 
-      mutate("Group_label" = case_when(value == 1 ~ "Unimpaired", 
-                                       value == 2 ~ "Other", 
-                                       value == 3 ~ "MCI", 
-                                       TRUE ~ "Dementia"))
+      pivot_longer(everything()) 
     
     synthetic_dementia_plot_data <- 
-      dem_sub %>% dplyr::count(name, Group_label) %>%
+      dem_sub %>% dplyr::count(name, value) %>%
       group_by(name) %>%
-      mutate(prop = n/sum(n)) %>% 
       mutate_at("name", as.numeric) %>% 
-      mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
-                                 Group_label == "Other" ~ "#28bed9", 
-                                 Group_label == "MCI" ~ "#fdab00", 
+      mutate("color" = case_when(value == "Unimpaired" ~ "#00a389", 
+                                 value == "Other" ~ "#28bed9", 
+                                 value == "MCI" ~ "#fdab00", 
                                  TRUE ~ "#ff0000"))
     
-    for(class in unique(synthetic_dementia_plot_data$Group_label)){
-      subset <- synthetic_dementia_plot_data %>% filter(Group_label == class)
+    for(class in unique(synthetic_dementia_plot_data$value)){
+      subset <- synthetic_dementia_plot_data %>% filter(value == class)
       
       #original data only
       ggplot(data = subset) + 
-        geom_histogram(aes(x = prop),
+        geom_histogram(aes(x = n),
                        color = "white", fill = "white") +
-        theme_minimal() + ggtitle(class) + xlab("Proportion") + ylab("Count") +
-        geom_vline(xintercept = to_copy_dementia_plot_data[
-          which(to_copy_dementia_plot_data$Var1 == class), "prop"], size = 2, 
+        theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
+        geom_vline(xintercept = to_copy_dementia_plot_data[[
+          which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
           color = unique(subset$color))
       
       ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
@@ -222,12 +218,12 @@ prior_predictive_checks <-
       
       #Prior predictive check
       ggplot(data = subset) + 
-        geom_histogram(aes(x = prop), 
+        geom_histogram(aes(x = n), 
                        color = unique(subset$color), 
                        fill = unique(subset$color)) + 
-        theme_minimal() + ggtitle(class) + xlab("Proportion") + ylab("Count") +
-        geom_vline(xintercept = to_copy_dementia_plot_data[
-          which(to_copy_dementia_plot_data$Var1 == class), "prop"], size = 2)
+        theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
+        geom_vline(xintercept = to_copy_dementia_plot_data[[
+          which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2)
       
       ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
                                ".jpeg"), 
@@ -235,35 +231,31 @@ prior_predictive_checks <-
     }
     
     #---- **class-specific continuous ----
-    for(class in unlist(unique(dataset_to_copy[, dementia_var]))){
+    for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
       true_data <- dataset_to_copy %>% 
-        dplyr::select(c(all_of(Z[, "var"]), all_of(dementia_var))) %>% 
-        filter(!!as.symbol(dementia_var) == class) %>% mutate("color" = "black")
+        dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
+        filter(!!as.symbol(class) == 1) %>% mutate("color" = "black")
       
       continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
       
       for(i in 1:length(continuous_list)){
         continuous_list[[i]] <- continuous_list[[i]] %>% 
           mutate("run" = i, "type" = "synthetic") %>% 
-          rbind(., true_data %>% dplyr::select(-dementia_var) %>% 
+          rbind(., true_data %>% dplyr::select(-!!as.symbol(class)) %>% 
                   mutate("run" = i, "type" = "True Data"))
       }
       
       continuous_list %<>% do.call(rbind, .) %>% as.data.frame() 
       
-      for(var in Z[, "var"]){
+      for(var in continuous_vars){
         data <- continuous_list[, c(var, "run", "type", "color")]
-        #unstandardize
-        data[, var] <- data[, var]*orig_sds[var] + orig_means[var]
         
         synthetic_subset <- data %>% filter(type == "synthetic")
-        # data[which(data$type == "synthetic"), var] <- 
-        #   synthetic_subset[, var]*orig_sds[var] + orig_means[var]
         
         continuous_plot <- 
           ggplot(data = data, aes(color = type, fill = type)) + 
           geom_density(aes(x = data[, 1]), alpha = 0.5) + 
-          theme_minimal() + xlab(Z[which(Z[, "var"] == var), "label"]) + 
+          theme_minimal() + xlab(var) + 
           scale_color_manual(values = rev(unique(data$color))) + 
           scale_fill_manual(values = rev(unique(data$color))) + 
           transition_states(data$run, transition_length = 1, state_length = 1) +
@@ -281,28 +273,28 @@ prior_predictive_checks <-
     }
   }
 
-#---- test function ----
-unimpaired_preds = unimpaired_preds
-other_preds = other_preds
-mci_preds = mci_preds
-categorical_vars = W 
-continuous_vars = Z 
-id_var = "HHIDPN" 
-#dementia_var 
-dataset_to_copy = dataset_to_copy 
-num_synthetic = 10
-unimpaired_betas = unimpaired_betas
-unimpaired_cov = unimpaired_cov
-other_betas = other_betas 
-other_cov = other_cov 
-mci_betas = mci_betas
-mci_cov = mci_cov
-alpha_0_dist = alpha_0_dist
-prior_Sigma = prior_Sigma
-prior_V_inv = prior_V_inv 
-prior_beta = priors_beta
-nu_0 = nu_0 
-kappa_0 = kappa_0 
-contrasts_matrix = A
-path_to_folder = paste0(path_to_box, "figures/simulation_study/", 
-                        "HCAP_normal_250_unimpaired/prior_predictive_checks/")
+# #---- test function ----
+# unimpaired_preds = unimpaired_preds
+# other_preds = other_preds
+# mci_preds = mci_preds
+# categorical_vars = W 
+# continuous_vars = Z 
+# id_var = "HHIDPN" 
+# #dementia_var 
+# dataset_to_copy = dataset_to_copy 
+# num_synthetic = 10
+# unimpaired_betas = unimpaired_betas
+# unimpaired_cov = unimpaired_cov
+# other_betas = other_betas 
+# other_cov = other_cov 
+# mci_betas = mci_betas
+# mci_cov = mci_cov
+# alpha_0_dist = alpha_0_dist
+# prior_Sigma = prior_Sigma
+# prior_V_inv = prior_V_inv 
+# prior_beta = priors_beta
+# nu_0 = nu_0 
+# kappa_0 = kappa_0 
+# contrasts_matrix = A
+# path_to_folder = paste0(path_to_box, "figures/simulation_study/", 
+#                         "HCAP_normal_250_unimpaired/prior_predictive_checks/")
