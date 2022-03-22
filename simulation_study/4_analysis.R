@@ -9,6 +9,10 @@ p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack",
 install_github("thomasp85/gganimate")
 library(gganimate)
 
+#---- source functions ----
+source(here::here("simulation_study", "functions", 
+                  "prior_predictive_checks_function.R"))
+
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
