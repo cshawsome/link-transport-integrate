@@ -20,15 +20,13 @@ prior_predictive_checks <-
     synthetic_sample <- dataset_to_copy %>%  
       dplyr::select(all_of(id_var), all_of(vars)) %>% 
       #pre-allocate columns
-      mutate("Group" = NA, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
+      mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
     
     generate_data <- function(){
       #---- latent class ----
-      group_vec = c("Unimpaired", "MCI", "Dementia", "Other")
-      group_index = 1
-      
+      group_num = 1
       for(model in c("unimpaired", "other", "mci")){
-        subset_index <- which(synthetic_sample$Group == 0)
+        subset_index <- which(synthetic_sample$group_num == 0)
         random_draw <- sample(seq(1, ncol(get(paste0(model, "_cov")))), 
                               size = 1)
         
@@ -43,14 +41,19 @@ prior_predictive_checks <-
                                            get(paste0(model, "_preds"))]) %*% 
                   as.matrix(betas))
         
-        synthetic_sample[subset_index, "Group"] <- 
+        synthetic_sample[subset_index, "group_num"] <- 
           rbernoulli(n = length(subset_index), 
                      p = synthetic_sample[subset_index, 
-                                          paste0("p_", model)])*group
+                                          paste0("p_", model)])*group_num
         
-        group = group + 1
+        group_num = group_num + 1
       }
-      synthetic_sample[which(synthetic_sample$Group == 0), "Group"] <- 4
+      
+      synthetic_sample[, "Group"] <- 
+        case_when(synthetic_sample$group_num == 1 ~ "Unimpaired", 
+                  synthetic_sample$group_num == 2 ~ "Other", 
+                  synthetic_sample$group_num == 3 ~ "MCI", 
+                  synthetic_sample$group_num == 0 ~ "Dementia")
       
       #pre-allocate
       mu <- matrix(0, ncol = 4*6, nrow = 10) %>%
