@@ -64,16 +64,22 @@ generate_synthetic <-
     for(b in 1:B){
       if(b == 1){
         #---- ****init group membership ----
-        dataset_to_copy[, "Group"] <- 
+        dataset_to_copy[, "group_num"] <- 
           sample(seq(1, 4), size = nrow(dataset_to_copy) , replace = TRUE, 
                  prob = starting_props)
       } else{
         #---- ****latent class gammas ----
         for(model in c("unimpaired", "other", "mci")){
-          random_draw <- sample(seq(1, 10000), size = 1)
+          max_index <- 
+            colnames(priors_beta)[str_detect(
+              colnames(priors_beta), "[0-9]+")] %>% as.numeric() %>% max()
           
-          prior_betas <- as.vector(get(paste0(model, "_betas"))[, random_draw])
-          prior_cov <- matrix(unlist(get(paste0(model, "_cov"))[, random_draw]), 
+          random_draw <- sample(seq(1, max_index), size = 1)
+          
+          prior_betas <- 
+            as.vector(get(paste0(model, "_betas"))[, as.character(random_draw)])
+          prior_cov <- 
+            matrix(unlist(get(paste0(model, "_cov"))[, as.character(random_draw)]), 
                               nrow = nrow(prior_betas))
           
           model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
