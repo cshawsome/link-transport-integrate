@@ -3,9 +3,8 @@ generate_synthetic <-
            mci_preds, categorical_vars, continuous_vars, id_var, variable_labels, 
            dataset_to_copy, cell_ID_key, num_synthetic, unimpaired_betas, 
            unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
-           alpha_0_dist, count = "no", prior_Sigma, prior_V_inv, prior_beta, 
-           nu_0, kappa_0, contrasts_matrix, path_to_analyses_folder, 
-           path_to_figures_folder){
+           alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
+           contrasts_matrix, path_to_analyses_folder, path_to_figures_folder){
     #---- generate subfolders for results ----
     dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
                       run_number), recursive = TRUE)
@@ -80,17 +79,17 @@ generate_synthetic <-
             as.vector(get(paste0(model, "_betas"))[, as.character(random_draw)])
           prior_cov <- 
             matrix(unlist(get(paste0(model, "_cov"))[, as.character(random_draw)]), 
-                              nrow = nrow(prior_betas))
+                   nrow = nrow(prior_betas))
           
           model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
             mvrnorm(n = 1, mu = unlist(prior_betas), Sigma = prior_cov)
         }
         
         #---- ****group membership ----
-        group = 1
-        dataset_to_copy[, "Group"] <- 0
+        group_num = 1
+        dataset_to_copy[, "group_num"] <- 0
         for(model in c("unimpaired", "other", "mci")){
-          subset_index <- which(dataset_to_copy$Group == 0)
+          subset_index <- which(dataset_to_copy$group_num == 0)
           
           dataset_to_copy[subset_index, paste0("p_", model)] <- 
             expit(as.matrix(dataset_to_copy[subset_index, 
@@ -98,15 +97,19 @@ generate_synthetic <-
                     as.matrix(model_gamma_chain[which(model_gamma_chain$model == 
                                                         model), b]))
           
-          dataset_to_copy[subset_index, "Group"] <- 
+          dataset_to_copy[subset_index, "group_num"] <- 
             rbernoulli(n = length(subset_index), 
                        p = dataset_to_copy[subset_index, 
-                                           paste0("p_", model)])*group
+                                           paste0("p_", model)])*group_num
           
-          group = group + 1
+          group_num = group_num + 1
         }
         
-        dataset_to_copy[which(dataset_to_copy$Group == 0), "Group"] <- 4
+        dataset_to_copy[, "Group"] <- 
+          case_when(dataset_to_copy$group_num == 1 ~ "Unimpaired", 
+                    dataset_to_copy$group_num == 2 ~ "Other", 
+                    dataset_to_copy$group_num == 3 ~ "MCI", 
+                    dataset_to_copy$group_num == 0 ~ "Dementia")
       }
       
       #---- ****group: summary ----
@@ -121,18 +124,19 @@ generate_synthetic <-
         latent_class_chain[, b] <- summary 
       }
       
-      for(i in 1:4){
-        subset <- dataset_to_copy %>% filter(Group == i) 
+      for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+        subset <- dataset_to_copy %>% filter(Group == class) 
         if(nrow(subset) == 0){
           next
         } else{
-          random_draw <- sample(seq(1, 10000), size = 1)
-          posterior_first_count <- 
-            alpha_0_dist[which(alpha_0_dist$group_number == i), random_draw]
+          max_index <- 
+            colnames(alpha_0_dist)[str_detect(
+              colnames(alpha_0_dist), "[0-9]+")] %>% as.numeric() %>% max()
           
-          if(count == "no"){
-            posterior_first_count = posterior_first_count*nrow(subset)
-          }
+          random_draw <- sample(seq(1, max_index), size = 1)
+          posterior_first_count <- 
+            alpha_0_dist[which(alpha_0_dist$group == class), 
+                         as.character(random_draw)]*nrow(subset)
           
           posterior_count <- posterior_first_count + 
             table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
