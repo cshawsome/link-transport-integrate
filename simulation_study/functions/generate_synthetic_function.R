@@ -385,26 +385,24 @@ generate_synthetic <-
     Sigma_chain_data <- Sigma_chain %>% as.data.frame() %>% 
       rownames_to_column("Z") %>% 
       pivot_longer(-c("Z"), names_to = c("Group", "Run"), names_sep = ":", 
-                   values_to = "variance") %>% 
-      mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
-                                       Group == 2 ~ "Other", Group == 3 ~ "MCI", 
-                                       Group == 4 ~ "Dementia")) %>%
-      mutate_at("Run", as.numeric) %>%
+                   values_to = "variance") %>% mutate_at("Run", as.numeric) %>%
       mutate_if(is.character, as.factor) 
     
     Sigma_chain_plot <- ggplot(data = Sigma_chain_data, 
                                aes(x = Run, y = variance, colour = Z)) +       
       geom_line(aes(group = Z)) + geom_vline(xintercept = warm_up, size = 1) +
       xlab("Run") + ylab("Variance") +  
-      scale_color_manual(values = rev(extended_pallette10)) + 
+      scale_color_manual(values = 
+                           rev(colorRampPalette(wes_palette("Darjeeling1"))(
+                             nrow(Sigma_chain)))) + 
       scale_x_continuous(breaks = seq(0, B, by = 100)) + 
-      facet_grid(rows = vars(factor(Group_label, 
+      facet_grid(rows = vars(factor(Group, 
                                     levels = c("Unimpaired", "MCI", "Dementia", 
                                                "Other")))) + theme_bw() 
     
     ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
            path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
-           width = 7, height = 5, units = "in", device = "jpeg")
+           device = "jpeg")
     
     #---- ****mu chain ----
     mu_chain_data <- mu_chain %>% as.data.frame() %>% 
