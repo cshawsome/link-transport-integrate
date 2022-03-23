@@ -5,13 +5,25 @@ generate_synthetic <-
            unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
            alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
            contrasts_matrix, path_to_analyses_folder, path_to_figures_folder){
-    #---- generate subfolders for results ----
-    dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                      run_number), recursive = TRUE)
-    dir.create(paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
-               recursive = TRUE)
-    dir.create(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
-                      run_number), recursive = TRUE)
+    #---- check subfolders for results ----
+    if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/run_", 
+                          run_number))){
+      dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
+                        run_number), recursive = TRUE)
+      
+    }
+    
+    if(!dir.exists(paste0(path_to_figures_folder, "diagnostics/run_", 
+                          run_number))){
+      dir.create(paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
+                 recursive = TRUE)
+    }
+    
+    if(!dir.exists(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
+                          run_number))){
+      dir.create(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
+                        run_number), recursive = TRUE)
+    }
     
     #---- sampling counts ----
     warm_up = warm_up
