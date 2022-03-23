@@ -15,7 +15,8 @@ generate_synthetic_continuous <-
     }
     
     #--- bootstrap data ----
-    synthetic_data <- sample_n(data, size = sample_size, replace = TRUE)
+    synthetic_data <- sample_n(data, size = sample_size, replace = TRUE) %>% 
+      mutate("HHIDPN" = seq(1, sample_size))
     
     #---- assign impairment category ----
     other_prop <- 1 - sum(unimpaired_prop, mci_prop, dementia_prop)
@@ -76,7 +77,7 @@ generate_synthetic_continuous <-
         #---- ****predicted Y ----
         X = synthetic_data[i, rownames(beta)]
         synthetic_data[i, colnames(beta)] = 
-          X%*%beta + rnorm(n = length(colnames(beta)), mean = 0, sd = 0.5)
+          X %*% beta + rnorm(n = length(colnames(beta)), mean = 0, sd = 0.5)
       }
     } else{
       stop("Invalid distribution argument. Please choose from: \"normal\".")
