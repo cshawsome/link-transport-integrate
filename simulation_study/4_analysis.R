@@ -95,12 +95,12 @@ prior_predictive_checks(unimpaired_preds, other_preds, mci_preds,
                                  "prior_predictive_checks/"))
 
 #---- generate synthetic data ----
-generate_synthetic_props(warm_up = 500, run_number = 1, 
+generate_synthetic_props(warm_up = 2, run_number = 1, 
                          starting_props = c(0.25, 0.25, 0.25, 0.25),
                          unimpaired_preds, other_preds, mci_preds, 
                          categorical_vars = W, continuous_vars = Z, 
                          id_var = "HHIDPN", dementia_var = "Adem_dx_cat", 
-                         dataset_to_copy, num_synthetic = 1000, 
+                         dataset_to_copy, num_synthetic = 10, 
                          unimpaired_betas, unimpaired_cov, other_betas, 
                          other_cov, mci_betas, mci_cov, alpha_0_dist, 
                          prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
