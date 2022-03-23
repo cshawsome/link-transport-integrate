@@ -80,7 +80,7 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
 #---- **run checks ----
 prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
                         categorical_vars = W, continuous_vars = Z, 
-                        id_var = "HHIDPN", 
+                        id_var = "HHIDPN", variable_labels = variable_labels,
                         dementia_var = "Adem_dx_cat", 
                         dataset_to_copy, num_synthetic = 10, 
                         unimpaired_betas, unimpaired_cov, 
