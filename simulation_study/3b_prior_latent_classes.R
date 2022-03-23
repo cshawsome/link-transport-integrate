@@ -92,6 +92,7 @@ for(est in c("betas", "cov")){
   for(group in c("unimpaired", "other", "mci")){
     data <- lapply(estimates, "[[", paste0(group, "_", est)) %>% 
       do.call(rbind, .) %>% t() %>% as.data.frame() 
+    data %<>% set_colnames(seq(1, ncol(data)))
     
     if(est == "betas"){
       data %<>% mutate("preds" = c("(Intercept)", get(paste0(group, "_preds"))))
