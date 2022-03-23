@@ -369,7 +369,9 @@ generate_synthetic <-
       geom_line(aes(group = Cell)) + 
       geom_vline(xintercept = warm_up, size = 1) + 
       xlab("Run") + ylab("Probability of cell membership") +  
-      #scale_color_manual(values = extended_pallette6) + 
+      scale_color_manual(values = 
+                           rev(colorRampPalette(wes_palette("Darjeeling1"))(
+                             nrow(cell_ID_key)))) + 
       scale_x_continuous(breaks = seq(0, B, by = 100)) +
       facet_grid(rows = vars(factor(Group, 
                                     levels = c("Unimpaired", "MCI", "Dementia", 
