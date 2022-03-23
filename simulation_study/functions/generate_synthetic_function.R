@@ -216,32 +216,31 @@ generate_synthetic <-
           
           #---- ****draw Sigma | Y ----
           ZtZ <- t(continuous_covariates) %*% continuous_covariates
-          third_term <- kappa_0[i]*t(beta_0) %*% V_0_inv %*% beta_0
+          third_term <- kappa_0[class]*t(beta_0) %*% V_0_inv %*% beta_0
           
-          random_draw <- sample(seq(1, 10000), size = 1)
+          random_draw <- sample(seq(1, max_index), size = 1)
           Sigma_prior <- 
-            matrix(unlist(prior_Sigma[which(prior_Sigma$group_number == i), 
-                                      random_draw]), 
+            matrix(unlist(prior_Sigma[which(prior_Sigma$group == class), 
+                                      as.character(random_draw)]), 
                    nrow = ncol(continuous_covariates))
           sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
                           S = Sigma_prior + ZtZ + third_term)
           
-          Sigma_chain[, paste0(i, ":", b)] <- diag(sig_Y)
+          Sigma_chain[, paste0(class, ":", b)] <- diag(sig_Y)
           
           #---- ****draw beta | Sigma, Y ----
-          beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y/kappa_0[i])
+          beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y/kappa_0[class])
           
           #---- ****compute mu ----
-          mu_chain[, paste0(i, ":", seq(1, nrow(cross_class_label)), ":", b)] <- 
-            t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = nrow(Z), 
+          mu_chain[, paste0(class, ":", 
+                            seq(1, nrow(cross_class_label)), ":", b)] <- 
+            t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = length(Z), 
                            byrow = FALSE))
           
           #---- ****draw data ----
           #reformat contingency table
-          contingency_table %<>% cbind(do.call(cbind, list(
-            #Black              #Hispanic           #Stroke
-            rep(c(1, 0, 0), 2), rep(c(0, 1, 0), 2), c(rep(0, 3), rep(1, 3))))) %>% 
-            set_colnames(c("Count", W))
+          contingency_table %<>% set_colnames("Count") %>% 
+            cbind(contrasts_matrix[, -1])
           
           for(j in 1:nrow(contingency_table)){
             if(contingency_table[j, "Count"] == 0){next}
@@ -255,13 +254,13 @@ generate_synthetic <-
               subset[index:(index - 1 + contingency_table[j, "Count"]), 
                      colnames(sig_Y)] <- 
                 t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
-                                    mu = mu_chain[, paste0(i, ":", j, ":", b)], 
+                                    mu = mu_chain[, paste0(class, ":", j, ":", b)], 
                                     Sigma = sig_Y)))
             } else{
               subset[index:(index - 1 + contingency_table[j, "Count"]), 
                      colnames(sig_Y)] <- 
                 mvrnorm(n = contingency_table[j, "Count"],
-                        mu = mu_chain[, paste0(i, ":", j, ":", b)], 
+                        mu = mu_chain[, paste0(class, ":", j, ":", b)], 
                         Sigma = sig_Y)
             }
             
@@ -275,7 +274,7 @@ generate_synthetic <-
           
           #---- ****replace synthetic data ----
           dataset_to_copy[which(dataset_to_copy$HHIDPN %in% subset$HHIDPN),
-                          c(W, Z[, "var"])] <- subset[, c(W, Z[, "var"])]
+                          c(W, Z)] <- subset[, c(W, Z)]
         }
       }
       #---- ****post-processing ----
