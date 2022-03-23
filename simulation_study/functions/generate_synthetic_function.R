@@ -62,12 +62,12 @@ generate_synthetic <-
     #---- start sampling ----
     for(b in 1:B){
       if(b == 1){
-        #---- ****init group membership ----
+        #---- **init group membership ----
         dataset_to_copy[, "group_num"] <- 
           sample(seq(1, 4), size = nrow(dataset_to_copy) , replace = TRUE, 
                  prob = starting_props)
       } else{
-        #---- ****latent class gammas ----
+        #---- **latent class gammas ----
         for(model in c("unimpaired", "other", "mci")){
           max_index <- 
             colnames(priors_beta)[str_detect(
@@ -143,13 +143,15 @@ generate_synthetic <-
             unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
             dplyr::select("Freq") %>% unlist()
           
-          #---- ****p(contingency table cell) ----
+          #---- **p(contingency table cell) ----
           pi_chain[, paste0(class, ":", b)] <- 
             MCMCpack::rdirichlet(1, alpha = as.numeric(unlist(posterior_count)))
           
           #---- ****contingency table count ----
           contingency_table <- 
-            rmultinom(n = 1, size = nrow(subset), prob = unlist(posterior_count))
+            rmultinom(n = 1, size = nrow(subset), 
+                      prob = pi_chain[, paste0(class, ":", b)])
+          
           UtU <- diag(contingency_table[, 1])
           
           #---- ****draw new UtU if needed ----
@@ -169,7 +171,14 @@ generate_synthetic <-
               unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
               dplyr::select("Freq") %>% unlist()
             
-            UtU <- diag(floor(unlist(new_counts[, 1])))
+            pi_chain[, paste0(class, ":", b)] <- 
+              MCMCpack::rdirichlet(1, alpha = as.numeric(unlist(new_counts)))
+            
+            new_contingency_table <- 
+              rmultinom(n = 1, size = nrow(subset), 
+                        prob = pi_chain[, paste0(class, ":", b)])
+            
+            UtU <- diag(new_contingency_table[, 1])
           }
           
           #---- ****make U matrix ----
@@ -185,7 +194,7 @@ generate_synthetic <-
             U[index:(index - 1 + contingency_table[j, ]), j] <- 1
           }
           
-          #---- ****Mm ----
+          #---- **Mm ----
           continuous_covariates <- subset %>% 
             dplyr::select(all_of(Z[, "var"])) %>% as.matrix
           
