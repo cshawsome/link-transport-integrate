@@ -322,11 +322,13 @@ generate_synthetic <-
       scale_x_discrete(breaks = seq(0, B, by = 100)) + 
       scale_color_manual(values = 
                            rev(colorRampPalette(wes_palette("Darjeeling1"))(
-                             length(unique(model_gamma_chain$pred)))))
+                             length(unique(model_gamma_chain$pred)))), 
+                         name = "Predictors") + 
+      theme(legend.position = "bottom")
     
     ggsave(filename = "gamma_chain.jpeg", plot = gamma_chain_plot, 
            path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
-           device = "jpeg")
+           height = 7, width = 12, units = "in", device = "jpeg")
     
     #---- ****latent class chain ----
     latent_class_data <- t(latent_class_chain) %>% as.data.frame() %>%
@@ -336,7 +338,7 @@ generate_synthetic <-
       mutate_at("Group", as.factor) %>% left_join(color_palette)
     latent_class_data$Group <- 
       fct_relevel(latent_class_data$Group, 
-                  paste0(unique(latent_class_data$Group)))
+                  paste0(unique(latent_class_data$Group))) 
     
     latent_class_chain_plot <- 
       ggplot(data = latent_class_data, 
@@ -345,11 +347,12 @@ generate_synthetic <-
       geom_vline(xintercept = warm_up, size = 1) + 
       theme_minimal() + xlab("Run") + ylab("Proportion of Sample") +  
       scale_color_manual(values = unique(latent_class_data$Color)) + 
-      scale_x_continuous(breaks = seq(0, B, by = 100)) 
+      scale_x_continuous(breaks = seq(0, B, by = 100)) + 
+      theme(legend.position = "bottom")
     
     ggsave(filename = "latent_class_chain.jpeg", plot = latent_class_chain_plot, 
            path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
-           device = "jpeg")
+           height = 7, width = 10, units = "in", device = "jpeg")
     
     #---- ****pi chain ----
     pi_chain_data <- pi_chain %>% as.data.frame() %>% 
@@ -374,7 +377,8 @@ generate_synthetic <-
       scale_x_continuous(breaks = seq(0, B, by = 100)) +
       facet_grid(rows = vars(factor(Group, 
                                     levels = c("Unimpaired", "MCI", "Dementia", 
-                                               "Other")))) + theme_bw() 
+                                               "Other")))) + theme_bw() + 
+      theme(legend.position = "bottom")
     
     ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
            path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
@@ -397,11 +401,12 @@ generate_synthetic <-
       scale_x_continuous(breaks = seq(0, B, by = 100)) + 
       facet_grid(rows = vars(factor(Group, 
                                     levels = c("Unimpaired", "MCI", "Dementia", 
-                                               "Other")))) + theme_bw() 
+                                               "Other")))) + theme_bw() + 
+      theme(legend.position = "bottom")
     
     ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
            path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
-           device = "jpeg")
+           height = 7, width = 12, units = "in", device = "jpeg")
     
     #---- ****mu chain ----
     mu_chain_data <- mu_chain %>% as.data.frame() %>% 
@@ -425,11 +430,12 @@ generate_synthetic <-
       scale_color_manual(values = unique(mu_chain_data$Color)) +
       scale_x_continuous(breaks = seq(0, B, by = 100)) + 
       facet_grid(rows = vars(factor(Z)), cols = vars(factor(cell_name)), 
-                 scales = "free") + theme_bw() 
+                 scales = "free") + theme_bw() + 
+      theme(legend.position = "bottom")
     
     ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
            path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
-           device = "jpeg")
+           height = 15, width = 12, units = "in", device = "jpeg")
     
     #---- save datasets ----
     write_csv(gamma_plot_data, 
