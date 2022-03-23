@@ -23,7 +23,7 @@ read_csv(paste0(path_to_box, "analyses/simulation_study/synthetic_data/HRS/",
                   "HRS_synthetic_normal_500_unimpaired.csv"))
 
 #---- analytic models ----
-truth <- glm(Dementia ~ age_Z + female + edyrs_Z + black + hispanic, 
+truth <- glm(Dementia ~ age_Z + female + black + hispanic, 
              family = "poisson", data = synthetic_data) %>% 
   tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = TRUE)
 
