@@ -1,11 +1,11 @@
 generate_synthetic <- 
-  function(warm_up, run_number, starting_props, 
-           unimpaired_preds, other_preds, mci_preds, categorical_vars, 
-           continuous_vars, id_var, dataset_to_copy, cell_ID_key, num_synthetic, 
-           unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
-           mci_cov, alpha_0_dist, count = "no", prior_Sigma, prior_V_inv, 
-           prior_beta, nu_0, kappa_0, contrasts_matrix,
-           path_to_analyses_folder, path_to_figures_folder){
+  function(warm_up, run_number, starting_props, unimpaired_preds, other_preds, 
+           mci_preds, categorical_vars, continuous_vars, id_var, variable_labels, 
+           dataset_to_copy, cell_ID_key, num_synthetic, unimpaired_betas, 
+           unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
+           alpha_0_dist, count = "no", prior_Sigma, prior_V_inv, prior_beta, 
+           nu_0, kappa_0, contrasts_matrix, path_to_analyses_folder, 
+           path_to_figures_folder){
     #---- generate subfolders for results ----
     dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
                       run_number), recursive = TRUE)
@@ -39,20 +39,26 @@ generate_synthetic <-
       set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
     
     pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
-      set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste, 
-                         collapse = ":")) %>% 
-      set_rownames(cross_class_label$`Cell Label`)
+      set_colnames(apply(expand.grid(
+        c("Unimpaired", "MCI", "Dementia", "Other"), seq(1:B)), 1, paste, 
+        collapse = ":")) %>% 
+      set_rownames(cross_class_label$cell_ID)
     
-    Sigma_chain <- matrix(nrow = nrow(Z), ncol = 4*B) %>%
-      set_colnames(apply(expand.grid(seq(1, 4), seq(1:B)), 1, paste,
-                         collapse = ":")) %>%
-      set_rownames(Z[, "label"])
+    Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
+      set_colnames(apply(expand.grid(
+        c("Unimpaired", "MCI", "Dementia", "Other"), seq(1:B)), 1, paste,
+        collapse = ":")) %>%
+      set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
+                                          "figure_label"]))
     
     mu_chain <-
-      matrix(nrow = nrow(Z), ncol = 4*nrow(cross_class_label)*B) %>%
+      matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>%
       set_colnames(apply(
-        expand.grid(seq(1, 4), seq(1:nrow(cross_class_label)), seq(1:B)), 1, 
-        paste,collapse = ":")) %>% set_rownames(Z[, "label"])
+        expand.grid(c("Unimpaired", "MCI", "Dementia", "Other"), 
+                    seq(1:nrow(cross_class_label)), seq(1:B)), 1, 
+        paste,collapse = ":")) %>% 
+      set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
+                                          "figure_label"]))
     
     #---- start sampling ----
     for(b in 1:B){
@@ -430,6 +436,7 @@ mci_preds = mci_preds
 categorical_vars = W 
 continuous_vars = Z 
 id_var = "HHIDPN" 
+variable_labels = variable_labels
 dataset_to_copy = dataset_to_copy
 cell_ID_key = cell_ID_key
 num_synthetic = 10 
