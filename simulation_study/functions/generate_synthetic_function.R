@@ -37,25 +37,25 @@ generate_synthetic <-
     latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
       set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
     
-    pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
+    pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*(B - 1)) %>% 
       set_colnames(apply(expand.grid(
-        c("Unimpaired", "MCI", "Dementia", "Other"), seq(1:B)), 1, paste, 
-        collapse = ":")) %>% 
+        c("Unimpaired", "MCI", "Dementia", "Other"), seq(2, B)), 1, paste, 
+        collapse = ":") %>% str_remove(., " ")) %>% 
       set_rownames(cross_class_label$cell_ID)
     
-    Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
+    Sigma_chain <- matrix(nrow = length(Z), ncol = 4*(B - 1)) %>%
       set_colnames(apply(expand.grid(
-        c("Unimpaired", "MCI", "Dementia", "Other"), seq(1:B)), 1, paste,
-        collapse = ":")) %>%
+        c("Unimpaired", "MCI", "Dementia", "Other"), seq(2, B)), 1, paste,
+        collapse = ":") %>% str_remove(., " ")) %>%
       set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
                                           "figure_label"]))
     
     mu_chain <-
-      matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>%
+      matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*(B - 1)) %>%
       set_colnames(apply(
         expand.grid(c("Unimpaired", "MCI", "Dementia", "Other"), 
-                    seq(1:nrow(cross_class_label)), seq(1:B)), 1, 
-        paste,collapse = ":")) %>% 
+                    seq(1:nrow(cross_class_label)), seq(2, B)), 1, 
+        paste,collapse = ":") %>% str_remove(., " ")) %>% 
       set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
                                           "figure_label"]))
     
@@ -138,13 +138,14 @@ generate_synthetic <-
             alpha_0_dist[which(alpha_0_dist$group == class), 
                          as.character(random_draw)]*nrow(subset)
           
-          posterior_count <- posterior_first_count + 
-            table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
+          posterior_count <- posterior_first_count +
+            subset %>% dplyr::select(all_of(W)) %>% 
+            unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
             dplyr::select("Freq") %>% unlist()
           
           #---- ****p(contingency table cell) ----
-          pi_chain[, paste0(i, ":", b)] <- 
-            rdirichlet(1, alpha = as.numeric(unlist(posterior_count)))
+          pi_chain[, paste0(class, ":", b)] <- 
+            MCMCpack::rdirichlet(1, alpha = as.numeric(unlist(posterior_count)))
           
           #---- ****contingency table count ----
           contingency_table <- rmultinom(n = 1, size = nrow(subset), 
