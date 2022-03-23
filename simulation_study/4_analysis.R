@@ -30,7 +30,8 @@ dataset_to_copy <-
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
 #---- **cell ID key ----
-cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) 
+cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
+  mutate_all(as.character)
 
 #---- **impairement class color palette ----
 color_palette <- read_csv(here::here("color_palette.csv")) 
