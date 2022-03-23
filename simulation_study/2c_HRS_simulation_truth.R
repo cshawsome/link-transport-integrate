@@ -5,11 +5,21 @@ if (!require("pacman")){
 
 p_load("here", "tidyverse", "broom")
 
+#---- source scripts ----
+
+
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-synthetic_data <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/synthetic_data/HRS/", 
+synthetic_data_paths <- 
+  list.files(path = paste0(path_to_box, 
+                           "analyses/simulation_study/synthetic_data/HRS/"), 
+             full.names = TRUE, pattern = "*.csv")
+
+synthetic_data <- do.call(rbind, lapply(synthetic_data_paths, read_results))
+  
+
+read_csv(paste0(path_to_box, "analyses/simulation_study/synthetic_data/HRS/", 
                   "HRS_synthetic_normal_500_unimpaired.csv"))
 
 #---- analytic models ----
