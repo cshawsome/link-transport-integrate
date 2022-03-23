@@ -162,23 +162,24 @@ generate_synthetic <-
             
             random_draw <- sample(seq(1, max_index), size = 1)
             
-            new_first_counts <- 
+            posterior_first_count <- 
               alpha_0_dist[which(alpha_0_dist$group == class), 
                            as.character(random_draw)]*nrow(subset)
             
-            new_counts <- new_first_counts +
+            posterior_count <- posterior_first_count +
               subset %>% dplyr::select(all_of(W)) %>% 
               unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
               dplyr::select("Freq") %>% unlist()
             
             pi_chain[, paste0(class, ":", b)] <- 
-              MCMCpack::rdirichlet(1, alpha = as.numeric(unlist(new_counts)))
+              MCMCpack::rdirichlet(1, 
+                                   alpha = as.numeric(unlist(posterior_count)))
             
-            new_contingency_table <- 
+            contingency_table <- 
               rmultinom(n = 1, size = nrow(subset), 
                         prob = pi_chain[, paste0(class, ":", b)])
             
-            UtU <- diag(new_contingency_table[, 1])
+            UtU <- diag(contingency_table[, 1])
           }
           
           #---- ****make U matrix ----
