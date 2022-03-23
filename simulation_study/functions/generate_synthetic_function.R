@@ -148,24 +148,28 @@ generate_synthetic <-
             MCMCpack::rdirichlet(1, alpha = as.numeric(unlist(posterior_count)))
           
           #---- ****contingency table count ----
-          contingency_table <- rmultinom(n = 1, size = nrow(subset), 
-                                         prob = pi_chain[, paste0(i, ":", b)])
+          contingency_table <- 
+            rmultinom(n = 1, size = nrow(subset), prob = unlist(posterior_count))
           UtU <- diag(contingency_table[, 1])
           
           #---- ****draw new UtU if needed ----
           while(det(t(A) %*% UtU %*% A) < 1e-9){
-            random_draw <- sample(seq(1, 10000), size = 1)
+            max_index <- 
+              colnames(alpha_0_dist)[str_detect(
+                colnames(alpha_0_dist), "[0-9]+")] %>% as.numeric() %>% max()
+            
+            random_draw <- sample(seq(1, max_index), size = 1)
+            
             new_first_counts <- 
-              alpha_0_dist[, c(random_draw, ncol(alpha_0_dist))] %>% 
-              filter(group_number == i)
-            if(count == "no"){
-              new_first_counts = new_first_counts*nrow(subset)
-            }
-            new_counts <- new_first_counts + 
-              table(subset$ETHNIC_label, subset$Astroke) %>% as.data.frame() %>% 
+              alpha_0_dist[which(alpha_0_dist$group == class), 
+                           as.character(random_draw)]*nrow(subset)
+            
+            new_counts <- new_first_counts +
+              subset %>% dplyr::select(all_of(W)) %>% 
+              unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
               dplyr::select("Freq") %>% unlist()
             
-            UtU <- diag(unlist(new_counts[, 1]))
+            UtU <- diag(floor(unlist(new_counts[, 1])))
           }
           
           #---- ****make U matrix ----
