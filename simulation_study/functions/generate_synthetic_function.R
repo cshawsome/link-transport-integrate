@@ -116,13 +116,13 @@ generate_synthetic <-
           
           group_num = group_num + 1
         }
-        
-        dataset_to_copy[, "Group"] <- 
-          case_when(dataset_to_copy$group_num == 1 ~ "Unimpaired", 
-                    dataset_to_copy$group_num == 2 ~ "Other", 
-                    dataset_to_copy$group_num == 3 ~ "MCI", 
-                    dataset_to_copy$group_num == 0 ~ "Dementia")
       }
+      
+      dataset_to_copy[, "Group"] <- 
+        case_when(dataset_to_copy$group_num == 1 ~ "Unimpaired", 
+                  dataset_to_copy$group_num == 2 ~ "Other", 
+                  dataset_to_copy$group_num == 3 ~ "MCI", 
+                  dataset_to_copy$group_num %in% c(0, 4) ~ "Dementia")
       
       #---- ****group: summary ----
       summary <- table(dataset_to_copy$Group)/sum(table(dataset_to_copy$Group)) 
