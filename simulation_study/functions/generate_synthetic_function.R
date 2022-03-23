@@ -156,9 +156,6 @@ generate_synthetic <-
           
           #---- ****draw new UtU if needed ----
           while(det(t(A) %*% UtU %*% A) < 1e-9){
-            max_index <- 
-              colnames(alpha_0_dist)[str_detect(
-                colnames(alpha_0_dist), "[0-9]+")] %>% as.numeric() %>% max()
             
             random_draw <- sample(seq(1, max_index), size = 1)
             
@@ -196,24 +193,24 @@ generate_synthetic <-
           }
           
           #---- **Mm ----
-          continuous_covariates <- subset %>% 
-            dplyr::select(all_of(Z[, "var"])) %>% as.matrix
+          continuous_covariates <- subset %>% dplyr::select(all_of(Z)) %>% 
+            as.matrix
           
           V_inv <- t(A) %*% UtU %*% A 
-          random_draw <- sample(seq(1, 10000), size = 1)
+          random_draw <- sample(seq(1, max_index), size = 1)
           V_0_inv <- 
-            matrix(unlist(prior_V_inv[which(prior_V_inv$group_number == i), 
-                                      random_draw]), 
+            matrix(unlist(prior_V_inv[which(prior_V_inv$group == class), 
+                                      as.character(random_draw)]), 
                    nrow = nrow(V_inv), ncol = ncol(V_inv))
           beta_0 <- 
-            matrix(unlist(priors_beta[which(priors_beta$group_number == i), 
-                                      random_draw]), 
+            matrix(unlist(priors_beta[which(priors_beta$group == class), 
+                                      as.character(random_draw)]), 
                    nrow = nrow(V_inv),  
                    ncol = ncol(continuous_covariates))
           
-          M <- solve(V_inv + kappa_0[i]*V_0_inv)
+          M <- solve(V_inv + kappa_0[class]*V_0_inv)
           m <-  t(A) %*% t(U) %*% continuous_covariates - 
-            kappa_0[i]*V_0_inv %*% beta_0
+            kappa_0[class]*V_0_inv %*% beta_0
           
           Mm <- M %*% m
           
