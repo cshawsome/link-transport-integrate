@@ -1,10 +1,11 @@
 generate_synthetic <- 
   function(warm_up, run_number, starting_props, unimpaired_preds, other_preds, 
            mci_preds, categorical_vars, continuous_vars, id_var, variable_labels, 
-           dataset_to_copy, cell_ID_key, num_synthetic, unimpaired_betas, 
-           unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
-           alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
-           contrasts_matrix, path_to_analyses_folder, path_to_figures_folder){
+           dataset_to_copy, cell_ID_key, color_palette, num_synthetic, 
+           unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
+           mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
+           kappa_0, contrasts_matrix, path_to_analyses_folder, 
+           path_to_figures_folder){
     #---- check subfolders for results ----
     if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/run_", 
                           run_number))){
@@ -332,10 +333,11 @@ generate_synthetic <-
       mutate("run" = seq(1:B)) %>% 
       pivot_longer(-c("run"), names_to = c("Group"), values_to = "prob") %>% 
       arrange(desc(prob)) %>%
-      mutate_at("Group", as.factor)
+      mutate_at("Group", as.factor) %>% left_join(color_palette)
     latent_class_data$Group <- 
       fct_relevel(latent_class_data$Group, 
                   paste0(unique(latent_class_data$Group)))
+    
     
     latent_class_chain_plot <- 
       ggplot(data = latent_class_data, 
@@ -343,15 +345,12 @@ generate_synthetic <-
       geom_line(aes(group = Group)) + 
       geom_vline(xintercept = warm_up, size = 1) + 
       theme_minimal() + xlab("Run") + ylab("Proportion of Sample") +  
-      scale_color_manual(values = c(wes_palette("Darjeeling1")[1], 
-                                    wes_palette("Darjeeling1")[3], 
-                                    wes_palette("Darjeeling1")[2], 
-                                    wes_palette("Darjeeling1")[5])) + 
+      scale_color_manual(values = unique(latent_class_data$Color)) + 
       scale_x_continuous(breaks = seq(0, B, by = 100)) 
     
     ggsave(filename = "latent_class_chain.jpeg", plot = latent_class_chain_plot, 
            path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
-           width = 7, height = 3, units = "in", device = "jpeg")
+           device = "jpeg")
     
     #---- ****pi chain ----
     pi_chain_data <- pi_chain %>% as.data.frame() %>% 
@@ -466,6 +465,7 @@ id_var = "HHIDPN"
 variable_labels = variable_labels
 dataset_to_copy = dataset_to_copy
 cell_ID_key = cell_ID_key
+color_palette = color_palette
 num_synthetic = 10 
 unimpaired_betas = unimpaired_betas
 unimpaired_cov = unimpaired_cov
