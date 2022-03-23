@@ -44,41 +44,24 @@ generate_synthetic_continuous(HRS_analytic, sample_size = 1000,
                                        "simulation_study/synthetic_data/", 
                                        "ADAMS_props/"))
 
-#---- ****500 mostly unimpaired ----
-generate_synthetic_continuous(HRS_analytic, sample_size = 500, 
-                              unimpaired_prop = 0.50, mci_prop = 0.20, 
-                              dementia_prop = 0.20, dist = "normal", 
-                              parameters = normal_parameter_list, 
-                              path_to_results = 
-                                paste0(path_to_box, "analyses/", 
-                                       "simulation_study/synthetic_data/")) 
-
-#---- ****500 mostly dementia ----
-generate_synthetic_continuous(HRS_analytic, sample_size = 500, 
-                              unimpaired_prop = 0.20, mci_prop = 0.20, 
-                              dementia_prop = 0.50, dist = "normal", 
-                              parameters = normal_parameter_list, 
-                              path_to_results = 
-                                paste0(path_to_box, "analyses/", 
-                                       "simulation_study/synthetic_data/")) 
-
-#---- ****1000 mostly unimpaired ----
-generate_synthetic_continuous(HRS_analytic, sample_size = 1000, 
-                              unimpaired_prop = 0.50, mci_prop = 0.20, 
-                              dementia_prop = 0.20, dist = "normal", 
-                              parameters = normal_parameter_list, 
-                              path_to_results = 
-                                paste0(path_to_box, "analyses/", 
-                                       "simulation_study/synthetic_data/")) 
-
-#---- ****1000 mostly dementia ----
-generate_synthetic_continuous(HRS_analytic, sample_size = 1000, 
-                              unimpaired_prop = 0.20, mci_prop = 0.20, 
-                              dementia_prop = 0.50, dist = "normal", 
-                              parameters = normal_parameter_list, 
-                              path_to_results = 
-                                paste0(path_to_box, "analyses/", 
-                                       "simulation_study/synthetic_data/")) 
+for(n in c(500, 1000, 2000, 4000, 8000)){
+  #---- ****mostly unimpaired ----
+  generate_synthetic_continuous(HRS_analytic, sample_size = n, 
+                                unimpaired_prop = 0.50, mci_prop = 0.20, 
+                                dementia_prop = 0.20, dist = "normal", 
+                                parameters = normal_parameter_list, 
+                                path_to_results = 
+                                  paste0(path_to_box, "analyses/", 
+                                         "simulation_study/synthetic_data/")) 
+  #---- ****mostly dementia ----
+  generate_synthetic_continuous(HRS_analytic, sample_size = n, 
+                                unimpaired_prop = 0.20, mci_prop = 0.20, 
+                                dementia_prop = 0.50, dist = "normal", 
+                                parameters = normal_parameter_list, 
+                                path_to_results = 
+                                  paste0(path_to_box, "analyses/", 
+                                         "simulation_study/synthetic_data/")) 
+}
 
 
 
