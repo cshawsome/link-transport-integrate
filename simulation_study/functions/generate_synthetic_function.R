@@ -338,7 +338,6 @@ generate_synthetic <-
       fct_relevel(latent_class_data$Group, 
                   paste0(unique(latent_class_data$Group)))
     
-    
     latent_class_chain_plot <- 
       ggplot(data = latent_class_data, 
              aes(x = run, y = prob, colour = Group)) +       
@@ -409,82 +408,83 @@ generate_synthetic <-
       rownames_to_column("Z") %>% 
       pivot_longer(-c("Z"), names_to = c("Group", "Cell", "Run"), 
                    names_sep = ":", values_to = "mu") %>% 
-      mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
-                                       Group == 2 ~ "Other", Group == 3 ~ "MCI", 
-                                       Group == 4 ~ "Dementia")) %>% 
-      mutate_at("Run", as.numeric) %>%
-      mutate_if(is.character, as.factor) 
+      left_join(color_palette) %>% 
+      left_join(cell_ID_key, by = c("Cell" = "cell_order")) %>%
+      mutate_at("Run", as.numeric) %>% mutate_if(is.character, as.factor) %>% 
+      mutate_at("Color", as.character)
+    
+    mu_chain_data$Group <- 
+      fct_relevel(mu_chain_data$Group, 
+                  c("Unimpaired", "MCI", "Dementia", "Other"))
+    
     
     mu_chain_plot <- ggplot(data = mu_chain_data, 
-                            aes(x = Run, y = mu, colour = Group_label)) +       
-      geom_line(aes(group = Group_label), alpha = 0.75) + 
+                            aes(x = Run, y = mu, colour = Group)) +       
+      geom_line(aes(group = Group), alpha = 0.75) + 
       xlab("Run") + ylab("mu") + geom_vline(xintercept = warm_up, size = 1) + 
-      scale_color_manual(values = c(wes_palette("Darjeeling1")[1], 
-                                    wes_palette("Darjeeling1")[3], 
-                                    wes_palette("Darjeeling1")[5], 
-                                    wes_palette("Darjeeling1")[2])) +
+      scale_color_manual(values = unique(mu_chain_data$Color)) +
       scale_x_continuous(breaks = seq(0, B, by = 100)) + 
-      facet_grid(rows = vars(factor(Z)), cols = vars(factor(Cell)), 
+      facet_grid(rows = vars(factor(Z)), cols = vars(factor(cell_name)), 
                  scales = "free") + theme_bw() 
     
     ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
            path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
-           width = 14, height = 10, units = "in", device = "jpeg")
+           device = "jpeg")
     
     #---- save datasets ----
     write_csv(gamma_plot_data, 
               file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                            "run_", run_number, "/ADAMSA_gamma_plot_data.csv"))
+                            "run_", run_number, "/gamma_plot_data.csv"))
     
     write_csv(latent_class_data, 
               file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                            "run_", run_number, "/ADAMSA_latent_class_data.csv"))
+                            "run_", run_number, "/latent_class_data.csv"))
     
     write_csv(pi_chain_data, 
               file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                            "run_", run_number, "/ADAMSA_pi_chain_data.csv"))
+                            "run_", run_number, "/pi_chain_data.csv"))
     
     write_csv(Sigma_chain_data, 
               file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                            "run_", run_number, "/ADAMSA_Sigma_chain_data.csv"))
+                            "run_", run_number, "/Sigma_chain_data.csv"))
     
     write_csv(mu_chain_data, 
               file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                            "run_", run_number, "/ADAMSA_mu_chain_data.csv"))
+                            "run_", run_number, "/mu_chain_data.csv"))
   }
 
-#---- test function ----
-warm_up = 2 
-run_number = 1 
-starting_props = c(0.25, 0.25, 0.25, 0.25)
-unimpaired_preds = unimpaired_preds
-other_preds = other_preds
-mci_preds = mci_preds
-categorical_vars = W 
-continuous_vars = Z 
-id_var = "HHIDPN" 
-variable_labels = variable_labels
-dataset_to_copy = dataset_to_copy
-cell_ID_key = cell_ID_key
-color_palette = color_palette
-num_synthetic = 10 
-unimpaired_betas = unimpaired_betas
-unimpaired_cov = unimpaired_cov
-other_betas = other_betas
-other_cov = other_cov
-mci_betas = mci_betas
-mci_cov = mci_cov
-alpha_0_dist = alpha_0_dist 
-prior_Sigma = prior_Sigma
-prior_V_inv = prior_V_inv
-prior_beta = priors_beta
-nu_0 = nu_0
-kappa_0 = kappa_0 
-contrasts_matrix = A
-path_to_analyses_folder = 
-  paste0(path_to_box, "analyses/simulation_study/HCAP_normal_250_unimpaired/") 
-path_to_figures_folder = 
-  paste0(path_to_box, "figures/simulation_study/HCAP_normal_250_unimpaired/") 
+# #---- test function ----
+# warm_up = 2 
+# run_number = 1 
+# starting_props = c(0.25, 0.25, 0.25, 0.25)
+# unimpaired_preds = unimpaired_preds
+# other_preds = other_preds
+# mci_preds = mci_preds
+# categorical_vars = W 
+# continuous_vars = Z 
+# id_var = "HHIDPN" 
+# variable_labels = variable_labels
+# dataset_to_copy = dataset_to_copy
+# cell_ID_key = cell_ID_key
+# color_palette = color_palette
+# num_synthetic = 10 
+# unimpaired_betas = unimpaired_betas
+# unimpaired_cov = unimpaired_cov
+# other_betas = other_betas
+# other_cov = other_cov
+# mci_betas = mci_betas
+# mci_cov = mci_cov
+# alpha_0_dist = alpha_0_dist 
+# prior_Sigma = prior_Sigma
+# prior_V_inv = prior_V_inv
+# prior_beta = priors_beta
+# nu_0 = nu_0
+# kappa_0 = kappa_0 
+# contrasts_matrix = A
+# path_to_analyses_folder = 
+#   paste0(path_to_box, "analyses/simulation_study/HCAP_normal_250_unimpaired/") 
+# path_to_figures_folder = 
+#   paste0(path_to_box, "figures/simulation_study/HCAP_normal_250_unimpaired/") 
 
 
 
