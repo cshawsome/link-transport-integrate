@@ -42,7 +42,7 @@ Z <- selected_vars[str_detect(selected_vars, "Z")]
 
 #---- **prior: cell counts ----
 alpha_0_dist <- 
-  read_csv(paste0(path_to_box, "data/ADAMS/prior_data/", 
+  read_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
                   "imputation_cell_props.csv")) 
 
 #---- **contrasts matrix ----
@@ -51,7 +51,7 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
   as.matrix()
 
 cells <- A %>% as.data.frame() %>% unite("cells", -1, sep = "") %>% 
-  dplyr::select(-"V1") %>% table() %>% as.data.frame() %>% 
+  dplyr::select(-"Intercept") %>% table() %>% as.data.frame() %>% 
   dplyr::select(-"Freq") %>% set_colnames("cells")
 
 #---- estimates ----
@@ -108,8 +108,11 @@ estimate_cont_priors <- function(data, W, Z, A){
     
     #---- **draw new UtU if needed ----
     while(det(t(A) %*% UtU %*% A) < 1e-9){
-      random_draw <- sample(seq(1, (ncol(alpha_0_dist) - 2)), size = 1)
-      new_props <- alpha_0_dist[, c(random_draw, "group")] %>% 
+      max_index <- 
+        colnames(alpha_0_dist)[str_detect(colnames(alpha_0_dist), "[0-9]+")] %>% 
+        as.numeric() %>% max()
+      random_draw <- sample(seq(1, max_index), size = 1)
+      new_props <- alpha_0_dist[, c(as.character(random_draw), "group")] %>% 
         filter(group == class)
       
       UtU <- diag(round(unlist(new_counts[, 1])*nrow(subset)))
