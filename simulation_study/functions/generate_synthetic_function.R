@@ -356,27 +356,28 @@ generate_synthetic <-
     pi_chain_data <- pi_chain %>% as.data.frame() %>% 
       rownames_to_column("Cell") %>% 
       pivot_longer(-c("Cell"), names_to = c("Group", "Run"), names_sep = ":", 
-                   values_to = "probability") %>% 
-      mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
-                                       Group == 2 ~ "Other", Group == 3 ~ "MCI", 
-                                       Group == 4 ~ "Dementia")) %>% 
-      mutate_at("Run", as.numeric) %>%
-      mutate_if(is.character, as.factor) 
+                   values_to = "probability") %>% arrange(desc(probability)) %>%
+      left_join(., cell_ID_key, by = c("Cell" = "cell_ID")) %>%
+      mutate_at("Run", as.numeric) %>% mutate_if(is.character, as.factor) %>% 
+      rename("cell_ID" = "Cell", "Cell" = "cell_name")
+    
+    pi_chain_data$Cell <- 
+      fct_relevel(pi_chain_data$Cell, paste0(unique(pi_chain_data$Cell)))
     
     pi_chain_plot <- ggplot(data = pi_chain_data, 
                             aes(x = Run, y = probability, colour = Cell)) +       
       geom_line(aes(group = Cell)) + 
       geom_vline(xintercept = warm_up, size = 1) + 
       xlab("Run") + ylab("Probability of cell membership") +  
-      scale_color_manual(values = extended_pallette6) + 
+      #scale_color_manual(values = extended_pallette6) + 
       scale_x_continuous(breaks = seq(0, B, by = 100)) +
-      facet_grid(rows = vars(factor(Group_label, 
+      facet_grid(rows = vars(factor(Group, 
                                     levels = c("Unimpaired", "MCI", "Dementia", 
                                                "Other")))) + theme_bw() 
     
     ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
            path = paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
-           width = 7, height = 5, units = "in", device = "jpeg")
+           device = "jpeg")
     
     #---- ****Sigma chain ----
     Sigma_chain_data <- Sigma_chain %>% as.data.frame() %>% 
