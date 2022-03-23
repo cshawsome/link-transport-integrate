@@ -294,7 +294,7 @@ generate_synthetic <-
       if(b > warm_up){
         write_csv(dataset_to_copy, 
                   file = paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                                run_number, "/ADAMSA_synthetic_", b - warm_up, 
+                                run_number, "/synthetic_", b - warm_up, 
                                 ".csv"))
       }
     }
