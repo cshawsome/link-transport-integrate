@@ -167,8 +167,8 @@ posterior_predictive_checks <-
         
         ggsave(filename = paste0(path_to_figures_folder, 
                                  "posterior_predictive_checks/run_", chain, 
-                                 "/cell_counts/group_specific/", 
-                                 tolower(dem_group), "_count.jpeg"), 
+                                 "/cell_counts/", tolower(dem_group), 
+                                 "_count.jpeg"), 
                width = 3, height = 4, units = "in")
       }
     }
