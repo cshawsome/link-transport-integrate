@@ -9,11 +9,10 @@ posterior_predictive_checks <-
       for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
         if(!dir.exists(paste0(path_to_figures_folder, 
                               "posterior_predictive_checks/run_", chain, 
-                              "/cell_counts/group_specific/"))){
+                              "/cell_counts/"))){
           dir.create(paste0(path_to_figures_folder, 
                             "posterior_predictive_checks/run_", chain, 
-                            "/cell_counts/group_specific/"), 
-                     recursive = TRUE)
+                            "/cell_counts/"), recursive = TRUE)
         }
       }
     }
@@ -22,23 +21,11 @@ posterior_predictive_checks <-
       for(metric in c("median", "skew")){
         if(!dir.exists(paste0(path_to_figures_folder, 
                               "posterior_predictive_checks/run_", chain, 
-                              "/continuous_vars/", metric, "/overall"))){
+                              "/continuous_vars/", metric, "/"))){
           dir.create(paste0(path_to_figures_folder, 
                             "posterior_predictive_checks/run_", chain, 
-                            "/continuous_vars/", metric, "/overall"), 
+                            "/continuous_vars/", metric, "/"), 
                      recursive = TRUE)
-        }
-        
-        for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-          if(!dir.exists(paste0(path_to_figures_folder, 
-                                "posterior_predictive_checks/run_", chain, 
-                                "/continuous_vars/", metric, "/", 
-                                tolower(group)))){
-            dir.create(paste0(path_to_figures_folder, 
-                              "posterior_predictive_checks/run_", chain, 
-                              "/continuous_vars/", metric, "/", tolower(group)), 
-                       recursive = TRUE)
-          }
         }
       }
       if(!dir.exists(paste0(path_to_figures_folder, 
@@ -251,21 +238,25 @@ posterior_predictive_checks <-
     
     #---- ****by class ----
     synthetic_continuous <- 
-      matrix(0, nrow = nrow(Z)*4*num_chains, ncol = (num_samples + 3)) %>% 
+      matrix(0, nrow = length(continuous_covariates)*4*num_chains, 
+             ncol = (num_samples + 3)) %>% 
       as.data.frame() %>% 
       set_colnames(c(seq(1, num_samples), "group", "var", "chain"))
-    synthetic_continuous[, "group"] <- rep(seq(1, 4), each = nrow(Z))
-    synthetic_continuous[, "var"] <- rep(Z[, "var"], 4)
-    synthetic_continuous[, "chain"] <- rep(seq(1, num_chains), each = nrow(Z)*4)
+    synthetic_continuous[, "group"] <- 
+      rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
+          each = length(continuous_covariates))
+    synthetic_continuous[, "var"] <- rep(continuous_covariates, 4)
+    synthetic_continuous[, "chain"] <- rep(seq(1, num_chains), 
+                                           each = length(Z)*4)
     
     #medians from synthetic datasets
-    for(group in 1:4){
-      subsample <- synthetic_sample %>% filter(Group == group)
+    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+      subsample <- synthetic_sample %>% filter(!!sym(group) == 1)
       
-      for(var in Z[, "var"]){
+      for(var in continuous_covariates){
         subset <- subsample %>% 
           dplyr::select(!!as.symbol(var), "sample", "chain") 
-        subset[, var] <- subset[, var]*orig_sds[var] + orig_means[var]
+        
         synthetic_continuous[which(synthetic_continuous$group == group & 
                                      synthetic_continuous$var == var & 
                                      synthetic_continuous$chain %in% 
@@ -280,25 +271,19 @@ posterior_predictive_checks <-
     
     synthetic_continuous %<>% 
       mutate("truth" = 0, 
-             "label" = rep(Z[, "label"], 4*num_chains), 
-             "group_label" = case_when(group == 1 ~ "Unimpaired", 
-                                       group == 2 ~ "Other", 
-                                       group == 3 ~ "MCI", 
-                                       group == 4 ~ "Dementia")) %>% 
-      mutate("color" = case_when(group_label == "Unimpaired" ~ "#00a389", 
-                                 group_label == "Other" ~ "#28bed9", 
-                                 group_label == "MCI" ~ "#fdab00", 
-                                 group_label == "Dementia" ~ "#ff0000"))
+             "label" = 
+               rep(unlist(variable_labels[
+                 which(variable_labels$data_label %in% continuous_covariates), 
+                 "figure_label"]), num_chains*4)) %>% 
+      left_join(color_palette, by = c("group" = "Group"))
     
-    for(group in unlist(unique(dataset_to_copy[, dementia_var]))){
-      subsample <- dataset_to_copy %>% 
-        filter(!!as.symbol(dementia_var) == group)
+    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+      subsample <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
       
-      for(var in Z[, "var"]){
-        synthetic_continuous[which(synthetic_continuous$group_label == group & 
+      for(var in continuous_covariates){
+        synthetic_continuous[which(synthetic_continuous$group == group & 
                                      synthetic_continuous$var == var), 
-                             "truth"] <- 
-          median(unlist(subsample[, var])*orig_sds[var] + orig_means[var])
+                             "truth"] <- median(unlist(subsample[, var]))
       }
     }
     
@@ -306,28 +291,25 @@ posterior_predictive_checks <-
     
     #---- ****plot ----
     for(chain_num in 1:num_chains){
-      for(dem_group in unique(synthetic_continuous$group_label)){
-        for(var_name in Z[, "label"]){
-          subset <- synthetic_continuous %>% 
-            filter(group_label == dem_group & label == var_name & 
-                     chain == chain_num)
-          ggplot(data = subset , aes(x = value)) + 
-            geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-            xlab("Median") + ggtitle(dem_group) + 
-            geom_vline(xintercept = subset$truth, color = unique(subset$color), 
-                       size = 1) + labs(subtitle = var_name) +
-            theme(plot.title = 
-                    element_text(hjust = 0.5, face = "bold",
-                                 color = unique(subset$color)), 
-                  text = element_text(size = 6)) 
-          
-          ggsave(filename = paste0(path_to_figures_folder, 
-                                   "posterior_predictive_checks/run_", 
-                                   chain_num, "/continuous_vars/median/", 
-                                   tolower(dem_group), "/", tolower(dem_group), 
-                                   "_", var_name, ".jpeg"), 
-                 width = 1.3, height = 1.4, units = "in")
-        } 
+      for(dem_group in c("Unimpaired", "MCI", "Dementia", "Other")){
+        subset <- synthetic_continuous %>% 
+          filter(group == dem_group & chain == chain_num)
+        
+        ggplot(data = subset , aes(x = value)) + 
+          geom_histogram(fill = "black", color = "black") + theme_bw() + 
+          xlab("Median") + ggtitle(dem_group) + 
+          facet_wrap(facets = vars(label), ncol = 2, scales = "free") +
+          geom_vline(aes(xintercept = truth), color = unique(subset$Color), 
+                     size = 1) + 
+          theme(plot.title = element_text(hjust = 0.5, face = "bold",
+                                          color = unique(subset$Color)), 
+                text = element_text(size = 10)) 
+        
+        ggsave(filename = paste0(path_to_figures_folder, 
+                                 "posterior_predictive_checks/run_", 
+                                 chain_num, "/continuous_vars/median/", 
+                                 tolower(dem_group), ".jpeg"), 
+               width = 8, height = 10, units = "in")
       }
     }
     
