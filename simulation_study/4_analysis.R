@@ -119,13 +119,13 @@ generate_synthetic(warm_up = 2, run_number = 1,
                             "HCAP_normal_250_unimpaired/"))
 
 #---- posterior predictive checks ----
-posterior_predictive_checks(dataset_to_copy, continuous_covariates = Z, 
-                            num_samples = 1000, num_chains = 1, 
+posterior_predictive_checks(dataset_to_copy, categorical_covariates = W, 
+                            continuous_covariates = Z, contrasts_matrix = A,
+                            cell_ID_key, variable_labels, num_samples = 10, 
+                            num_chains = 1, color_palette,
                             path_to_analyses_folder = 
-                              paste0("/Users/CrystalShaw/Box/",
-                                     "Dissertation/analyses/ADAMS_test/"), 
+                              paste0(path_to_box, "analyses/simulation_study/", 
+                                     "HCAP_normal_250_unimpaired/"), 
                             path_to_figures_folder = 
-                              paste0("/Users/CrystalShaw/Box/", 
-                                     "Dissertation/figures/ADAMS_test/"))
-
-
+                              paste0(path_to_box, "figures/simulation_study/", 
+                                     "HCAP_normal_250_unimpaired/"))
