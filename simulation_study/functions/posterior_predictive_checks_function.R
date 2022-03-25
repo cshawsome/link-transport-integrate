@@ -1,6 +1,7 @@
 posterior_predictive_checks <- 
-  function(dataset_to_copy, continuous_covariates, num_samples, num_chains, 
-           path_to_analyses_folder, path_to_figures_folder){
+  function(dataset_to_copy, continuous_covariates, contrasts_matrix, cell_ID_key,
+           num_samples, num_chains, path_to_analyses_folder, 
+           path_to_figures_folder){
     
     #---- create directories for results ----
     for(chain in 1:num_chains){
@@ -106,22 +107,21 @@ posterior_predictive_checks <-
     #---- pre-allocate results matrix ----
     #---- **synthetic counts ----
     synthetic_counts <- 
-      matrix(0, nrow = 6*4*num_chains, ncol = (num_samples + 3)) %>% 
-      as.data.frame() %>% 
+      matrix(0, nrow = nrow(contrasts_matrix)*4*num_chains, 
+             ncol = (num_samples + 3)) %>% as.data.frame() %>% 
       set_colnames(c(seq(1, num_samples), "group", "cell", "chain"))
     
     synthetic_counts[, "group"] <- 
-      rep(rep(unlist(unique(dataset_to_copy[, dementia_var])), each = 6), 
-          num_chains)
+      rep(rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
+              each = nrow(contrasts_matrix)), num_chains)
     
-    cells <- 
-      as.data.frame(table(dataset_to_copy$ETHNIC_label, 
-                          dataset_to_copy$Astroke)) %>% 
-      unite("cell", c("Var1", "Var2"), sep = ":")
+    cells <- contrasts_matrix[, -1] %>% as.data.frame() %>% 
+      unite("cell_ID", sep = "") %>% left_join(cell_ID_key)
     
-    synthetic_counts[, "cell"] <- rep(rep(cells$cell, 4), num_chains)
+    synthetic_counts[, "cell"] <- rep(rep(cells$cell_name, 4), num_chains)
     
-    synthetic_counts[, "chain"] <- rep(seq(1, num_chains), each = 6*4) 
+    synthetic_counts[, "chain"] <- rep(seq(1, num_chains), 
+                                       each = nrow(contrasts_matrix)*4) 
     
     #---- categorical checks ----
     #---- **race/ethnicity x stroke ----
@@ -556,6 +556,8 @@ posterior_predictive_checks <-
 #---- test function ----
 dataset_to_copy = dataset_to_copy
 continuous_covariates = Z 
+contrasts_matrix = A
+cell_ID_key = cell_ID_key
 num_samples = 10 
 num_chains = 1 
 path_to_analyses_folder = paste0(path_to_box, "analyses/simulation_study/", 
