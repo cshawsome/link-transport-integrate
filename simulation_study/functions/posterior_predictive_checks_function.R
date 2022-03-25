@@ -8,10 +8,10 @@ posterior_predictive_checks <-
       for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
         if(!dir.exists(paste0(path_to_figures_folder, 
                               "posterior_predictive_checks/run_", chain, 
-                              "/cell_counts/group_specific/", tolower(group)))){
+                              "/cell_counts/group_specific/"))){
           dir.create(paste0(path_to_figures_folder, 
                             "posterior_predictive_checks/run_", chain, 
-                            "/cell_counts/group_specific/", tolower(group)), 
+                            "/cell_counts/group_specific/"), 
                      recursive = TRUE)
         }
       }
