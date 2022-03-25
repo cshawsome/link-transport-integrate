@@ -71,16 +71,14 @@ posterior_predictive_checks <-
     for(chain_num in 1:num_chains){
       if(chain_num == 1){
         group_membership <- 
-          vroom(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                       "run_", chain_num, 
-                       "/ADAMSA_latent_class_data.csv")) %>% 
+          read_csv(paste0(path_to_analyses_folder, "diagnostics_data/", 
+                          "run_", chain_num, "/latent_class_data.csv")) %>% 
           mutate("chain" = chain_num)
       } else{
         group_membership %<>% 
           rbind(., 
-                vroom(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                             "run_", chain_num, 
-                             "/ADAMSA_latent_class_data.csv")) %>% 
+                read_csv(paste0(path_to_analyses_folder, "diagnostics_data/", 
+                                "run_", chain_num, "/latent_class_data.csv")) %>% 
                   mutate("chain" = chain_num))
       }
     }
