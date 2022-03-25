@@ -17,7 +17,7 @@ source(here::here("simulation_study", "functions",
                   "generate_synthetic_function.R"))
 
 source(here::here("simulation_study", "functions", 
-                  "posterior_predictive_checks.R"))
+                  "posterior_predictive_checks_function.R"))
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
