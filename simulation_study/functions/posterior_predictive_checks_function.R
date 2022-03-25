@@ -53,15 +53,15 @@ posterior_predictive_checks <-
       for(chain in 1:num_chains){
         if(sample == 1 & chain == 1){
           synthetic_sample <- 
-            vroom(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                         chain, "/ADAMSA_synthetic_", sample, ".csv")) %>% 
+            read_csv(paste0(path_to_analyses_folder, "synthetic_data/run_", 
+                            chain, "/synthetic_", sample, ".csv")) %>% 
             mutate("sample" = sample, "chain" = chain)
         } else{
           synthetic_sample %<>% 
             rbind(., 
-                  vroom(paste0(path_to_analyses_folder, 
-                               "synthetic_data/run_", chain, 
-                               "/ADAMSA_synthetic_", sample, ".csv")) %>% 
+                  read_csv(paste0(path_to_analyses_folder, 
+                                  "synthetic_data/run_", chain, 
+                                  "/synthetic_", sample, ".csv")) %>% 
                     mutate("sample" = sample, "chain" = chain))
         }
       }
