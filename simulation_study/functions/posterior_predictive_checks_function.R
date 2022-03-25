@@ -537,3 +537,13 @@ posterior_predictive_checks <-
     }
   }
 
+#---- test function ----
+dataset_to_copy = dataset_to_copy
+continuous_covariates = Z 
+num_samples = 10 
+num_chains = 1 
+path_to_analyses_folder = paste0(path_to_box, "analyses/simulation_study/", 
+                                 "HCAP_normal_250_unimpaired/") 
+path_to_figures_folder = paste0(path_to_box, "figures/simulation_study/", 
+                                "HCAP_normal_250_unimpaired/")
+
