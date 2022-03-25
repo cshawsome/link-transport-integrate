@@ -178,8 +178,8 @@ posterior_predictive_checks <-
         ggplot(data = subset , aes(x = value)) + 
           geom_histogram(fill = "black", color = "black") + theme_bw() + 
           xlab("Contingency Cell Count") + ylab("") + 
-          facet_wrap(facets = vars(cat), ncol = 2, scales = "free") +
-          geom_vline(aes(xintercept = truth), color = unique(subset$color),
+          facet_wrap(facets = vars(cell), ncol = 2, scales = "free") +
+          geom_vline(aes(xintercept = truth), color = unique(subset$Color),
                      size = 1) +
           theme(text = element_text(size = 6), 
                 strip.text = element_text(size = 6))  
@@ -188,7 +188,7 @@ posterior_predictive_checks <-
                                  "posterior_predictive_checks/run_", chain, 
                                  "/cell_counts/group_specific/", 
                                  tolower(dem_group), "_count.jpeg"), 
-               width = 2.45, height = 2.6, units = "in")
+               width = 3, height = 4, units = "in")
       }
     }
     
