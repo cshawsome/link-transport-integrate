@@ -125,19 +125,6 @@ posterior_predictive_checks <-
     
     #---- categorical checks ----
     #---- **race/ethnicity x stroke ----
-    #true counts
-    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      counts <- dataset_to_copy %>% filter(!!as.symbol(group) == 1) %>% 
-        dplyr::select(all_of(categorical_covariates)) %>% 
-        unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-        set_colnames(c("cell_ID", "Freq")) %>% 
-        left_join(cell_ID_key, .)
-      
-      counts[which(is.na(counts$Freq)), "Freq"] <- 0
-      
-      assign(paste0(group, "_data_counts"), counts)
-    }
-    
     for(chain_num in unique(synthetic_sample$chain)){
       #counts from synthetic datasets
       for(num in 1:num_samples){
@@ -163,12 +150,20 @@ posterior_predictive_checks <-
     
     synthetic_count_plot_data <- synthetic_counts %>% mutate("truth" = 0) 
     
-    for(group in unlist(unique(dataset_to_copy[, dementia_var]))){
-      true_counts <- get(paste0(group, "_data_counts"))
+    #true counts
+    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+      counts <- dataset_to_copy %>% filter(!!as.symbol(group) == 1) %>% 
+        dplyr::select(all_of(categorical_covariates)) %>% 
+        unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+        set_colnames(c("cell_ID", "Freq")) %>% 
+        left_join(cell_ID_key, .)
+      
+      counts[which(is.na(counts$Freq)), "Freq"] <- 0
+      
       synthetic_count_plot_data[
         which(synthetic_count_plot_data$group == group & 
-                synthetic_count_plot_data$cell %in% true_counts$cell), 
-        "truth"] <- true_counts$Freq
+                synthetic_count_plot_data$cell %in% counts$cell_name), 
+        "truth"] <- counts$Freq
     }
     
     synthetic_count_plot_data %<>% 
