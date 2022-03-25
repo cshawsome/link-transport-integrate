@@ -122,7 +122,7 @@ set.seed(20220310)
 start <- Sys.time()
 fast_impute(predictor_matrix = predict, data = ADAMS_subset, 
             path_for_output = paste0(path_to_box, "data/ADAMS/prior_data/"),
-            method = "PMM", m = 100, maxit = 15)
+            method = "PMM", m = 10000, maxit = 15)
 end <- Sys.time() - start
 
 #---- read in results ----
