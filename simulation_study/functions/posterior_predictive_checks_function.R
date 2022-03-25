@@ -144,17 +144,19 @@ posterior_predictive_checks <-
         subsample <- synthetic_sample %>% 
           filter(chain == chain_num & sample == num) 
         
-        for(group in unlist(unique(dataset_to_copy[, dementia_var]))){
-          subset <- subsample %>% filter(!!as.symbol(dementia_var) == group) 
+        for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+          counts <- subsample %>% filter(!!as.symbol(group) == 1) %>% 
+            dplyr::select(all_of(categorical_covariates)) %>% 
+            unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+            set_colnames(c("cell_ID", "Freq")) %>% left_join(., cell_ID_key)
           
-          counts <- 
-            as.data.frame(table(subset$ETHNIC_label, subset$Astroke)) %>% 
-            unite("cell", c("Var1", "Var2"), sep = ":")
+          counts[which(is.na(counts$Freq)), "Freq"] <- 0
           
           synthetic_counts[
             which(synthetic_counts$group == group & 
                     synthetic_counts$chain == chain_num & 
-                    synthetic_counts$cell %in% counts$cell), num] <- counts$Freq
+                    synthetic_counts$cell %in% counts$cell_name), num] <- 
+            counts$Freq
         }
       }
     }
