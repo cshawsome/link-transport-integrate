@@ -232,7 +232,7 @@ posterior_predictive_checks <-
       
       ggsave(filename = paste0(path_to_figures_folder, 
                                "posterior_predictive_checks/run_", chain_num, 
-                               "/continuous_vars/median/overall/combined.jpeg"), 
+                               "/continuous_vars/median/overall.jpeg"), 
              width = 8, height = 10, units = "in")
     }
     
