@@ -127,12 +127,15 @@ posterior_predictive_checks <-
     #---- **race/ethnicity x stroke ----
     #true counts
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      subset <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
-      assign(paste0(group, "_data_counts"), 
-             subset %>% dplyr::select(all_of(categorical_covariates)) %>% 
-               unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-               set_colnames(c("cell_ID", "Freq")) %>% 
-               left_join(cell_ID_key, .))
+      counts <- dataset_to_copy %>% filter(!!as.symbol(group) == 1) %>% 
+        dplyr::select(all_of(categorical_covariates)) %>% 
+        unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+        set_colnames(c("cell_ID", "Freq")) %>% 
+        left_join(cell_ID_key, .)
+      
+      counts[which(is.na(counts$Freq)), "Freq"] <- 0
+      
+      assign(paste0(group, "_data_counts"), counts)
     }
     
     for(chain_num in unique(synthetic_sample$chain)){
