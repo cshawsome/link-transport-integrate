@@ -16,6 +16,9 @@ source(here::here("simulation_study", "functions",
 source(here::here("simulation_study", "functions", 
                   "generate_synthetic_function.R"))
 
+source(here::here("simulation_study", "functions", 
+                  "posterior_predictive_checks.R"))
+
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
@@ -115,12 +118,6 @@ generate_synthetic(warm_up = 2, run_number = 1,
                      paste0(path_to_box, "figures/simulation_study/", 
                             "HCAP_normal_250_unimpaired/"))
 
-#---- OLD ----
-
-#---- source functions ----
-source(here::here("ADAMS", "analysis_scripts", "functions", 
-                  "ADAMS_posterior_predictive_checks.R"))
-
 #---- posterior predictive checks ----
 ADAMS_posterior_predictive_checks(dataset_to_copy, continuous_covariates = Z, 
                                   orig_means = ADAMS_means, 
@@ -133,3 +130,5 @@ ADAMS_posterior_predictive_checks(dataset_to_copy, continuous_covariates = Z,
                                   path_to_figures_folder = 
                                     paste0("/Users/CrystalShaw/Box/", 
                                            "Dissertation/figures/ADAMS_test/"))
+
+
