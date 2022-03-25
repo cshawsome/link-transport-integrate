@@ -1,7 +1,7 @@
 posterior_predictive_checks <- 
-  function(dataset_to_copy, continuous_covariates, contrasts_matrix, cell_ID_key,
-           num_samples, num_chains, path_to_analyses_folder, 
-           path_to_figures_folder){
+  function(dataset_to_copy, categorical_covariates, continuous_covariates, 
+           contrasts_matrix, cell_ID_key, num_samples, num_chains, 
+           path_to_analyses_folder, path_to_figures_folder){
     
     #---- create directories for results ----
     for(chain in 1:num_chains){
@@ -126,13 +126,13 @@ posterior_predictive_checks <-
     #---- categorical checks ----
     #---- **race/ethnicity x stroke ----
     #true counts
-    for(group in unlist(unique(dataset_to_copy[, dementia_var]))){
-      subset <- dataset_to_copy %>% filter(!!as.symbol(dementia_var) == group)
+    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+      subset <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
       assign(paste0(group, "_data_counts"), 
-             as.data.frame(table(subset$ETHNIC_label, 
-                                 subset$Astroke)) %>% 
-               mutate("percent" = round((Freq/sum(Freq))*100, 1)) %>% 
-               unite("cell", c("Var1", "Var2"), sep = ":")) 
+             subset %>% dplyr::select(all_of(categorical_covariates)) %>% 
+               unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+               set_colnames(c("cell_ID", "Freq")) %>% 
+               left_join(cell_ID_key, .))
     }
     
     for(chain_num in unique(synthetic_sample$chain)){
@@ -555,6 +555,7 @@ posterior_predictive_checks <-
 
 #---- test function ----
 dataset_to_copy = dataset_to_copy
+categorical_covariates = W
 continuous_covariates = Z 
 contrasts_matrix = A
 cell_ID_key = cell_ID_key
