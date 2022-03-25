@@ -119,16 +119,13 @@ generate_synthetic(warm_up = 2, run_number = 1,
                             "HCAP_normal_250_unimpaired/"))
 
 #---- posterior predictive checks ----
-ADAMS_posterior_predictive_checks(dataset_to_copy, continuous_covariates = Z, 
-                                  orig_means = ADAMS_means, 
-                                  orig_sds = ADAMS_sds, 
-                                  num_samples = 1000, num_chains = 5, 
-                                  dementia_var = "Adem_dx_cat", 
-                                  path_to_analyses_folder = 
-                                    paste0("/Users/CrystalShaw/Box/",
-                                           "Dissertation/analyses/ADAMS_test/"), 
-                                  path_to_figures_folder = 
-                                    paste0("/Users/CrystalShaw/Box/", 
-                                           "Dissertation/figures/ADAMS_test/"))
+posterior_predictive_checks(dataset_to_copy, continuous_covariates = Z, 
+                            num_samples = 1000, num_chains = 1, 
+                            path_to_analyses_folder = 
+                              paste0("/Users/CrystalShaw/Box/",
+                                     "Dissertation/analyses/ADAMS_test/"), 
+                            path_to_figures_folder = 
+                              paste0("/Users/CrystalShaw/Box/", 
+                                     "Dissertation/figures/ADAMS_test/"))
 
 
