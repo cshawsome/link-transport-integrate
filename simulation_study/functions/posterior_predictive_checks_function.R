@@ -1,7 +1,8 @@
 posterior_predictive_checks <- 
   function(dataset_to_copy, categorical_covariates, continuous_covariates, 
-           contrasts_matrix, cell_ID_key, num_samples, num_chains, color_palette, 
-           path_to_analyses_folder, path_to_figures_folder){
+           contrasts_matrix, cell_ID_key, variable_labels, num_samples, 
+           num_chains, color_palette, path_to_analyses_folder, 
+           path_to_figures_folder){
     
     #---- create directories for results ----
     for(chain in 1:num_chains){
@@ -197,17 +198,17 @@ posterior_predictive_checks <-
     #---- **median ----
     #---- ****overall ----
     synthetic_continuous <- 
-      matrix(0, nrow = nrow(Z)*num_chains, ncol = (num_samples + 2)) %>% 
+      matrix(0, nrow = length(continuous_covariates)*num_chains, 
+             ncol = (num_samples + 2)) %>% 
       as.data.frame() %>% set_colnames(c(seq(1, num_samples), "var", "chain"))
-    synthetic_continuous[, "var"] <- rep(Z[, "var"], num_chains)
+    synthetic_continuous[, "var"] <- rep(continuous_covariates, num_chains)
     synthetic_continuous[, "chain"] <- 
-      rep(seq(1, num_chains), each = length(Z[, "var"]))
+      rep(seq(1, num_chains), each = length(continuous_covariates))
     
     #medians from synthetic datasets
-    for(var in Z[, "var"]){
+    for(var in continuous_covariates){
       subset <- synthetic_sample %>% 
         dplyr::select(!!as.symbol(var), "sample", "chain") 
-      subset[, var] <- subset[, var]*orig_sds[var] + orig_means[var]
       synthetic_continuous[which(synthetic_continuous$var == var & 
                                    synthetic_continuous$chain %in% 
                                    seq(1, num_chains)), 
@@ -220,30 +221,32 @@ posterior_predictive_checks <-
     
     synthetic_continuous %<>% 
       mutate("truth" = 0, 
-             "label" = rep(Z[, "label"], num_chains))
+             "label" = 
+               rep(unlist(variable_labels[
+                 which(variable_labels$data_label %in% continuous_covariates), 
+                 "figure_label"]), num_chains))
     
-    for(var in Z[, "var"]){
+    for(var in continuous_covariates){
       synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
-        median(unlist(dataset_to_copy[, var]*orig_sds[var] + orig_means[var]))
+        median(unlist(dataset_to_copy[, var]))
     }
     
     synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
     
     #---- ****plot ----
     for(chain_num in seq(1:num_chains)){
-      for(var_name in Z[, "label"]){
-        subset <- synthetic_continuous %>% 
-          filter(label == var_name & chain == chain_num)
-        ggplot(data = subset , aes(x = value)) + 
-          geom_histogram(fill = "black", color = "black") + theme_minimal() + 
-          xlab("Median") + ggtitle(var_name) + 
-          geom_vline(xintercept = subset$truth, color = "#f2caaa" , size = 2)
-        
-        ggsave(filename = paste0(path_to_figures_folder, 
-                                 "posterior_predictive_checks/run_", chain_num, 
-                                 "/continuous_vars/median/overall/", var_name, 
-                                 ".jpeg"), width = 5, height = 3, units = "in")
-      }
+      subset <- synthetic_continuous %>% filter(chain == chain_num)
+      
+      ggplot(data = subset , aes(x = value)) + 
+        geom_histogram(fill = "black", color = "black") + theme_bw() + 
+        xlab("Median") + facet_wrap(facets = vars(label), 
+                                    ncol = 2, scales = "free") +
+        geom_vline(aes(xintercept = truth), color = "#f2caaa", size = 2)
+      
+      ggsave(filename = paste0(path_to_figures_folder, 
+                               "posterior_predictive_checks/run_", chain_num, 
+                               "/continuous_vars/median/overall/combined.jpeg"), 
+             width = 8, height = 10, units = "in")
     }
     
     #---- ****by class ----
@@ -552,6 +555,7 @@ categorical_covariates = W
 continuous_covariates = Z 
 contrasts_matrix = A
 cell_ID_key = cell_ID_key
+variable_labels = variable_labels
 num_samples = 10 
 num_chains = 1 
 color_palette = color_palette
