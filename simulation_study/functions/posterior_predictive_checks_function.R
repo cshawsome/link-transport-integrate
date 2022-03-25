@@ -1,33 +1,51 @@
 posterior_predictive_checks <- 
-  function(dataset_to_copy, continuous_covariates, orig_means, orig_sds, 
-           num_samples, num_chains, dementia_var, path_to_analyses_folder, 
-           path_to_figures_folder){
+  function(dataset_to_copy, continuous_covariates, num_samples, num_chains, 
+           path_to_analyses_folder, path_to_figures_folder){
     
     #---- create directories for results ----
     for(chain in 1:num_chains){
-      for(group in unlist(unique(dataset_to_copy[, dementia_var]))){
-        dir.create(paste0(path_to_figures_folder, 
-                          "posterior_predictive_checks/", 
-                          "run_", chain, "/cell_counts/group_specific/", 
-                          tolower(group)), recursive = TRUE)
+      for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+        if(!dir.exists(paste0(path_to_figures_folder, 
+                              "posterior_predictive_checks/run_", chain, 
+                              "/cell_counts/group_specific/", tolower(group)))){
+          dir.create(paste0(path_to_figures_folder, 
+                            "posterior_predictive_checks/run_", chain, 
+                            "/cell_counts/group_specific/", tolower(group)), 
+                     recursive = TRUE)
+        }
       }
     }
     
     for(chain in 1:num_chains){
       for(metric in c("median", "skew")){
-        dir.create(paste0(path_to_figures_folder, 
-                          "posterior_predictive_checks/", 
-                          "run_", chain, "/continuous_vars/", metric, 
-                          "/overall"), recursive = TRUE)
-        for(group in unlist(unique(dataset_to_copy[, dementia_var]))){
+        if(!dir.exists(paste0(path_to_figures_folder, 
+                              "posterior_predictive_checks/run_", chain, 
+                              "/continuous_vars/", metric, "/overall"))){
           dir.create(paste0(path_to_figures_folder, 
-                            "posterior_predictive_checks/", 
-                            "run_", chain, "/continuous_vars/", metric, "/",
-                            tolower(group)), recursive = TRUE)
+                            "posterior_predictive_checks/run_", chain, 
+                            "/continuous_vars/", metric, "/overall"), 
+                     recursive = TRUE)
+        }
+        
+        for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+          if(!dir.exists(paste0(path_to_figures_folder, 
+                                "posterior_predictive_checks/run_", chain, 
+                                "/continuous_vars/", metric, "/", 
+                                tolower(group)))){
+            dir.create(paste0(path_to_figures_folder, 
+                              "posterior_predictive_checks/run_", chain, 
+                              "/continuous_vars/", metric, "/", tolower(group)), 
+                       recursive = TRUE)
+          }
         }
       }
-      dir.create(paste0(path_to_figures_folder, "posterior_predictive_checks/", 
-                        "run_", chain, "/impairment_classes"), recursive = TRUE)
+      if(!dir.exists(paste0(path_to_figures_folder, 
+                            "posterior_predictive_checks/run_", chain, 
+                            "/impairment_classes"))){
+        dir.create(paste0(path_to_figures_folder, "posterior_predictive_checks/", 
+                          "run_", chain, "/impairment_classes"), 
+                   recursive = TRUE)
+      }
     }
     
     #---- read in synthetic data ----
