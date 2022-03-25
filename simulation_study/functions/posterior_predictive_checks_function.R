@@ -1,6 +1,6 @@
 posterior_predictive_checks <- 
   function(dataset_to_copy, categorical_covariates, continuous_covariates, 
-           contrasts_matrix, cell_ID_key, num_samples, num_chains, 
+           contrasts_matrix, cell_ID_key, num_samples, num_chains, color_palette, 
            path_to_analyses_folder, path_to_figures_folder){
     
     #---- create directories for results ----
@@ -167,15 +167,8 @@ posterior_predictive_checks <-
     }
     
     synthetic_count_plot_data %<>% 
-      mutate("cat" = rep(rep(c("Black + No Stroke", "Hispanic + No Stroke", 
-                               "White + No Stroke", "Black + Stroke", 
-                               "Hispanic + Stroke", "White + Stroke"), 4), 
-                         num_chains)) %>% 
-      pivot_longer(-c("group", "cell", "chain", "truth", "cat")) %>% 
-      mutate("color" = case_when(group == "Unimpaired" ~ "#00a389", 
-                                 group == "Other" ~ "#28bed9", 
-                                 group == "MCI" ~ "#fdab00", 
-                                 group == "Dementia" ~ "#ff0000"))
+      pivot_longer(-c("group", "cell", "chain", "truth")) %>% 
+      left_join(color_palette, by = c("group" = "Group"))
     
     #---- **plot ----
     for(chain in 1:num_chains){
@@ -561,6 +554,7 @@ contrasts_matrix = A
 cell_ID_key = cell_ID_key
 num_samples = 10 
 num_chains = 1 
+color_palette = color_palette
 path_to_analyses_folder = paste0(path_to_box, "analyses/simulation_study/", 
                                  "HCAP_normal_250_unimpaired/") 
 path_to_figures_folder = paste0(path_to_box, "figures/simulation_study/", 
