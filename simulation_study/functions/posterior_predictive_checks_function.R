@@ -28,13 +28,6 @@ posterior_predictive_checks <-
                      recursive = TRUE)
         }
       }
-      if(!dir.exists(paste0(path_to_figures_folder, 
-                            "posterior_predictive_checks/run_", chain, 
-                            "/impairment_classes"))){
-        dir.create(paste0(path_to_figures_folder, "posterior_predictive_checks/", 
-                          "run_", chain, "/impairment_classes"), 
-                   recursive = TRUE)
-      }
     }
     
     #---- read in synthetic data ----
@@ -447,53 +440,39 @@ posterior_predictive_checks <-
     #---- impairment classification ----
     #truth
     dementia_plot_data <- 
-      as.data.frame(table(dataset_to_copy[, dementia_var])) %>% 
-      mutate("prop" = Freq/sum(Freq))
+      colSums(dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")]) %>%
+      as.data.frame() %>% set_colnames("truth") %>% rownames_to_column("Group")
     
     #synthetic
-    dem_sub <- synthetic_sample[, c("Group", "sample", "chain")] %>% 
-      mutate("Group_label" = case_when(Group == 1 ~ "Unimpaired", 
-                                       Group == 2 ~ "Other", 
-                                       Group == 3 ~ "MCI", 
-                                       TRUE ~ "Dementia"))
-    
     synthetic_dementia_plot_data <- 
-      dem_sub %>% dplyr::count(chain, sample, Group_label) %>%
+      synthetic_sample[, c("Group", "sample", "chain")]  %>% 
+      dplyr::count(chain, sample, Group) %>%
       group_by(chain, sample) %>%
-      mutate(prop = n/sum(n)) %>% 
-      mutate_at("sample", as.numeric) %>% 
-      mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
-                                 Group_label == "Other" ~ "#28bed9", 
-                                 Group_label == "MCI" ~ "#fdab00", 
-                                 TRUE ~ "#ff0000"))
+      mutate_at("sample", as.numeric) 
     
     #---- **combined plot ----
     combined_plot_data <- synthetic_dementia_plot_data %>% ungroup() %>% 
-      group_by(chain, Group_label) %>% 
+      group_by(chain, Group) %>% 
       summarize_at("n", list("mean" = mean, 
                              "lower" = ~ quantile(.x, probs = 0.025), 
                              "upper" = ~ quantile(.x, probs = 0.975))) %>% 
-      mutate("truth" = dementia_plot_data$Freq) %>% 
-      mutate("color" = case_when(Group_label == "Unimpaired" ~ "#00a389", 
-                                 Group_label == "Other" ~ "#28bed9", 
-                                 Group_label == "MCI" ~ "#fdab00", 
-                                 Group_label == "Dementia" ~ "#ff0000")) %>% 
+      left_join(dementia_plot_data) %>% left_join(color_palette) %>%
       mutate("chain" = paste0("Chain ", chain))
     
-    
-    combined_plot_data$Group_label <- 
-      factor(combined_plot_data$Group_label, 
-             levels = c("Unimpaired", "Other", "MCI", "Dementia"))
+    combined_plot_data$Group <- 
+      factor(combined_plot_data$Group, 
+             levels = c("Unimpaired", "MCI", "Dementia", "Other"))
     
     ggplot(data = combined_plot_data, 
-           aes(x = Group_label, y = mean)) + theme_bw() + 
-      geom_point(aes(x = Group_label, y = truth, size = 1), color = "black",
+           aes(x = Group, y = mean)) + theme_bw() + 
+      geom_point(aes(x = Group, y = truth, size = 1), color = "black",
                  shape = 18, alpha = 1) + 
-      geom_errorbar(aes(ymin = lower, ymax = upper, color = Group_label), 
+      geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
                     width = 0.10) + 
-      geom_point(aes(size = 1, color = Group_label), alpha = 0.5) +
+      geom_point(aes(size = 1, color = Group), alpha = 0.5) +
       xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
-      scale_color_manual(values = rev(c(combined_plot_data$color))) + 
+      scale_color_manual(
+        values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
       facet_wrap(facets = as.factor(combined_plot_data$chain), 
                  nrow = 2, ncol = 3) +
       ggtitle(paste0("95% Credible intervals from ", num_samples, 
@@ -508,22 +487,22 @@ posterior_predictive_checks <-
     for(chain_num in 1:num_chains){
       ggplot(data = combined_plot_data %>% 
                filter(chain == paste0("Chain ", chain_num)), 
-             aes(x = Group_label, y = mean)) + 
-        geom_point(aes(size = 1, color = Group_label), alpha = 0.5) + 
+             aes(x = Group, y = mean)) + 
+        geom_point(aes(size = 1, color = Group), alpha = 0.5) + 
         theme_minimal() + 
-        geom_point(aes(x = Group_label, y = truth, 
-                       size = 1), shape = 18, color = "black") + 
-        geom_errorbar(aes(ymin = lower, ymax = upper, color = Group_label), 
+        geom_point(aes(x = Group, y = truth, size = 1), shape = 18, 
+                   color = "black") + 
+        geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
                       width = 0.10) + 
         xlab("") + ylab("Count") + 
         theme(text = element_text(size = 10), legend.title = element_blank(), 
-              legend.position = "bottom", 
+              legend.position = "none", 
               plot.title = element_text(size = 10)) +
-        scale_color_manual(values = rev(c(combined_plot_data$color))) + 
+        scale_color_manual(
+          values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
         ggtitle(paste0("95% Credible intervals from ", num_samples, 
                        " synthetic datasets")) + 
-        guides(color = "none") + 
-        guides(size = guide_legend(override.aes = list(shape = c(18))))
+        guides(color = "none") 
       
       ggsave(filename = paste0(path_to_figures_folder, 
                                "posterior_predictive_checks/run_", chain_num,  
