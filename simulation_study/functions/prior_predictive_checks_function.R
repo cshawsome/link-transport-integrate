@@ -1,17 +1,24 @@
 prior_predictive_checks <- 
   function(unimpaired_preds, other_preds, mci_preds, categorical_vars, 
-           continuous_vars, id_var, variable_labels, dementia_var, 
-           dataset_to_copy, num_synthetic, unimpaired_betas, unimpaired_cov, 
-           other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
-           prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
+           continuous_vars, id_var, variable_labels, color_palette, 
+           dementia_var, dataset_to_copy, num_synthetic, unimpaired_betas, 
+           unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
+           alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
            contrasts_matrix, path_to_folder){
     
     #---- create folders for results ----
-    dir.create(paste0(path_to_folder, "impairment_classes/"), recursive = TRUE)
+    if(!dir.exists(paste0(path_to_folder, "impairment_classes/"))){
+      dir.create(paste0(path_to_folder, "impairment_classes/"), 
+                 recursive = TRUE) 
+    }
     
     for(class in c("unimpaired", "mci", "dementia", "other")){
-      dir.create(paste0(path_to_folder, "continuous_vars/", 
-                        tolower(class)), recursive = TRUE)
+      if(!dir.exists(paste0(path_to_folder, "continuous_vars/", 
+                            tolower(class)))){
+        dir.create(paste0(path_to_folder, "continuous_vars/", 
+                          tolower(class)), recursive = TRUE)
+      }
+      
     }
     
     #---- select variables ----
@@ -187,7 +194,7 @@ prior_predictive_checks <-
       as.data.frame(table(
         dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
       pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
-      
+    
     dem_sub <- lapply(synthetic, "[[", "Group") %>% do.call(cbind, .) %>% 
       set_colnames(seq(1, runs)) %>% as.data.frame() %>%
       pivot_longer(everything()) 
@@ -276,28 +283,29 @@ prior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# unimpaired_preds = unimpaired_preds
-# other_preds = other_preds
-# mci_preds = mci_preds
-# categorical_vars = W
-# continuous_vars = Z
-# variable_labels = variable_labels
-# id_var = "HHIDPN"
-# dataset_to_copy = dataset_to_copy
-# num_synthetic = 10
-# unimpaired_betas = unimpaired_betas
-# unimpaired_cov = unimpaired_cov
-# other_betas = other_betas
-# other_cov = other_cov
-# mci_betas = mci_betas
-# mci_cov = mci_cov
-# alpha_0_dist = alpha_0_dist
-# prior_Sigma = prior_Sigma
-# prior_V_inv = prior_V_inv
-# prior_beta = priors_beta
-# nu_0 = nu_0
-# kappa_0 = kappa_0
-# contrasts_matrix = A
-# path_to_folder = paste0(path_to_box, "figures/simulation_study/",
-#                         "HCAP_normal_250_unimpaired/prior_predictive_checks/")
+#---- test function ----
+unimpaired_preds = unimpaired_preds
+other_preds = other_preds
+mci_preds = mci_preds
+categorical_vars = W
+continuous_vars = Z
+variable_labels = variable_labels
+color_palette = color_palette
+id_var = "HHIDPN"
+dataset_to_copy = dataset_to_copy
+num_synthetic = 10
+unimpaired_betas = unimpaired_betas
+unimpaired_cov = unimpaired_cov
+other_betas = other_betas
+other_cov = other_cov
+mci_betas = mci_betas
+mci_cov = mci_cov
+alpha_0_dist = alpha_0_dist
+prior_Sigma = prior_Sigma
+prior_V_inv = prior_V_inv
+prior_beta = priors_beta
+nu_0 = nu_0
+kappa_0 = kappa_0
+contrasts_matrix = A
+path_to_folder = paste0(path_to_box, "figures/simulation_study/",
+                        "HCAP_normal_250_unimpaired/prior_predictive_checks/")
