@@ -1,10 +1,10 @@
 prior_predictive_checks <- 
   function(unimpaired_preds, other_preds, mci_preds, categorical_vars, 
-           continuous_vars, id_var, variable_labels, color_palette, 
-           dementia_var, dataset_to_copy, num_synthetic, unimpaired_betas, 
-           unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
-           alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
-           contrasts_matrix, path_to_folder){
+           continuous_vars, variable_labels, color_palette, dataset_to_copy, 
+           num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 
+           other_cov, mci_betas, mci_cov, alpha_0_dist, prior_Sigma, 
+           prior_V_inv, prior_beta, nu_0, kappa_0, contrasts_matrix, 
+           path_to_folder){
     
     #---- create folders for results ----
     if(!dir.exists(paste0(path_to_folder, "impairment_classes/"))){
@@ -25,8 +25,7 @@ prior_predictive_checks <-
     vars <- unique(c(unimpaired_preds, other_preds, mci_preds, 
                      "Unimpaired", "MCI", "Dementia", "Other"))
     
-    synthetic_sample <- dataset_to_copy %>%  
-      dplyr::select(all_of(id_var), all_of(vars)) %>% 
+    synthetic_sample <- dataset_to_copy %>% dplyr::select(all_of(vars)) %>% 
       #pre-allocate columns
       mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
     
@@ -292,7 +291,6 @@ prior_predictive_checks <-
 # continuous_vars = Z
 # variable_labels = variable_labels
 # color_palette = color_palette
-# id_var = "HHIDPN"
 # dataset_to_copy = dataset_to_copy
 # num_synthetic = 10
 # unimpaired_betas = unimpaired_betas

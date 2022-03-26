@@ -77,11 +77,11 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
 #---- **run checks ----
 prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
                         categorical_vars = W, continuous_vars = Z, 
-                        id_var = "HHIDPN", variable_labels, color_palette, 
-                        dataset_to_copy, num_synthetic = 10, unimpaired_betas, 
-                        unimpaired_cov, other_betas, other_cov, mci_betas, 
-                        mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
-                        prior_beta, nu_0, kappa_0, contrasts_matrix = A, 
+                        variable_labels, color_palette, dataset_to_copy, 
+                        num_synthetic = 10, unimpaired_betas, unimpaired_cov, 
+                        other_betas, other_cov, mci_betas, mci_cov, 
+                        alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, 
+                        nu_0, kappa_0, contrasts_matrix = A, 
                         path_to_folder = 
                           paste0(path_to_box,
                                  "figures/simulation_study/", 
