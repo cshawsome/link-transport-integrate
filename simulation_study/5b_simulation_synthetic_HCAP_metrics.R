@@ -33,7 +33,7 @@ for(path in simulated_data_directories){
   }
 }
 
-#---- impairment class coverage ----
+#---- coverage: impairment class ----
 #---- **true counts ----
 true_counts <- simulated_data %>% filter(sim_name == "sim_1" & 
                                            dataset_number == "synthetic_1") %>% 
@@ -56,5 +56,7 @@ simulated_counts <- simulated_data %>%
 
 #---- **formatted table ----
 coverage_table <- left_join(true_counts, simulated_counts)
+
+#---- bias: impairment class ----
 
 
