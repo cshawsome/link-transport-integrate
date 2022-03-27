@@ -4,20 +4,11 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "MBSP", "wesanderson", "RColorBrewer", "devtools", "gifski", 
-       "transformr", "moments", "qdapRegex")
-install_github("thomasp85/gganimate")
-library(gganimate)
+       "locfit", "MBSP")
 
 #---- source functions ----
 source(here::here("simulation_study", "functions", 
-                  "prior_predictive_checks_function.R"))
-
-source(here::here("simulation_study", "functions", 
                   "generate_synthetic_function.R"))
-
-source(here::here("simulation_study", "functions", 
-                  "posterior_predictive_checks_function.R"))
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -46,9 +37,8 @@ W <- c("black", "hispanic", "stroke")
 #continuous vars (notation from Schafer 1997)
 Z <- colnames(dataset_to_copy)[str_detect(colnames(dataset_to_copy), "_Z")]
 
-#---- prior predictive checks ----
-#---- **specifying priors ----
-#---- ****latent classes ----
+#---- specifying priors ----
+#---- **latent classes ----
 for(group in c("unimpaired", "mci", "other")){
   assign(paste0(group, "_betas"), 
          read_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
@@ -84,23 +74,6 @@ nu_0 <- 65
 kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>% 
   set_names(c("Unimpaired", "MCI", "Dementia", "Other"))
 
-#---- **run checks ----
-prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
-                        categorical_vars = W, continuous_vars = Z, 
-                        id_var = "HHIDPN", variable_labels = variable_labels,
-                        dementia_var = "Adem_dx_cat", 
-                        dataset_to_copy, num_synthetic = 10, 
-                        unimpaired_betas, unimpaired_cov, 
-                        other_betas, other_cov, mci_betas, mci_cov, 
-                        alpha_0_dist, prior_Sigma, prior_V_inv, 
-                        prior_beta, nu_0, kappa_0, 
-                        contrasts_matrix = A, 
-                        path_to_folder = 
-                          paste0(path_to_box,
-                                 "figures/simulation_study/", 
-                                 "HCAP_normal_250_unimpaired/", 
-                                 "prior_predictive_checks/"))
-
 #---- generate synthetic data ----
 generate_synthetic(warm_up = 2, run_number = 1, 
                    starting_props = c(0.25, 0.25, 0.25, 0.25),
@@ -117,15 +90,3 @@ generate_synthetic(warm_up = 2, run_number = 1,
                    path_to_figures_folder = 
                      paste0(path_to_box, "figures/simulation_study/", 
                             "HCAP_normal_250_unimpaired/"))
-
-#---- posterior predictive checks ----
-posterior_predictive_checks(dataset_to_copy, categorical_covariates = W, 
-                            continuous_covariates = Z, contrasts_matrix = A,
-                            cell_ID_key, variable_labels, num_samples = 10, 
-                            num_chains = 1, color_palette,
-                            path_to_analyses_folder = 
-                              paste0(path_to_box, "analyses/simulation_study/", 
-                                     "HCAP_normal_250_unimpaired/"), 
-                            path_to_figures_folder = 
-                              paste0(path_to_box, "figures/simulation_study/", 
-                                     "HCAP_normal_250_unimpaired/"))
