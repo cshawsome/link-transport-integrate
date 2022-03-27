@@ -35,16 +35,26 @@ for(path in simulated_data_directories){
 
 #---- impairment class coverage ----
 #---- **true counts ----
-count_data <- simulated_data %>% filter(sim_name == "sim_1" & 
-                                          dataset_number == "synthetic_1") %>% 
+true_counts <- simulated_data %>% filter(sim_name == "sim_1" & 
+                                           dataset_number == "synthetic_1") %>% 
   dplyr::select(c("Unimpaired", "MCI", "Dementia", "Other")) %>% colSums() %>% 
   as.data.frame() %>% rownames_to_column() %>% 
   set_colnames(c("Group", "true_counts")) %>% 
   mutate("sample_size" = sum(true_counts))
 
 #---- **simulated counts ----
-test <- simulated_data %>% group_by(dataset_name, sim_name, dataset_number) %>% 
-  count(Group) %>% group_by
+simulated_counts <- simulated_data %>% 
+  group_by(dataset_name, sim_name, dataset_number) %>% 
+  count(Group) %>% ungroup() %>% group_by(dataset_name, sim_name, Group) %>% 
+  summarise_at("n", list("LB" = function(x) quantile(x, 0.25), 
+                         "UB" = function(x) quantile(x, 0.975))) %>% 
+  left_join(., count_data) %>% 
+  mutate("truth_capture" = 
+           ifelse(LB <= true_counts & UB >= true_counts, 1, 0)) %>% 
+  group_by(sample_size, Group) %>% summarize_at("truth_capture", mean) %>% 
+  rename("Normal" = "truth_capture")
 
+#---- **formatted table ----
+coverage_table <- left_join(true_counts, simulated_counts)
 
 
