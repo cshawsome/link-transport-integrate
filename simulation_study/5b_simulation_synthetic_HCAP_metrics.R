@@ -35,11 +35,16 @@ for(path in simulated_data_directories){
 
 #---- impairment class coverage ----
 #---- **true counts ----
-true_counts <- simulated_data %>% filter(sim_name == "sim_1" & 
-                                           dataset_number == "synthetic_1") %>% 
-  dplyr::select(c("Unimpaired", "MCI", "Dementia", "Other")) %>% colSums()
+count_data <- simulated_data %>% filter(sim_name == "sim_1" & 
+                                          dataset_number == "synthetic_1") %>% 
+  dplyr::select(c("Unimpaired", "MCI", "Dementia", "Other")) %>% colSums() %>% 
+  as.data.frame() %>% rownames_to_column() %>% 
+  set_colnames(c("Group", "true_counts")) %>% 
+  mutate("sample_size" = sum(true_counts))
 
 #---- **simulated counts ----
+test <- simulated_data %>% group_by(dataset_name, sim_name, dataset_number) %>% 
+  count(Group) %>% group_by
 
 
 
