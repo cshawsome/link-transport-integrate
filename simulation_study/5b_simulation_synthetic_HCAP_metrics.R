@@ -35,7 +35,11 @@ for(path in simulated_data_directories){
 
 #---- impairment class coverage ----
 #---- **true counts ----
-test <- 
+true_counts <- simulated_data %>% filter(sim_name == "sim_1" & 
+                                           dataset_number == "synthetic_1") %>% 
+  dplyr::select(c("Unimpaired", "MCI", "Dementia", "Other")) %>% colSums()
+
+#---- **simulated counts ----
 
 
 
