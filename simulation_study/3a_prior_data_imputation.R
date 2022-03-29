@@ -3,7 +3,8 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "here", "miceFast", "ggforce", "NormPsy")
+p_load("tidyverse", "magrittr", "here", "miceFast", "ggforce", "NormPsy", 
+       "future.apply")
 
 options(scipen = 999)
 
@@ -118,9 +119,19 @@ predict <- predict[!rownames(predict) %in% remove, ]
 colSums(predict[, not_predictors])
 
 #---- **impute data ----
+per_run_num_impute = 10
+total_num_impute = 20
+chunks <- seq(1, total_num_impute/per_run_num_impute) %>% as.matrix()
+
 start <- Sys.time()
-fast_impute(predictor_matrix = predict, data = ADAMS_subset, 
-            path_for_output = paste0(path_to_box, "data/ADAMS/prior_data/"),
-            method = "PMM", m = 5, maxit = 20, seed = 1)
+plan(multisession, workers = (availableCores() - 2))
+set.seed(20220329)
+future_apply(chunks, 1, function(x) 
+  fast_impute(predictor_matrix = predict, data = ADAMS_subset, 
+              path_for_output = paste0(path_to_box, "data/ADAMS/prior_data/"),
+              method = "PMM", m = per_run_num_impute, maxit = 20, chunk = x), 
+  future.seed = TRUE)
 end <- Sys.time() - start
+plan(sequential)
+
 
