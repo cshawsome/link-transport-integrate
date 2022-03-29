@@ -25,13 +25,15 @@ for(dataset in unique(synthetic_data$dataset_name)){
   if(!exists("truth")){
     truth <- glm(Dementia ~ age_Z + female + black + hispanic, 
                  family = "poisson", data = subset) %>% 
-      tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = TRUE) %>% 
-      mutate("dataset_name" = dataset)
+      tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+      mutate("dataset_name" = dataset, 
+             "RR" = exp(estimate))
   } else{
     truth <- rbind(truth,  glm(Dementia ~ age_Z + female + black + hispanic, 
                  family = "poisson", data = subset) %>% 
-      tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = TRUE) %>% 
-      mutate("dataset_name" = dataset))
+      tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+      mutate("dataset_name" = dataset, 
+             "RR" = exp(estimate)))
   }
 }
 
