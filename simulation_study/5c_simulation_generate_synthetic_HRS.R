@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "broom")
+p_load("here", "tidyverse", "broom", "mice")
 
 #---- source scripts ----
 source(here::here("functions", "read_results.R"))
@@ -58,5 +58,6 @@ models <- lapply(simulated_data,
                                        family = "poisson", data = dataset))
 
 #---- **pooled ----
+pooled_model <- summary(mice::pool(models[1:10]))
 
 
