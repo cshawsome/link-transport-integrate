@@ -1,29 +1,35 @@
 prior_predictive_checks <- 
   function(unimpaired_preds, other_preds, mci_preds, categorical_vars, 
-           continuous_vars, id_var, variable_labels, dementia_var, 
-           dataset_to_copy, num_synthetic, unimpaired_betas, unimpaired_cov, 
-           other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
-           prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
-           contrasts_matrix, path_to_folder){
+           continuous_vars, variable_labels, color_palette, dataset_to_copy, 
+           num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 
+           other_cov, mci_betas, mci_cov, alpha_0_dist, prior_Sigma, 
+           prior_V_inv, prior_beta, nu_0, kappa_0, contrasts_matrix, 
+           path_to_folder){
     
     #---- create folders for results ----
-    dir.create(paste0(path_to_folder, "impairment_classes/"), recursive = TRUE)
+    if(!dir.exists(paste0(path_to_folder, "impairment_classes/"))){
+      dir.create(paste0(path_to_folder, "impairment_classes/"), 
+                 recursive = TRUE) 
+    }
     
     for(class in c("unimpaired", "mci", "dementia", "other")){
-      dir.create(paste0(path_to_folder, "continuous_vars/", 
-                        tolower(class)), recursive = TRUE)
+      if(!dir.exists(paste0(path_to_folder, "continuous_vars/", 
+                            tolower(class)))){
+        dir.create(paste0(path_to_folder, "continuous_vars/", 
+                          tolower(class)), recursive = TRUE)
+      }
+      
     }
     
     #---- select variables ----
     vars <- unique(c(unimpaired_preds, other_preds, mci_preds, 
                      "Unimpaired", "MCI", "Dementia", "Other"))
     
-    synthetic_sample <- dataset_to_copy %>%  
-      dplyr::select(all_of(id_var), all_of(vars)) %>% 
+    synthetic_sample <- dataset_to_copy %>% dplyr::select(all_of(vars)) %>% 
       #pre-allocate columns
       mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
     
-    generate_data <- function(){
+    generate_data <- function(color_palette){
       #---- latent class ----
       group_num = 1
       for(model in c("unimpaired", "other", "mci")){
@@ -168,17 +174,22 @@ prior_predictive_checks <-
       }
       
       #---- **return ----
-      return(list("Group" = synthetic_sample$Group,
-                  "Z_unimpaired" = Z_Unimpaired %>% mutate("color" = "#00a389"), 
-                  "Z_other" = Z_Other %>% mutate("color" = "#28bed9"), 
-                  "Z_mci" = Z_MCI %>% mutate("color" = "#fdab00"),
-                  "Z_dementia" = Z_Dementia %>% mutate("color" = "#ff0000")))
+      return(list("Group" = synthetic_sample$Group, 
+                  "Z_unimpaired" = Z_Unimpaired %>% 
+                    mutate("Group" = "Unimpaired") %>% left_join(color_palette), 
+                  "Z_other" = Z_Other %>% 
+                    mutate("Group" = "Other") %>% left_join(color_palette), 
+                  "Z_mci" = Z_MCI %>% 
+                    mutate("Group" = "MCI") %>% left_join(color_palette), 
+                  "Z_dementia" = Z_Dementia %>% 
+                    mutate("Group" = "Unimpaired") %>% left_join(color_palette)))
     }
     
     #---- multiruns ----
     #start <- Sys.time()
     runs = num_synthetic
-    synthetic <- replicate(num_synthetic, generate_data(), simplify = FALSE) 
+    synthetic <- replicate(num_synthetic, generate_data(color_palette), 
+                           simplify = FALSE) 
     #stop <- Sys.time() - start
     
     #---- plots ----
@@ -187,7 +198,7 @@ prior_predictive_checks <-
       as.data.frame(table(
         dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
       pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
-      
+    
     dem_sub <- lapply(synthetic, "[[", "Group") %>% do.call(cbind, .) %>% 
       set_colnames(seq(1, runs)) %>% as.data.frame() %>%
       pivot_longer(everything()) 
@@ -196,10 +207,7 @@ prior_predictive_checks <-
       dem_sub %>% dplyr::count(name, value) %>%
       group_by(name) %>%
       mutate_at("name", as.numeric) %>% 
-      mutate("color" = case_when(value == "Unimpaired" ~ "#00a389", 
-                                 value == "Other" ~ "#28bed9", 
-                                 value == "MCI" ~ "#fdab00", 
-                                 TRUE ~ "#ff0000"))
+      left_join(., color_palette, by = c("value" = "Group"))
     
     for(class in unique(synthetic_dementia_plot_data$value)){
       subset <- synthetic_dementia_plot_data %>% filter(value == class)
@@ -211,7 +219,7 @@ prior_predictive_checks <-
         theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
         geom_vline(xintercept = to_copy_dementia_plot_data[[
           which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
-          color = unique(subset$color))
+          color = unique(subset$Color))
       
       ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
                                "_line_only.jpeg"), 
@@ -220,8 +228,8 @@ prior_predictive_checks <-
       #Prior predictive check
       ggplot(data = subset) + 
         geom_histogram(aes(x = n), 
-                       color = unique(subset$color), 
-                       fill = unique(subset$color)) + 
+                       color = unique(subset$Color), 
+                       fill = unique(subset$Color)) + 
         theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
         geom_vline(xintercept = to_copy_dementia_plot_data[[
           which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2)
@@ -235,32 +243,31 @@ prior_predictive_checks <-
     for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
       true_data <- dataset_to_copy %>% 
         dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
-        filter(!!as.symbol(class) == 1) %>% mutate("color" = "black")
+        filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
       
       continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
       
       for(i in 1:length(continuous_list)){
         continuous_list[[i]] <- continuous_list[[i]] %>% 
-          mutate("run" = i, "type" = "synthetic") %>% 
+          dplyr::select(-c("Group")) %>%
+          mutate("run" = i, "Type" = "Synthetic") %>% 
           rbind(., true_data %>% dplyr::select(-!!as.symbol(class)) %>% 
-                  mutate("run" = i, "type" = "True Data"))
+                  mutate("run" = i, "Type" = "Observed"))
       }
       
       continuous_list %<>% do.call(rbind, .) %>% as.data.frame() 
       
       for(var in continuous_vars){
-        data <- continuous_list[, c(var, "run", "type", "color")]
-        
-        synthetic_subset <- data %>% filter(type == "synthetic")
+        data <- continuous_list[, c(var, "run", "Type", "Color")]
         
         continuous_plot <- 
-          ggplot(data = data, aes(color = type, fill = type)) + 
+          ggplot(data = data, aes(color = Type, fill = Type)) + 
           geom_density(aes(x = data[, 1]), alpha = 0.5) + 
           theme_minimal() + 
           xlab(variable_labels[variable_labels$data_label == var, 
                                "figure_label"]) + 
-          scale_color_manual(values = rev(unique(data$color))) + 
-          scale_fill_manual(values = rev(unique(data$color))) + 
+          scale_color_manual(values = rev(unique(data$Color))) + 
+          scale_fill_manual(values = rev(unique(data$Color))) + 
           transition_states(data$run, transition_length = 1, state_length = 1) +
           labs(title = "Synthetic {round(frame_time)}") + transition_time(run) +
           ease_aes('linear')
@@ -283,7 +290,7 @@ prior_predictive_checks <-
 # categorical_vars = W
 # continuous_vars = Z
 # variable_labels = variable_labels
-# id_var = "HHIDPN"
+# color_palette = color_palette
 # dataset_to_copy = dataset_to_copy
 # num_synthetic = 10
 # unimpaired_betas = unimpaired_betas
