@@ -1,8 +1,5 @@
 fast_impute <- 
-  function(predictor_matrix, data, path_for_output, method, m, maxit, seed){
-    
-    #---- seed setting ----
-    set.seed(seed)
+  function(predictor_matrix, data, path_for_output, method, m, maxit, run){
     
     #---- check filepath ----
     if(!dir.exists(path_for_output)){
@@ -75,17 +72,17 @@ fast_impute <-
     
     #---- save results ----
     #create directory for results
-    dir.create(here::here(paste0(path_for_output, "MI/seed_", seed)))
+    dir.create(here::here(paste0(path_for_output, "MI/run_", run)))
     
     #---- **where matrix ----
     write_csv(as.data.frame(where), 
-              file = paste0(path_for_output, "MI/seed_", seed, "/where.csv"))
+              file = paste0(path_for_output, "MI/run_", run, "/where.csv"))
     
     #---- **trace plots data ----
     trace_data %<>% as.data.frame() %>% 
       rownames_to_column(var = "impute_vars")
     
-    write_csv(trace_data, file = paste0(path_for_output, "MI/seed_", seed, 
+    write_csv(trace_data, file = paste0(path_for_output, "MI/run_", run, 
                                         "/trace_data.csv"))
     
     #---- **trace plots ----
@@ -104,7 +101,7 @@ fast_impute <-
     
     n = n_pages(trace_plots)
     
-    pdf(paste0(path_for_output, "MI/seed_", seed, "/trace_plots.pdf"), 
+    pdf(paste0(path_for_output, "MI/run_", run, "/trace_plots.pdf"), 
         paper = "letter", height = 10.5, width = 8)
     
     for(i in 1:n){
@@ -120,7 +117,7 @@ fast_impute <-
     
     #---- **imputed data ----
     saveRDS(impute_list, 
-            file = paste0(path_for_output, "MI/seed_", seed, "/MI_datasets"))
+            file = paste0(path_for_output, "MI/run_", run, "/MI_datasets"))
   }
 
 # #---- function testing ----
