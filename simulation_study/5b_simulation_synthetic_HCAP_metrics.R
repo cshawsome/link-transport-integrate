@@ -57,6 +57,10 @@ simulated_counts <- simulated_data %>%
 #---- **formatted table ----
 coverage_table <- left_join(true_counts, simulated_counts)
 
+write_csv(coverage_table, 
+          paste0(path_to_box, "analyses/simulation_study/results/", 
+                 "HCAP_metrics_coverage_table.csv"))
+
 #---- bias: impairment class ----
 
 
