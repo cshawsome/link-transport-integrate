@@ -5,6 +5,9 @@ if (!require("pacman")){
 
 p_load("tidyverse")
 
+#---- source scripts ----
+source(here::here("functions", "read_results.R"))
+
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
@@ -25,6 +28,6 @@ for(path in simulated_data_directories){
   if(!exists("simulated_data")){
     simulated_data <- lapply(simulated_data_paths, read_results)
   } else{
-    append(simulated_data, lapply(simulated_data_paths, read_results))
+    simulated_data %<>% append(., lapply(simulated_data_paths, read_results))
   }
 }
