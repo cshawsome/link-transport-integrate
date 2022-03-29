@@ -75,18 +75,18 @@ fast_impute <-
     
     #---- save results ----
     #create directory for results
-    dir.create(here::here(path_for_output, seed, "/MI"))
+    dir.create(here::here(paste0(path_for_output, "MI/seed_", seed)))
     
     #---- **where matrix ----
     write_csv(as.data.frame(where), 
-              file = paste0(path_for_output, seed, "/MI/where.csv"))
+              file = paste0(path_for_output, "MI/seed_", seed, "/where.csv"))
     
     #---- **trace plots data ----
     trace_data %<>% as.data.frame() %>% 
       rownames_to_column(var = "impute_vars")
     
-    write_csv(trace_data, file = paste0(path_for_output, seed, 
-                                        "/MI/trace_data.csv"))
+    write_csv(trace_data, file = paste0(path_for_output, "MI/seed_", seed, 
+                                        "/trace_data.csv"))
     
     #---- **trace plots ----
     plot_data <- trace_data %>% 
@@ -104,12 +104,13 @@ fast_impute <-
     
     n = n_pages(trace_plots)
     
-    pdf(paste0(path_for_output, seed, "/MI/trace_plots.pdf"), paper = "letter", 
-        height = 10.5, width = 8)
+    pdf(paste0(path_for_output, "MI/seed_", seed, "/trace_plots.pdf"), 
+        paper = "letter", height = 10.5, width = 8)
     
     for(i in 1:n){
       print(ggplot(plot_data, aes(x = iteration, y = value, color = run)) +
               geom_line(aes(group = run)) + theme_bw() + 
+              theme(legend.position = "none") +
               facet_wrap_paginate(impute_vars~stat, ncol = 2, nrow = 6, 
                                   page = i, scales = "free", 
                                   strip.position = "top"))
@@ -119,7 +120,7 @@ fast_impute <-
     
     #---- **imputed data ----
     saveRDS(impute_list, 
-            file = paste0(path_for_output, seed, "/MI/MI_datasets"))
+            file = paste0(path_for_output, "MI/seed_", seed, "/MI_datasets"))
   }
 
 # #---- function testing ----
