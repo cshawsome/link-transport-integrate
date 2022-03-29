@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse")
+p_load("here", "tidyverse", "broom")
 
 #---- source scripts ----
 source(here::here("functions", "read_results.R"))
