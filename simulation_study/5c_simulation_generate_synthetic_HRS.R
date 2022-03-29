@@ -52,7 +52,10 @@ simulated_data <-
            mutate("predicted_Dementia" = ifelse(Group == "Dementia", 1, 0)))
 
 #---- models ----
-test <- with(simulated_data[[1]], 
-             glm(predicted_Dementia ~ age_Z + female + black + hispanic, 
-                 family = "poisson", weights = weight) %>% 
-               tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = TRUE))
+models <- lapply(simulated_data, 
+                 function(dataset) glm(predicted_Dementia ~ 
+                                         age_Z + female + black + hispanic, 
+                                       family = "poisson", data = dataset) %>% 
+                   tidy(., conf.int = TRUE, conf.level = 0.95, 
+                        exponentiate = TRUE))
+
