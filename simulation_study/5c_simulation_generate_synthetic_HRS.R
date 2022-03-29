@@ -55,7 +55,8 @@ simulated_data <-
 models <- lapply(simulated_data, 
                  function(dataset) glm(predicted_Dementia ~ 
                                          age_Z + female + black + hispanic, 
-                                       family = "poisson", data = dataset) %>% 
-                   tidy(., conf.int = TRUE, conf.level = 0.95, 
-                        exponentiate = TRUE))
+                                       family = "poisson", data = dataset))
+
+#---- **pooled ----
+
 
