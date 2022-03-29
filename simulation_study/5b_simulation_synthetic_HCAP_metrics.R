@@ -54,7 +54,7 @@ simulated_counts <- simulated_data %>%
   group_by(sample_size, Group) %>% summarize_at("truth_capture", mean) %>% 
   rename("Normal" = "truth_capture")
 
-#---- **formatted table ----
+#---- **save results ----
 coverage_table <- left_join(true_counts, simulated_counts)
 
 write_csv(coverage_table, 
@@ -62,5 +62,24 @@ write_csv(coverage_table,
                  "HCAP_metrics_coverage_table.csv"))
 
 #---- bias: impairment class ----
+#distribution of mean bias across synthetic datasets
+#---- **true counts ----
+true_counts <- simulated_data %>% filter(sim_name == "sim_1" & 
+                                           dataset_number == "synthetic_1") %>% 
+  dplyr::select(c("Unimpaired", "MCI", "Dementia", "Other")) %>% colSums() %>% 
+  as.data.frame() %>% rownames_to_column() %>% 
+  set_colnames(c("Group", "true_counts")) %>% 
+  mutate("sample_size" = sum(true_counts))
+
+#---- **synthetic counts ----
+bias <- simulated_data %>% group_by(dataset_name, sim_name, dataset_number) %>% 
+  count(Group) %>% left_join(true_counts) %>% 
+  mutate("bias" = true_counts - n) %>% ungroup() %>% 
+  group_by(dataset_name, sim_name, Group) %>% summarize_at("bias", mean)
+
+#---- **save results ----
+write_csv(bias, paste0(path_to_box, "analyses/simulation_study/results/", 
+                       "HCAP_metrics_bias.csv"))
+
 
 
