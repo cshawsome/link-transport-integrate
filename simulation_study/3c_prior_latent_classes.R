@@ -77,15 +77,15 @@ estimates <-
   lapply(prior_imputed_clean, model_function, unimpaired_preds, other_preds, 
          mci_preds) 
 
-#---- check distributions ----
-for(group in c("unimpaired", "other", "mci")){
-  data <- lapply(estimates, "[[", paste0(group, "_betas")) %>% 
-    do.call(rbind, .) %>% t() %>% as.data.frame() 
-  
-  for(var in rownames(data)){
-    show(hist(as.numeric(data[var, ]), main = paste0(group, " ", var)))
-  }
-}
+# #---- check distributions ----
+# for(group in c("unimpaired", "other", "mci")){
+#   data <- lapply(estimates, "[[", paste0(group, "_betas")) %>% 
+#     do.call(rbind, .) %>% t() %>% as.data.frame() 
+#   
+#   for(var in rownames(data)){
+#     show(hist(as.numeric(data[var, ]), main = paste0(group, " ", var)))
+#   }
+# }
 
 #---- format output ----
 for(est in c("betas", "cov")){
