@@ -119,8 +119,8 @@ predict <- predict[!rownames(predict) %in% remove, ]
 colSums(predict[, not_predictors])
 
 #---- **impute data ----
-per_run_num_impute = 10
-total_num_impute = 20
+per_run_num_impute = 100
+total_num_impute = 10000
 chunks <- seq(1, total_num_impute/per_run_num_impute) %>% as.matrix()
 
 start <- Sys.time()
