@@ -10,10 +10,6 @@ generate_synthetic_continuous <-
       dir.create(paste0(path_to_results, "HRS/"), recursive = TRUE)
     }
     
-    if(!dir.exists(paste0(path_to_results, "HCAP/"))){
-      dir.create(paste0(path_to_results, "HCAP/"), recursive = TRUE)
-    }
-    
     #--- bootstrap data ----
     synthetic_data <- sample_n(data, size = sample_size, replace = TRUE) %>% 
       mutate("HHIDPN" = seq(1, sample_size))
@@ -84,16 +80,9 @@ generate_synthetic_continuous <-
     }
     
     #---- return values ----
-    #---- **synthetic HRS ----
     write_csv(as.data.frame(synthetic_data), 
               paste0(path_to_results, "/HRS/HRS_synthetic_", dist, "_", 
                      sample_size, "_", scenario_name, ".csv"))
-    
-    #---- **synthetic HCAP ----
-    write_csv(as.data.frame(synthetic_data) %>% group_by(married_partnered) %>% 
-                slice_sample(prop = 0.5), 
-              paste0(path_to_results, "/HCAP/HCAP_synthetic_", dist, "_", 
-                     0.5*sample_size, "_", scenario_name, ".csv"))
   }
 
 # #---- testing ----
