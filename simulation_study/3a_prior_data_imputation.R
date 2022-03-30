@@ -3,8 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "here", "miceFast", "ggforce", "NormPsy", 
-       "future.apply")
+p_load("tidyverse", "magrittr", "here", "miceFast", "ggforce", "future.apply")
 
 options(scipen = 999)
 
