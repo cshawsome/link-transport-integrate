@@ -10,18 +10,21 @@ install_github("thomasp85/gganimate")
 library(gganimate)
 
 #---- source functions ----
+source(here::here("functions", "read_results.R"))
+
 source(here::here("simulation_study", "functions", 
                   "prior_predictive_checks_function.R"))
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-#---- **dataset to copy ----
-#dataset we're trying to create synthetic versions of
-dataset_to_copy <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/synthetic_data/HCAP/", 
-                  "HCAP_synthetic_normal_250_unimpaired.csv")) %>% 
-  mutate("(Intercept)" = 1)
+#---- **data paths ----
+synthetic_data_paths <- 
+  list.files(path = paste0(path_to_box, 
+                           "analyses/simulation_study/synthetic_data/HRS"), 
+             full.names = TRUE, pattern = "*.csv")
+
+synthetic_data_list <- lapply(synthetic_data_paths, read_results)
 
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
@@ -34,7 +37,8 @@ color_palette <- read_csv(here::here("color_palette.csv"))
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
-Z <- colnames(dataset_to_copy)[str_detect(colnames(dataset_to_copy), "_Z")]
+Z <- colnames(synthetic_data_list[[1]])[str_detect(
+  colnames(synthetic_data_list[[1]]), "_Z")]
 
 #---- prior predictive checks ----
 #---- **specifying priors ----
@@ -75,15 +79,27 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
   set_names(c("Unimpaired", "MCI", "Dementia", "Other"))
 
 #---- **run checks ----
-prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
-                        categorical_vars = W, continuous_vars = Z, 
-                        variable_labels, color_palette, dataset_to_copy, 
-                        num_synthetic = 10, unimpaired_betas, unimpaired_cov, 
-                        other_betas, other_cov, mci_betas, mci_cov, 
-                        alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, 
-                        nu_0, kappa_0, contrasts_matrix = A, 
-                        path_to_folder = 
-                          paste0(path_to_box,
-                                 "figures/simulation_study/", 
-                                 "HCAP_normal_250_unimpaired/", 
-                                 "prior_predictive_checks/"))
+set.seed(20220329)
+lapply(synthetic_data_list[1:2], function(x)
+  prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
+                          categorical_vars = W, continuous_vars = Z, 
+                          variable_labels, color_palette, 
+                          dataset_to_copy = x %>% 
+                            group_by(married_partnered) %>% 
+                            slice_sample(prop = 0.5) %>% 
+                            mutate("(Intercept)" = 1) %>% ungroup(), 
+                          num_synthetic = 2, unimpaired_betas, 
+                          unimpaired_cov, other_betas, other_cov, 
+                          mci_betas, mci_cov, alpha_0_dist, prior_Sigma, 
+                          prior_V_inv, prior_beta, nu_0, kappa_0, 
+                          contrasts_matrix = A, 
+                          path_to_folder = 
+                            paste0(path_to_box,
+                                   "figures/simulation_study/HCAP_HRS_", 
+                                   unique(x[, "dataset_name"]), 
+                                   "/prior_predictive_checks/")))
+
+  
+  
+  
+  
