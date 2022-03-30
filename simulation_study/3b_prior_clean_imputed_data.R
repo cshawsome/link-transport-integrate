@@ -8,9 +8,20 @@ p_load("tidyverse", "magrittr", "here", "NormPsy")
 options(scipen = 999)
 
 #---- read in results ----
-ADAMS_imputed <- 
-  readRDS(paste0(path_to_box, "data/ADAMS/prior_data/MI/MI_datasets"))
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
+data_folders <-  
+  list.dirs(path = paste0(path_to_box, "data/ADAMS/prior_data/MI"), 
+            full.names = TRUE, recursive = FALSE)
+
+for(directory in data_folders){
+  if(!exists("MI_data")){
+    ADAMS_imputed <- readRDS(paste0(directory, "/MI_datasets"))
+  } else{
+    ADAMS_imputed %<>% append(., readRDS(paste0(directory, "/MI_datasets")))
+  }
+}
+  
 #---- derive post-imputation variables ----
 hrs_waves <- seq(4, 7)
 
