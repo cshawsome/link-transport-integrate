@@ -1,3 +1,12 @@
+#---- Package loading + options ----
+if (!require("pacman")){
+  install.packages("pacman", repos='http://cran.us.r-project.org')
+}
+
+p_load("tidyverse", "magrittr", "here", "NormPsy")
+
+options(scipen = 999)
+
 #---- read in results ----
 ADAMS_imputed <- 
   readRDS(paste0(path_to_box, "data/ADAMS/prior_data/MI/MI_datasets"))
