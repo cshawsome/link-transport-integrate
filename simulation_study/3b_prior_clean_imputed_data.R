@@ -15,7 +15,7 @@ data_folders <-
             full.names = TRUE, recursive = FALSE)
 
 for(directory in data_folders){
-  if(!exists("MI_data")){
+  if(!exists("ADAMS_imputed")){
     ADAMS_imputed <- readRDS(paste0(directory, "/MI_datasets"))
   } else{
     ADAMS_imputed %<>% append(., readRDS(paste0(directory, "/MI_datasets")))
