@@ -80,7 +80,9 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
 
 #---- **run checks ----
 set.seed(20220329)
-lapply(synthetic_data_list[1:2], function(x)
+start <- Sys.time()
+#---- **normal data ----
+lapply(synthetic_data_list, function(x)
   prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
                           categorical_vars = W, continuous_vars = Z, 
                           variable_labels, color_palette, 
@@ -88,7 +90,7 @@ lapply(synthetic_data_list[1:2], function(x)
                             group_by(married_partnered) %>% 
                             slice_sample(prop = 0.5) %>% 
                             mutate("(Intercept)" = 1) %>% ungroup(), 
-                          num_synthetic = 2, unimpaired_betas, 
+                          num_synthetic = 1000, unimpaired_betas, 
                           unimpaired_cov, other_betas, other_cov, 
                           mci_betas, mci_cov, alpha_0_dist, prior_Sigma, 
                           prior_V_inv, prior_beta, nu_0, kappa_0, 
@@ -98,6 +100,7 @@ lapply(synthetic_data_list[1:2], function(x)
                                    "figures/simulation_study/HCAP_HRS_", 
                                    unique(x[, "dataset_name"]), 
                                    "/prior_predictive_checks/")))
+end <- Sys.time() - start
 
   
   
