@@ -82,15 +82,29 @@ generate_synthetic_continuous <-
           exp(rnorm(n = length(colnames(beta)), mean = 0, sd = 0.5))
         #---- ****bathtub ----
       } else if(dist == "bathtub"){
+        #subset beta-- some of the variables are reverse coded so we want to 
+        # flip the skew for them
+        beta_no_flip <- beta[, which(!colnames(beta) %in% 
+                                       c("age_Z", "adl_Z", "trailsA_Z"))]
+        beta_flip <- beta[, which(colnames(beta) %in% 
+                                    c("age_Z", "adl_Z", "trailsA_Z"))] 
+        
         if(group %in% c("MCI", "Dementia")){
-          #beta_subset
-          synthetic_data[i, colnames(beta)] = 
-            X %*% beta - 
-            2*rbeta(n = length(colnames(beta)), shape1 = 5, shape2 = 1)
+          synthetic_data[i, colnames(beta_no_flip)] = 
+            X %*% beta_no_flip - 
+            2*rbeta(n = length(colnames(beta_no_flip)), shape1 = 5, shape2 = 1)
+          
+          synthetic_data[i, colnames(beta_flip)] = 
+            X %*% beta_flip + 
+            2*rbeta(n = length(colnames(beta_flip)), shape1 = 5, shape2 = 1)
         } else{
-          synthetic_data[i, colnames(beta)] = 
-            X %*% beta + 
-            2*rbeta(n = length(colnames(beta)), shape1 = 5, shape2 = 1)
+          synthetic_data[i, colnames(beta_no_flip)] = 
+            X %*% beta_no_flip + 
+            2*rbeta(n = length(colnames(beta_no_flip)), shape1 = 5, shape2 = 1)
+          
+          synthetic_data[i, colnames(beta_flip)] = 
+            X %*% beta_flip - 
+            2*rbeta(n = length(colnames(beta_flip)), shape1 = 5, shape2 = 1)
         }
       } else{
         stop(paste0("Invalid distribution argument. Please choose from: 'normal'", 
