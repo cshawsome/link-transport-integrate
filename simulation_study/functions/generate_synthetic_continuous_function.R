@@ -47,38 +47,44 @@ generate_synthetic_continuous <-
     synthetic_data %<>% as.matrix()  
     
     #---- generate synthetic data ----
-    #---- **normal distribution ----
-    if(dist == "normal"){
-      #---- ****shell for continuous vars ----
-      synthetic_data %<>% 
-        cbind(., matrix(nrow = sample_size, 
-                        ncol = ncol(parameters$Unimpaired$beta_center)) %>%
-                set_colnames(colnames(parameters$Unimpaired$beta_center)))
+    #---- **shell for continuous vars ----
+    synthetic_data %<>% 
+      cbind(., matrix(nrow = sample_size, 
+                      ncol = ncol(parameters$Unimpaired$beta_center)) %>%
+              set_colnames(colnames(parameters$Unimpaired$beta_center)))
+    
+    #---- **draw continuous variables ----
+    for(i in 1:nrow(synthetic_data)){
+      group <- names(
+        which(
+          synthetic_data[i, c("Unimpaired", "MCI", "Dementia", "Other")] == 1))
       
-      #---- ****draw continuous variables ----
-      for(i in 1:nrow(synthetic_data)){
-        group <- names(
-          which(
-            synthetic_data[i, c("Unimpaired", "MCI", "Dementia", "Other")] == 1))
-        
-        #---- ****sigma | Y ----
-        sigma <- riwish(v = normal_parameter_list[[group]]$sigma_dof, 
-                        S = normal_parameter_list[[group]]$sigma_center)
-        
-        #---- ****beta | sigma, Y ----
-        beta <- matrix.normal(M = normal_parameter_list[[group]]$beta_center, 
-                              U = normal_parameter_list[[group]]$row_cov, 
-                              V = sigma)
-        
-        #---- ****predicted Y ----
-        X = synthetic_data[i, rownames(beta)]
+      #---- **sigma | Y ----
+      sigma <- riwish(v = normal_parameter_list[[group]]$sigma_dof, 
+                      S = normal_parameter_list[[group]]$sigma_center)
+      
+      #---- **beta | sigma, Y ----
+      beta <- matrix.normal(M = normal_parameter_list[[group]]$beta_center, 
+                            U = normal_parameter_list[[group]]$row_cov, 
+                            V = sigma)
+      
+      #---- **predicted Y ----
+      X = synthetic_data[i, rownames(beta)]
+      
+      #---- ****normal ----
+      if(dist == "normal"){
         synthetic_data[i, colnames(beta)] = 
           X %*% beta + rnorm(n = length(colnames(beta)), mean = 0, sd = 0.5)
+        #---- ****lognormal ----
+      } else if(dist == "lognormal"){
+        synthetic_data[i, colnames(beta)] = 
+          X %*% beta + 
+          exp(rnorm(n = length(colnames(beta)), mean = 0, sd = 0.5))
+      } else{
+        stop(paste0("Invalid distribution argument. Please choose from: 'normal'", 
+                    "or 'lognormal'."))
       }
-    } else{
-      stop("Invalid distribution argument. Please choose from: \"normal\".")
     }
-    
     #---- return values ----
     write_csv(as.data.frame(synthetic_data), 
               paste0(path_to_results, "/HRS/HRS_synthetic_", dist, "_", 

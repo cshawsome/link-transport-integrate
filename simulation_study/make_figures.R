@@ -27,7 +27,7 @@ ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>%
 #---- ****synthetic HRS ----
 synthetic_normal_1000 <- 
   read_csv(paste0(path_to_box, "analyses/simulation_study/", "synthetic_data/", 
-                  "synthetic_normal_1000.csv"))
+                  "ADAMS_props/HRS/HRS_synthetic_normal_1000_dementia.csv"))
 
 #---- **define plot variables ----
 continuous_vars <- colnames(synthetic_normal_1000)[
