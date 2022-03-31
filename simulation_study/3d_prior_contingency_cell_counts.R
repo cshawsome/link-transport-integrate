@@ -61,7 +61,7 @@ color_palette <- read_csv(here("color_palette.csv"))
 #---- **join data ----
 imputation_props_plot_data <- left_join(imputation_props, cell_ID_key) %>% 
   left_join(., color_palette, by = c("group" = "Group")) %>% 
-  pivot_longer(-c("group", "cell_ID", "cell_name", "Color")) %>% 
+  pivot_longer(-c("group", "cell_ID", "cell_name", "Color", "cell_order")) %>% 
   mutate_at("group", function(x) 
     factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
   mutate_at("cell_name", function(x) 
@@ -75,8 +75,8 @@ names(colors) <- color_palette$Group
 
 ggplot(data = imputation_props_plot_data , aes(x = value)) + 
   geom_histogram(aes(fill = group, color = group)) + theme_bw() + 
-  xlab("Proportion") + facet_grid(rows = vars(cell_name), cols = vars(group), 
-                                  scales = "free") + 
+  xlab("Proportion") + 
+  facet_grid(rows = vars(cell_name), cols = vars(group), scales = "free") + 
   scale_color_manual(values = colors) + scale_fill_manual(values = colors) + 
   theme(legend.position = "none")
 

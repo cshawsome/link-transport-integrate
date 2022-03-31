@@ -79,9 +79,9 @@ estimates <-
 
 #---- check distributions ----
 for(group in c("unimpaired", "other", "mci")){
-  data <- lapply(estimates, "[[", paste0(group, "_betas")) %>% 
-    do.call(rbind, .) %>% t() %>% as.data.frame() 
-  
+  data <- lapply(estimates, "[[", paste0(group, "_betas")) %>%
+    do.call(rbind, .) %>% t() %>% as.data.frame()
+
   for(var in rownames(data)){
     show(hist(as.numeric(data[var, ]), main = paste0(group, " ", var)))
   }
