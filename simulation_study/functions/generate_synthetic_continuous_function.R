@@ -80,9 +80,19 @@ generate_synthetic_continuous <-
         synthetic_data[i, colnames(beta)] = 
           X %*% beta + 
           exp(rnorm(n = length(colnames(beta)), mean = 0, sd = 0.5))
+      } else if(dist == "bathtub"){
+        if(group %in% c("Unimpaired", "Other")){
+          synthetic_data[i, colnames(beta)] = 
+            X %*% beta - 
+            exp(rnorm(n = length(colnames(beta)), mean = 0, sd = 0.5))
+        } else{
+          synthetic_data[i, colnames(beta)] = 
+            X %*% beta + 
+            exp(rnorm(n = length(colnames(beta)), mean = 0, sd = 0.5))
+        }
       } else{
         stop(paste0("Invalid distribution argument. Please choose from: 'normal'", 
-                    "or 'lognormal'."))
+                    ", 'lognormal', or 'bathtub'."))
       }
     }
     #---- return values ----
