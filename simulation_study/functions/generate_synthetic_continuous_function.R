@@ -82,14 +82,15 @@ generate_synthetic_continuous <-
           exp(rnorm(n = length(colnames(beta)), mean = 0, sd = 0.5))
         #---- ****bathtub ----
       } else if(dist == "bathtub"){
-        if(group %in% c("Unimpaired", "Other")){
+        if(group %in% c("MCI", "Dementia")){
+          #beta_subset
           synthetic_data[i, colnames(beta)] = 
             X %*% beta - 
-            exp(rnorm(n = length(colnames(beta)), mean = 0, sd = 0.5))
+            2*rbeta(n = length(colnames(beta)), shape1 = 5, shape2 = 1)
         } else{
           synthetic_data[i, colnames(beta)] = 
             X %*% beta + 
-            exp(rnorm(n = length(colnames(beta)), mean = 0, sd = 0.5))
+            2*rbeta(n = length(colnames(beta)), shape1 = 5, shape2 = 1)
         }
       } else{
         stop(paste0("Invalid distribution argument. Please choose from: 'normal'", 
