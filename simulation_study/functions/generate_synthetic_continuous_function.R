@@ -80,6 +80,7 @@ generate_synthetic_continuous <-
         synthetic_data[i, colnames(beta)] = 
           X %*% beta + 
           exp(rnorm(n = length(colnames(beta)), mean = 0, sd = 0.5))
+        #---- ****bathtub ----
       } else if(dist == "bathtub"){
         if(group %in% c("Unimpaired", "Other")){
           synthetic_data[i, colnames(beta)] = 
