@@ -74,5 +74,16 @@ generate_synthetic_continuous(HRS_analytic, sample_size = 1000,
                                        "simulation_study/synthetic_data/", 
                                        "ADAMS_props/"))
 
+#---- **bathtub ----
+#---- ****compare with ADAMS ----
+generate_synthetic_continuous(HRS_analytic, sample_size = 1000, 
+                              unimpaired_prop = 0.35, mci_prop = 0.10, 
+                              dementia_prop = 0.35, dist = "bathtub", 
+                              parameters = normal_parameter_list, 
+                              path_to_results = 
+                                paste0(path_to_box, "analyses/", 
+                                       "simulation_study/synthetic_data/", 
+                                       "ADAMS_props/"))
+
 
 
