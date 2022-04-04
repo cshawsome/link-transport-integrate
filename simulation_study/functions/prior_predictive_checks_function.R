@@ -182,7 +182,7 @@ prior_predictive_checks <-
                   "Z_mci" = Z_MCI %>% 
                     mutate("Group" = "MCI") %>% left_join(color_palette), 
                   "Z_dementia" = Z_Dementia %>% 
-                    mutate("Group" = "Unimpaired") %>% left_join(color_palette)))
+                    mutate("Group" = "Dementia") %>% left_join(color_palette)))
     }
     
     #---- multiruns ----
@@ -283,30 +283,30 @@ prior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# unimpaired_preds = unimpaired_preds
-# other_preds = other_preds
-# mci_preds = mci_preds
-# categorical_vars = W
-# continuous_vars = Z
-# variable_labels = variable_labels
-# color_palette = color_palette
-# dataset_to_copy = synthetic_data_list[[1]] %>% group_by(married_partnered) %>% 
-#   slice_sample(prop = 0.5) %>% mutate("(Intercept)" = 1) %>% ungroup()
-# num_synthetic = 2
-# unimpaired_betas = unimpaired_betas
-# unimpaired_cov = unimpaired_cov
-# other_betas = other_betas
-# other_cov = other_cov
-# mci_betas = mci_betas
-# mci_cov = mci_cov
-# alpha_0_dist = alpha_0_dist
-# prior_Sigma = prior_Sigma
-# prior_V_inv = prior_V_inv
-# prior_beta = priors_beta
-# nu_0 = nu_0
-# kappa_0 = kappa_0
-# contrasts_matrix = A
-# path_to_folder = paste0(path_to_box, "figures/simulation_study/HCAP_HRS_", 
-#                         unique(synthetic_data_list[[1]][, "dataset_name"]), 
-#                         "/prior_predictive_checks/")
+#---- test function ----
+unimpaired_preds = unimpaired_preds
+other_preds = other_preds
+mci_preds = mci_preds
+categorical_vars = W
+continuous_vars = Z
+variable_labels = variable_labels
+color_palette = color_palette
+dataset_to_copy = synthetic_data_list[[1]] %>% group_by(married_partnered) %>%
+  slice_sample(prop = 0.5) %>% mutate("(Intercept)" = 1) %>% ungroup()
+num_synthetic = 2
+unimpaired_betas = unimpaired_betas
+unimpaired_cov = unimpaired_cov
+other_betas = other_betas
+other_cov = other_cov
+mci_betas = mci_betas
+mci_cov = mci_cov
+alpha_0_dist = alpha_0_dist
+prior_Sigma = prior_Sigma
+prior_V_inv = prior_V_inv
+prior_beta = priors_beta
+nu_0 = nu_0
+kappa_0 = kappa_0
+contrasts_matrix = A
+path_to_folder = paste0(path_to_box, "figures/simulation_study/HCAP_HRS_",
+                        unique(synthetic_data_list[[1]][, "dataset_name"]),
+                        "/prior_predictive_checks/")
