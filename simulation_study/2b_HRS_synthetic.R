@@ -34,17 +34,16 @@ HRS_analytic %<>% mutate("Intercept" = 1) %>%
 #---- synthetic data ----
 set.seed(20220303)
 #---- **normal ----
-#---- ****compare with ADAMS ----
-generate_synthetic_continuous(HRS_analytic, sample_size = 1000, 
-                              unimpaired_prop = 0.35, mci_prop = 0.10, 
-                              dementia_prop = 0.35, dist = "normal", 
-                              parameters = normal_parameter_list, 
-                              path_to_results = 
-                                paste0(path_to_box, "analyses/", 
-                                       "simulation_study/synthetic_data/", 
-                                       "ADAMS_props/"))
-
 for(n in c(500, 1000, 2000, 4000, 8000)){
+  #---- ****compare with ADAMS ----
+  generate_synthetic_continuous(HRS_analytic, sample_size = n, 
+                                unimpaired_prop = 0.35, mci_prop = 0.10, 
+                                dementia_prop = 0.35, dist = "normal", 
+                                parameters = normal_parameter_list, 
+                                scenario_name = "ADAMS",
+                                path_to_results = 
+                                  paste0(path_to_box, "analyses/", 
+                                         "simulation_study/synthetic_data/"))
   #---- ****mostly unimpaired ----
   generate_synthetic_continuous(HRS_analytic, sample_size = n, 
                                 unimpaired_prop = 0.50, mci_prop = 0.20, 
@@ -69,10 +68,10 @@ generate_synthetic_continuous(HRS_analytic, sample_size = 1000,
                               unimpaired_prop = 0.35, mci_prop = 0.10, 
                               dementia_prop = 0.35, dist = "lognormal", 
                               parameters = normal_parameter_list, 
+                              scenario_name = "ADAMS",
                               path_to_results = 
                                 paste0(path_to_box, "analyses/", 
-                                       "simulation_study/synthetic_data/", 
-                                       "ADAMS_props/"))
+                                       "simulation_study/synthetic_data/"))
 
 #---- **bathtub ----
 #---- ****compare with ADAMS ----
@@ -80,10 +79,10 @@ generate_synthetic_continuous(HRS_analytic, sample_size = 1000,
                               unimpaired_prop = 0.35, mci_prop = 0.10, 
                               dementia_prop = 0.35, dist = "bathtub", 
                               parameters = normal_parameter_list, 
+                              scenario_name = "ADAMS",
                               path_to_results = 
                                 paste0(path_to_box, "analyses/", 
-                                       "simulation_study/synthetic_data/", 
-                                       "ADAMS_props/"))
+                                       "simulation_study/synthetic_data/"))
 
 
 

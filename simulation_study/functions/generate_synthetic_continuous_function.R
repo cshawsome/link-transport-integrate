@@ -1,6 +1,7 @@
 generate_synthetic_continuous <- 
   function(data, sample_size, unimpaired_prop = 0.25, mci_prop = 0.25, 
-           dementia_prop = 0.25, dist, parameters, path_to_results){
+           dementia_prop = 0.25, dist, parameters, path_to_results, 
+           scenario_name = NA){
     #---- check parameters ----
     if(sum(unimpaired_prop, mci_prop, dementia_prop) > 1){
       stop("Impairment proportions sum to more than 1. Please check values.") 
@@ -40,8 +41,10 @@ generate_synthetic_continuous <-
     synthetic_data[first_1:last_1, "Other"] <- 1
     
     #---- scenario name ----
-    scenario_name <- tolower(names(which.max(
-      colSums(synthetic_data[, c("Unimpaired", "MCI", "Dementia", "Other")]))))
+    if(is.na(scenario_name)){
+      scenario_name <- tolower(names(which.max(
+        colSums(synthetic_data[, c("Unimpaired", "MCI", "Dementia", "Other")]))))
+    }
     
     #---- reformat synthetic data ----
     synthetic_data %<>% as.matrix()  
@@ -124,6 +127,7 @@ generate_synthetic_continuous <-
 # mci_prop = 0.10
 # dementia_prop = 0.35
 # dist <- "normal"
+# scenario_name = NA
 # parameters <- normal_parameter_list
 # path_to_results = paste0(path_to_box, "analyses/simulation_study/",
 #                          "synthetic_data/")
