@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "MBSP")
+       "locfit", "MBSP", "wesanderson")
 
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
