@@ -24,6 +24,12 @@ synthetic_data_paths <-
                            "analyses/simulation_study/synthetic_data/HRS"), 
              full.names = TRUE, pattern = "*.csv")
 
+#Focus on full analysis with normal, ADAMS props data
+synthetic_data_paths <- 
+  synthetic_data_paths[unlist(lapply(synthetic_data_paths, 
+                                     function(x) str_detect(x, "ADAMS") & 
+                                       str_detect(x, "_normal")))]
+
 synthetic_data_list <- lapply(synthetic_data_paths, read_results)
 
 #---- **variable labels ----
@@ -90,7 +96,7 @@ lapply(synthetic_data_list, function(x)
                             group_by(married_partnered) %>% 
                             slice_sample(prop = 0.5) %>% 
                             mutate("(Intercept)" = 1) %>% ungroup(), 
-                          num_synthetic = 2, unimpaired_betas, 
+                          num_synthetic = 1000, unimpaired_betas, 
                           unimpaired_cov, other_betas, other_cov, 
                           mci_betas, mci_cov, alpha_0_dist, prior_Sigma, 
                           prior_V_inv, prior_beta, nu_0, kappa_0, 
@@ -102,7 +108,6 @@ lapply(synthetic_data_list, function(x)
                                    "/prior_predictive_checks/")))
 end <- Sys.time() - start
 
-  
-  
-  
-  
+
+
+
