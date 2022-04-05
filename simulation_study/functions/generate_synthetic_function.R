@@ -51,24 +51,26 @@ generate_synthetic <-
       set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
     
     pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
-      set_colnames(apply(expand.grid(
-        c("Unimpaired", "MCI", "Dementia", "Other"), seq(1, B)), 1, paste, 
-        collapse = ":") %>% str_remove(., " ")) %>% 
+      set_colnames(gsub(" ", "", 
+                        apply(expand.grid(
+                          c("Unimpaired", "MCI", "Dementia", "Other"), 
+                          seq(1, B)), 1, paste, collapse = ":"))) %>% 
       set_rownames(cross_class_label$cell_ID)
     
     Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
-      set_colnames(apply(expand.grid(
-        c("Unimpaired", "MCI", "Dementia", "Other"), seq(1, B)), 1, paste,
-        collapse = ":") %>% str_remove(., " ")) %>%
+      set_colnames(gsub(" ", "", 
+                        apply(expand.grid(
+                          c("Unimpaired", "MCI", "Dementia", "Other"), 
+                          seq(1, B)), 1, paste, collapse = ":"))) %>% 
       set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
                                           "figure_label"]))
     
     mu_chain <-
       matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>%
-      set_colnames(apply(
-        expand.grid(c("Unimpaired", "MCI", "Dementia", "Other"), 
-                    seq(1:nrow(cross_class_label)), seq(1, B)), 1, 
-        paste,collapse = ":") %>% str_remove(., " ")) %>% 
+      set_colnames(gsub(" ", "", 
+                        apply(expand.grid(
+                          c("Unimpaired", "MCI", "Dementia", "Other"), 
+                          seq(1, B)), 1, paste, collapse = ":"))) %>% 
       set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
                                           "figure_label"]))
     
