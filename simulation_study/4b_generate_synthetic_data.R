@@ -13,12 +13,20 @@ source(here::here("simulation_study", "functions",
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-#---- **dataset to copy ----
-#dataset we're trying to create synthetic versions of
-dataset_to_copy <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/synthetic_data/HCAP/", 
-                  "HCAP_synthetic_normal_250_unimpaired.csv")) %>% 
-  mutate("(Intercept)" = 1)
+#---- **data paths ----
+#datasets to copy
+synthetic_data_paths <- 
+  list.files(path = paste0(path_to_box, 
+                           "analyses/simulation_study/synthetic_data/HRS"), 
+             full.names = TRUE, pattern = "*.csv")
+
+#Focus on full analysis with normal, ADAMS props data
+synthetic_data_paths <- 
+  synthetic_data_paths[unlist(lapply(synthetic_data_paths, 
+                                     function(x) str_detect(x, "ADAMS") & 
+                                       str_detect(x, "_normal")))]
+
+synthetic_data_list <- lapply(synthetic_data_paths, read_results)
 
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
@@ -75,12 +83,12 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
   set_names(c("Unimpaired", "MCI", "Dementia", "Other"))
 
 #---- generate synthetic data ----
-generate_synthetic(warm_up = 2, run_number = 1, 
+generate_synthetic(warm_up = 100, run_number = 1, 
                    starting_props = c(0.25, 0.25, 0.25, 0.25),
                    unimpaired_preds, other_preds, mci_preds, 
                    categorical_vars = W, continuous_vars = Z, id_var = "HHIDPN", 
                    variable_labels, dataset_to_copy, cell_ID_key, color_palette,
-                   num_synthetic = 10, unimpaired_betas, unimpaired_cov, 
+                   num_synthetic = 1000, unimpaired_betas, unimpaired_cov, 
                    other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
                    prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
                    contrasts_matrix = A,
