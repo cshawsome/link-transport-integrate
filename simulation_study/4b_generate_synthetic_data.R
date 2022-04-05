@@ -7,6 +7,8 @@ p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack",
        "locfit", "MBSP")
 
 #---- source functions ----
+source(here::here("functions", "read_results.R"))
+
 source(here::here("simulation_study", "functions", 
                   "generate_synthetic_function.R"))
 
@@ -108,6 +110,3 @@ lapply(synthetic_data_list, function(x)
                               unique(x[, "dataset_name"]), "/")))
   
 end <- Sys.time() - start
-
-
-
