@@ -69,8 +69,9 @@ generate_synthetic <-
       matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>%
       set_colnames(gsub(" ", "", 
                         apply(expand.grid(
-                          c("Unimpaired", "MCI", "Dementia", "Other"), 
-                          seq(1, B)), 1, paste, collapse = ":"))) %>% 
+                          c("Unimpaired", "MCI", "Dementia", "Other"),
+                          seq(1:nrow(cross_class_label)), seq(1, B)), 1, paste, 
+                          collapse = ":"))) %>% 
       set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
                                           "figure_label"]))
     
