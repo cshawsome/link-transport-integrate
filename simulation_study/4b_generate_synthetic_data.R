@@ -14,7 +14,6 @@ source(here::here("simulation_study", "functions",
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **data paths ----
-#datasets to copy
 synthetic_data_paths <- 
   list.files(path = paste0(path_to_box, 
                            "analyses/simulation_study/synthetic_data/HRS"), 
