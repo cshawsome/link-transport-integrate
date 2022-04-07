@@ -296,12 +296,21 @@ generate_synthetic <-
       
       #---- ****save synthetic sample ----
       if(b > warm_up){
-        write_csv(dataset_to_copy, 
-                  file = paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                                run_number, "/synthetic_", b - warm_up, 
-                                ".csv"))
+        # write_csv(dataset_to_copy, 
+        #           file = paste0(path_to_analyses_folder, "synthetic_data/run_", 
+        #                         run_number, "/synthetic_", b - warm_up, 
+        #                         ".csv"))
+        #test a different way of saving the datasets
+        if(!exists("dataset_list")){
+          dataset_list <- list()
+        }
+        dataset_list[[b - warm_up]] <- dataset_to_copy
       }
     }
+    
+    saveRDS(dataset_list, 
+            file = paste0(path_to_analyses_folder, "synthetic_data/run_",
+                          run_number, "/synthetic_dataset_list"))
     
     #---- **dx plots ----
     #---- ****gamma chains ----
