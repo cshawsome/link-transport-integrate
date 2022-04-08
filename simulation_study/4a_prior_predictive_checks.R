@@ -102,6 +102,3 @@ lapply(synthetic_data_list, function(x)
                                    "/prior_predictive_checks/")))
 end <- Sys.time() - start
 
-
-
-
