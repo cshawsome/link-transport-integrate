@@ -219,31 +219,44 @@ prior_predictive_checks <-
     for(class in unique(synthetic_dementia_plot_data$value)){
       subset <- synthetic_dementia_plot_data %>% filter(value == class)
       
-      #original data only
-      ggplot(data = subset) + 
-        geom_histogram(aes(x = n),
-                       color = "white", fill = "white") +
-        theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
-        geom_vline(xintercept = to_copy_dementia_plot_data[[
-          which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
-          color = unique(subset$Color))
-      
-      ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
-                               "_line_only.jpeg"), 
-             height = 3, width = 5, units = "in")
-      
-      #Prior predictive check
-      ggplot(data = subset) + 
-        geom_histogram(aes(x = n), 
-                       color = unique(subset$Color), 
-                       fill = unique(subset$Color)) + 
-        theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
-        geom_vline(xintercept = to_copy_dementia_plot_data[[
-          which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2)
-      
-      ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
-                               ".jpeg"), 
-             height = 3, width = 5, units = "in")
+      if(nrow(subset) == 0){
+        #original data only
+        ggplot() + theme_minimal() + ggtitle(class) + xlab("Count") + 
+          ylab("Frequency") +
+          geom_vline(xintercept = to_copy_dementia_plot_data[[
+            which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
+            color = color_palette[which(color_palette$Group == class), "Color"])
+        
+        ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
+                                 "_line_only.jpeg"), 
+               height = 3, width = 5, units = "in")
+      } else{
+        #original data only
+        ggplot(data = subset) + 
+          geom_histogram(aes(x = n),
+                         color = "white", fill = "white") +
+          theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
+          geom_vline(xintercept = to_copy_dementia_plot_data[[
+            which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
+            color = unique(subset$Color))
+        
+        ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
+                                 "_line_only.jpeg"), 
+               height = 3, width = 5, units = "in")
+        
+        #Prior predictive check
+        ggplot(data = subset) + 
+          geom_histogram(aes(x = n), 
+                         color = unique(subset$Color), 
+                         fill = unique(subset$Color)) + 
+          theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
+          geom_vline(xintercept = to_copy_dementia_plot_data[[
+            which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2)
+        
+        ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
+                                 ".jpeg"), 
+               height = 3, width = 5, units = "in")
+      }
     }
     
     #---- **class-specific continuous ----
