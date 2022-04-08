@@ -24,12 +24,6 @@ synthetic_data_paths <-
                            "analyses/simulation_study/synthetic_data/HRS"), 
              full.names = TRUE, pattern = "*.csv")
 
-#Focus on full analysis with normal, ADAMS props data
-synthetic_data_paths <- 
-  synthetic_data_paths[unlist(lapply(synthetic_data_paths, 
-                                     function(x) str_detect(x, "ADAMS") & 
-                                       str_detect(x, "_normal")))]
-
 synthetic_data_list <- lapply(synthetic_data_paths, read_results)
 
 #---- **variable labels ----
