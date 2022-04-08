@@ -83,6 +83,13 @@ prior_predictive_checks <-
         
         #---- **contingency cells ----
         subset <- synthetic_sample %>% filter(Group == class)
+        if(nrow(subset) == 0){
+          assign(paste0("Z_", class), 
+                 matrix(rep(NA, length(continuous_vars)), nrow = 1) %>% 
+                   as.data.frame() %>% set_colnames(continuous_vars))
+          next
+        }
+        
         prior_counts <- 
           alpha_0_dist[, c(as.character(random_draw), "group")] %>% 
           filter(group == class)
