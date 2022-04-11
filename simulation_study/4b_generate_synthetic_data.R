@@ -87,7 +87,7 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
 #---- code testing ----
 #---- **test 1: normal data ----
 #2.6 mins for n = 1000 dataset
-#XX mins for n = 8000 dataset
+#over 30 mins for n = 8000 dataset
 start <- Sys.time()
 generate_synthetic(warm_up = 100, run_number = 1, 
                    starting_props = c(0.25, 0.25, 0.25, 0.25),
