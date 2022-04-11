@@ -278,27 +278,43 @@ prior_predictive_checks <-
       continuous_list %<>% do.call(rbind, .) %>% as.data.frame() 
       
       for(var in continuous_vars){
-        data <- continuous_list[, c(var, "run", "Type", "Color")]
+        data <- continuous_list[, c(var, "run", "Type", "Color")] 
         
-        continuous_plot <- 
-          ggplot(data = data, aes(color = Type, fill = Type)) + 
-          geom_density(aes(x = data[, 1]), alpha = 0.5) + 
-          theme_minimal() + 
-          xlab(variable_labels[variable_labels$data_label == var, 
-                               "figure_label"]) + 
-          scale_color_manual(values = rev(unique(data$Color))) + 
-          scale_fill_manual(values = rev(unique(data$Color))) + 
-          transition_states(data$run, transition_length = 1, state_length = 1) +
-          labs(title = "Synthetic {round(frame_time)}") + transition_time(run) +
-          ease_aes('linear')
-        
-        animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
-                res = 150, renderer = gifski_renderer())
-        
-        anim_save(filename = paste0(path_to_folder, "continuous_vars/", 
-                                    tolower(class), "/", var, ".gif"),
-                  animation = last_animation(),
-                  renderer = gifski_renderer())
+        if(is.na(sum(data[, var]))){
+          continuous_plot <- 
+            ggplot(data = data, aes(color = Type, fill = Type)) + 
+            geom_density(aes(x = data[, 1]), alpha = 0.5) + 
+            theme_minimal() + 
+            xlab(variable_labels[variable_labels$data_label == var, 
+                                 "figure_label"]) + 
+            scale_color_manual(values = rev(unique(data$Color))) + 
+            scale_fill_manual(values = rev(unique(data$Color)))
+          
+          ggsave(filename = paste0(path_to_folder, "continuous_vars/", 
+                                   tolower(class), "/", var, ".jpeg"), 
+                 height = 3, width = 5, units = "in")
+          
+        } else{
+          continuous_plot <- 
+            ggplot(data = data, aes(color = Type, fill = Type)) + 
+            geom_density(aes(x = data[, 1]), alpha = 0.5) + 
+            theme_minimal() + 
+            xlab(variable_labels[variable_labels$data_label == var, 
+                                 "figure_label"]) + 
+            scale_color_manual(values = rev(unique(data$Color))) + 
+            scale_fill_manual(values = rev(unique(data$Color))) + 
+            transition_states(data$run, transition_length = 1, state_length = 1) +
+            labs(title = "Synthetic {round(frame_time)}") + transition_time(run) +
+            ease_aes('linear')
+          
+          animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
+                  res = 150, renderer = gifski_renderer())
+          
+          anim_save(filename = paste0(path_to_folder, "continuous_vars/", 
+                                      tolower(class), "/", var, ".gif"),
+                    animation = last_animation(),
+                    renderer = gifski_renderer())
+        }
       }
     }
   }
@@ -313,7 +329,7 @@ prior_predictive_checks <-
 # color_palette = color_palette
 # dataset_to_copy = synthetic_data_list[[1]] %>% group_by(married_partnered) %>%
 #   slice_sample(prop = 0.5) %>% mutate("(Intercept)" = 1) %>% ungroup()
-# num_synthetic = 2
+# num_synthetic = 1000
 # unimpaired_betas = unimpaired_betas
 # unimpaired_cov = unimpaired_cov
 # other_betas = other_betas
