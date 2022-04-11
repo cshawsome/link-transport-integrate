@@ -81,7 +81,7 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
 #---- **run checks ----
 set.seed(20220329)
 start <- Sys.time()
-#---- **normal data ----
+
 lapply(synthetic_data_list, function(x)
   prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
                           categorical_vars = W, continuous_vars = Z, 
