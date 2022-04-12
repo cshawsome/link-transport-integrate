@@ -1,8 +1,7 @@
 posterior_predictive_checks <- 
   function(dataset_to_copy, categorical_covariates, continuous_covariates, 
            contrasts_matrix, cell_ID_key, variable_labels, num_samples, 
-           num_chains, color_palette, path_to_analyses_folder, 
-           path_to_figures_folder){
+           color_palette, path_to_analyses_folder, path_to_figures_folder){
     
     #---- create directories for results ----
     for(chain in 1:num_chains){
@@ -31,7 +30,14 @@ posterior_predictive_checks <-
     }
     
     #---- read in synthetic data ----
-    synthetic_sample <- readRDS()
+    file_paths <- 
+      list.dirs(path = paste0(path_to_analyses_folder, "synthetic_data"), 
+                full.names = TRUE, recursive = FALSE)
+    
+    for(chain in 1:num_chains){
+      synthetic_sample <- readRDS()
+    }
+    
       
     for(sample in 1:num_samples){
       for(chain in 1:num_chains){
