@@ -1,8 +1,32 @@
 posterior_predictive_checks <- 
   function(dataset_to_copy, categorical_covariates, continuous_covariates, 
            contrasts_matrix, cell_ID_key, variable_labels, num_samples, 
-           num_chains, color_palette, path_to_analyses_folder, 
-           path_to_figures_folder){
+           color_palette, path_to_analyses_folder, path_to_figures_folder){
+    
+    #---- read in synthetic data ----
+    file_paths <- 
+      list.dirs(path = paste0(path_to_analyses_folder, "synthetic_data"), 
+                full.names = TRUE, recursive = FALSE)
+    
+    for(chain in 1:length(file_paths)){
+      data_file <- list.files(file_paths[chain], full.names = TRUE)
+      synthetic_sample <- readRDS(data_file)
+      
+      #---- **formatting ----
+      #add chain number
+      synthetic_sample <-
+        lapply(synthetic_sample, function(x) x %<>% mutate("chain" = chain))
+      
+      #add sample number
+      sample_nums <- as.list(seq(1, length(synthetic_sample)))
+      synthetic_sample <- Map(cbind, synthetic_sample, sample = sample_nums)
+    }
+    
+    synthetic_sample %<>% do.call(rbind, .)
+    
+    #---- number of chains and samples ----
+    num_chains <- max(synthetic_sample$chain)
+    num_samples <- max(synthetic_sample$sample)
     
     #---- create directories for results ----
     for(chain in 1:num_chains){
@@ -30,40 +54,22 @@ posterior_predictive_checks <-
       }
     }
     
-    #---- read in synthetic data ----
-    for(sample in 1:num_samples){
-      for(chain in 1:num_chains){
-        if(sample == 1 & chain == 1){
-          synthetic_sample <- 
-            read_csv(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                            chain, "/synthetic_", sample, ".csv")) %>% 
-            mutate("sample" = sample, "chain" = chain)
-        } else{
-          synthetic_sample %<>% 
-            rbind(., 
-                  read_csv(paste0(path_to_analyses_folder, 
-                                  "synthetic_data/run_", chain, 
-                                  "/synthetic_", sample, ".csv")) %>% 
-                    mutate("sample" = sample, "chain" = chain))
-        }
-      }
-    }
-    
     #---- chain convergence ----
-    for(chain_num in 1:num_chains){
-      if(chain_num == 1){
-        group_membership <- 
-          read_csv(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                          "run_", chain_num, "/latent_class_data.csv")) %>% 
-          mutate("chain" = chain_num)
-      } else{
-        group_membership %<>% 
-          rbind(., 
-                read_csv(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "run_", chain_num, "/latent_class_data.csv")) %>% 
-                  mutate("chain" = chain_num))
-      }
-    }
+    #---- **read in data ----
+    file_paths <- 
+      list.dirs(path = paste0(path_to_analyses_folder, "diagnostics_data"), 
+                full.names = TRUE, recursive = FALSE)
+    
+    group_membership <- 
+      lapply(file_paths, function(x) 
+        read_csv(paste0(x, "/latent_class_data.csv")))
+    
+    #---- **formatting ----
+    #add chain number
+    chain_nums <- as.list(seq(1, length(file_paths)))
+    group_membership <- Map(cbind, group_membership, chain = chain_nums)
+    
+    group_membership %<>% do.call(rbind, .)
     
     #---- **plot ----
     chain_convergence <- 
@@ -512,17 +518,20 @@ posterior_predictive_checks <-
   }
 
 # #---- test function ----
-# dataset_to_copy = dataset_to_copy
-# categorical_covariates = W
+# dataset_to_copy = synthetic_data_list[[1]] %>% 
+#   group_by(married_partnered) %>% 
+#   slice_sample(prop = 0.5) %>% 
+#   mutate("(Intercept)" = 1) %>% ungroup() 
+# categorical_covariates = W 
 # continuous_covariates = Z 
 # contrasts_matrix = A
-# cell_ID_key = cell_ID_key
-# variable_labels = variable_labels
-# num_samples = 10 
-# num_chains = 1 
-# color_palette = color_palette
-# path_to_analyses_folder = paste0(path_to_box, "analyses/simulation_study/", 
-#                                  "HCAP_normal_250_unimpaired/") 
-# path_to_figures_folder = paste0(path_to_box, "figures/simulation_study/", 
-#                                 "HCAP_normal_250_unimpaired/")
+# path_to_analyses_folder = 
+#   paste0(path_to_box, 
+#          "analyses/simulation_study/HCAP_HRS_", 
+#          unique(synthetic_data_list[[1]][, "dataset_name"]), "/") 
+# path_to_figures_folder = 
+#   paste0(path_to_box,
+#          "figures/simulation_study/HCAP_HRS_", 
+#          unique(synthetic_data_list[[1]][, "dataset_name"]), "/")
+# 
 
