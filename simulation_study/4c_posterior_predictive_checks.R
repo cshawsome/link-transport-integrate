@@ -79,8 +79,7 @@ lapply(synthetic_data_list, function(x)
                                 mutate("(Intercept)" = 1) %>% ungroup() , 
                               categorical_covariates = W, 
                               continuous_covariates = Z, contrasts_matrix = A,
-                              cell_ID_key, variable_labels, num_samples = 10, 
-                              num_chains = 1, color_palette,
+                              cell_ID_key, variable_labels, color_palette,
                               path_to_analyses_folder = 
                                 paste0(path_to_box, 
                                        "analyses/simulation_study/HCAP_HRS_", 
