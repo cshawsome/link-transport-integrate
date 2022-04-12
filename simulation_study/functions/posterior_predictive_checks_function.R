@@ -1,7 +1,7 @@
 posterior_predictive_checks <- 
   function(dataset_to_copy, categorical_covariates, continuous_covariates, 
-           contrasts_matrix, cell_ID_key, variable_labels, num_samples, 
-           color_palette, path_to_analyses_folder, path_to_figures_folder){
+           contrasts_matrix, cell_ID_key, variable_labels, color_palette, 
+           path_to_analyses_folder, path_to_figures_folder){
     
     #---- read in synthetic data ----
     file_paths <- 
