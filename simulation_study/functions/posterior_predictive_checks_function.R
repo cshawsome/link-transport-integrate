@@ -51,20 +51,21 @@ posterior_predictive_checks <-
     }
     
     #---- chain convergence ----
-    for(chain_num in 1:num_chains){
-      if(chain_num == 1){
-        group_membership <- 
-          read_csv(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                          "run_", chain_num, "/latent_class_data.csv")) %>% 
-          mutate("chain" = chain_num)
-      } else{
-        group_membership %<>% 
-          rbind(., 
-                read_csv(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "run_", chain_num, "/latent_class_data.csv")) %>% 
-                  mutate("chain" = chain_num))
-      }
-    }
+    #---- **read in data ----
+    file_paths <- 
+      list.dirs(path = paste0(path_to_analyses_folder, "diagnostics_data"), 
+                full.names = TRUE, recursive = FALSE)
+    
+    group_membership <- 
+      lapply(file_paths, function(x) 
+        read_csv(paste0(x, "/latent_class_data.csv")))
+    
+    #---- **formatting ----
+    #add chain number
+    chain_nums <- as.list(seq(1, length(file_paths)))
+    group_membership <- Map(cbind, group_membership, chain = chain_nums)
+    
+    group_membership %<>% do.call(rbind, .)
     
     #---- **plot ----
     chain_convergence <- 
