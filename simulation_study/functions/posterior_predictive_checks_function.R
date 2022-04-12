@@ -24,8 +24,9 @@ posterior_predictive_checks <-
     
     synthetic_sample %<>% do.call(rbind, .)
     
-    #---- number of chains ----
+    #---- number of chains and samples ----
     num_chains <- max(synthetic_sample$chain)
+    num_samples <- max(synthetic_sample$sample)
     
     #---- create directories for results ----
     for(chain in 1:num_chains){
