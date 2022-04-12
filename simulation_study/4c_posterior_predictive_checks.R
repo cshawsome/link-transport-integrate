@@ -30,13 +30,6 @@ synthetic_data_paths <-
 
 synthetic_data_list <- lapply(synthetic_data_paths, read_results)
 
-#---- **dataset to copy ----
-#dataset we're trying to create synthetic versions of
-dataset_to_copy <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/synthetic_data/HCAP/", 
-                  "HCAP_synthetic_normal_250_unimpaired.csv")) %>% 
-  mutate("(Intercept)" = 1)
-
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
@@ -52,7 +45,8 @@ color_palette <- read_csv(here::here("color_palette.csv"))
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
-Z <- colnames(dataset_to_copy)[str_detect(colnames(dataset_to_copy), "_Z")]
+Z <- colnames(synthetic_data_list[[1]])[str_detect(
+  colnames(synthetic_data_list[[1]]), "_Z")]
 
 #---- **contrasts matrix ----
 A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
