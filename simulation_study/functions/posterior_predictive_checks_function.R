@@ -8,28 +8,21 @@ posterior_predictive_checks <-
       list.dirs(path = paste0(path_to_analyses_folder, "synthetic_data"), 
                 full.names = TRUE, recursive = FALSE)
     
-    for(chain in 1:num_chains){
-      synthetic_sample <- readRDS()
+    for(chain in 1:length(file_paths)){
+      data_file <- list.files(file_paths[chain], full.names = TRUE)
+      synthetic_sample <- readRDS(data_file)
+      
+      #---- **formatting ----
+      #add chain number
+      synthetic_sample <-
+        lapply(synthetic_sample, function(x) x %<>% mutate("chain" = chain))
+      
+      #add sample number
+      sample_nums <- as.list(seq(1, length(synthetic_sample)))
+      synthetic_sample <- Map(cbind, synthetic_sample, sample = sample_nums)
     }
     
-    
-    for(sample in 1:num_samples){
-      for(chain in 1:num_chains){
-        if(sample == 1 & chain == 1){
-          synthetic_sample <- 
-            read_csv(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                            chain, "/synthetic_", sample, ".csv")) %>% 
-            mutate("sample" = sample, "chain" = chain)
-        } else{
-          synthetic_sample %<>% 
-            rbind(., 
-                  read_csv(paste0(path_to_analyses_folder, 
-                                  "synthetic_data/run_", chain, 
-                                  "/synthetic_", sample, ".csv")) %>% 
-                    mutate("sample" = sample, "chain" = chain))
-        }
-      }
-    }
+    synthetic_sample %<>% do.call(rbind, .)
     
     #---- create directories for results ----
     for(chain in 1:num_chains){
@@ -527,7 +520,6 @@ dataset_to_copy = synthetic_data_list[[1]] %>%
 categorical_covariates = W 
 continuous_covariates = Z 
 contrasts_matrix = A
-num_chains = 1 
 path_to_analyses_folder = 
   paste0(path_to_box, 
          "analyses/simulation_study/HCAP_HRS_", 
