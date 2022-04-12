@@ -3,6 +3,34 @@ posterior_predictive_checks <-
            contrasts_matrix, cell_ID_key, variable_labels, num_samples, 
            color_palette, path_to_analyses_folder, path_to_figures_folder){
     
+    #---- read in synthetic data ----
+    file_paths <- 
+      list.dirs(path = paste0(path_to_analyses_folder, "synthetic_data"), 
+                full.names = TRUE, recursive = FALSE)
+    
+    for(chain in 1:num_chains){
+      synthetic_sample <- readRDS()
+    }
+    
+    
+    for(sample in 1:num_samples){
+      for(chain in 1:num_chains){
+        if(sample == 1 & chain == 1){
+          synthetic_sample <- 
+            read_csv(paste0(path_to_analyses_folder, "synthetic_data/run_", 
+                            chain, "/synthetic_", sample, ".csv")) %>% 
+            mutate("sample" = sample, "chain" = chain)
+        } else{
+          synthetic_sample %<>% 
+            rbind(., 
+                  read_csv(paste0(path_to_analyses_folder, 
+                                  "synthetic_data/run_", chain, 
+                                  "/synthetic_", sample, ".csv")) %>% 
+                    mutate("sample" = sample, "chain" = chain))
+        }
+      }
+    }
+    
     #---- create directories for results ----
     for(chain in 1:num_chains){
       for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
@@ -25,34 +53,6 @@ posterior_predictive_checks <-
                             "posterior_predictive_checks/run_", chain, 
                             "/continuous_vars/", metric, "/"), 
                      recursive = TRUE)
-        }
-      }
-    }
-    
-    #---- read in synthetic data ----
-    file_paths <- 
-      list.dirs(path = paste0(path_to_analyses_folder, "synthetic_data"), 
-                full.names = TRUE, recursive = FALSE)
-    
-    for(chain in 1:num_chains){
-      synthetic_sample <- readRDS()
-    }
-    
-      
-    for(sample in 1:num_samples){
-      for(chain in 1:num_chains){
-        if(sample == 1 & chain == 1){
-          synthetic_sample <- 
-            read_csv(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                            chain, "/synthetic_", sample, ".csv")) %>% 
-            mutate("sample" = sample, "chain" = chain)
-        } else{
-          synthetic_sample %<>% 
-            rbind(., 
-                  read_csv(paste0(path_to_analyses_folder, 
-                                  "synthetic_data/run_", chain, 
-                                  "/synthetic_", sample, ".csv")) %>% 
-                    mutate("sample" = sample, "chain" = chain))
         }
       }
     }
