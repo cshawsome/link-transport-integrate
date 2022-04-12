@@ -91,6 +91,7 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
 #XX mins for n = 2000 dataset
 #XX mins for n = 4000 dataset
 #over 30 mins for n = 8000 dataset
+set.seed(20220329)
 start <- Sys.time()
 generate_synthetic(warm_up = 100, run_number = 1, 
                    starting_props = c(0.25, 0.25, 0.25, 0.25),
