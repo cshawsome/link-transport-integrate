@@ -24,8 +24,11 @@ posterior_predictive_checks <-
     
     synthetic_sample %<>% do.call(rbind, .)
     
+    #---- number of chains ----
+    num_chains <- max(synthetic_sample$chain)
+    
     #---- create directories for results ----
-    for(chain in 1:max(synthetic_sample$chain)){
+    for(chain in 1:num_chains){
       for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
         if(!dir.exists(paste0(path_to_figures_folder, 
                               "posterior_predictive_checks/run_", chain, 
@@ -37,7 +40,7 @@ posterior_predictive_checks <-
       }
     }
     
-    for(chain in 1:max(synthetic_sample$chain)){
+    for(chain in 1:num_chains){
       for(metric in c("median", "skew")){
         if(!dir.exists(paste0(path_to_figures_folder, 
                               "posterior_predictive_checks/run_", chain, 
