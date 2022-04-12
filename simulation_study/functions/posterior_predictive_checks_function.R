@@ -517,21 +517,21 @@ posterior_predictive_checks <-
     }
   }
 
-#---- test function ----
-dataset_to_copy = synthetic_data_list[[1]] %>% 
-  group_by(married_partnered) %>% 
-  slice_sample(prop = 0.5) %>% 
-  mutate("(Intercept)" = 1) %>% ungroup() 
-categorical_covariates = W 
-continuous_covariates = Z 
-contrasts_matrix = A
-path_to_analyses_folder = 
-  paste0(path_to_box, 
-         "analyses/simulation_study/HCAP_HRS_", 
-         unique(synthetic_data_list[[1]][, "dataset_name"]), "/") 
-path_to_figures_folder = 
-  paste0(path_to_box,
-         "figures/simulation_study/HCAP_HRS_", 
-         unique(synthetic_data_list[[1]][, "dataset_name"]), "/")
-
+# #---- test function ----
+# dataset_to_copy = synthetic_data_list[[1]] %>% 
+#   group_by(married_partnered) %>% 
+#   slice_sample(prop = 0.5) %>% 
+#   mutate("(Intercept)" = 1) %>% ungroup() 
+# categorical_covariates = W 
+# continuous_covariates = Z 
+# contrasts_matrix = A
+# path_to_analyses_folder = 
+#   paste0(path_to_box, 
+#          "analyses/simulation_study/HCAP_HRS_", 
+#          unique(synthetic_data_list[[1]][, "dataset_name"]), "/") 
+# path_to_figures_folder = 
+#   paste0(path_to_box,
+#          "figures/simulation_study/HCAP_HRS_", 
+#          unique(synthetic_data_list[[1]][, "dataset_name"]), "/")
+# 
 
