@@ -31,6 +31,8 @@ posterior_predictive_checks <-
     }
     
     #---- read in synthetic data ----
+    synthetic_sample <- readRDS()
+      
     for(sample in 1:num_samples){
       for(chain in 1:num_chains){
         if(sample == 1 & chain == 1){
@@ -511,18 +513,22 @@ posterior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# dataset_to_copy = dataset_to_copy
-# categorical_covariates = W
-# continuous_covariates = Z 
-# contrasts_matrix = A
-# cell_ID_key = cell_ID_key
-# variable_labels = variable_labels
-# num_samples = 10 
-# num_chains = 1 
-# color_palette = color_palette
-# path_to_analyses_folder = paste0(path_to_box, "analyses/simulation_study/", 
-#                                  "HCAP_normal_250_unimpaired/") 
-# path_to_figures_folder = paste0(path_to_box, "figures/simulation_study/", 
-#                                 "HCAP_normal_250_unimpaired/")
+#---- test function ----
+dataset_to_copy = synthetic_data_list[[1]] %>% 
+  group_by(married_partnered) %>% 
+  slice_sample(prop = 0.5) %>% 
+  mutate("(Intercept)" = 1) %>% ungroup() 
+categorical_covariates = W 
+continuous_covariates = Z 
+contrasts_matrix = A
+num_chains = 1 
+path_to_analyses_folder = 
+  paste0(path_to_box, 
+         "analyses/simulation_study/HCAP_HRS_", 
+         unique(synthetic_data_list[[1]][, "dataset_name"]), "/") 
+path_to_figures_folder = 
+  paste0(path_to_box,
+         "figures/simulation_study/HCAP_HRS_", 
+         unique(synthetic_data_list[[1]][, "dataset_name"]), "/")
+
 
