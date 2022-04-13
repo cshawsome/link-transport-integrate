@@ -5,26 +5,26 @@ generate_synthetic <-
            unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
            mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
            kappa_0, contrasts_matrix, path_to_analyses_folder, 
-           path_to_figures_folder){
+           path_to_figures_folder, sim = "no"){
     
     #---- check subfolders for results ----
-    if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                          run_number))){
-      dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                        run_number), recursive = TRUE)
+    if(sim == "no"){
+      if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/run_", 
+                            run_number))){
+        dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
+                          run_number), recursive = TRUE)
+      }
+      if(!dir.exists(paste0(path_to_figures_folder, "diagnostics/run_", 
+                            run_number))){
+        dir.create(paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
+                   recursive = TRUE)
+      }
       
-    }
-    
-    if(!dir.exists(paste0(path_to_figures_folder, "diagnostics/run_", 
-                          run_number))){
-      dir.create(paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
-                 recursive = TRUE)
-    }
-    
-    if(!dir.exists(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
-                          run_number))){
-      dir.create(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
-                        run_number), recursive = TRUE)
+      if(!dir.exists(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
+                            run_number))){
+        dir.create(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
+                          run_number), recursive = TRUE)
+      }
     }
     
     #---- sampling counts ----
@@ -39,42 +39,42 @@ generate_synthetic <-
       as.data.frame() %>% set_colnames(c("cell_ID", "count")) %>% 
       left_join(cell_ID_key)
     
-    #---- chain storage ----
-    model_gamma_chain <- 
-      matrix(nrow = sum(length(unimpaired_preds), length(other_preds), 
-                        length(mci_preds)), ncol = B) %>% as.data.frame() %>%
-      mutate("model" = c(rep("unimpaired", length(unimpaired_preds)), 
-                         rep("other", length(other_preds)), 
-                         rep("mci", length(mci_preds))), 
-             "pred" = c(unimpaired_preds, mci_preds, other_preds))
-    
-    latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
-      set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
-    
-    pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
-      set_colnames(gsub(" ", "", 
-                        apply(expand.grid(
-                          c("Unimpaired", "MCI", "Dementia", "Other"), 
-                          seq(1, B)), 1, paste, collapse = ":"))) %>% 
-      set_rownames(cross_class_label$cell_ID)
-    
-    Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
-      set_colnames(gsub(" ", "", 
-                        apply(expand.grid(
-                          c("Unimpaired", "MCI", "Dementia", "Other"), 
-                          seq(1, B)), 1, paste, collapse = ":"))) %>% 
-      set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
-                                          "figure_label"]))
-    
-    mu_chain <-
-      matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>%
-      set_colnames(gsub(" ", "", 
-                        apply(expand.grid(
-                          c("Unimpaired", "MCI", "Dementia", "Other"),
-                          seq(1:nrow(cross_class_label)), seq(1, B)), 1, paste, 
-                          collapse = ":"))) %>% 
-      set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
-                                          "figure_label"]))
+      #---- chain storage ----
+      model_gamma_chain <- 
+        matrix(nrow = sum(length(unimpaired_preds), length(other_preds), 
+                          length(mci_preds)), ncol = B) %>% as.data.frame() %>%
+        mutate("model" = c(rep("unimpaired", length(unimpaired_preds)), 
+                           rep("other", length(other_preds)), 
+                           rep("mci", length(mci_preds))), 
+               "pred" = c(unimpaired_preds, mci_preds, other_preds))
+      
+      latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
+        set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
+      
+      pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
+        set_colnames(gsub(" ", "", 
+                          apply(expand.grid(
+                            c("Unimpaired", "MCI", "Dementia", "Other"), 
+                            seq(1, B)), 1, paste, collapse = ":"))) %>% 
+        set_rownames(cross_class_label$cell_ID)
+      
+      Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
+        set_colnames(gsub(" ", "", 
+                          apply(expand.grid(
+                            c("Unimpaired", "MCI", "Dementia", "Other"), 
+                            seq(1, B)), 1, paste, collapse = ":"))) %>% 
+        set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
+                                            "figure_label"]))
+      
+      mu_chain <-
+        matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>%
+        set_colnames(gsub(" ", "", 
+                          apply(expand.grid(
+                            c("Unimpaired", "MCI", "Dementia", "Other"),
+                            seq(1:nrow(cross_class_label)), seq(1, B)), 1, paste, 
+                            collapse = ":"))) %>% 
+        set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
+                                            "figure_label"]))
     
     #---- start sampling ----
     for(b in 1:B){
