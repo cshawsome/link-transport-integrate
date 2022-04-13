@@ -6,6 +6,7 @@ generate_synthetic <-
            mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
            kappa_0, contrasts_matrix, path_to_analyses_folder, 
            path_to_figures_folder){
+    
     #---- check subfolders for results ----
     if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/run_", 
                           run_number))){
