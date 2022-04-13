@@ -7,18 +7,21 @@ p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack",
        "locfit", "MBSP")
 
 #---- source functions ----
+source(here::here("functions", "read_results.R"))
 source(here::here("simulation_study", "functions", 
                   "generate_synthetic_function.R"))
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-#---- **dataset to copy ----
-#dataset we're trying to create synthetic versions of
-dataset_to_copy <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/synthetic_data/HCAP/", 
-                  "HCAP_synthetic_normal_250_unimpaired.csv")) %>% 
-  mutate("(Intercept)" = 1)
+#subset for now
+synthetic_data_paths <- 
+  synthetic_data_paths[
+    str_detect(synthetic_data_paths, 
+               "synthetic_normal_500_ADAMS|synthetic_normal_1000_ADAMS")]
+
+
+synthetic_data_list <- lapply(synthetic_data_paths, read_results)
 
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
