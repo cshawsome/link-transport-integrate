@@ -150,9 +150,6 @@ generate_synthetic <-
         if(nrow(subset) == 0){
           next
         } else{
-          max_index <- 
-            colnames(alpha_0_dist)[str_detect(
-              colnames(alpha_0_dist), "[0-9]+")] %>% as.numeric() %>% max()
           
           random_draw <- sample(seq(1, max_index), size = 1)
           posterior_first_count <- 
