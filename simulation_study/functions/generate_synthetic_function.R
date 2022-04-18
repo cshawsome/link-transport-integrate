@@ -5,7 +5,7 @@ generate_synthetic <-
            unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
            mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
            kappa_0, contrasts_matrix, path_to_analyses_folder, 
-           data_only = FALSE){
+           path_to_figures_folder, data_only = FALSE){
     
     #---- check subfolders for results ----
     if(!data_only){
@@ -27,11 +27,9 @@ generate_synthetic <-
     B = warm_up + synthetic_sets
     
     #---- count contingency cells ----
-    cross_class_label <- dataset_to_copy %>% 
-      dplyr::select(all_of(categorical_vars)) %>% 
+    cross_class_label <- dataset_to_copy[, categorical_vars] %>%
       unite("cell_ID", everything(), sep = "") %>% table() %>% 
-      as.data.frame() %>% set_colnames(c("cell_ID", "count")) %>% 
-      left_join(cell_ID_key)
+      as.data.frame() %>% set_colnames(c("cell_ID", "count"))
     
     #---- chain storage ----
     model_gamma_chain <- 
@@ -50,26 +48,27 @@ generate_synthetic <-
       set_rownames(cross_class_label$cell_ID)
     
     mu_chain <-
-      matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>%
+      matrix(nrow = length(continuous_vars), 
+             ncol = 4*nrow(cross_class_label)*B) %>%
       set_colnames(gsub(" ", "", 
                         apply(expand.grid(
                           c("Unimpaired", "MCI", "Dementia", "Other"),
                           seq(1:nrow(cross_class_label)), seq(1, B)), 1, paste, 
                           collapse = ":"))) %>% 
-      set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
-                                          "figure_label"]))
+      set_rownames(unlist(variable_labels[variable_labels$data_label %in% 
+                                            continuous_vars, "figure_label"]))
     
     if(!data_only){
       latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
         set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
       
-      Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
+      Sigma_chain <- matrix(nrow = length(continuous_vars), ncol = 4*B) %>%
         set_colnames(gsub(" ", "", 
                           apply(expand.grid(
                             c("Unimpaired", "MCI", "Dementia", "Other"), 
                             seq(1, B)), 1, paste, collapse = ":"))) %>% 
-        set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
-                                            "figure_label"]))
+        set_rownames(unlist(variable_labels[variable_labels$data_label %in% 
+                                              continuous_vars, "figure_label"]))
     }
     
     #---- max index ----
@@ -156,7 +155,7 @@ generate_synthetic <-
             alpha_0_dist[which(alpha_0_dist$group == class), 
                          as.character(random_draw)]*nrow(subset)
           
-          posterior_second_count <- subset %>% dplyr::select(all_of(W)) %>% 
+          posterior_second_count <- subset[, categorical_vars] %>% 
             unite("cell_ID", sep = "") %>% table() 
           
           if(length(posterior_second_count) < nrow(cell_ID_key)){
@@ -217,8 +216,8 @@ generate_synthetic <-
           }
           
           #---- **Mm ----
-          continuous_covariates <- subset %>% dplyr::select(all_of(Z)) %>% 
-            as.matrix
+          continuous_covariates <- subset %>% 
+            dplyr::select(all_of(continuous_vars)) %>% as.matrix
           
           V_inv <- t(A) %*% UtU %*% A 
           random_draw <- sample(seq(1, max_index), size = 1)
@@ -260,8 +259,8 @@ generate_synthetic <-
           #---- ****compute mu ----
           mu_chain[, paste0(class, ":", 
                             seq(1, nrow(cross_class_label)), ":", b)] <- 
-            t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), ncol = length(Z), 
-                           byrow = FALSE))
+            t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), 
+                           ncol = length(continuous_vars), byrow = FALSE))
           
           #---- ****draw data ----
           #reformat contingency table
@@ -300,7 +299,8 @@ generate_synthetic <-
           
           #---- ****replace synthetic data ----
           dataset_to_copy[which(dataset_to_copy$HHIDPN %in% subset$HHIDPN),
-                          c(W, Z)] <- subset[, c(W, Z)]
+                          c(categorical_vars, continuous_vars)] <- 
+            subset[, c(categorical_vars, continuous_vars)]
         }
       }
       
@@ -314,7 +314,7 @@ generate_synthetic <-
     }
     
     if(data_only){
-      return(data_list)
+      return(dataset_list)
     } else{
       saveRDS(dataset_list, 
               file = paste0(path_to_analyses_folder, "synthetic_data/run_",
@@ -416,9 +416,11 @@ generate_synthetic <-
                      values_to = "variance") %>% 
         mutate_at("Run", as.numeric) %>% mutate_if(is.character, as.factor) 
       
-      Sigma_chain_plot <- ggplot(data = Sigma_chain_data, 
-                                 aes(x = Run, y = variance, colour = Z)) +       
-        geom_line(aes(group = Z)) + geom_vline(xintercept = warm_up, size = 1) +
+      Sigma_chain_plot <- 
+        ggplot(data = Sigma_chain_data, 
+               aes(x = Run, y = variance, colour = continuous_vars)) +       
+        geom_line(aes(group = continuous_vars)) + 
+        geom_vline(xintercept = warm_up, size = 1) +
         xlab("Run") + ylab("Variance") +  
         scale_color_manual(values = 
                              rev(colorRampPalette(wes_palette("Darjeeling1"))(
@@ -455,7 +457,8 @@ generate_synthetic <-
         xlab("Run") + ylab("mu") + geom_vline(xintercept = warm_up, size = 1) + 
         scale_color_manual(values = unique(mu_chain_data$Color)) +
         scale_x_continuous(breaks = seq(0, B, by = 100)) + 
-        facet_grid(rows = vars(factor(Z)), cols = vars(factor(cell_name)), 
+        facet_grid(rows = vars(factor(continuous_vars)), 
+                   cols = vars(factor(cell_name)), 
                    scales = "free") + theme_bw() + 
         theme(legend.position = "bottom")
       
