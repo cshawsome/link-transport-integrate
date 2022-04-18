@@ -93,7 +93,7 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
 #over 30 mins for n = 8000 dataset
 set.seed(20220329)
 start <- Sys.time()
-generate_synthetic(warm_up = 100, run_number = 1, 
+test <- generate_synthetic(warm_up = 100, run_number = 1, 
                    starting_props = c(0.25, 0.25, 0.25, 0.25),
                    unimpaired_preds, other_preds, mci_preds, 
                    categorical_vars = W, continuous_vars = Z, 
@@ -114,7 +114,7 @@ generate_synthetic(warm_up = 100, run_number = 1,
                      paste0(path_to_box,
                             "figures/simulation_study/HCAP_HRS_", 
                             unique(synthetic_data_list[[1]][, "dataset_name"]), 
-                            "/"))
+                            "/"), data_only = TRUE)
 end <- Sys.time() - start
 
 #---- ****code timing ----
