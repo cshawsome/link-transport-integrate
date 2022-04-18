@@ -79,6 +79,7 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
   set_names(c("Unimpaired", "MCI", "Dementia", "Other"))
 
 #---- **run checks ----
+#1.7 days for all checks to run in serial
 set.seed(20220329)
 start <- Sys.time()
 

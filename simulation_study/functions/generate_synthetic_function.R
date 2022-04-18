@@ -5,26 +5,19 @@ generate_synthetic <-
            unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
            mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
            kappa_0, contrasts_matrix, path_to_analyses_folder, 
-           path_to_figures_folder, data_only = FALSE){
+           data_only = FALSE){
+
     #---- check subfolders for results ----
-    if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                          run_number))){
-      dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                        run_number), recursive = TRUE)
-      
-    }
-    
     if(!data_only){
-      if(!dir.exists(paste0(path_to_figures_folder, "diagnostics/run_", 
+      if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/run_", 
                             run_number))){
-        dir.create(paste0(path_to_figures_folder, "diagnostics/run_", 
+        dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
                           run_number), recursive = TRUE)
       }
-      
-      if(!dir.exists(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
+      if(!dir.exists(paste0(path_to_figures_folder, "diagnostics/run_", 
                             run_number))){
-        dir.create(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
-                          run_number), recursive = TRUE)
+        dir.create(paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
+                   recursive = TRUE)
       }
     }
     
@@ -77,6 +70,14 @@ generate_synthetic <-
       set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
                                           "figure_label"]))
     
+    #---- max index ----
+    indices <- 
+      colnames(priors_beta)[str_detect(colnames(priors_beta), "[0-9]+")] 
+    
+    max_index <- as.numeric(indices[length(indices)])
+    
+    rm(indices)
+    
     #---- start sampling ----
     for(b in 1:B){
       if(b == 1){
@@ -87,16 +88,11 @@ generate_synthetic <-
       } else{
         #---- **latent class gammas ----
         for(model in c("unimpaired", "other", "mci")){
-          max_index <- 
-            colnames(priors_beta)[str_detect(
-              colnames(priors_beta), "[0-9]+")] %>% as.numeric() %>% max()
-          
           random_draw <- sample(seq(1, max_index), size = 1)
           
-          prior_betas <- 
-            as.vector(get(paste0(model, "_betas"))[, as.character(random_draw)])
+          prior_betas <- get(paste0(model, "_betas"))[, random_draw]
           prior_cov <- 
-            matrix(unlist(get(paste0(model, "_cov"))[, as.character(random_draw)]), 
+            matrix(unlist(get(paste0(model, "_cov"))[, random_draw]), 
                    nrow = nrow(prior_betas))
           
           model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
@@ -131,9 +127,10 @@ generate_synthetic <-
                   dataset_to_copy$group_num %in% c(0, 4) ~ "Dementia")
       
       #---- ****group: summary ----
-      summary <- table(dataset_to_copy$Group)/sum(table(dataset_to_copy$Group)) 
+      summary <- table(dataset_to_copy$Group)/nrow(dataset_to_copy) 
       if(length(summary) < 4){
-        missing <- which(!seq(1, 4) %in% names(summary))
+        missing <- which(!c("Unimpaired", "Other", "MCI", "Dementia") %in% 
+                           names(summary))
         new_summary <- vector(length = 4)
         new_summary[missing] <- 0
         new_summary[-missing] <- summary
@@ -147,9 +144,6 @@ generate_synthetic <-
         if(nrow(subset) == 0){
           next
         } else{
-          max_index <- 
-            colnames(alpha_0_dist)[str_detect(
-              colnames(alpha_0_dist), "[0-9]+")] %>% as.numeric() %>% max()
           
           random_draw <- sample(seq(1, max_index), size = 1)
           posterior_first_count <- 
@@ -474,44 +468,42 @@ generate_synthetic <-
   }
 
 # #---- test function ----
-# warm_up = 2 
+# warm_up = 100
 # run_number = 1 
 # starting_props = c(0.25, 0.25, 0.25, 0.25)
-# unimpaired_preds = unimpaired_preds
-# other_preds = other_preds
-# mci_preds = mci_preds
-# categorical_vars = W 
+# unimpaired_preds
+# other_preds
+# mci_preds 
+# categorical_vars = W
 # continuous_vars = Z 
-# id_var = "HHIDPN" 
-# variable_labels = variable_labels
-# dataset_to_copy = dataset_to_copy
-# cell_ID_key = cell_ID_key
-# color_palette = color_palette
-# num_synthetic = 10 
-# unimpaired_betas = unimpaired_betas
-# unimpaired_cov = unimpaired_cov
-# other_betas = other_betas
-# other_cov = other_cov
-# mci_betas = mci_betas
-# mci_cov = mci_cov
-# alpha_0_dist = alpha_0_dist 
-# prior_Sigma = prior_Sigma
-# prior_V_inv = prior_V_inv
-# prior_beta = priors_beta
-# nu_0 = nu_0
-# kappa_0 = kappa_0 
+# id_var = "HHIDPN"
+# variable_labels 
+# dataset_to_copy = synthetic_data_list[[4]] %>% 
+#   group_by(married_partnered) %>% 
+#   slice_sample(prop = 0.5) %>% 
+#   mutate("(Intercept)" = 1) %>% ungroup()
+# cell_ID_key 
+# color_palette
+# num_synthetic = 1000
+# unimpaired_betas 
+# unimpaired_cov
+# other_betas 
+# other_cov
+# mci_betas
+# mci_cov 
+# alpha_0_dist
+# prior_Sigma
+# prior_V_inv
+# prior_beta
+# nu_0 
+# kappa_0
 # contrasts_matrix = A
 # path_to_analyses_folder = 
-#   paste0(path_to_box, "analyses/simulation_study/HCAP_normal_250_unimpaired/") 
+#   paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
+#          unique(synthetic_data_list[[4]][, "dataset_name"]), 
+#          "/") 
 # path_to_figures_folder = 
-#   paste0(path_to_box, "figures/simulation_study/HCAP_normal_250_unimpaired/") 
-
-
-
-
-
-
-
-
-
-
+#   paste0(path_to_box,
+#          "figures/simulation_study/HCAP_HRS_", 
+#          unique(synthetic_data_list[[4]][, "dataset_name"]), 
+#          "/")

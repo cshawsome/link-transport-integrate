@@ -7,18 +7,21 @@ p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack",
        "locfit", "MBSP")
 
 #---- source functions ----
+source(here::here("functions", "read_results.R"))
 source(here::here("simulation_study", "functions", 
                   "generate_synthetic_function.R"))
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-#---- **dataset to copy ----
-#dataset we're trying to create synthetic versions of
-dataset_to_copy <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/synthetic_data/HCAP/", 
-                  "HCAP_synthetic_normal_250_unimpaired.csv")) %>% 
-  mutate("(Intercept)" = 1)
+#subset for now
+synthetic_data_paths <- 
+  synthetic_data_paths[
+    str_detect(synthetic_data_paths, 
+               "synthetic_normal_500_ADAMS|synthetic_normal_1000_ADAMS")]
+
+
+synthetic_data_list <- lapply(synthetic_data_paths, read_results)
 
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
@@ -35,7 +38,8 @@ color_palette <- read_csv(here::here("color_palette.csv"))
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
-Z <- colnames(dataset_to_copy)[str_detect(colnames(dataset_to_copy), "_Z")]
+Z <- colnames(synthetic_data_list[[1]])[str_detect(
+  colnames(synthetic_data_list[[1]]), "_Z")]
 
 #---- specifying priors ----
 #---- **latent classes ----
@@ -74,22 +78,31 @@ nu_0 <- 65
 kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>% 
   set_names(c("Unimpaired", "MCI", "Dementia", "Other"))
 
-#---- generate synthetic data ----
-for(sim in 1:5){
-  generate_synthetic(warm_up = 2, run_number = paste0("sim_", sim), 
-                     starting_props = c(0.25, 0.25, 0.25, 0.25),
-                     unimpaired_preds, other_preds, mci_preds, 
-                     categorical_vars = W, continuous_vars = Z, 
-                     id_var = "HHIDPN", variable_labels, dataset_to_copy, 
-                     cell_ID_key, color_palette, num_synthetic = 10, 
-                     unimpaired_betas, unimpaired_cov, other_betas, other_cov, 
-                     mci_betas, mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
-                     prior_beta, nu_0, kappa_0, contrasts_matrix = A,
-                     path_to_analyses_folder = 
-                       paste0(path_to_box, "analyses/simulation_study/", 
-                              "HCAP_normal_250_unimpaired/"), 
-                     path_to_figures_folder = 
-                       paste0(path_to_box, "figures/simulation_study/", 
-                              "HCAP_normal_250_unimpaired/"))
+
+#---- generate synthetic data function ----
+simulate_function <- function(num_sims, warm_up, starting_props, 
+                              unimpaired_preds, other_preds, mci_preds, W, Z, 
+                              id_var, id_var, variable_labels, dataset_to_copy, 
+                              cell_ID_key, color_palette, num_synthetic, 
+                              unimpaired_betas, unimpaired_cov, other_betas, 
+                              other_cov, mci_betas, mci_cov, alpha_0_dist, 
+                              prior_Sigma, prior_V_inv, prior_beta, nu_0, 
+                              kappa_0, contrasts_matrix = A,
+                              path_to_analyses_folder, path_to_figures_folder){
+  for(sim in 1:num_sims){
+    generate_synthetic(warm_up, run_number = paste0("sim_", sim), 
+                       starting_props, unimpaired_preds, other_preds, mci_preds, 
+                       categorical_vars = W, continuous_vars = Z, 
+                       id_var, variable_labels, dataset_to_copy, 
+                       cell_ID_key, color_palette, num_synthetic, 
+                       unimpaired_betas, unimpaired_cov, other_betas, other_cov, 
+                       mci_betas, mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
+                       prior_beta, nu_0, kappa_0, contrasts_matrix = A,
+                       path_to_analyses_folder, path_to_figures_folder)
+  }
 }
+
+#---- run sims ----
+set.seed(20200412)
+
 
