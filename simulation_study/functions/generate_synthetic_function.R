@@ -527,3 +527,5 @@ path_to_figures_folder =
          "figures/simulation_study/HCAP_HRS_",
          unique(synthetic_data_list[[4]][, "dataset_name"]),
          "/")
+data_only = TRUE
+
