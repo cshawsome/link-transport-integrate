@@ -216,8 +216,7 @@ generate_synthetic <-
           }
           
           #---- **Mm ----
-          continuous_covariates <- subset %>% 
-            dplyr::select(all_of(continuous_vars)) %>% as.matrix
+          continuous_covariates <- subset[, continuous_vars] %>% as.matrix
           
           V_inv <- t(A) %*% UtU %*% A 
           random_draw <- sample(seq(1, max_index), size = 1)
