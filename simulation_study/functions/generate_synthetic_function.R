@@ -42,16 +42,16 @@ generate_synthetic <-
                          rep("mci", length(mci_preds))), 
              "pred" = c(unimpaired_preds, mci_preds, other_preds))
     
+    pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
+      set_colnames(gsub(" ", "", 
+                        apply(expand.grid(
+                          c("Unimpaired", "MCI", "Dementia", "Other"), 
+                          seq(1, B)), 1, paste, collapse = ":"))) %>% 
+      set_rownames(cross_class_label$cell_ID)
+    
     if(!data_only){
       latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
         set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
-      
-      pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
-        set_colnames(gsub(" ", "", 
-                          apply(expand.grid(
-                            c("Unimpaired", "MCI", "Dementia", "Other"), 
-                            seq(1, B)), 1, paste, collapse = ":"))) %>% 
-        set_rownames(cross_class_label$cell_ID)
       
       Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
         set_colnames(gsub(" ", "", 
@@ -189,10 +189,8 @@ generate_synthetic <-
               alpha_0_dist[which(alpha_0_dist$group == class), 
                            as.character(random_draw)]*nrow(subset)
             
-            posterior_count <- posterior_first_count +
-              subset %>% dplyr::select(all_of(W)) %>% 
-              unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-              dplyr::select("Freq") %>% unlist()
+            posterior_count <- 
+              posterior_first_count + posterior_second_count
             
             pi_chain[, paste0(class, ":", b)] <- 
               MCMCpack::rdirichlet(1, 
