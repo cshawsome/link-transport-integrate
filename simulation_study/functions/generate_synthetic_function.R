@@ -6,7 +6,7 @@ generate_synthetic <-
            mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
            kappa_0, contrasts_matrix, path_to_analyses_folder, 
            data_only = FALSE){
-
+    
     #---- check subfolders for results ----
     if(!data_only){
       if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/run_", 
@@ -16,8 +16,8 @@ generate_synthetic <-
       }
       if(!dir.exists(paste0(path_to_figures_folder, "diagnostics/run_", 
                             run_number))){
-        dir.create(paste0(path_to_figures_folder, "diagnostics/run_", run_number), 
-                   recursive = TRUE)
+        dir.create(paste0(path_to_figures_folder, "diagnostics/run_", 
+                          run_number), recursive = TRUE)
       }
     }
     
@@ -42,33 +42,35 @@ generate_synthetic <-
                          rep("mci", length(mci_preds))), 
              "pred" = c(unimpaired_preds, mci_preds, other_preds))
     
-    latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
-      set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
-    
-    pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
-      set_colnames(gsub(" ", "", 
-                        apply(expand.grid(
-                          c("Unimpaired", "MCI", "Dementia", "Other"), 
-                          seq(1, B)), 1, paste, collapse = ":"))) %>% 
-      set_rownames(cross_class_label$cell_ID)
-    
-    Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
-      set_colnames(gsub(" ", "", 
-                        apply(expand.grid(
-                          c("Unimpaired", "MCI", "Dementia", "Other"), 
-                          seq(1, B)), 1, paste, collapse = ":"))) %>% 
-      set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
-                                          "figure_label"]))
-    
-    mu_chain <-
-      matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>%
-      set_colnames(gsub(" ", "", 
-                        apply(expand.grid(
-                          c("Unimpaired", "MCI", "Dementia", "Other"),
-                          seq(1:nrow(cross_class_label)), seq(1, B)), 1, paste, 
-                          collapse = ":"))) %>% 
-      set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
-                                          "figure_label"]))
+    if(!data_only){
+      latent_class_chain <- matrix(nrow = 4, ncol = B) %>% 
+        set_rownames(c("Unimpaired", "Other", "MCI", "Dementia"))
+      
+      pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
+        set_colnames(gsub(" ", "", 
+                          apply(expand.grid(
+                            c("Unimpaired", "MCI", "Dementia", "Other"), 
+                            seq(1, B)), 1, paste, collapse = ":"))) %>% 
+        set_rownames(cross_class_label$cell_ID)
+      
+      Sigma_chain <- matrix(nrow = length(Z), ncol = 4*B) %>%
+        set_colnames(gsub(" ", "", 
+                          apply(expand.grid(
+                            c("Unimpaired", "MCI", "Dementia", "Other"), 
+                            seq(1, B)), 1, paste, collapse = ":"))) %>% 
+        set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
+                                            "figure_label"]))
+      
+      mu_chain <-
+        matrix(nrow = length(Z), ncol = 4*nrow(cross_class_label)*B) %>%
+        set_colnames(gsub(" ", "", 
+                          apply(expand.grid(
+                            c("Unimpaired", "MCI", "Dementia", "Other"),
+                            seq(1:nrow(cross_class_label)), seq(1, B)), 1, paste, 
+                            collapse = ":"))) %>% 
+        set_rownames(unlist(variable_labels[variable_labels$data_label %in% Z, 
+                                            "figure_label"]))
+    }
     
     #---- max index ----
     indices <- 
@@ -97,6 +99,7 @@ generate_synthetic <-
           
           model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
             mvrnorm(n = 1, mu = unlist(prior_betas), Sigma = prior_cov)
+          
         }
         
         #---- ****group membership ----
@@ -120,23 +123,27 @@ generate_synthetic <-
         }
       }
       
+      dataset_to_copy[which(dataset_to_copy$group_num == 0), "group_num"] <- 4
+      
       dataset_to_copy[, "Group"] <- 
         case_when(dataset_to_copy$group_num == 1 ~ "Unimpaired", 
                   dataset_to_copy$group_num == 2 ~ "Other", 
                   dataset_to_copy$group_num == 3 ~ "MCI", 
-                  dataset_to_copy$group_num %in% c(0, 4) ~ "Dementia")
+                  dataset_to_copy$group_num == 4 ~ "Dementia")
       
       #---- ****group: summary ----
-      summary <- table(dataset_to_copy$Group)/nrow(dataset_to_copy) 
+      summary <- table(dataset_to_copy$group_num)/nrow(dataset_to_copy) 
+      
       if(length(summary) < 4){
-        missing <- which(!c("Unimpaired", "Other", "MCI", "Dementia") %in% 
-                           names(summary))
+        missing <- which(!seq(1, 4) %in% names(summary))
         new_summary <- vector(length = 4)
         new_summary[missing] <- 0
         new_summary[-missing] <- summary
         latent_class_chain[, b] <- new_summary 
       } else{
-        latent_class_chain[, b] <- summary 
+        if(!data_only){
+          latent_class_chain[, b] <- summary 
+        }
       }
       
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
@@ -144,17 +151,24 @@ generate_synthetic <-
         if(nrow(subset) == 0){
           next
         } else{
-          
           random_draw <- sample(seq(1, max_index), size = 1)
           posterior_first_count <- 
             alpha_0_dist[which(alpha_0_dist$group == class), 
                          as.character(random_draw)]*nrow(subset)
           
-          posterior_count <- posterior_first_count +
-            subset %>% dplyr::select(all_of(W)) %>% 
-            unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-            dplyr::select("Freq") %>% unlist()
+          posterior_second_count <- subset %>% dplyr::select(all_of(W)) %>% 
+            unite("cell_ID", sep = "") %>% table() 
           
+          if(length(posterior_second_count) < nrow(cell_ID_key)){
+            missing <- 
+              which(!cell_ID_key$cell_ID %in% names(posterior_second_count))
+            new_counts <- vector(length = nrow(cell_ID_key))
+            new_counts[missing] <- 0
+            new_counts[-missing] <- posterior_second_count
+          }
+          
+          posterior_count <- posterior_first_count + posterior_second_count
+            
           #---- **p(contingency table cell) ----
           pi_chain[, paste0(class, ":", b)] <- 
             MCMCpack::rdirichlet(1, alpha = as.numeric(unlist(posterior_count)))
@@ -467,43 +481,43 @@ generate_synthetic <-
                             "run_", run_number, "/mu_chain_data.csv"))
   }
 
-# #---- test function ----
-# warm_up = 100
-# run_number = 1 
-# starting_props = c(0.25, 0.25, 0.25, 0.25)
-# unimpaired_preds
-# other_preds
-# mci_preds 
-# categorical_vars = W
-# continuous_vars = Z 
-# id_var = "HHIDPN"
-# variable_labels 
-# dataset_to_copy = synthetic_data_list[[4]] %>% 
-#   group_by(married_partnered) %>% 
-#   slice_sample(prop = 0.5) %>% 
-#   mutate("(Intercept)" = 1) %>% ungroup()
-# cell_ID_key 
-# color_palette
-# num_synthetic = 1000
-# unimpaired_betas 
-# unimpaired_cov
-# other_betas 
-# other_cov
-# mci_betas
-# mci_cov 
-# alpha_0_dist
-# prior_Sigma
-# prior_V_inv
-# prior_beta
-# nu_0 
-# kappa_0
-# contrasts_matrix = A
-# path_to_analyses_folder = 
-#   paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
-#          unique(synthetic_data_list[[4]][, "dataset_name"]), 
-#          "/") 
-# path_to_figures_folder = 
-#   paste0(path_to_box,
-#          "figures/simulation_study/HCAP_HRS_", 
-#          unique(synthetic_data_list[[4]][, "dataset_name"]), 
-#          "/")
+#---- test function ----
+warm_up = 100
+run_number = 1
+starting_props = c(0.25, 0.25, 0.25, 0.25)
+unimpaired_preds
+other_preds
+mci_preds
+categorical_vars = W
+continuous_vars = Z
+id_var = "HHIDPN"
+variable_labels
+dataset_to_copy = synthetic_data_list[[4]] %>%
+  group_by(married_partnered) %>%
+  slice_sample(prop = 0.5) %>%
+  mutate("(Intercept)" = 1) %>% ungroup()
+cell_ID_key
+color_palette
+num_synthetic = 1000
+unimpaired_betas
+unimpaired_cov
+other_betas
+other_cov
+mci_betas
+mci_cov
+alpha_0_dist
+prior_Sigma
+prior_V_inv
+prior_beta
+nu_0
+kappa_0
+contrasts_matrix = A
+path_to_analyses_folder =
+  paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_",
+         unique(synthetic_data_list[[4]][, "dataset_name"]),
+         "/")
+path_to_figures_folder =
+  paste0(path_to_box,
+         "figures/simulation_study/HCAP_HRS_",
+         unique(synthetic_data_list[[4]][, "dataset_name"]),
+         "/")
