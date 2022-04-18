@@ -91,6 +91,12 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
 #XX mins for n = 2000 dataset
 #XX mins for n = 4000 dataset
 #over 30 mins for n = 8000 dataset
+#
+#Just data generation
+#n = 1000 dataset (1.6 mins laptop)
+#XX mins for n = 2000 dataset
+#XX mins for n = 4000 dataset
+#over 30 mins for n = 8000 dataset
 set.seed(20220329)
 start <- Sys.time()
 test <- generate_synthetic(warm_up = 100, run_number = 1, 
@@ -98,7 +104,7 @@ test <- generate_synthetic(warm_up = 100, run_number = 1,
                    unimpaired_preds, other_preds, mci_preds, 
                    categorical_vars = W, continuous_vars = Z, 
                    id_var = "HHIDPN", variable_labels, 
-                   dataset_to_copy = synthetic_data_list[[1]] %>% 
+                   dataset_to_copy = synthetic_data_list[[2]] %>% 
                      group_by(married_partnered) %>% 
                      slice_sample(prop = 0.5) %>% 
                      mutate("(Intercept)" = 1) %>% ungroup(), cell_ID_key, 
@@ -108,12 +114,12 @@ test <- generate_synthetic(warm_up = 100, run_number = 1,
                    kappa_0, contrasts_matrix = A,
                    path_to_analyses_folder = 
                      paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
-                            unique(synthetic_data_list[[1]][, "dataset_name"]), 
+                            unique(synthetic_data_list[[2]][, "dataset_name"]), 
                             "/"), 
                    path_to_figures_folder = 
                      paste0(path_to_box,
                             "figures/simulation_study/HCAP_HRS_", 
-                            unique(synthetic_data_list[[1]][, "dataset_name"]), 
+                            unique(synthetic_data_list[[2]][, "dataset_name"]), 
                             "/"), data_only = TRUE)
 end <- Sys.time() - start
 
@@ -141,7 +147,8 @@ profvis::profvis(
                        paste0(path_to_box,
                               "figures/simulation_study/HCAP_HRS_", 
                               unique(synthetic_data_list[[1]][, "dataset_name"]), 
-                              "/")))
+                              "/"), 
+                     data_only = TRUE))
 
 
 #---- **test 2: parallel ----
