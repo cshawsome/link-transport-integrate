@@ -47,6 +47,8 @@ get_props <- function(data, W){
 imputation_props <- lapply(prior_imputed_clean, get_props, W) %>% 
   reduce(left_join, by = c("cell_ID", "name")) %>% 
   set_colnames(c("cell_ID", "group", seq(1, length(prior_imputed_clean)))) %>% 
+  relocate("cell_ID", .after = last_col()) %>% 
+  relocate("group", .after = "cell_ID") %>%
   write_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
                    "imputation_cell_props.csv"))
 
