@@ -41,17 +41,15 @@ get_props <- function(data, W){
   counts %<>% 
     left_join(., counts %>% group_by(name) %>% summarize_at("Freq", sum), 
               by = "name") %>% mutate("props" = Freq.x/Freq.y) %>% 
-    dplyr::select(-contains("Freq"))
+    dplyr::select(-contains("Freq")) %>% group_by(name) %>% group_split() %>% 
+    set_names(c("Dementia", "MCI", "Other", "Unimpaired"))
 }
 
-imputation_props <- lapply(prior_imputed_clean, get_props, W) %>% 
-  reduce(left_join, by = c("cell_ID", "name")) %>% 
-  set_colnames(c("cell_ID", "group", seq(1, length(prior_imputed_clean)))) %>% 
-  relocate("cell_ID", .after = last_col()) %>% 
-  relocate("group", .after = "cell_ID") %>%
-  write_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                   "imputation_cell_props.csv"))
+imputation_props <- lapply(prior_imputed_clean, get_props, W) %>%
+  saveRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                   "imputation_cell_props"))
 
+#---- NEEDS TO BE REFACTORED ----
 #---- plots ----
 #---- **read in data ----
 #---- ****cell ID key ----
