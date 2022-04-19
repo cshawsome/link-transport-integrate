@@ -249,8 +249,7 @@ generate_synthetic <-
             #---- ****compute mu ----
             mu_chain[, paste0(class, ":", 
                               seq(1, nrow(cross_class_label)), ":", b)] <- 
-              t(A %*% matrix(beta_Sigma_Y, nrow = ncol(A), 
-                             ncol = length(continuous_vars), byrow = FALSE))
+              t(A %*% beta_Sigma_Y)
             
             #---- ****draw data ----
             #reformat contingency table
