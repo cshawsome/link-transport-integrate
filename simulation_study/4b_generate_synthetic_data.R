@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "MBSP", "wesanderson", "future.apply")
+       "locfit", "MBSP", "wesanderson", "future.apply", "vroom")
 
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
@@ -51,27 +51,27 @@ Z <- colnames(synthetic_data_list[[1]])[str_detect(
 #---- **latent classes ----
 for(group in c("unimpaired", "mci", "other")){
   assign(paste0(group, "_betas"), 
-         read_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                         "latent_class_", group, "_betas.csv")))
+         vroom(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                         "latent_class_", group, "_betas.csv"), delim = ","))
   assign(paste0(group, "_cov"), 
-         read_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                         "latent_class_", group, "_cov.csv")))
+         vroom(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                         "latent_class_", group, "_cov.csv"), delim = ","))
   
   assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
 }
 
 #---- ****contingency cells ----
 alpha_0_dist <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                  "imputation_cell_props.csv")) 
+  vroom(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                  "imputation_cell_props.csv"), delim = ",") 
 
 #--- ****beta and sigma ----
-priors_beta <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
-                               "prior_data/priors_beta.csv")) 
-prior_V_inv <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
-                               "prior_data/priors_V_inv.csv"))  
-prior_Sigma <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
-                               "prior_data/priors_Sigma.csv")) 
+priors_beta <- vroom(paste0(path_to_box, "analyses/simulation_study/",
+                               "prior_data/priors_beta.csv"), delim = ",") 
+prior_V_inv <- vroom(paste0(path_to_box, "analyses/simulation_study/",
+                               "prior_data/priors_V_inv.csv"), delim = ",")  
+prior_Sigma <- vroom(paste0(path_to_box, "analyses/simulation_study/",
+                               "prior_data/priors_Sigma.csv"), delim = ",") 
 
 #---- **contrasts matrix ----
 A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
