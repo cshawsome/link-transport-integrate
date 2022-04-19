@@ -417,8 +417,8 @@ generate_synthetic <-
       
       Sigma_chain_plot <- 
         ggplot(data = Sigma_chain_data, 
-               aes(x = Run, y = variance, colour = continuous_vars)) +       
-        geom_line(aes(group = continuous_vars)) + 
+               aes(x = Run, y = variance, colour = Z)) +       
+        geom_line(aes(group = Z)) + 
         geom_vline(xintercept = warm_up, size = 1) +
         xlab("Run") + ylab("Variance") +  
         scale_color_manual(values = 
@@ -456,7 +456,7 @@ generate_synthetic <-
         xlab("Run") + ylab("mu") + geom_vline(xintercept = warm_up, size = 1) + 
         scale_color_manual(values = unique(mu_chain_data$Color)) +
         scale_x_continuous(breaks = seq(0, B, by = 100)) + 
-        facet_grid(rows = vars(factor(continuous_vars)), 
+        facet_grid(rows = vars(factor(Z)), 
                    cols = vars(factor(cell_name)), 
                    scales = "free") + theme_bw() + 
         theme(legend.position = "bottom")
@@ -500,7 +500,7 @@ generate_synthetic <-
 # continuous_vars = Z
 # id_var = "HHIDPN"
 # variable_labels
-# dataset_to_copy = synthetic_data_list[[4]] %>%
+# dataset_to_copy = synthetic_data_list[[1]] %>%
 #   group_by(married_partnered) %>%
 #   slice_sample(prop = 0.5) %>%
 #   mutate("(Intercept)" = 1) %>% ungroup()
@@ -530,4 +530,4 @@ generate_synthetic <-
 #          unique(synthetic_data_list[[4]][, "dataset_name"]),
 #          "/")
 # data_only = TRUE
-
+# 
