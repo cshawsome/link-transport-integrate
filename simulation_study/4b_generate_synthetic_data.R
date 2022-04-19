@@ -86,35 +86,41 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
 
 #---- code testing ----
 #---- **test 1: serial; one at a time ----
-#n = 500 dataset (XX mins desktop, 3.1 mins laptop); 
-#n = 1000 dataset (2.6 mins desktop, 3.5 mins laptop)
+#n = 500 dataset (XX mins desktop, 1.4 mins laptop); 
+#n = 1000 dataset (XX mins desktop, 1.5 mins laptop)
+#n = 2000 dataset (XX mins laptop)
+#XX mins for n = 4000 dataset
+#over 30 mins for n = 8000 dataset
+#
+#Just data generation
+#n = 1000 dataset (1.6 mins laptop)
 #XX mins for n = 2000 dataset
 #XX mins for n = 4000 dataset
 #over 30 mins for n = 8000 dataset
 set.seed(20220329)
 start <- Sys.time()
-generate_synthetic(warm_up = 100, run_number = 1, 
-                   starting_props = c(0.25, 0.25, 0.25, 0.25),
-                   unimpaired_preds, other_preds, mci_preds, 
-                   categorical_vars = W, continuous_vars = Z, 
-                   id_var = "HHIDPN", variable_labels, 
-                   dataset_to_copy = synthetic_data_list[[1]] %>% 
-                     group_by(married_partnered) %>% 
-                     slice_sample(prop = 0.5) %>% 
-                     mutate("(Intercept)" = 1) %>% ungroup(), cell_ID_key, 
-                   color_palette, num_synthetic = 1000, unimpaired_betas, 
-                   unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
-                   alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
-                   kappa_0, contrasts_matrix = A,
-                   path_to_analyses_folder = 
-                     paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
-                            unique(synthetic_data_list[[1]][, "dataset_name"]), 
-                            "/"), 
-                   path_to_figures_folder = 
-                     paste0(path_to_box,
-                            "figures/simulation_study/HCAP_HRS_", 
-                            unique(synthetic_data_list[[1]][, "dataset_name"]), 
-                            "/"))
+test <- generate_synthetic(warm_up = 100, run_number = 1, 
+                           starting_props = c(0.25, 0.25, 0.25, 0.25),
+                           unimpaired_preds, other_preds, mci_preds, 
+                           categorical_vars = W, continuous_vars = Z, 
+                           id_var = "HHIDPN", variable_labels, 
+                           dataset_to_copy = synthetic_data_list[[2]] %>% 
+                             group_by(married_partnered) %>% 
+                             slice_sample(prop = 0.5) %>% 
+                             mutate("(Intercept)" = 1) %>% ungroup(), cell_ID_key, 
+                           color_palette, num_synthetic = 1000, unimpaired_betas, 
+                           unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
+                           alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
+                           kappa_0, contrasts_matrix = A,
+                           path_to_analyses_folder = 
+                             paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
+                                    unique(synthetic_data_list[[2]][, "dataset_name"]), 
+                                    "/"), 
+                           path_to_figures_folder = 
+                             paste0(path_to_box,
+                                    "figures/simulation_study/HCAP_HRS_", 
+                                    unique(synthetic_data_list[[2]][, "dataset_name"]), 
+                                    "/"), data_only = FALSE)
 end <- Sys.time() - start
 
 #---- ****code timing ----
@@ -125,7 +131,7 @@ profvis::profvis(
                      unimpaired_preds, other_preds, mci_preds, 
                      categorical_vars = W, continuous_vars = Z, 
                      id_var = "HHIDPN", variable_labels, 
-                     dataset_to_copy = synthetic_data_list[[1]] %>% 
+                     dataset_to_copy = synthetic_data_list[[2]] %>% 
                        group_by(married_partnered) %>% 
                        slice_sample(prop = 0.5) %>% 
                        mutate("(Intercept)" = 1) %>% ungroup(), cell_ID_key, 
@@ -135,14 +141,14 @@ profvis::profvis(
                      kappa_0, contrasts_matrix = A,
                      path_to_analyses_folder = 
                        paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
-                              unique(synthetic_data_list[[1]][, "dataset_name"]), 
+                              unique(synthetic_data_list[[2]][, "dataset_name"]), 
                               "/"), 
                      path_to_figures_folder = 
                        paste0(path_to_box,
                               "figures/simulation_study/HCAP_HRS_", 
-                              unique(synthetic_data_list[[1]][, "dataset_name"]), 
-                              "/")))
-
+                              unique(synthetic_data_list[[2]][, "dataset_name"]), 
+                              "/"), 
+                     data_only = TRUE))
 
 #---- **test 2: parallel ----
 set.seed(20220329)
