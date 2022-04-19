@@ -144,8 +144,7 @@ generate_synthetic <-
           } else{
             random_draw <- sample(seq(1, max_index), size = 1)
             posterior_first_count <- 
-              alpha_0_dist[which(alpha_0_dist$group == class), 
-                           random_draw]*nrow(subset)
+              alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
             
             posterior_second_count <- subset[, categorical_vars] %>% 
               unite("cell_ID", sep = "") %>% table() 
@@ -178,8 +177,7 @@ generate_synthetic <-
               random_draw <- sample(seq(1, max_index), size = 1)
               
               posterior_first_count <- 
-                alpha_0_dist[which(alpha_0_dist$group == class), 
-                             random_draw]*nrow(subset)
+                alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
               
               posterior_count <- 
                 posterior_first_count + posterior_second_count
@@ -214,14 +212,13 @@ generate_synthetic <-
             V_inv <- t(A) %*% UtU %*% A 
             random_draw <- sample(seq(1, max_index), size = 1)
             V_0_inv <- 
-              matrix(unlist(prior_V_inv[which(prior_V_inv$group == class), 
-                                        random_draw]), 
-                     nrow = nrow(V_inv), ncol = ncol(V_inv))
+              as.matrix(
+                prior_V_inv[[random_draw]][[class]][, seq(1, ncol(V_inv))])
+              
             beta_0 <- 
-              matrix(unlist(priors_beta[which(priors_beta$group == class), 
-                                        random_draw]), 
-                     nrow = nrow(V_inv),  
-                     ncol = ncol(continuous_covariates))
+              as.matrix(
+                priors_beta[[random_draw]][[
+                  class]][, seq(1, length(continuous_vars))])
             
             M <- solve(V_inv + kappa_0[class]*V_0_inv)
             m <-  t(A) %*% t(U) %*% continuous_covariates - 
@@ -235,9 +232,10 @@ generate_synthetic <-
             
             random_draw <- sample(seq(1, max_index), size = 1)
             Sigma_prior <- 
-              matrix(unlist(prior_Sigma[which(prior_Sigma$group == class), 
-                                        random_draw]), 
-                     nrow = ncol(continuous_covariates))
+              as.matrix(
+                prior_Sigma[[random_draw]][[
+                  class]][, seq(1, length(continuous_vars))])
+              
             sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
                             S = Sigma_prior + ZtZ + third_term)
             
@@ -269,13 +267,13 @@ generate_synthetic <-
               #Z (continuous data)
               if(contingency_table[j, "Count"] == 1){
                 subset[index:(index - 1 + contingency_table[j, "Count"]), 
-                       colnames(sig_Y)] <- 
+                       continuous_vars] <- 
                   t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
                                       mu = mu_chain[, paste0(class, ":", j, ":", b)], 
                                       Sigma = sig_Y)))
               } else{
                 subset[index:(index - 1 + contingency_table[j, "Count"]), 
-                       colnames(sig_Y)] <- 
+                       continuous_vars] <- 
                   mvrnorm(n = contingency_table[j, "Count"],
                           mu = mu_chain[, paste0(class, ":", j, ":", b)], 
                           Sigma = sig_Y)
