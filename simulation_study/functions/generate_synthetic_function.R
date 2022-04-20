@@ -20,6 +20,7 @@ generate_synthetic <-
                           run_number), recursive = TRUE)
       }
     }
+    
     #---- sampling counts ----
     warm_up = warm_up
     synthetic_sets = num_synthetic
@@ -89,7 +90,7 @@ generate_synthetic <-
           prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
           
           model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
-            mvrnorm(n = 1, mu = unlist(prior_betas), Sigma = prior_cov)
+            t(rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov))
         }
         
         #---- ****group membership ----
@@ -266,15 +267,15 @@ generate_synthetic <-
             if(contingency_table[j, "Count"] == 1){
               subset[index:(index - 1 + contingency_table[j, "Count"]), 
                      continuous_vars] <- 
-                t(as.matrix(mvrnorm(n = contingency_table[j, "Count"],
-                                    mu = mu_chain[, paste0(class, ":", j, ":", b)], 
-                                    Sigma = sig_Y)))
+                rmvn(n = contingency_table[j, "Count"],
+                     mu = mu_chain[, paste0(class, ":", j, ":", b)], 
+                     sigma = sig_Y)
             } else{
               subset[index:(index - 1 + contingency_table[j, "Count"]), 
                      continuous_vars] <- 
-                mvrnorm(n = contingency_table[j, "Count"],
-                        mu = mu_chain[, paste0(class, ":", j, ":", b)], 
-                        Sigma = sig_Y)
+                rmvn(n = contingency_table[j, "Count"],
+                     mu = mu_chain[, paste0(class, ":", j, ":", b)], 
+                     sigma = sig_Y)
             }
             
             #W (categorical data)
@@ -478,44 +479,44 @@ generate_synthetic <-
     }
   }
 
-# #---- test function ----
-# warm_up = 100
-# run_number = 1
-# starting_props = c(0.25, 0.25, 0.25, 0.25)
-# unimpaired_preds
-# other_preds
-# mci_preds
-# categorical_vars = W
-# continuous_vars = Z
-# id_var = "HHIDPN"
-# variable_labels
-# dataset_to_copy = synthetic_data_list[[1]] %>%
-#   group_by(married_partnered) %>%
-#   slice_sample(prop = 0.5) %>%
-#   mutate("(Intercept)" = 1) %>% ungroup()
-# cell_ID_key
-# color_palette
-# num_synthetic = 1000
-# unimpaired_betas
-# unimpaired_cov
-# other_betas
-# other_cov
-# mci_betas
-# mci_cov
-# alpha_0_dist
-# prior_Sigma
-# prior_V_inv
-# prior_beta
-# nu_0
-# kappa_0
-# contrasts_matrix = A
-# path_to_analyses_folder =
-#   paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_",
-#          unique(synthetic_data_list[[1]][, "dataset_name"]),
-#          "/")
-# path_to_figures_folder =
-#   paste0(path_to_box,
-#          "figures/simulation_study/HCAP_HRS_",
-#          unique(synthetic_data_list[[1]][, "dataset_name"]),
-#          "/")
-# data_only = FALSE
+#---- test function ----
+warm_up = 100
+run_number = 1
+starting_props = c(0.25, 0.25, 0.25, 0.25)
+unimpaired_preds
+other_preds
+mci_preds
+categorical_vars = W
+continuous_vars = Z
+id_var = "HHIDPN"
+variable_labels
+dataset_to_copy = synthetic_data_list[[1]] %>%
+  group_by(married_partnered) %>%
+  slice_sample(prop = 0.5) %>%
+  mutate("(Intercept)" = 1) %>% ungroup()
+cell_ID_key
+color_palette
+num_synthetic = 1000
+unimpaired_betas
+unimpaired_cov
+other_betas
+other_cov
+mci_betas
+mci_cov
+alpha_0_dist
+prior_Sigma
+prior_V_inv
+prior_beta
+nu_0
+kappa_0
+contrasts_matrix = A
+path_to_analyses_folder =
+  paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_",
+         unique(synthetic_data_list[[1]][, "dataset_name"]),
+         "/")
+path_to_figures_folder =
+  paste0(path_to_box,
+         "figures/simulation_study/HCAP_HRS_",
+         unique(synthetic_data_list[[1]][, "dataset_name"]),
+         "/")
+data_only = TRUE
