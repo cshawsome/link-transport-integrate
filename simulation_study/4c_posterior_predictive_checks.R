@@ -52,23 +52,6 @@ Z <- colnames(synthetic_data_list[[1]])[str_detect(
 A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
   as.matrix()
 
-#---- **test 1 dataset ----
-posterior_predictive_checks(dataset_to_copy = synthetic_data_list[[1]] %>% 
-                              group_by(married_partnered) %>% 
-                              slice_sample(prop = 0.5) %>% 
-                              mutate("(Intercept)" = 1) %>% ungroup() , 
-                            categorical_covariates = W, 
-                            continuous_covariates = Z, contrasts_matrix = A,
-                            cell_ID_key, variable_labels, color_palette,
-                            path_to_analyses_folder = 
-                              paste0(path_to_box, 
-                                     "analyses/simulation_study/HCAP_HRS_", 
-                                     unique(synthetic_data_list[[1]][, "dataset_name"]), "/"), 
-                            path_to_figures_folder = 
-                              paste0(path_to_box,
-                                     "figures/simulation_study/HCAP_HRS_", 
-                                     unique(synthetic_data_list[[1]][, "dataset_name"]), "/"))
-
 #---- posterior predictive checks ----
 set.seed(20220329)
 start <- Sys.time()
