@@ -86,17 +86,18 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
 
 #---- code testing ----
 #---- **test 1: serial; one at a time ----
-#n = 500 dataset (XX mins desktop, 1.4 mins laptop); 
-#n = 1000 dataset (XX mins desktop, 1.5 mins laptop)
-#n = 2000 dataset (XX mins laptop)
-#XX mins for n = 4000 dataset
-#over 30 mins for n = 8000 dataset
+#n = 500 dataset 
+#n = 1000 dataset (XX mins desktop, 1 min laptop)
+#n = 2000 dataset 
+#n = 4000 dataset
+#n = 8000 dataset
 #
 #Just data generation
-#n = 1000 dataset (1.6 mins laptop)
-#XX mins for n = 2000 dataset
-#XX mins for n = 4000 dataset
-#over 30 mins for n = 8000 dataset
+#n = 500 dataset 
+#n = 1000 dataset (0.8 mins laptop)
+#n = 2000 dataset 
+#n = 4000 dataset
+#n = 8000 dataset
 set.seed(20220329)
 start <- Sys.time()
 test <- generate_synthetic(warm_up = 100, run_number = 1, 
