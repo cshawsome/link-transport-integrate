@@ -45,27 +45,27 @@ Z <- colnames(synthetic_data_list[[1]])[str_detect(
 #---- **latent classes ----
 for(group in c("unimpaired", "mci", "other")){
   assign(paste0(group, "_betas"), 
-         read_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                         "latent_class_", group, "_betas.csv")))
+         vroom(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                      "latent_class_", group, "_betas.csv"), delim = ","))
   assign(paste0(group, "_cov"), 
-         read_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                         "latent_class_", group, "_cov.csv")))
+         readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                        "latent_class_", group, "_cov")))
   
   assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
 }
 
 #---- ****contingency cells ----
 alpha_0_dist <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                  "imputation_cell_props.csv")) 
+  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                 "imputation_cell_props")) 
 
 #--- ****beta and sigma ----
-priors_beta <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
-                               "prior_data/priors_beta.csv")) 
-prior_V_inv <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
-                               "prior_data/priors_V_inv.csv"))  
-prior_Sigma <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
-                               "prior_data/priors_Sigma.csv")) 
+priors_beta <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
+                              "prior_data/priors_beta")) 
+prior_V_inv <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
+                              "prior_data/priors_V_inv"))  
+prior_Sigma <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
+                              "prior_data/priors_Sigma"))
 
 #---- **contrasts matrix ----
 A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
@@ -77,7 +77,6 @@ nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
 kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>% 
   set_names(c("Unimpaired", "MCI", "Dementia", "Other"))
-
 
 #---- generate synthetic data function ----
 simulate_function <- function(num_sims, warm_up, starting_props, 
