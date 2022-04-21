@@ -26,6 +26,11 @@ simulation_function <-
       slice_sample(prop = 0.5) %>% 
       mutate("(Intercept)" = 1) %>% ungroup()
     
+    #---- **true impairment class counts ----
+    results[, 
+            c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other")] <- 
+      colSums(dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])
+    
     synthetic_HCAP <- 
       generate_synthetic(warm_up, run_number = NA, starting_props,
                          unimpaired_preds, other_preds, mci_preds, 
