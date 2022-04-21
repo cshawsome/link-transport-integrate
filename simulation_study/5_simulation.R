@@ -14,6 +14,7 @@ source(here::here("simulation_study", "functions",
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
+#---- **synthetic data ----
 synthetic_data_paths <- 
   list.files(path = paste0(path_to_box, 
                            "analyses/simulation_study/synthetic_data/HRS"), 
@@ -26,6 +27,9 @@ synthetic_data_paths <-
                "synthetic_normal_500_ADAMS|synthetic_normal_1000_ADAMS")]
 
 synthetic_data_list <- lapply(synthetic_data_paths, read_results)
+
+#---- **truth table ----
+truth <- read_csv(paste0(path_to_box, "analyses/simulation_study/truth.csv"))
 
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
