@@ -4,7 +4,7 @@ simulation_function <-
            dataset, cell_ID_key, color_palette, num_synthetic, unimpaired_betas, 
            unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
            alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
-           contrasts_matrix, seed, path_to_results){
+           contrasts_matrix, seed, truth, path_to_results){
     
     #---- pre-allocated results ----
     result_names <- 
@@ -16,7 +16,7 @@ simulation_function <-
         "Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
         "Other_coverage", "black_beta", "black_se", "black_LCI", "black_UCI",
         "hispanic_beta", "hispanic_se", "hispanic_LCI", "hispanic_UCI",
-        "seed", "time")
+        "black_coverage", "hispanic_coverage", "seed", "time")
     
     results <- matrix(ncol = length(result_names), nrow = 1) %>% 
       set_colnames(all_of(result_names))
@@ -101,7 +101,11 @@ simulation_function <-
     #---- **pooled ----
     pooled_model <- summary(mice::pool(models))
     
+    #---- ****truth table ----
+    truth_table <- truth[which(truth$dataset_name == dataset$dataset_name[1]), ] 
+    
     for(race_eth in c("black", "hispanic")){
+      #---- ****estimates ----
       results[, paste0(race_eth, "_beta")] <- 
         pooled_model[which(pooled_model$term == race_eth), "estimate"]
       
@@ -115,6 +119,13 @@ simulation_function <-
       results[, paste0(race_eth, "_UCI")] <- 
         results[, paste0(race_eth, "_beta")] + 
         1.96*results[, paste0(race_eth, "_se")]
+      
+      #---- ****coverage ----
+      results[, paste0(race_eth, "_coverage")] <- 
+        (truth_table[which(truth_table$term == race_eth), "estimate"] >= 
+           results[, paste0(race_eth, "_LCI")])*
+        (truth_table[which(truth_table$term == race_eth), "estimate"] <= 
+           results[, paste0(race_eth, "_UCI")])
     }
     
     #---- end time ----
@@ -158,6 +169,7 @@ nu_0
 kappa_0 
 contrasts_matrix = A
 seed = 1
+truth
 path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
 
 for(seed in 1:3){
@@ -167,5 +179,5 @@ for(seed in 1:3){
                       num_synthetic, unimpaired_betas, unimpaired_cov, 
                       other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
                       prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
-                      contrasts_matrix, seed, path_to_results)
+                      contrasts_matrix, seed, truth, path_to_results)
 }
