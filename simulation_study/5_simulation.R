@@ -3,8 +3,8 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "MBSP")
+p_load("tidyverse", "DirichletReg", "magrittr", "here", "MCMCpack", "locfit", 
+       "MBSP", "vroom", "mvnfast")
 
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
@@ -14,12 +14,16 @@ source(here::here("simulation_study", "functions",
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
+synthetic_data_paths <- 
+  list.files(path = paste0(path_to_box, 
+                           "analyses/simulation_study/synthetic_data/HRS"), 
+             full.names = TRUE, pattern = "*.csv")
+
 #subset for now
 synthetic_data_paths <- 
   synthetic_data_paths[
     str_detect(synthetic_data_paths, 
                "synthetic_normal_500_ADAMS|synthetic_normal_1000_ADAMS")]
-
 
 synthetic_data_list <- lapply(synthetic_data_paths, read_results)
 
