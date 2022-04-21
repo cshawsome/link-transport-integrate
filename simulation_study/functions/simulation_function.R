@@ -8,8 +8,13 @@ simulation_function <-
     
     #---- pre-allocated results ----
     result_names <- 
-      c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other", "seed", 
-        "time")
+      c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other", 
+        "mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other",
+        "bias_Unimpaired", "bias_MCI", "bias_Dementia", "bias_Other",
+        "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other",
+        "UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other",
+        "Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
+        "Other_coverage", "seed", "time")
     
     results <- matrix(ncol = length(result_names), nrow = 1) %>% 
       set_colnames(all_of(result_names))
@@ -31,6 +36,7 @@ simulation_function <-
             c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other")] <- 
       colSums(dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])
     
+    #---- generate synthetic data ----
     synthetic_HCAP <- 
       generate_synthetic(warm_up, run_number = NA, starting_props,
                          unimpaired_preds, other_preds, mci_preds, 
@@ -42,6 +48,33 @@ simulation_function <-
                          prior_beta, nu_0, kappa_0, contrasts_matrix,
                          path_to_analyses_folder = NA, 
                          path_to_figures_folder = NA, data_only = TRUE)
+    
+    #---- impairment class counts ----
+    counts <- 
+      lapply(synthetic_HCAP, function(x) table(x[, "Group"])) %>% 
+      do.call(rbind, .)
+    
+    #---- **mean counts ----
+    mean_counts <- round(colMeans(counts))
+    results[, paste0("mean_", colnames(counts))] <- mean_counts
+    
+    #---- **CI ----
+    results[, paste0("LCI_", colnames(counts))] <- 
+      apply(counts, 2, function(x) quantile(x, 0.25))
+    
+    results[, paste0("UCI_", colnames(counts))] <- 
+      apply(counts, 2, function(x) quantile(x, 0.975))
+    
+    #---- **bias ----
+    results[, paste0("bias_", colnames(counts))] <- 
+      mean_counts - results[, paste0("true_", colnames(counts))]
+    
+    #---- **coverage ----
+    for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+      results[, paste0(class, "_coverage")] <- 
+        (results[, paste0("true_", class)] >= results[, paste0("LCI_", class)])*
+        (results[, paste0("true_", class)] <= results[, paste0("UCI_", class)])
+    }
     
     #---- end time ----
     results[, "time"] <- as.numeric(difftime(Sys.time(), start, units = "mins"))
