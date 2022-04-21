@@ -141,43 +141,43 @@ simulation_function <-
     }
   }
 
-#---- testing ----
-warm_up = 100 
-starting_props = rep(0.25, 4) 
-unimpaired_preds 
-other_preds
-mci_preds 
-categorical_vars = W
-continuous_vars = Z
-id_var = "HHIDPN"
-variable_labels 
-dataset = synthetic_data_list[[1]]
-cell_ID_key
-color_palette 
-num_synthetic = 1000
-unimpaired_betas 
-unimpaired_cov
-other_betas
-other_cov
-mci_betas
-mci_cov
-alpha_0_dist
-prior_Sigma
-prior_V_inv
-prior_beta
-nu_0
-kappa_0 
-contrasts_matrix = A
-seed = 1
-truth
-path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
-
-for(seed in 1:3){
-  simulation_function(warm_up, starting_props, unimpaired_preds, other_preds, 
-                      mci_preds, categorical_vars, continuous_vars, id_var, 
-                      variable_labels, dataset, cell_ID_key, color_palette, 
-                      num_synthetic, unimpaired_betas, unimpaired_cov, 
-                      other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
-                      prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
-                      contrasts_matrix, seed, truth, path_to_results)
-}
+# #---- testing ----
+# warm_up = 100 
+# starting_props = rep(0.25, 4) 
+# unimpaired_preds 
+# other_preds
+# mci_preds 
+# categorical_vars = W
+# continuous_vars = Z
+# id_var = "HHIDPN"
+# variable_labels 
+# dataset = synthetic_data_list[[1]]
+# cell_ID_key
+# color_palette 
+# num_synthetic = 1000
+# unimpaired_betas 
+# unimpaired_cov
+# other_betas
+# other_cov
+# mci_betas
+# mci_cov
+# alpha_0_dist
+# prior_Sigma
+# prior_V_inv
+# prior_beta
+# nu_0
+# kappa_0 
+# contrasts_matrix = A
+# seed = 1
+# truth
+# path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
+# 
+# for(seed in 1:3){
+#   simulation_function(warm_up, starting_props, unimpaired_preds, other_preds, 
+#                       mci_preds, categorical_vars, continuous_vars, id_var, 
+#                       variable_labels, dataset, cell_ID_key, color_palette, 
+#                       num_synthetic, unimpaired_betas, unimpaired_cov, 
+#                       other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
+#                       prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
+#                       contrasts_matrix, seed, truth, path_to_results)
+# }
