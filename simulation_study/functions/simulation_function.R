@@ -14,7 +14,9 @@ simulation_function <-
         "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other",
         "UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other",
         "Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
-        "Other_coverage", "seed", "time")
+        "Other_coverage", "black_beta", "black_se", "black_LCI", "black_UCI",
+        "hispanic_beta", "hispanic_se", "hispanic_LCI", "hispanic_UCI",
+        "seed", "time")
     
     results <- matrix(ncol = length(result_names), nrow = 1) %>% 
       set_colnames(all_of(result_names))
@@ -76,6 +78,45 @@ simulation_function <-
         (results[, paste0("true_", class)] <= results[, paste0("UCI_", class)])
     }
     
+    #---- models ----
+    #---- **add weights ----
+    #the only variable that contributed to selection was marital status
+    # we selected half of married people and half of unmarried people, thus the 
+    # weight for every observation should be 2
+    
+    synthetic_HCAP %<>% lapply(function(x) x %<>% mutate("weight" = 2))
+    
+    #---- **predicted dementia status ----
+    synthetic_HCAP %<>% 
+      lapply(function(x) x %<>% 
+               mutate("predicted_Dementia" = ifelse(Group == "Dementia", 1, 0)))
+    
+    #---- models ----
+    models <- 
+      lapply(synthetic_HCAP, 
+             function(dataset) glm(predicted_Dementia ~ 
+                                     age_Z + female + black + hispanic, 
+                                   family = "poisson", data = dataset)) 
+    
+    #---- **pooled ----
+    pooled_model <- summary(mice::pool(models))
+    
+    for(race_eth in c("black", "hispanic")){
+      results[, paste0(race_eth, "_beta")] <- 
+        pooled_model[which(pooled_model$term == race_eth), "estimate"]
+      
+      results[, paste0(race_eth, "_se")] <- 
+        pooled_model[which(pooled_model$term == race_eth), "std.error"]
+      
+      results[, paste0(race_eth, "_LCI")] <- 
+        results[, paste0(race_eth, "_beta")] - 
+        1.96*results[, paste0(race_eth, "_se")]
+      
+      results[, paste0(race_eth, "_UCI")] <- 
+        results[, paste0(race_eth, "_beta")] + 
+        1.96*results[, paste0(race_eth, "_se")]
+    }
+    
     #---- end time ----
     results[, "time"] <- as.numeric(difftime(Sys.time(), start, units = "mins"))
     
@@ -118,3 +159,13 @@ kappa_0
 contrasts_matrix = A
 seed = 1
 path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
+
+for(seed in 1:3){
+  simulation_function(warm_up, starting_props, unimpaired_preds, other_preds, 
+                      mci_preds, categorical_vars, continuous_vars, id_var, 
+                      variable_labels, dataset, cell_ID_key, color_palette, 
+                      num_synthetic, unimpaired_betas, unimpaired_cov, 
+                      other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
+                      prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
+                      contrasts_matrix, seed, path_to_results)
+}
