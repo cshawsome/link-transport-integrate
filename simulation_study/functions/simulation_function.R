@@ -47,9 +47,13 @@ simulation_function <-
     results[, "time"] <- as.numeric(difftime(Sys.time(), start, units = "mins"))
     
     #---- write results ----
-    write_csv(as.data.frame(results), 
-              file = paste0(path_to_results, dataset$dataset_name[1], 
-                            ".csv"), append = TRUE, col_names = TRUE)
+    file_path <- paste0(path_to_results, dataset$dataset_name[1], ".csv")
+    
+    if(file.exists(file_path)){
+      write_csv(as.data.frame(results), file = file_path, append = TRUE)
+    } else{
+      write_csv(as.data.frame(results), file = file_path, col_names = TRUE)
+    }
   }
 
 #---- testing ----
