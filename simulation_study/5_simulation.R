@@ -10,6 +10,7 @@ p_load("tidyverse", "DirichletReg", "magrittr", "here", "MCMCpack", "locfit",
 source(here::here("functions", "read_results.R"))
 source(here::here("simulation_study", "functions", 
                   "generate_synthetic_function.R"))
+source(here::here("simulation_study", "functions", "simulation_function.R"))
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -85,3 +86,25 @@ nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
 kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>% 
   set_names(c("Unimpaired", "MCI", "Dementia", "Other"))
+
+#---- run sim ----
+start <- Sys.time()
+lapply(synthetic_data_list[2], 
+       function(dataset) 
+         for(seed in 21:100){
+           simulation_function(warm_up = 100, starting_props = rep(0.25, 4), 
+                               unimpaired_preds, other_preds, mci_preds, 
+                               categorical_vars = W, continuous_vars = Z, 
+                               id_var = "HHIDPN", variable_labels, dataset, 
+                               cell_ID_key, color_palette, num_synthetic = 1000, 
+                               unimpaired_betas, unimpaired_cov, other_betas, 
+                               other_cov, mci_betas, mci_cov, alpha_0_dist,
+                               prior_Sigma, prior_V_inv, prior_beta, nu_0, 
+                               kappa_0, contrasts_matrix = A, seed, truth, 
+                               path_to_results = 
+                                 paste0(path_to_box, 
+                                        "analyses/simulation_study/results/"))})
+
+end <- Sys.time() - start
+
+
