@@ -31,6 +31,13 @@ generate_synthetic <-
       unite("cell_ID", everything(), sep = "") %>% table() %>% 
       as.data.frame() %>% set_colnames(c("cell_ID", "count"))
     
+    if(nrow(cross_class_label) < nrow(cell_ID_key)){
+      missing <- which(!cell_ID_key$cell_ID %in% cross_class_label$cell_ID)
+      new_table <- cell_ID_key[, "cell_ID"] %>% left_join(., cross_class_label)
+      new_table[is.na(new_table$count), "count"] <- 0
+      cross_class_label <- new_table
+    }
+    
     #---- chain storage ----
     model_gamma_chain <- 
       matrix(nrow = sum(length(unimpaired_preds), length(other_preds), 
