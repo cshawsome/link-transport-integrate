@@ -499,7 +499,7 @@ categorical_vars = W
 continuous_vars = Z
 id_var = "HHIDPN"
 variable_labels
-dataset_to_copy = synthetic_data_list[[2]] %>%
+dataset_to_copy = synthetic_data_list[[5]] %>%
   group_by(married_partnered) %>%
   slice_sample(prop = 0.50) %>%
   mutate("(Intercept)" = 1) %>% ungroup()
