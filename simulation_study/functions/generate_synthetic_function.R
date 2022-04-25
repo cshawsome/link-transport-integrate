@@ -14,9 +14,16 @@ generate_synthetic <-
         dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
                           run_number), recursive = TRUE)
       }
+      
       if(!dir.exists(paste0(path_to_figures_folder, "diagnostics/run_", 
                             run_number))){
         dir.create(paste0(path_to_figures_folder, "diagnostics/run_", 
+                          run_number), recursive = TRUE)
+      }
+      
+      if(!dir.exists(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
+                            run_number))){
+        dir.create(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
                           run_number), recursive = TRUE)
       }
     }
@@ -244,15 +251,17 @@ generate_synthetic <-
                 class]][, seq(1, length(continuous_vars))])
           
           sigma_mat <- Sigma_prior + ZtZ + third_term
+          redraws = 0
           
           while(is.character(tryCatch(sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
                                                       S = sigma_mat), 
-                                      error = function(e) "error"))){
+                                      error = function(e) "error")) & 
+                redraws <= 100){
             
-            sigma_mat = sigma_mat + 0.01
-            print(paste0("redraw b = ", b))            
+            sigma_mat = sigma_mat + 0.001
+            redraws = redraws + 1
+            #print(paste0("class = ", class, "; b = ", b))            
           }
-          
           
           if(!data_only){
             Sigma_chain[, paste0(class, ":", b)] <- diag(sig_Y)
