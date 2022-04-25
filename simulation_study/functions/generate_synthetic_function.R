@@ -137,11 +137,11 @@ generate_synthetic <-
         new_summary <- vector(length = 4)
         new_summary[missing] <- 0
         new_summary[-missing] <- summary
-        latent_class_chain[, b] <- new_summary 
-      } else{
-        if(!data_only){
-          latent_class_chain[, b] <- summary 
-        }
+        summary <- new_summary
+      } 
+      
+      if(!data_only){
+        latent_class_chain[, b] <- summary 
       }
       
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
@@ -179,26 +179,26 @@ generate_synthetic <-
           UtU <- diag(contingency_table[, 1])
           
           #---- ****draw new UtU if needed ----
-          while(det(t(A) %*% UtU %*% A) < 1e-9){
-            
-            random_draw <- sample(seq(1, max_index), size = 1)
-            
-            posterior_first_count <- 
-              alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
-            
-            posterior_count <- 
-              posterior_first_count + posterior_second_count
-            
-            pi_chain[, paste0(class, ":", b)] <- 
-              MCMCpack::rdirichlet(1, 
-                                   alpha = as.numeric(unlist(posterior_count)))
-            
-            contingency_table <- 
-              rmultinom(n = 1, size = nrow(subset), 
-                        prob = pi_chain[, paste0(class, ":", b)])
-            
-            UtU <- diag(contingency_table[, 1])
-          }
+          # while(det(t(A) %*% UtU %*% A) < 1e-10){
+          #   
+          #   random_draw <- sample(seq(1, max_index), size = 1)
+          #   
+          #   posterior_first_count <- 
+          #     alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
+          #   
+          #   posterior_count <- 
+          #     posterior_first_count + posterior_second_count
+          #   
+          #   pi_chain[, paste0(class, ":", b)] <- 
+          #     MCMCpack::rdirichlet(1, 
+          #                          alpha = as.numeric(unlist(posterior_count)))
+          #   
+          #   contingency_table <- 
+          #     rmultinom(n = 1, size = nrow(subset), 
+          #               prob = pi_chain[, paste0(class, ":", b)])
+          #   
+          #   UtU <- diag(contingency_table[, 1])
+          # }
           
           #---- ****make U matrix ----
           U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
@@ -243,8 +243,16 @@ generate_synthetic <-
               prior_Sigma[[random_draw]][[
                 class]][, seq(1, length(continuous_vars))])
           
-          sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
-                          S = Sigma_prior + ZtZ + third_term)
+          sigma_mat <- Sigma_prior + ZtZ + third_term
+          
+          while(is.character(tryCatch(sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
+                                                      S = sigma_mat), 
+                                      error = function(e) "error"))){
+            
+            sigma_mat = sigma_mat + 0.01
+            print(paste0("redraw b = ", b))            
+          }
+          
           
           if(!data_only){
             Sigma_chain[, paste0(class, ":", b)] <- diag(sig_Y)
@@ -312,7 +320,7 @@ generate_synthetic <-
     if(data_only){
       return(dataset_list)
     } else{
-      saveRDS(dataset_list, 
+      saveRDS(dataset_list,
               file = paste0(path_to_analyses_folder, "synthetic_data/run_",
                             run_number, "/synthetic_dataset_list"))
       
@@ -484,46 +492,47 @@ generate_synthetic <-
                 file = paste0(path_to_analyses_folder, "diagnostics_data/", 
                               "run_", run_number, "/mu_chain_data.csv"))
     }
-  }
+  })
+}
 
-# #---- test function ----
-# warm_up = 100
-# run_number = 1
-# starting_props = c(0.25, 0.25, 0.25, 0.25)
-# unimpaired_preds
-# other_preds
-# mci_preds
-# categorical_vars = W
-# continuous_vars = Z
-# id_var = "HHIDPN"
-# variable_labels
-# dataset_to_copy = synthetic_data_list[[2]] %>%
-#   group_by(married_partnered) %>%
-#   slice_sample(prop = 0.5) %>%
-#   mutate("(Intercept)" = 1) %>% ungroup()
-# cell_ID_key
-# color_palette
-# num_synthetic = 1000
-# unimpaired_betas
-# unimpaired_cov
-# other_betas
-# other_cov
-# mci_betas
-# mci_cov
-# alpha_0_dist
-# prior_Sigma
-# prior_V_inv
-# prior_beta
-# nu_0
-# kappa_0
-# contrasts_matrix = A
-# path_to_analyses_folder =
-#   paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_",
-#          unique(synthetic_data_list[[2]][, "dataset_name"]),
-#          "/")
-# path_to_figures_folder =
-#   paste0(path_to_box,
-#          "figures/simulation_study/HCAP_HRS_",
-#          unique(synthetic_data_list[[2]][, "dataset_name"]),
-#          "/")
-# data_only = TRUE
+#---- test function ----
+warm_up = 100
+run_number = 1
+starting_props = c(0.25, 0.25, 0.25, 0.25)
+unimpaired_preds
+other_preds
+mci_preds
+categorical_vars = W
+continuous_vars = Z
+id_var = "HHIDPN"
+variable_labels
+dataset_to_copy = synthetic_data_list[[5]] %>%
+  group_by(married_partnered) %>%
+  slice_sample(prop = 0.50) %>%
+  mutate("(Intercept)" = 1) %>% ungroup()
+cell_ID_key
+color_palette
+num_synthetic = 1000
+unimpaired_betas
+unimpaired_cov
+other_betas
+other_cov
+mci_betas
+mci_cov
+alpha_0_dist
+prior_Sigma
+prior_V_inv
+prior_beta
+nu_0
+kappa_0
+contrasts_matrix = A
+path_to_analyses_folder =
+  paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_",
+         unique(synthetic_data_list[[2]][, "dataset_name"]),
+         "/")
+path_to_figures_folder =
+  paste0(path_to_box,
+         "figures/simulation_study/HCAP_HRS_",
+         unique(synthetic_data_list[[2]][, "dataset_name"]),
+         "/")
+data_only = TRUE

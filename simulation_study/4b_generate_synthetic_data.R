@@ -105,7 +105,7 @@ generate_synthetic(warm_up = 100, run_number = 1,
                    unimpaired_preds, other_preds, mci_preds, 
                    categorical_vars = W, continuous_vars = Z, 
                    id_var = "HHIDPN", variable_labels, 
-                   dataset_to_copy = synthetic_data_list[[2]] %>% 
+                   dataset_to_copy = synthetic_data_list[[1]] %>% 
                      group_by(married_partnered) %>% 
                      slice_sample(prop = 0.5) %>% 
                      mutate("(Intercept)" = 1) %>% ungroup(), cell_ID_key, 
@@ -115,12 +115,12 @@ generate_synthetic(warm_up = 100, run_number = 1,
                    kappa_0, contrasts_matrix = A,
                    path_to_analyses_folder = 
                      paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
-                            unique(synthetic_data_list[[2]][, "dataset_name"]), 
+                            unique(synthetic_data_list[[1]][, "dataset_name"]), 
                             "/"), 
                    path_to_figures_folder = 
                      paste0(path_to_box,
                             "figures/simulation_study/HCAP_HRS_", 
-                            unique(synthetic_data_list[[2]][, "dataset_name"]), 
+                            unique(synthetic_data_list[[1]][, "dataset_name"]), 
                             "/"), data_only = FALSE)
 end <- Sys.time() - start
 
