@@ -4,7 +4,8 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "wesanderson", "vroom", "mvnfast", "future.apply")
+       "LaplacesDemon", "locfit", "wesanderson", "vroom", "mvnfast", 
+       "future.apply")
 
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
@@ -75,10 +76,7 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 #DOF for inverse wishart
 nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
-kappa_0 <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
-  
-  rep(2.75, 4) %>% 
-  set_names(c("Unimpaired", "MCI", "Dementia", "Other"))
+kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
 
 #---- generate synthetic data ----
 #41 mins to generate one copy of each dataset
@@ -99,7 +97,7 @@ future_lapply(synthetic_data_list, function(x)
                      color_palette, num_synthetic = 1000, unimpaired_betas, 
                      unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
                      alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
-                     kappa_0, contrasts_matrix = A,
+                     kappa_0_mat, contrasts_matrix = A,
                      path_to_analyses_folder = 
                        paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
                               unique(x[, "dataset_name"]), "/"), 
@@ -130,7 +128,7 @@ lapply(synthetic_data_list[37], function(x)
                      color_palette, num_synthetic = 1000, unimpaired_betas, 
                      unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
                      alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
-                     kappa_0, contrasts_matrix = A,
+                     kappa_0_mat, contrasts_matrix = A,
                      path_to_analyses_folder = 
                        paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
                               unique(x[, "dataset_name"]), "/"), 

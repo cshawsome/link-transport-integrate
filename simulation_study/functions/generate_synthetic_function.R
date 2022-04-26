@@ -104,7 +104,7 @@ generate_synthetic <-
           prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
           
           model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
-            t(rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov))
+            t(mvnfast::rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov))
         }
         
         #---- ****group membership ----
@@ -274,7 +274,9 @@ generate_synthetic <-
           }
           
           #---- ****draw beta | Sigma, Y ----
-          beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y/unlist(kappa_0[, class]))
+          beta_Sigma_Y <- 
+            rmatrixnorm(M = Mm, U = as.positive.definite(M), 
+                        V = as.positive.definite(sig_Y/unlist(kappa_0[, class])))
           
           #---- ****compute mu ----
           mu_chain[, paste0(class, ":", 
@@ -297,15 +299,15 @@ generate_synthetic <-
             if(contingency_table[j, "Count"] == 1){
               subset[index:(index - 1 + contingency_table[j, "Count"]), 
                      continuous_vars] <- 
-                rmvn(n = contingency_table[j, "Count"],
-                     mu = mu_chain[, paste0(class, ":", j, ":", b)], 
-                     sigma = sig_Y)
+                mvnfast::rmvn(n = contingency_table[j, "Count"],
+                              mu = mu_chain[, paste0(class, ":", j, ":", b)], 
+                              sigma = sig_Y)
             } else{
               subset[index:(index - 1 + contingency_table[j, "Count"]), 
                      continuous_vars] <- 
-                rmvn(n = contingency_table[j, "Count"],
-                     mu = mu_chain[, paste0(class, ":", j, ":", b)], 
-                     sigma = sig_Y)
+                mvnfast::rmvn(n = contingency_table[j, "Count"],
+                              mu = mu_chain[, paste0(class, ":", j, ":", b)], 
+                              sigma = sig_Y)
             }
             
             #W (categorical data)
