@@ -4,7 +4,7 @@ generate_synthetic <-
            dataset_to_copy, cell_ID_key, color_palette, num_synthetic, 
            unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
            mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
-           kappa_0, contrasts_matrix, path_to_analyses_folder, 
+           kappa_0_mat, contrasts_matrix, path_to_analyses_folder, 
            path_to_figures_folder, data_only = FALSE){
     
     #---- check subfolders for results ----
@@ -221,6 +221,12 @@ generate_synthetic <-
           }
           
           #---- **Mm ----
+          #---- ****grab kappa_0 vec ----
+          kappa_0 <- 
+            kappa_0_mat[
+              which(kappa_0_mat$dataset_name == 
+                      unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
+          
           continuous_covariates <- subset[, continuous_vars] %>% as.matrix
           
           V_inv <- t(A) %*% UtU %*% A 
@@ -234,15 +240,15 @@ generate_synthetic <-
               priors_beta[[random_draw]][[
                 class]][, seq(1, length(continuous_vars))])
           
-          M <- solve(V_inv + kappa_0[class]*V_0_inv)
+          M <- solve(V_inv + unlist(kappa_0[, class])*V_0_inv)
           m <-  t(A) %*% t(U) %*% continuous_covariates - 
-            kappa_0[class]*V_0_inv %*% beta_0
+            unlist(kappa_0[, class])*V_0_inv %*% beta_0
           
           Mm <- M %*% m
           
           #---- ****draw Sigma | Y ----
           ZtZ <- t(continuous_covariates) %*% continuous_covariates
-          third_term <- kappa_0[class]*t(beta_0) %*% V_0_inv %*% beta_0
+          third_term <- unlist(kappa_0[, class])*t(beta_0) %*% V_0_inv %*% beta_0
           
           random_draw <- sample(seq(1, max_index), size = 1)
           Sigma_prior <- 
@@ -268,7 +274,7 @@ generate_synthetic <-
           }
           
           #---- ****draw beta | Sigma, Y ----
-          beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y/kappa_0[class])
+          beta_Sigma_Y <- matrix.normal(Mm, M, sig_Y/unlist(kappa_0[, class]))
           
           #---- ****compute mu ----
           mu_chain[, paste0(class, ":", 
@@ -532,7 +538,7 @@ generate_synthetic <-
 # prior_V_inv
 # prior_beta
 # nu_0
-# kappa_0
+# kappa_0_mat
 # contrasts_matrix = A
 # path_to_analyses_folder =
 #   paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_",

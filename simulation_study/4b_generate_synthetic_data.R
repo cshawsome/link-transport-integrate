@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "MBSP", "wesanderson", "vroom", "mvnfast", "future.apply")
+       "locfit", "wesanderson", "vroom", "mvnfast", "future.apply")
 
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
@@ -75,7 +75,9 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 #DOF for inverse wishart
 nu_0 <- 65
 #scaling for inverse wishart as variance of Beta
-kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>% 
+kappa_0 <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
+  
+  rep(2.75, 4) %>% 
   set_names(c("Unimpaired", "MCI", "Dementia", "Other"))
 
 #---- generate synthetic data ----
@@ -110,3 +112,33 @@ future_lapply(synthetic_data_list, function(x)
 
 end <- Sys.time() - start
 plan(sequential)
+
+#---- generate one set ----
+set.seed(20220329)
+start <- Sys.time()
+
+lapply(synthetic_data_list[37], function(x)
+  generate_synthetic(warm_up = 100, run_number = 1, 
+                     starting_props = c(0.25, 0.25, 0.25, 0.25),
+                     unimpaired_preds, other_preds, mci_preds, 
+                     categorical_vars = W, continuous_vars = Z, 
+                     id_var = "HHIDPN", variable_labels, 
+                     dataset_to_copy = x %>% 
+                       group_by(married_partnered) %>% 
+                       slice_sample(prop = 0.5) %>% 
+                       mutate("(Intercept)" = 1) %>% ungroup(), cell_ID_key, 
+                     color_palette, num_synthetic = 1000, unimpaired_betas, 
+                     unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
+                     alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
+                     kappa_0, contrasts_matrix = A,
+                     path_to_analyses_folder = 
+                       paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
+                              unique(x[, "dataset_name"]), "/"), 
+                     path_to_figures_folder = 
+                       paste0(path_to_box,
+                              "figures/simulation_study/HCAP_HRS_", 
+                              unique(x[, "dataset_name"]), "/"), 
+                     data_only = FALSE))
+
+end <- Sys.time() - start
+
