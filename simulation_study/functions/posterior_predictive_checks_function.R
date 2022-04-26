@@ -471,11 +471,11 @@ posterior_predictive_checks <-
     
     ggplot(data = combined_plot_data, 
            aes(x = Group, y = mean)) + theme_bw() + 
-      geom_point(aes(x = Group, y = truth, size = 1), color = "black",
-                 shape = 18, alpha = 1) + 
       geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
                     width = 0.10) + 
-      geom_point(aes(size = 1, color = Group), alpha = 0.5) +
+      geom_point(aes(size = 1, color = Group)) +
+      geom_point(aes(x = Group, y = truth, size = 1), color = "black",
+                 shape = 18, alpha = 1) + 
       xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
       scale_color_manual(
         values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
@@ -494,12 +494,12 @@ posterior_predictive_checks <-
       ggplot(data = combined_plot_data %>% 
                filter(chain == paste0("Chain ", chain_num)), 
              aes(x = Group, y = mean)) + 
-        geom_point(aes(size = 1, color = Group), alpha = 0.5) + 
+        geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
+                      width = 0.10) + 
+        geom_point(aes(size = 1, color = Group)) + 
         theme_minimal() + 
         geom_point(aes(x = Group, y = truth, size = 1), shape = 18, 
                    color = "black") + 
-        geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
-                      width = 0.10) + 
         xlab("") + ylab("Count") + 
         theme(text = element_text(size = 10), legend.title = element_blank(), 
               legend.position = "none", 

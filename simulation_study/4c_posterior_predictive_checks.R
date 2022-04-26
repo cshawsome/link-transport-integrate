@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "MBSP", "wesanderson", "RColorBrewer", "transformr", "moments", 
+       "locfit", "wesanderson", "RColorBrewer", "transformr", "moments", 
        "qdapRegex")
 
 #---- source functions ----
@@ -25,7 +25,9 @@ synthetic_data_paths <-
 synthetic_data_paths <- 
   synthetic_data_paths[
     str_detect(synthetic_data_paths, 
-               "synthetic_normal_500_ADAMS|synthetic_normal_1000_ADAMS")]
+               paste0("synthetic_normal_500_ADAMS|synthetic_normal_1000_ADAMS|", 
+                      "synthetic_normal_2000_ADAMS|synthetic_normal_4000_ADAMS|", 
+                      "synthetic_normal_8000_ADAMS"))]
 
 
 synthetic_data_list <- lapply(synthetic_data_paths, read_results)
@@ -55,11 +57,11 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 #---- posterior predictive checks ----
 set.seed(20220329)
 start <- Sys.time()
-lapply(synthetic_data_list, function(x)
+lapply(synthetic_data_list[40], function(x)
   posterior_predictive_checks(dataset_to_copy = x %>% 
                                 group_by(married_partnered) %>% 
                                 slice_sample(prop = 0.5) %>% 
-                                mutate("(Intercept)" = 1) %>% ungroup() , 
+                                mutate("(Intercept)" = 1) %>% ungroup(), 
                               categorical_covariates = W, 
                               continuous_covariates = Z, contrasts_matrix = A,
                               cell_ID_key, variable_labels, color_palette,
