@@ -43,12 +43,12 @@ prior_predictive_checks <-
         prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
         
         betas <- 
-          mvnfast::rmvn(n = 1, mu = unlist(prior_betas), Sigma = prior_cov)
+          mvnfast::rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov)
         
         synthetic_sample[subset_index, paste0("p_", model)] <- 
           expit(as.matrix(synthetic_sample[subset_index, 
                                            get(paste0(model, "_preds"))]) %*% 
-                  as.matrix(betas))
+                  t(as.matrix(betas)))
         
         synthetic_sample[subset_index, "group_num"] <- 
           rbernoulli(n = length(subset_index), 
@@ -78,6 +78,12 @@ prior_predictive_checks <-
         #---- **index for random draws ----
         random_draw <- sample(seq(1, max_index), size = 1)
         
+        #---- ****grab kappa_0 vec ----
+        kappa_0 <- 
+          kappa_0_mat[
+            which(kappa_0_mat$dataset_name == 
+                    unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
+        
         #---- **contingency cells ----
         subset <- synthetic_sample %>% filter(Group == class)
         if(nrow(subset) == 0){
@@ -88,13 +94,11 @@ prior_predictive_checks <-
         }
         
         prior_counts <- 
-          alpha_0_dist[, c(as.character(random_draw), "group")] %>% 
-          filter(group == class)
+          alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
         
         #---- **p(contingency table cell) ----
         pi <- 
-          MCMCpack::rdirichlet(1, alpha = as.numeric(unlist(prior_counts[, 1]))*
-                                 nrow(subset))
+          MCMCpack::rdirichlet(1, alpha = as.numeric(unlist(prior_counts)))
         
         #---- **contingency table count ----
         contingency_table <- rmultinom(n = 1, size = nrow(subset), prob = pi)
@@ -105,8 +109,7 @@ prior_predictive_checks <-
           #---- ****new random draw index ----
           random_draw <- sample(seq(1, max_index), size = 1)
           new_counts <- 
-            alpha_0_dist[, c(as.character(random_draw), "group")] %>% 
-            filter(group == class)
+            alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
           
           UtU <- diag(unlist(new_counts[, 1])*nrow(subset))
         }
@@ -135,7 +138,7 @@ prior_predictive_checks <-
         #---- **beta_0 ----
         V_0_inv <- 
           as.matrix(
-            prior_V_inv[[random_draw]][[class]][, seq(1, ncol(V_inv))])
+            prior_V_inv[[random_draw]][[class]][, seq(1, ncol(A))])
         
         beta_0 <- 
           as.matrix(
@@ -143,8 +146,9 @@ prior_predictive_checks <-
               class]][, seq(1, length(continuous_vars))])
         
         #---- **draw beta | Sigma----
-        beta_Sigma_Y <- rmatrixnorm(beta_0, solve(V_0_inv), 
-                                    sig_Y/unlist(kappa_0[, class]))
+        beta_Sigma_Y <- 
+          rmatrixnorm(M = beta_0, U = as.positive.definite(solve(V_0_inv)), 
+                      V = as.positive.definite(sig_Y/unlist(kappa_0[, class])))
         
         #---- **compute mu ----
         mu[, paste0(class, ":", seq(1, 6))] <-
