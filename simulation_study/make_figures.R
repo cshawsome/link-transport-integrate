@@ -185,5 +185,105 @@ results_paths <-
 
 results <- do.call(rbind, lapply(results_paths, read_results))
 
+#---- **color palette ----
+color_palette <- read_csv(here("color_palette.csv"))
+
+group_colors <- color_palette$Color
+names(group_colors) <- color_palette$Group
+
+#---- **plot data ----
+plot_data <- results %>% 
+  group_by(distribution, sample_size, prior_props) %>% 
+  summarise_at(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"), 
+               mean) %>% 
+  mutate_at("sample_size", as.numeric) %>% 
+  mutate("sample_size" = 0.5*sample_size) %>%
+  pivot_longer(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"),
+               names_to = c("class", "coverage"), names_sep = "_") 
+
+#---- **plot ----
+ggplot(data = plot_data, aes(x = sample_size, y = value, group = class)) + 
+  geom_line(aes(color = class)) + geom_point(aes(color = class)) + 
+  scale_color_manual(values = group_colors) +
+  geom_hline(yintercept = 0.95, lty = "dashed") +
+  theme_bw() + ylab("95% CI Coverage") + 
+  facet_grid(cols = vars(distribution)) + 
+  guides(color = guide_legend(title = "Group")) + 
+  scale_x_continuous(name = "Sample Size", 
+                     breaks = unique(plot_data$sample_size))
+
+ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+                         "impairement_class_coverage.jpeg"))
+
+#----- Figure X: bias impairment class counts ----
+#---- **read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+results_paths <- 
+  list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
+             full.names = TRUE, pattern = "*.csv")
+
+results <- do.call(rbind, lapply(results_paths, read_results))
+
+#---- ****% bias ----
+for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+  results %<>% 
+    mutate(!!paste0("percent_increase_", class) := 
+             !!sym(paste0("bias_", class))/!!sym(paste0("true_", class))*100)
+}
+
+#---- **color palette ----
+color_palette <- read_csv(here("color_palette.csv"))
+
+group_colors <- color_palette$Color
+names(group_colors) <- color_palette$Group
+
+#---- **plot data ----
+plot_data <- results %>% 
+  dplyr::select("sample_size", "distribution", 
+                paste0("percent_increase_", 
+                       c("Unimpaired", "MCI", "Dementia", "Other"))) %>%
+  mutate_at("sample_size", as.numeric) %>% 
+  mutate("sample_size" = 0.5*sample_size) %>% 
+  mutate_at("sample_size", as.factor) %>%
+  pivot_longer(paste0("percent_increase_", 
+                      c("Unimpaired", "MCI", "Dementia", "Other")),
+               names_to = c("text", "class"), 
+               names_sep = "_increase_") %>% 
+  mutate_at("class", function(x) 
+    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other")))
+
+#---- **plot ----
+ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) + 
+  geom_boxplot() +
+  scale_color_manual(values = group_colors) + 
+  geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
+  ylab("Bias: % Increase") + facet_grid(cols = vars(distribution)) + 
+  guides(color = guide_legend(title = "Group")) + 
+  scale_x_discrete(name = "Sample Size", 
+                     breaks = unique(plot_data$sample_size))
+
+ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+                         "impairement_class_bias_percent_increase.jpeg"))
+
+#---- Figure X: HRS model results ----
+#---- **read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+results_paths <- 
+  list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
+             full.names = TRUE, pattern = "*.csv")
+
+results <- do.call(rbind, lapply(results_paths, read_results))
+
+
+
+#---- **plot ----
+ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+                         "HRS_model_results.jpeg"))
+
+
+
+
 
 
