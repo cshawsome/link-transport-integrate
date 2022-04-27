@@ -74,7 +74,8 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
-nu_0 <- 65
+nu_0 <- read_csv(paste0(path_to_box, "analyses/nu_0.csv")) %>% 
+  column_to_rownames("dataset_name") %>% t()
 #scaling for inverse wishart as variance of Beta
 kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
 
@@ -96,8 +97,9 @@ future_lapply(synthetic_data_list, function(x)
                        mutate("(Intercept)" = 1) %>% ungroup(), cell_ID_key, 
                      color_palette, num_synthetic = 1000, unimpaired_betas, 
                      unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
-                     alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
-                     kappa_0_mat, contrasts_matrix = A,
+                     alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, 
+                     nu_0 = nu_0[, unique(x$dataset_name)], kappa_0_mat, 
+                     contrasts_matrix = A,
                      path_to_analyses_folder = 
                        paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
                               unique(x[, "dataset_name"]), "/"), 
@@ -111,11 +113,11 @@ future_lapply(synthetic_data_list, function(x)
 end <- Sys.time() - start
 plan(sequential)
 
-#---- generate one set ----
+#---- generate one set for tuning ----
 set.seed(20220329)
 start <- Sys.time()
 
-lapply(synthetic_data_list[37], function(x)
+lapply(synthetic_data_list[43], function(x)
   generate_synthetic(warm_up = 100, run_number = 1, 
                      starting_props = c(0.25, 0.25, 0.25, 0.25),
                      unimpaired_preds, other_preds, mci_preds, 
@@ -127,8 +129,9 @@ lapply(synthetic_data_list[37], function(x)
                        mutate("(Intercept)" = 1) %>% ungroup(), cell_ID_key, 
                      color_palette, num_synthetic = 1000, unimpaired_betas, 
                      unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
-                     alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
-                     kappa_0_mat, contrasts_matrix = A,
+                     alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, 
+                     nu_0 = nu_0[, unique(x$dataset_name)], kappa_0_mat, 
+                     contrasts_matrix = A,
                      path_to_analyses_folder = 
                        paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
                               unique(x[, "dataset_name"]), "/"), 
