@@ -15,12 +15,12 @@ read_results <- function(path){
     data <- data.table::fread(path, fill = TRUE) %>% 
       mutate("dataset_name" = dataset_name) %>% 
       separate(dataset_name, 
-               into = c("distribution", "sample_size", "prior_props"), 
+               into = c("Distribution", "sample_size", "prior_props"), 
                sep = "_") %>% 
-      mutate_at("distribution", str_to_title) %>% 
-      mutate("color" = case_when(distribution == "Normal" ~ "#135467", 
-                                 distribution == "Lognormal" ~ "#f0824f", 
-                                 distribution == "Bathtub" ~ "b51661"))
+      mutate_at("Distribution", str_to_title) %>% 
+      mutate("color" = case_when(Distribution == "Normal" ~ "#135467", 
+                                 Distribution == "Lognormal" ~ "#f0824f", 
+                                 Distribution == "Bathtub" ~ "b51661"))
     
     return(data)
   }
