@@ -5,7 +5,7 @@ if (!require("pacman")){
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
        "locfit", "MBSP", "wesanderson", "RColorBrewer", "devtools", "gifski", 
-       "transformr", "moments", "qdapRegex")
+       "transformr", "moments", "qdapRegex", "future.apply")
 install_github("thomasp85/gganimate")
 library(gganimate)
 
@@ -82,8 +82,9 @@ kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
 #1.7 days for all checks to run in serial
 set.seed(20220329)
 start <- Sys.time()
+plan(multisession, workers = (availableCores() - 2))
 
-lapply(synthetic_data_list, function(x)
+future_lapply(synthetic_data_list, function(x)
   prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
                           categorical_vars = W, continuous_vars = Z, 
                           variable_labels, color_palette, 
@@ -101,6 +102,7 @@ lapply(synthetic_data_list, function(x)
                             paste0(path_to_box,
                                    "figures/simulation_study/HCAP_HRS_", 
                                    unique(x[, "dataset_name"]), 
-                                   "/prior_predictive_checks/")))
+                                   "/prior_predictive_checks/")), 
+  future.seed = TRUE)
 end <- Sys.time() - start
-
+plan(sequential)
