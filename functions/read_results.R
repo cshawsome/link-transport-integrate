@@ -11,8 +11,18 @@ read_results <- function(path){
   if(str_detect(path, "simulation_study/results")){
     dataset_name <- str_split(path, pattern = "results/")[[1]][2]
     dataset_name <- str_remove(dataset_name, pattern = ".csv")
-    return(data.table::fread(path, fill = TRUE) %>% 
-             mutate("dataset_name" = dataset_name))
+    
+    data <- data.table::fread(path, fill = TRUE) %>% 
+      mutate("dataset_name" = dataset_name) %>% 
+      separate(dataset_name, 
+               into = c("distribution", "sample_size", "prior_props"), 
+               sep = "_") %>% 
+      mutate_at("distribution", str_to_title) %>% 
+      mutate("color" = case_when(distribution == "Normal" ~ "#135467", 
+                                 distribution == "Lognormal" ~ "#f0824f", 
+                                 distribution == "Bathtub" ~ "b51661"))
+    
+    return(data)
   }
   
   #---- OLD ----
