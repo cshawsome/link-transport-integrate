@@ -4,8 +4,9 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
-       "locfit", "MBSP", "wesanderson", "RColorBrewer", "devtools", "gifski", 
-       "transformr", "moments", "qdapRegex", "future.apply")
+       "locfit", "wesanderson", "RColorBrewer", "devtools", "gifski", 
+       "transformr", "moments", "qdapRegex", "future.apply", "mvnfast", 
+       "LaplacesDemon")
 install_github("thomasp85/gganimate")
 library(gganimate)
 
@@ -83,7 +84,7 @@ set.seed(20220329)
 start <- Sys.time()
 plan(multisession, workers = (availableCores() - 2))
 
-future_lapply(synthetic_data_list, function(x)
+future_lapply(synthetic_data_list[seq(31, 43, by = 3)], function(x)
   prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
                           categorical_vars = W, continuous_vars = Z, 
                           variable_labels, color_palette, 

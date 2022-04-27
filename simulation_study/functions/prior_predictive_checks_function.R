@@ -29,19 +29,21 @@ prior_predictive_checks <-
       #pre-allocate columns
       mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
     
+    #---- max index ----
+    max_index <- length(priors_beta)
+    
     generate_data <- function(color_palette){
       #---- latent class ----
       group_num = 1
       for(model in c("unimpaired", "other", "mci")){
         subset_index <- which(synthetic_sample$group_num == 0)
-        random_draw <- sample(seq(1, ncol(get(paste0(model, "_cov")))), 
-                              size = 1)
+        random_draw <- sample(seq(1, max_index), size = 1)
         
-        prior_betas <- as.vector(get(paste0(model, "_betas"))[, random_draw])
-        prior_cov <- matrix(unlist(get(paste0(model, "_cov"))[, random_draw]), 
-                            nrow = nrow(prior_betas))
+        prior_betas <- get(paste0(model, "_betas"))[, random_draw]
+        prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
         
-        betas <- mvrnorm(n = 1, mu = t(prior_betas), Sigma = prior_cov)
+        betas <- 
+          mvnfast::rmvn(n = 1, mu = unlist(prior_betas), Sigma = prior_cov)
         
         synthetic_sample[subset_index, paste0("p_", model)] <- 
           expit(as.matrix(synthetic_sample[subset_index, 
@@ -71,11 +73,6 @@ prior_predictive_checks <-
           expand.grid(c("Unimpaired", "MCI", "Dementia", "Other"), 
                       seq(1, nrow(contrasts_matrix))), 1, paste0,
           collapse = ":"))
-      
-      #figure out max sampling index-- could use any prior distribution
-      max_index <- 
-        colnames(alpha_0_dist)[str_detect(colnames(alpha_0_dist), "[0-9]+")] %>% 
-        as.numeric() %>% max()
       
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
         #---- **index for random draws ----
@@ -128,24 +125,26 @@ prior_predictive_checks <-
         }
         
         #---- **draw Sigma_0----
-        Sigma_prior <- prior_Sigma[, c(as.character(random_draw), "group")] %>% 
-          filter(group == class)
-        sig_Y <- riwish(v = (nu_0), S = matrix(unlist(Sigma_prior[, 1]), 
-                                               nrow = length(continuous_vars)))
+        Sigma_prior <- 
+          as.matrix(
+            prior_Sigma[[random_draw]][[
+              class]][, seq(1, length(continuous_vars))])
+        
+        sig_Y <- riwish(v = (nu_0), S = Sigma_prior)
         
         #---- **beta_0 ----
-        V_0_inv <- prior_V_inv[, c(as.character(random_draw), "group")] %>% 
-          filter(group == class)
-        beta_0 <- priors_beta[, c(as.character(random_draw), "group")] %>% 
-          filter(group == class)
+        V_0_inv <- 
+          as.matrix(
+            prior_V_inv[[random_draw]][[class]][, seq(1, ncol(V_inv))])
         
-        #as matrices
-        V_0_inv <- matrix(unlist(V_0_inv[, 1]), nrow = ncol(contrasts_matrix))
-        beta_0 <- matrix(unlist(beta_0[, 1]), nrow = nrow(V_0_inv))
+        beta_0 <- 
+          as.matrix(
+            priors_beta[[random_draw]][[
+              class]][, seq(1, length(continuous_vars))])
         
         #---- **draw beta | Sigma----
-        beta_Sigma_Y <- matrix.normal(beta_0, solve(V_0_inv), 
-                                      sig_Y/unlist(kappa_0[, class]))
+        beta_Sigma_Y <- rmatrixnorm(beta_0, solve(V_0_inv), 
+                                    sig_Y/unlist(kappa_0[, class]))
         
         #---- **compute mu ----
         mu[, paste0(class, ":", seq(1, 6))] <-
@@ -193,11 +192,9 @@ prior_predictive_checks <-
     }
     
     #---- multiruns ----
-    #start <- Sys.time()
     runs = num_synthetic
     synthetic <- replicate(num_synthetic, generate_data(color_palette), 
                            simplify = FALSE) 
-    #stop <- Sys.time() - start
     
     #---- plots ----
     #---- **dem class ----
