@@ -73,10 +73,10 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
-nu_0 <- 65
+nu_0 <- read_csv(paste0(path_to_box, "analyses/nu_0.csv")) %>% 
+  column_to_rownames("dataset_name") %>% t()
 #scaling for inverse wishart as variance of Beta
-kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>% 
-  set_names(c("Unimpaired", "MCI", "Dementia", "Other"))
+kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
 
 #---- **run checks ----
 #1.7 days for all checks to run in serial
@@ -94,7 +94,8 @@ lapply(synthetic_data_list, function(x)
                           num_synthetic = 1000, unimpaired_betas, 
                           unimpaired_cov, other_betas, other_cov, 
                           mci_betas, mci_cov, alpha_0_dist, prior_Sigma, 
-                          prior_V_inv, prior_beta, nu_0, kappa_0, 
+                          prior_V_inv, prior_beta, 
+                          nu_0 = nu_0[, unique(x$dataset_name)], kappa_0_mat, 
                           contrasts_matrix = A, 
                           path_to_folder = 
                             paste0(path_to_box,

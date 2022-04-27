@@ -3,7 +3,7 @@ prior_predictive_checks <-
            continuous_vars, variable_labels, color_palette, dataset_to_copy, 
            num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 
            other_cov, mci_betas, mci_cov, alpha_0_dist, prior_Sigma, 
-           prior_V_inv, prior_beta, nu_0, kappa_0, contrasts_matrix, 
+           prior_V_inv, prior_beta, nu_0, kappa_0_mat, contrasts_matrix, 
            path_to_folder){
     
     #---- create folders for results ----
@@ -145,7 +145,7 @@ prior_predictive_checks <-
         
         #---- **draw beta | Sigma----
         beta_Sigma_Y <- matrix.normal(beta_0, solve(V_0_inv), 
-                                      sig_Y/kappa_0[class])
+                                      sig_Y/unlist(kappa_0[, class]))
         
         #---- **compute mu ----
         mu[, paste0(class, ":", seq(1, 6))] <-
