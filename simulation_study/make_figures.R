@@ -6,6 +6,9 @@ if (!require("pacman")){
 p_load("tidyverse", "magrittr", "wesanderson", "devtools", "here")
 install_github("thomasp85/patchwork")
 
+#---- source functions ----
+source(here::here("functions", "read_results.R"))
+
 #---- Figure X: comparing ADAMS with synthetic HRS ----
 #---- **read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -171,5 +174,16 @@ ggplot(data = plot_data, aes(x = value, color = Color, fill = Color)) +
 ggsave(filename = "synthetic_bathtub_mix_Z.jpeg", plot = last_plot(), 
        path = paste0(path_to_box, "figures/simulation_study/"), 
        width = 8, height = 10, units = "in", device = "jpeg")
+
+#---- Figure X: 95% CI impairment classes ----
+#---- **read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+results_paths <- 
+  list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
+             full.names = TRUE, pattern = "*.csv")
+
+results <- do.call(rbind, lapply(results_paths, read_results))
+
 
 
