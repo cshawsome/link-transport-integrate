@@ -280,7 +280,7 @@ results <- do.call(rbind, lapply(results_paths, read_results))
 truth <- 
   read_csv(paste0(path_to_box, "analyses/simulation_study/truth.csv")) %>% 
   filter(term %in% c("black", "hispanic")) %>% 
-  dplyr::select("term", "estimate", "dataset_name", "prior_props") %>% 
+  dplyr::select("term", "estimate", "dataset_name") %>% 
   separate(dataset_name, 
                     into = c("Distribution", "sample_size", "prior_props"), 
                     sep = "_") %>% 
@@ -314,7 +314,8 @@ ggplot(results_summary,
   theme(legend.position = "bottom", legend.direction = "horizontal") + 
   scale_color_manual(values = dist_colors) + 
   geom_vline(xintercept = 0, linetype = "dashed", color = "dark grey") + 
-  geom_vline(data = truth %>% filter(Distribution == "Normal"), 
+  geom_vline(data = truth %>% 
+               filter(Distribution == "Normal" & prior_props == "ADAMS"), 
              aes(xintercept = beta)) +
   facet_grid(rows = vars(race_eth), cols = vars(sample_size)) 
 
