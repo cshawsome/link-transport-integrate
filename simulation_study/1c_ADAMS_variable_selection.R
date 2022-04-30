@@ -82,7 +82,7 @@ lasso_reg <- function(data, var_list){
     #---- define outcome and predictor variables ----
     y <- model_data[, class]
     x <- data.matrix(model_data[, var_list])
-    weights <- data.matrix(model_data[, "weights"])
+    weights <- model_data[, "weights"]
     
     #---- choose best lambda ----
     lambda <- median(replicate(1000, best_lambda(x, y, weights)))
