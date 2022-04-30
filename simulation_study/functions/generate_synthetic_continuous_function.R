@@ -1,7 +1,7 @@
 generate_synthetic_continuous <- 
   function(data, sample_size, unimpaired_prop = 0.25, mci_prop = 0.25, 
-           dementia_prop = 0.25, dist, parameters, path_to_results, 
-           scenario_name = NA){
+           dementia_prop = 0.25, dist, parameters, selected_vars_estimates, 
+           path_to_results, scenario_name = NA){
     #---- check parameters ----
     if(sum(unimpaired_prop, mci_prop, dementia_prop) > 1){
       stop("Impairment proportions sum to more than 1. Please check values.") 
@@ -19,7 +19,18 @@ generate_synthetic_continuous <-
     other_prop <- 1 - sum(unimpaired_prop, mci_prop, dementia_prop)
     
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+      if(group != "Dementia"){
+        synthetic_data %<>% mutate(!!paste0(group, "_prob") := 0)
+      }
       synthetic_data %<>% mutate({{group}} := 0)
+    }
+    
+    #---- **predicted probabilities ----
+    for(group in c("Unimpaired", "Other", "MCI")){
+      X <- as.matrix(synthetic_data[, selected_vars_estimates$data_label])
+      beta <- as.matrix(selected_vars_estimates[, group])
+      
+      synthetic_data[, paste0(group, "_prob")] <- X%*%beta
     }
     
     #---- **Unimpaired ----
@@ -120,20 +131,21 @@ generate_synthetic_continuous <-
                      sample_size, "_", scenario_name, ".csv"))
   }
 
-# #---- testing ----
-# data <- HRS_analytic
-# sample_size <- 1000
-# unimpaired_prop = 0.35
-# mci_prop = 0.10
-# dementia_prop = 0.35
-# dist <- "normal"
-# scenario_name = NA
-# parameters <- normal_parameter_list
-# path_to_results = paste0(path_to_box, "analyses/simulation_study/",
-#                          "synthetic_data/")
-# 
-# generate_synthetic_continuous(data, sample_size, unimpaired_prop,
-#                               mci_prop, dementia_prop, dist,
-#                               parameters, path_to_results)
+#---- testing ----
+data <- HRS_analytic
+sample_size <- 1000
+unimpaired_prop = 0.35
+mci_prop = 0.10
+dementia_prop = 0.35
+dist <- "normal"
+scenario_name = NA
+parameters <- normal_parameter_list
+selected_vars_estimates <- selected_vars_betas
+path_to_results = paste0(path_to_box, "analyses/simulation_study/",
+                         "synthetic_data/")
+
+generate_synthetic_continuous(data, sample_size, unimpaired_prop,
+                              mci_prop, dementia_prop, dist,
+                              parameters, path_to_results)
 
 
