@@ -177,6 +177,17 @@ write_csv(selected_vars_results,
           paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
                  "selected_vars_model_coefficients.csv"))
 
+# #---- Sanity check ----
+# ADAMS_imputed_stacked %<>% mutate("Intercept" = 1)
+# 
+# X <-
+#   as.matrix(ADAMS_imputed_stacked[, c("Intercept",
+#                                       str_remove_all(selected_var_list, "`"))])
+# 
+# beta <- as.matrix(selected_vars_results[, "Unimpaired"])
+# 
+# pred_probs <- inv.logit(X %*% beta)
+
 #---- OLD ----
 # #---- models ----
 # #---- **Unimpaired vs. Impaired ----
