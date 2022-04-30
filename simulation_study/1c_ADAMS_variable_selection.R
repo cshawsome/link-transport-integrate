@@ -9,8 +9,7 @@ p_load("tidyverse", "broom", "sjPlot", "gridExtra", "magrittr", "glmnet")
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 ADAMS_imputed_clean <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
-                 "MI_datasets_cleaned")) %>%
+  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
@@ -59,7 +58,7 @@ ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>%
 #---- **best lambda function ----
 #choose the best lambda for lasso regression based on 1000 runs of 10-fold CV
 best_lambda <- function(x, y, weights){
-  cv_model <- cv.glmnet(x, y, alpha = 1, weights = weights)
+  cv_model <- cv.glmnet(x, y, alpha = 1, weights = weights, family = "binomial")
   min_lambda <- cv_model$lambda.min
   return(min_lambda)
 }
@@ -90,7 +89,8 @@ lasso_reg <- function(data, var_list){
     
     #---- store results ----
     model_list[[class]] <- 
-      glmnet(x, y, alpha = 1, lambda = lambda, weights = weights)
+      glmnet(x, y, alpha = 1, lambda = lambda, weights = weights, 
+             family = "binomial")
     
     lambda_vec[class] <- lambda
   }
@@ -160,7 +160,8 @@ for(class in c("Unimpaired", "Other", "MCI")){
   model <- 
     glm(as.formula(paste0(class,  "~", 
                           paste(selected_var_list, collapse = "+"))), 
-               family = binomial, data = model_data, weights = weights)
+        family = binomial(link = "logit"), data = model_data, 
+        weights = weights)
   
   selected_vars_results[, class] <- coefficients(model) 
 }
@@ -171,7 +172,7 @@ selected_vars_results %<>%
   left_join(., variable_labels, by = c("data_name" = "ADAMS")) %>%
   dplyr::select("data_label", "Unimpaired", "Other", "MCI") 
 
-selected_vars_results[1, "data_label"] <- "(Intercept)"
+selected_vars_results[1, "data_label"] <- "Intercept"
 
 #---- **save results ----
 write_csv(selected_vars_results,
