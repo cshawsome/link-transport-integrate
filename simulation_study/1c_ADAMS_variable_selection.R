@@ -97,6 +97,7 @@ lasso_reg <- function(data, var_list){
   return(list("models" = model_list, "lambdas" = lambda_vec))
 }
 
+#About 3.5 hours
 start <- Sys.time()
 variable_selection <- lasso_reg(ADAMS_imputed_stacked, var_list)
 end <- Sys.time() - start
