@@ -172,8 +172,6 @@ selected_vars_results %<>%
   left_join(., variable_labels, by = c("data_name" = "ADAMS")) %>%
   dplyr::select("data_label", "Unimpaired", "Other", "MCI") 
 
-selected_vars_results[1, "data_label"] <- "Intercept"
-
 #---- **save results ----
 write_csv(selected_vars_results,
           paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
