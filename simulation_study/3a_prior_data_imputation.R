@@ -19,9 +19,8 @@ ADAMS_analytic <-
 
 #---- imputation ----
 #---- **pare down list of vars based on ADAMS variable selection ----
-remove <- c("ANRECNO", paste0("r", seq(4, 7), "iadla"), "avg_proxy_cog_Better", 
-            "avg_proxy_cog_Same", "avg_proxy_cog_Worse", "proxy_Spouse", 
-            "proxy_Child", "proxy_Other_Relative", "proxy_Other", "Aiadla")
+remove <- c("avg_proxy_cog_Better", "avg_proxy_cog_Same", "avg_proxy_cog_Worse", "proxy_Spouse", 
+            "proxy_Child", "proxy_Other_Relative", "proxy_Other")
 
 ADAMS_subset <- ADAMS_analytic %>% dplyr::select(-all_of(remove))
 
@@ -36,9 +35,9 @@ sociodem_vars <- c("AAGE", "EDYRS", "Female", "Black", "Hispanic",
                    "Married/partnered", "Working", "Retired", "Not working")
 
 ADAMS_vars <- c("SELFCOG", "ANMSETOT", "ANSER7T", "ANSCISOR", "ANCACTUS", 
-                "ANPRES", "ANAFTOT", "ANBNTTOT", "ANDELCOR", "ANRECYES", 
-                "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", "ANTMASEC", 
-                "ANBWC20", "ANBWC86", "ANIMMCR", "ANSMEM2_Better", 
+                "ANPRES", "ANAFTOT", "ANBNTTOT", "ANDELCOR", "ANRECYES",
+                "ANRECNO", "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", 
+                "ANTMASEC", "ANBWC20", "ANBWC86", "ANIMMCR", "ANSMEM2_Better", 
                 "ANSMEM2_Same", "ANSMEM2_Worse", "Dementia", "Other", 
                 "MCI")
 
@@ -46,27 +45,28 @@ HRS_vars <- c(paste0("r", cog_waves, "mpart"), paste0("r", hrs_waves, "height"),
               paste0("r", hrs_waves, "weight"), paste0("r", hrs_waves, "smoken"), 
               paste0("r", hrs_waves, "drinkd"), paste0("r", hrs_waves, "drinkn"), 
               paste0("r", hrs_waves, "hibpe"), paste0("r", hrs_waves, "diabe"), 
-              paste0("r", hrs_waves, "hearte"), paste0("r", hrs_waves, "stroke"), 
-              paste0("r", hrs_waves, "adla"), paste0("r", cog_waves, "imrc"), 
-              paste0("r", cog_waves, "dlrc"), paste0("r", cog_waves, "ser7"), 
-              paste0("r", cog_waves, "bwc20"), paste0("r", seq(5, 6), "bwc86"), 
-              paste0("r", cog_waves, "scis"), paste0("r", cog_waves, "cact"), 
-              paste0("r", cog_waves, "pres"), paste0("r", cog_waves, "cogtot"), 
+              paste0("r", hrs_waves, "hearte"), paste0("r", hrs_waves, "stroke"),
+              paste0("r", hrs_waves, "adla"), paste0("r", hrs_waves, "iadla"), 
+              paste0("r", cog_waves, "imrc"), paste0("r", cog_waves, "dlrc"), 
+              paste0("r", cog_waves, "ser7"), paste0("r", cog_waves, "bwc20"), 
+              paste0("r", seq(5, 6), "bwc86"), paste0("r", cog_waves, "scis"), 
+              paste0("r", cog_waves, "cact"), paste0("r", cog_waves, "pres"), 
+              paste0("r", cog_waves, "cogtot"), 
               paste0("r", cog_waves, "pstmem_Better"), 
               paste0("r", cog_waves, "pstmem_Same"), 
               paste0("r", cog_waves, "pstmem_Worse"))
 
 not_predictors <- c("HHIDPN", "AYEAR", "White", "ANMSETOT_norm", 
                     "Adem_dx_label_collapsed", "Unimpaired", "Astroke", "Ahibpe", 
-                    "Adiabe", "Ahearte", "Abmi", "Aadla", "Asmoken", "Adrinkd", 
-                    "Adrinkn")
+                    "Adiabe", "Ahearte", "Abmi", "Aiadla", "Aadla", "Asmoken", 
+                    "Adrinkd", "Adrinkn")
 
-# #Sanity check
-# union_var_names <- c(sociodem_vars, ADAMS_vars, HRS_vars, not_predictors)
-# ncol(ADAMS_subset) == length(union_var_names)
-# 
-# colnames(ADAMS_subset)[which(!colnames(ADAMS_subset) %in% union_var_names)]
-# union_var_names[which(!union_var_names %in% colnames(ADAMS_subset))]
+#Sanity check
+union_var_names <- c(sociodem_vars, ADAMS_vars, HRS_vars, not_predictors)
+ncol(ADAMS_subset) == length(union_var_names)
+
+colnames(ADAMS_subset)[which(!colnames(ADAMS_subset) %in% union_var_names)]
+union_var_names[which(!union_var_names %in% colnames(ADAMS_subset))]
 
 #---- **predictor matrix ----
 predict <- 
@@ -122,6 +122,7 @@ per_run_num_impute = 100
 total_num_impute = 10000
 chunks <- seq(1, total_num_impute/per_run_num_impute) %>% as.matrix()
 
+#About 
 start <- Sys.time()
 plan(multisession, workers = (availableCores() - 2))
 set.seed(20220329)
