@@ -20,8 +20,8 @@ superpopulations_data <-
   do.call(rbind, lapply(superpopulations_paths, read_results))
 
 #---- analytic models ----
-for(dataset in unique(synthetic_data$dataset_name)){
-  subset <- synthetic_data %>% filter(dataset_name == dataset)
+for(dataset in unique(superpopulations_data$dataset_name)){
+  subset <- superpopulations_data %>% filter(dataset_name == dataset)
   
   if(!exists("truth")){
     truth <- glm(Dementia ~ age_Z + female + black + hispanic, 
