@@ -5,6 +5,8 @@ if (!require("pacman")){
 
 p_load("here", "tidyverse", "magrittr", "LaplacesDemon", "boot")
 
+options(scipen = 999)
+
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
