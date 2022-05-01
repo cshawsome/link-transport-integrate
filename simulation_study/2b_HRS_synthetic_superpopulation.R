@@ -39,6 +39,7 @@ HRS_analytic %<>% mutate("Intercept" = 1) %>%
 #---- synthetic data ----
 set.seed(20220303)
 
+#About 40 mins
 start <- Sys.time()
 for(dist_name in c("normal", "lognormal", "bathtub")){
   #---- ****compare with ADAMS ----

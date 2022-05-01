@@ -122,7 +122,7 @@ per_run_num_impute = 100
 total_num_impute = 10000
 chunks <- seq(1, total_num_impute/per_run_num_impute) %>% as.matrix()
 
-#About 
+#About 13.5 hours
 start <- Sys.time()
 plan(multisession, workers = (availableCores() - 2))
 set.seed(20220329)
