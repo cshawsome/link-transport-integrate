@@ -71,8 +71,3 @@ for(dist_name in c("normal", "lognormal", "bathtub")){
                                          "simulation_study/superpopulations/")) 
 }
 end <- Sys.time() - start
-
-
-
-
-
