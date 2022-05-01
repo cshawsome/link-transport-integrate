@@ -12,7 +12,7 @@ ADAMS_imputed_clean <-
   readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
-variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
 #---- variable list ----
 #variables and groups in order of priority for model inclusion 
