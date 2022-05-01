@@ -56,6 +56,7 @@ for(dist_name in c("normal", "lognormal", "bathtub")){
                                 unimpaired_prop = 0.50, mci_prop = 0.20, 
                                 dementia_prop = 0.20, dist = dist_name, 
                                 parameters = normal_parameter_list, 
+                                selected_vars_estimates = selected_vars_betas,
                                 path_to_results = 
                                   paste0(path_to_box, "analyses/", 
                                          "simulation_study/superpopulations/")) 
@@ -64,6 +65,7 @@ for(dist_name in c("normal", "lognormal", "bathtub")){
                                 unimpaired_prop = 0.20, mci_prop = 0.20, 
                                 dementia_prop = 0.50, dist = dist_name, 
                                 parameters = normal_parameter_list, 
+                                selected_vars_estimates = selected_vars_betas,
                                 path_to_results = 
                                   paste0(path_to_box, "analyses/", 
                                          "simulation_study/superpopulations/")) 
