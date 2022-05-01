@@ -7,8 +7,8 @@ generate_synthetic_continuous <-
       stop("Impairment proportions sum to more than 1. Please check values.") 
     }
     
-    if(!dir.exists(paste0(path_to_results, "HRS/"))){
-      dir.create(paste0(path_to_results, "HRS/"), recursive = TRUE)
+    if(!dir.exists(path_to_results)){
+      dir.create(path_to_results, recursive = TRUE)
     }
     
     #--- bootstrap data ----
@@ -30,26 +30,35 @@ generate_synthetic_continuous <-
       X <- as.matrix(synthetic_data[, selected_vars_estimates$data_label])
       beta <- as.matrix(selected_vars_estimates[, group])
       
-      synthetic_data[, paste0(group, "_prob")] <- X%*%beta
+      synthetic_data[, paste0(group, "_prob")] <- inv.logit(X %*% beta)
     }
     
-    #---- **Unimpaired ----
-    synthetic_data[1:round(unimpaired_prop*sample_size), "Unimpaired"] <- 1
+    #---- **group assignment ----
+    for(group in c("Unimpaired", "Other", "MCI", "Dementia")){
+      num_people <- round(get(paste0(tolower(group), "_prop"))*sample_size)
+      
+      synthetic_data %<>% 
+        mutate("group_membership" = 
+                 rowSums(synthetic_data[, c("Unimpaired", "Other", "MCI", 
+                                            "Dementia")])) 
+      
+      if(group == "Dementia"){
+        indices <- synthetic_data %>% filter(group_membership == 0) %>% 
+          dplyr::select("HHIDPN") %>% unlist()
+        
+      } else{
+        indices <- synthetic_data %>% filter(group_membership == 0) %>% 
+          arrange(desc(!!sym(paste0(group, "_prob")))) %>% 
+          dplyr::select("HHIDPN") %>% unlist()
+        
+        indices <- indices[1:num_people]
+      }
+      
+      synthetic_data[indices, group] <- 1
+    }
     
-    #---- **MCI ----
-    first_1 <- max(which(synthetic_data$Unimpaired == 1)) + 1
-    last_1 <- first_1 + round(mci_prop*sample_size)
-    synthetic_data[first_1:last_1, "MCI"] <- 1
-    
-    #---- **Dementia ----
-    first_1 <- max(which(synthetic_data$MCI == 1)) + 1
-    last_1 <- first_1 + round(dementia_prop*sample_size)
-    synthetic_data[first_1:last_1, "Dementia"] <- 1
-    
-    #---- **Other ----
-    first_1 <- max(which(synthetic_data$Dementia == 1)) + 1
-    last_1 <- sample_size
-    synthetic_data[first_1:last_1, "Other"] <- 1
+    #---- **get rid of extra column ----
+    synthetic_data %<>% dplyr::select(-one_of("group_membership"))
     
     #---- scenario name ----
     if(is.na(scenario_name)){
@@ -127,25 +136,25 @@ generate_synthetic_continuous <-
     }
     #---- return values ----
     write_csv(as.data.frame(synthetic_data), 
-              paste0(path_to_results, "/HRS/HRS_synthetic_", dist, "_", 
-                     sample_size, "_", scenario_name, ".csv"))
+              paste0(path_to_results, dist, "_", sample_size, "_", 
+                     scenario_name, ".csv"))
   }
 
-#---- testing ----
-data <- HRS_analytic
-sample_size <- 1000
-unimpaired_prop = 0.35
-mci_prop = 0.10
-dementia_prop = 0.35
-dist <- "normal"
-scenario_name = NA
-parameters <- normal_parameter_list
-selected_vars_estimates <- selected_vars_betas
-path_to_results = paste0(path_to_box, "analyses/simulation_study/",
-                         "synthetic_data/")
-
-generate_synthetic_continuous(data, sample_size, unimpaired_prop,
-                              mci_prop, dementia_prop, dist,
-                              parameters, path_to_results)
-
-
+# #---- testing ----
+# data <- HRS_analytic
+# sample_size <- 1000
+# unimpaired_prop = 0.35
+# mci_prop = 0.10
+# dementia_prop = 0.35
+# dist <- "normal"
+# scenario_name = NA
+# parameters <- normal_parameter_list
+# selected_vars_estimates <- selected_vars_betas
+# path_to_results = paste0(path_to_box, "analyses/simulation_study/",
+#                          "superpopulations/")
+# 
+# generate_synthetic_continuous(data, sample_size, unimpaired_prop,
+#                               mci_prop, dementia_prop, dist,
+#                               parameters, path_to_results)
+# 
+# 
