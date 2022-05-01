@@ -10,11 +10,13 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **ADAMS imputed data ----
 ADAMS_imputed_clean <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
-                 "MI_datasets_cleaned"))
+  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned")) %>%
+  lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
 #---- **variable labels ----
-variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
+variable_labels <- 
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
+  filter(ADAMS %in% colnames(ADAMS_imputed_clean[[1]]))
 
 #---- **variable selection results ----
 selected_vars <- 
