@@ -39,6 +39,7 @@ HRS_analytic %<>% mutate("Intercept" = 1) %>%
 #---- synthetic data ----
 set.seed(20220303)
 
+start <- Sys.time()
 for(dist_name in c("normal", "lognormal", "bathtub")){
   #---- ****compare with ADAMS ----
   generate_synthetic_continuous(HRS_analytic, sample_size = 1000000, 
@@ -67,6 +68,7 @@ for(dist_name in c("normal", "lognormal", "bathtub")){
                                   paste0(path_to_box, "analyses/", 
                                          "simulation_study/superpopulations/")) 
 }
+end <- Sys.time() - start
 
 
 
