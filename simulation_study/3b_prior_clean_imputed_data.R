@@ -168,10 +168,10 @@ ADAMS_imputed <- lapply(ADAMS_imputed, select_cat, Subjective)
 sociodemographics <- c("Female", "Married/partnered", "Not working", "Retired", 
                        "AAGE", "EDYRS", "Black", "Hispanic")
 neuropsych <- c("ANAFTOT", "ANBNTTOT", "ANCPTOT", "ANRCPTOT", "ANMSETOT_norm", 
-                "ANRECYES", "ANTMASEC", "ANWM1TOT", "ANWM2TOT")
+                "ANRECYES", "ANRECNO", "ANTMASEC", "ANWM1TOT", "ANWM2TOT")
 gen_cog <- c("SELFCOG", "ANBWC20", "ANBWC86", "ANCACTUS", "ANDELCOR", "ANIMMCR",
              "ANPRES", "ANSCISOR", "ANSER7T", "ANSMEM2_Better", "ANSMEM2_Worse")
-functional <- c("Aadla")
+functional <- c("Aadla", "Aiadla")
 health <- c("Adiabe", "Ahearte", "Ahibpe", "Asmoken", "Astroke", 
             "Amoderate_drinking", "Aheavy_drinking", "Abmi_derived")
 
@@ -192,9 +192,10 @@ ADAMS_imputed_clean <-
 
 #---- standardize continuous vars ----
 standardize_vars <- c("AAGE", "EDYRS", "ANMSETOT_norm", "ANAFTOT", "ANBNTTOT", 
-                      "ANCPTOT", "ANRCPTOT", "ANRECYES", "ANTMASEC", "ANWM1TOT", 
-                      "ANWM2TOT", "SELFCOG", "ANBWC20", "ANBWC86", "ANDELCOR", 
-                      "ANIMMCR", "ANSER7T", "Aadla", "Abmi_derived")
+                      "ANCPTOT", "ANRCPTOT", "ANRECYES", "ANRECNO", "ANTMASEC", 
+                      "ANWM1TOT", "ANWM2TOT", "SELFCOG", "ANBWC20", "ANBWC86", 
+                      "ANDELCOR", "ANIMMCR", "ANSER7T", "Aadla", "Aiadla", 
+                      "Abmi_derived")
 
 Z_score <- function(data, vars){
   subset <- data %>% dplyr::select(all_of(vars)) %>% 
