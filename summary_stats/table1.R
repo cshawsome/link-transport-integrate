@@ -10,47 +10,45 @@ options(scipen = 999)
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+HRS_clean <- 
+  read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_clean.csv"))
+
 HRS_analytic <- 
   read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
 
 #---- HRS ----
-#---- **analytic ----
-nrow(HRS_analytic)
-
-#---- ****HCAP selection ----
-table(HRS_analytic$HCAP_SELECT, useNA = "ifany")
-table(HRS_analytic$HCAP_SELECT, useNA = "ifany")/nrow(HRS_analytic)
-
+#---- **clean ----
 #---- ****married/partnered ----
-table(HRS_analytic$PCOUPLE, useNA = "ifany")
-table(HRS_analytic$PCOUPLE, useNA = "ifany")/nrow(HRS_analytic)
+table(HRS_clean$PCOUPLE, useNA = "ifany")
+table(HRS_clean$PCOUPLE, useNA = "ifany")/nrow(HRS_clean)
 
 #---- ****female ----
-table(HRS_analytic$Female, useNA = "ifany")
-table(HRS_analytic$Female, useNA = "ifany")/nrow(HRS_analytic)
+table(HRS_clean$Female, useNA = "ifany")
+table(HRS_clean$Female, useNA = "ifany")/nrow(HRS_clean)
 
 #---- ****age ----
-summary(HRS_analytic$PAGE)
+summary(HRS_clean$PAGE)
 
 #---- ****race/ethnicity ----
-table(HRS_analytic$White, useNA = "ifany")
-table(HRS_analytic$White, useNA = "ifany")/nrow(HRS_analytic)
+table(HRS_clean$White, useNA = "ifany")
+table(HRS_clean$White, useNA = "ifany")/nrow(HRS_clean)
 
-table(HRS_analytic$Black, useNA = "ifany")
-table(HRS_analytic$Black, useNA = "ifany")/nrow(HRS_analytic)
+table(HRS_clean$Black, useNA = "ifany")
+table(HRS_clean$Black, useNA = "ifany")/nrow(HRS_clean)
 
-table(HRS_analytic$Hispanic, useNA = "ifany")
-table(HRS_analytic$Hispanic, useNA = "ifany")/nrow(HRS_analytic)
+table(HRS_clean$Hispanic, useNA = "ifany")
+table(HRS_clean$Hispanic, useNA = "ifany")/nrow(HRS_clean)
 
 #---- ****employment ----
-table(HRS_analytic$Working, useNA = "ifany")
-table(HRS_analytic$Working, useNA = "ifany")/nrow(HRS_analytic)
+table(HRS_clean$Working, useNA = "ifany")
+table(HRS_clean$Working, useNA = "ifany")/nrow(HRS_clean)
 
-table(HRS_analytic$Retired, useNA = "ifany")
-table(HRS_analytic$Retired, useNA = "ifany")/nrow(HRS_analytic)
+table(HRS_clean$Retired, useNA = "ifany")
+table(HRS_clean$Retired, useNA = "ifany")/nrow(HRS_clean)
 
-table(HRS_analytic$`Not working`, useNA = "ifany")
-table(HRS_analytic$`Not working`, useNA = "ifany")/nrow(HRS_analytic)
+table(HRS_clean$`Not working`, useNA = "ifany")
+table(HRS_clean$`Not working`, useNA = "ifany")/nrow(HRS_clean)
 
 #---- **CC ----
 HRS_CC <- na.omit(HRS_analytic)
