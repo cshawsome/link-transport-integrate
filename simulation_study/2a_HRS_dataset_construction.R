@@ -21,8 +21,8 @@ HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
                            HHIDPN = "TRUE") %>% 
   #select variables: ID, 2016 Wave participation, 2016 married/partnered status, 
   # sex/gender, age, race, ethnicity, 
-  dplyr::select("HHIDPN", "PIWTYPE", "PCOUPLE", "GENDER", "PAGE", 
-                "RACE", "HISPANIC") %>%
+  dplyr::select("HHIDPN", "PIWTYPE", "PCOUPLE", "GENDER", "PAGE", "RACE", 
+                "HISPANIC") %>%
   #N = 43398
   #filter to those who completed 2016 Wave interview (N = 20911; dropped n = 22487)
   filter(PIWTYPE == 1)
@@ -212,6 +212,6 @@ remove <- c("PIWTYPE", "PAGE", "RACE", "RACE_label", "RACE_White", "RACE_Black",
 
 HRS %>% dplyr::select(-all_of(remove)) %>% 
   write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_clean.csv"))
-  
+
 HRS %>% dplyr::select(-all_of(remove)) %>% na.omit() %>%
   write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
