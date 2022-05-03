@@ -14,7 +14,7 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 prior_imputed_clean <- 
   readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
                  "MI_datasets_cleaned")) %>%
-  lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
+  lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
 
 #---- **variable labels ----
 variable_labels <- 
@@ -35,17 +35,17 @@ prior_imputed_clean <-
 #---- predictors ----
 #unimpaired model predictors
 unimpaired_preds <- selected_vars %>% 
-  filter(data_label != "(Intercept)" & Unimpaired != 0) %>% 
+  filter(data_label != "Intercept" & Unimpaired != 0) %>% 
   dplyr::select(data_label) %>% unlist()
 
 #other model predictors
 other_preds <- selected_vars %>% 
-  filter(data_label != "(Intercept)" & Other != 0) %>% 
+  filter(data_label != "Intercept" & Other != 0) %>% 
   dplyr::select(data_label) %>% unlist()
 
 #mci model predictors
 mci_preds <- selected_vars %>% 
-  filter(data_label != "(Intercept)" & MCI != 0) %>% 
+  filter(data_label != "Intercept" & MCI != 0) %>% 
   dplyr::select(data_label) %>% unlist()
 
 #---- models ----
