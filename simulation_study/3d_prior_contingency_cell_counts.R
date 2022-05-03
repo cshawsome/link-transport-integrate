@@ -47,13 +47,18 @@ get_props <- function(data, W){
 
 imputation_props <- lapply(prior_imputed_clean, get_props, W) %>%
   saveRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                   "imputation_cell_props"))
+                 "imputation_cell_props"))
 
 #---- NEEDS TO BE REFACTORED ----
 #---- plots ----
 #---- **read in data ----
 #---- ****cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv"))
+
+#---- ****imputation props ----
+imputation_props <- 
+  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                 "imputation_cell_props")) 
 
 #---- ****color palette ----
 color_palette <- read_csv(here("color_palette.csv"))
