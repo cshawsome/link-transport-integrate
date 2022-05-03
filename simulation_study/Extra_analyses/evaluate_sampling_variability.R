@@ -11,74 +11,74 @@ source(here::here("functions", "read_results.R"))
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-#---- **HRS analytic dataset ----
-HRS_analytic <- 
-  read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv")) 
+#---- **superpopulations ----
+superpopulations_paths <- 
+  list.files(path = paste0(path_to_box, 
+                           "analyses/simulation_study/superpopulations"), 
+             full.names = TRUE, pattern = "*.csv")
 
-#---- **variable labels ----
-variable_labels <- 
-  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
-  filter(HRS %in% colnames(HRS_analytic)) 
+superpopulations_data <- 
+  do.call(rbind, lapply(superpopulations_paths, read_results)) 
 
-#---- **selected vars estimates ----
-selected_vars_betas <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
-                  "selected_vars_model_coefficients.csv"))
+#---- **HRS synthetic datasets ----
+HRS_synthetic_paths <- 
+  list.files(path = paste0(path_to_box, 
+                           "analyses/simulation_study/OLD/synthetic_data/HRS"), 
+             full.names = TRUE, pattern = "*.csv")
 
-#---- **continuous distribution parameters ----
-normal_parameter_list <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/", 
-                 "continuous_distribution_parameters/", 
-                 "normal_parameters"))
+HRS_synthetic_data <- 
+  do.call(rbind, lapply(HRS_synthetic_paths, read_results)) 
 
-#---- source functions ----
-source(here("simulation_study", "functions", 
-            "generate_synthetic_continuous_function.R"))
-
-#---- format data ----
-HRS_analytic %<>% mutate("Intercept" = 1) %>% 
-  rename_at(vars(variable_labels$HRS), ~ variable_labels$data_label)
-
-#---- synthetic data ----
-set.seed(20220303)
-for(n in c(500, 1000, 2000, 4000, 8000)){
-  for(dist_name in c("normal", "lognormal", "bathtub")){
-    #---- ****compare with ADAMS ----
-    generate_synthetic_continuous(HRS_analytic, sample_size = n, 
-                                  unimpaired_prop = 0.35, mci_prop = 0.10, 
-                                  dementia_prop = 0.35, dist = dist_name, 
-                                  parameters = normal_parameter_list, 
-                                  scenario_name = "ADAMS",
-                                  path_to_results = 
-                                    paste0(path_to_box, "analyses/", 
-                                           "simulation_study/synthetic_data/"))
-    #---- ****mostly unimpaired ----
-    generate_synthetic_continuous(HRS_analytic, sample_size = n, 
-                                  unimpaired_prop = 0.50, mci_prop = 0.20, 
-                                  dementia_prop = 0.20, dist = dist_name, 
-                                  parameters = normal_parameter_list, 
-                                  path_to_results = 
-                                    paste0(path_to_box, "analyses/", 
-                                           "simulation_study/synthetic_data/")) 
-    #---- ****mostly dementia ----
-    generate_synthetic_continuous(HRS_analytic, sample_size = n, 
-                                  unimpaired_prop = 0.20, mci_prop = 0.20, 
-                                  dementia_prop = 0.50, dist = dist_name, 
-                                  parameters = normal_parameter_list, 
-                                  path_to_results = 
-                                    paste0(path_to_box, "analyses/", 
-                                           "simulation_study/synthetic_data/")) 
+#---- draws from superpopulation ----
+for(sample_size in c(500, 1000, 2000, 4000, 8000)){
+  if(!exists("HRS_draws")){
+    HRS_draws <- superpopulations_data %>% group_by(dataset_name) %>% 
+      sample_n(size = sample_size, replace = TRUE) %>% 
+      mutate_at("dataset_name", 
+                function(x) str_replace(x, "1000000", paste0(sample_size)))
+  } else{
+    HRS_draws %<>% 
+      rbind(., superpopulations_data %>% group_by(dataset_name) %>% 
+              sample_n(size = sample_size, replace = TRUE) %>% 
+              mutate_at("dataset_name", 
+                        function(x) str_replace(x, "1000000", 
+                                                paste0(sample_size))))
   }
 }
 
-#---- read in results ----
-#---- **data paths ----
-synthetic_data_paths <- 
-  list.files(path = paste0(path_to_box, 
-                           "analyses/simulation_study/synthetic_data/HRS"), 
-             full.names = TRUE, pattern = "*.csv")
+#---- age variability plots ----
+#---- **superpopulations ----
+ggplot(data = superpopulations_data, aes(x = age_Z)) + 
+  geom_histogram() + theme_bw() + 
+  facet_wrap(vars(dataset_name), ncol = 3, scales = "free")
 
-synthetic_data <- 
-  do.call(rbind, lapply(synthetic_data_paths, read_results))
+ggsave(paste0(path_to_box, "figures/simulation_study/extra_analyses/", 
+              "superpopulations_age_dist.jpeg"))
 
-#----
+#---- **superpopulation draws ----
+ggplot(data = HRS_draws, aes(x = age_Z)) + 
+  geom_histogram() + theme_bw() + 
+  facet_wrap(vars(dataset_name), ncol = 3, scales = "free")
+
+ggsave(paste0(path_to_box, "figures/simulation_study/extra_analyses/", 
+              "HRS_draws_age_dist.jpeg"), width = 11, height = 14, 
+       units = "in")
+
+#---- **synthetic HRS ----
+ggplot(data = HRS_synthetic_data, aes(x = age_Z)) + 
+  geom_histogram() + theme_bw() + 
+  facet_wrap(vars(dataset_name), ncol = 3, scales = "free")
+
+ggsave(paste0(path_to_box, "figures/simulation_study/extra_analyses/", 
+              "HRS_synthetic_age_dist.jpeg"), width = 11, height = 14, 
+       units = "in")
+
+#---- continuous vars summary stats ----
+#These are very similar
+HRS_synthetic_data_sds <- HRS_synthetic_data %>% 
+  dplyr::select(contains("Z")) %>% summarize_all(sd)
+
+HRS_draws_sds <- HRS_draws %>% ungroup() %>% 
+  dplyr::select(names(HRS_synthetic_data_sds)) %>% summarize_all(sd) %>% 
+  unlist()
+  
