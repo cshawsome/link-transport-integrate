@@ -106,44 +106,95 @@ table(HRS_clean$`Not working`, HRS_clean$Hispanic, useNA = "ifany")/
   sum(HRS_clean$Hispanic)
 
 #---- **CC ----
-HRS_CC <- na.omit(HRS_analytic)
-nrow(HRS_CC)
-
-#---- ****HCAP selection ----
-table(HRS_CC$HCAP_SELECT, useNA = "ifany")
-table(HRS_CC$HCAP_SELECT, useNA = "ifany")/nrow(HRS_CC)
-
 #---- ****married/partnered ----
-table(HRS_CC$PCOUPLE, useNA = "ifany")
-table(HRS_CC$PCOUPLE, useNA = "ifany")/nrow(HRS_CC)
+table(HRS_analytic$PCOUPLE, useNA = "ifany")
+table(HRS_analytic$PCOUPLE, useNA = "ifany")/nrow(HRS_analytic)
+
+table(HRS_analytic$PCOUPLE, HRS_analytic$White, useNA = "ifany")
+table(HRS_analytic$PCOUPLE, HRS_analytic$White, useNA = "ifany")/
+  sum(HRS_analytic$White)
+
+table(HRS_analytic$PCOUPLE, HRS_analytic$Black, useNA = "ifany")
+table(HRS_analytic$PCOUPLE, HRS_analytic$Black, useNA = "ifany")/
+  sum(HRS_analytic$Black)
+
+table(HRS_analytic$PCOUPLE, HRS_analytic$Hispanic, useNA = "ifany")
+table(HRS_analytic$PCOUPLE, HRS_analytic$Hispanic, useNA = "ifany")/
+  sum(HRS_analytic$Hispanic)
 
 #---- ****female ----
-table(HRS_CC$Female, useNA = "ifany")
-table(HRS_CC$Female, useNA = "ifany")/nrow(HRS_CC)
+table(HRS_analytic$Female, useNA = "ifany")
+table(HRS_analytic$Female, useNA = "ifany")/nrow(HRS_analytic)
+
+table(HRS_analytic$Female, HRS_analytic$White, useNA = "ifany")
+table(HRS_analytic$Female, HRS_analytic$White, useNA = "ifany")/
+  sum(HRS_analytic$White)
+
+table(HRS_analytic$Female, HRS_analytic$Black, useNA = "ifany")
+table(HRS_analytic$Female, HRS_analytic$Black, useNA = "ifany")/
+  sum(HRS_analytic$Black)
+
+table(HRS_analytic$Female, HRS_analytic$Hispanic, useNA = "ifany")
+table(HRS_analytic$Female, HRS_analytic$Hispanic, useNA = "ifany")/
+  sum(HRS_analytic$Hispanic)
 
 #---- ****age ----
-hist(HRS_CC$PAGE)
-summary(HRS_CC$PAGE)
+summary(HRS_analytic$PAGE)
+summary(HRS_analytic %>% filter(White == 1) %>% dplyr::select("PAGE"))
+summary(HRS_analytic %>% filter(Black == 1) %>% dplyr::select("PAGE"))
+summary(HRS_analytic %>% filter(Hispanic == 1) %>% dplyr::select("PAGE"))
 
 #---- ****race/ethnicity ----
-table(HRS_CC$White, useNA = "ifany")
-table(HRS_CC$White, useNA = "ifany")/nrow(HRS_CC)
+table(HRS_analytic$White, useNA = "ifany")
+table(HRS_analytic$White, useNA = "ifany")/nrow(HRS_analytic)
 
-table(HRS_CC$Black, useNA = "ifany")
-table(HRS_CC$Black, useNA = "ifany")/nrow(HRS_CC)
+table(HRS_analytic$Black, useNA = "ifany")
+table(HRS_analytic$Black, useNA = "ifany")/nrow(HRS_analytic)
 
-table(HRS_CC$Hispanic, useNA = "ifany")
-table(HRS_CC$Hispanic, useNA = "ifany")/nrow(HRS_CC)
+table(HRS_analytic$Hispanic, useNA = "ifany")
+table(HRS_analytic$Hispanic, useNA = "ifany")/nrow(HRS_analytic)
 
 #---- ****employment ----
-table(HRS_CC$Working, useNA = "ifany")
-table(HRS_CC$Working, useNA = "ifany")/nrow(HRS_CC)
+table(HRS_analytic$Working, useNA = "ifany")
+table(HRS_analytic$Working, useNA = "ifany")/nrow(HRS_analytic)
 
-table(HRS_CC$Retired, useNA = "ifany")
-table(HRS_CC$Retired, useNA = "ifany")/nrow(HRS_CC)
+table(HRS_analytic$Working, HRS_analytic$White, useNA = "ifany")
+table(HRS_analytic$Working, HRS_analytic$White, useNA = "ifany")/sum(HRS_analytic$White)
 
-table(HRS_CC$`Not working`, useNA = "ifany")
-table(HRS_CC$`Not working`, useNA = "ifany")/nrow(HRS_CC)
+table(HRS_analytic$Working, HRS_analytic$Black, useNA = "ifany")
+table(HRS_analytic$Working, HRS_analytic$Black, useNA = "ifany")/sum(HRS_analytic$Black)
+
+table(HRS_analytic$Working, HRS_analytic$Hispanic, useNA = "ifany")
+table(HRS_analytic$Working, HRS_analytic$Hispanic, useNA = "ifany")/
+  sum(HRS_analytic$Hispanic)
+
+table(HRS_analytic$Retired, useNA = "ifany")
+table(HRS_analytic$Retired, useNA = "ifany")/nrow(HRS_analytic)
+
+table(HRS_analytic$Retired, HRS_analytic$White, useNA = "ifany")
+table(HRS_analytic$Retired, HRS_analytic$White, useNA = "ifany")/sum(HRS_analytic$White)
+
+table(HRS_analytic$Retired, HRS_analytic$Black, useNA = "ifany")
+table(HRS_analytic$Retired, HRS_analytic$Black, useNA = "ifany")/sum(HRS_analytic$Black)
+
+table(HRS_analytic$Retired, HRS_analytic$Hispanic, useNA = "ifany")
+table(HRS_analytic$Retired, HRS_analytic$Hispanic, useNA = "ifany")/
+  sum(HRS_analytic$Hispanic)
+
+table(HRS_analytic$`Not working`, useNA = "ifany")
+table(HRS_analytic$`Not working`, useNA = "ifany")/nrow(HRS_analytic)
+
+table(HRS_analytic$`Not working`, HRS_analytic$White, useNA = "ifany")
+table(HRS_analytic$`Not working`, HRS_analytic$White, useNA = "ifany")/
+  sum(HRS_analytic$White)
+
+table(HRS_analytic$`Not working`, HRS_analytic$Black, useNA = "ifany")
+table(HRS_analytic$`Not working`, HRS_analytic$Black, useNA = "ifany")/
+  sum(HRS_analytic$Black)
+
+table(HRS_analytic$`Not working`, HRS_analytic$Hispanic, useNA = "ifany")
+table(HRS_analytic$`Not working`, HRS_analytic$Hispanic, useNA = "ifany")/
+  sum(HRS_analytic$Hispanic)
 
 #---- OLD ----
 
