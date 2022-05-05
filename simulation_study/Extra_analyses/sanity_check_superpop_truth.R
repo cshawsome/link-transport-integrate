@@ -21,10 +21,54 @@ glm(Dementia ~ age_Z + Female + Black + Hispanic,
   tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
   mutate("RR" = exp(estimate))
 
+glm(Dementia ~ Female + Black + Hispanic, 
+    family = "poisson", data = ADAMS_analytic) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
 glm(Dementia ~ age_Z + Female + Black + Hispanic + ANMSETOT, 
     family = "poisson", data = ADAMS_analytic) %>% 
   tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
   mutate("RR" = exp(estimate))
+
+#---- **sex/gender + race/ethnicity only ----
+glm(Unimpaired ~ Female + Black + Hispanic, 
+    family = "poisson", data = ADAMS_analytic) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
+glm(MCI ~ Female + Black + Hispanic, 
+    family = "poisson", data = ADAMS_analytic) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
+glm(Dementia ~ Female + Black + Hispanic, 
+    family = "poisson", data = ADAMS_analytic) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
+glm(Other ~ Female + Black + Hispanic, 
+    family = "poisson", data = ADAMS_analytic) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
+#---- **sex/gender + race/ethnicity only | impairment class ----
+glm(Unimpaired ~ Female + Black + Hispanic, 
+    family = "poisson", data = ADAMS_analytic) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
+glm(MCI ~ Female + Black + Hispanic, 
+    family = "poisson", data = ADAMS_analytic %>% filter(Dementia == 0)) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
+glm(Other ~ Female + Black + Hispanic, 
+    family = "poisson", data = ADAMS_analytic %>% 
+      filter(Dementia == 0 & MCI == 0)) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
 
 #---- try one imputation of superpop ----
 #---- **source functions ----
@@ -114,9 +158,41 @@ for(dist_name in c("normal")){
 
 end <- Sys.time() - start
 
-#---- **test model ----
-glm(Dementia ~ age_Z + Female + Black + Hispanic, 
-    family = "poisson", data = ADAMS_analytic) %>% 
+#---- **read in data ----
+superpop <- read_csv(paste0(path_to_box, "analyses/simulation_study/", 
+                            "test_superpopulations/normal_1000000_ADAMS.csv"))
+
+#---- **test overall model ----
+glm(Dementia ~ age_Z + female + black + hispanic, 
+    family = "poisson", data = superpop) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
+glm(Dementia ~ black + hispanic, 
+    family = "poisson", data = superpop) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
+#---- **test stratified model ----
+glm(Dementia ~ black + hispanic, 
+    family = "poisson", data = superpop %>% filter(female == 1)) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
+glm(Dementia ~ black + hispanic, 
+    family = "poisson", data = superpop %>% filter(female == 1 & age_Z > 2)) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
+glm(Dementia ~ black + hispanic, 
+    family = "poisson", data = superpop %>% 
+      filter(female == 1 & age_Z > 1 & age_Z < 2)) %>% 
+  tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
+  mutate("RR" = exp(estimate))
+
+glm(Dementia ~ black + hispanic, 
+    family = "poisson", data = superpop %>% 
+      filter(female == 1 & age_Z < -1)) %>% 
   tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
   mutate("RR" = exp(estimate))
 
