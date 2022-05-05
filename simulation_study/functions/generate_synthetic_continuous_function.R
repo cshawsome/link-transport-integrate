@@ -30,7 +30,7 @@ generate_synthetic_continuous <-
       X <- as.matrix(synthetic_data[, selected_vars_estimates$data_label])
       beta <- as.matrix(selected_vars_estimates[, group])
       
-      synthetic_data[, paste0(group, "_prob")] <- inv.logit(X %*% beta)
+      synthetic_data[, paste0(group, "_prob")] <- expit(X %*% beta)
     }
     
     #---- **group assignment ----
@@ -87,9 +87,10 @@ generate_synthetic_continuous <-
                       S = normal_parameter_list[[group]]$sigma_center)
       
       #---- **beta | sigma, Y ----
-      beta <- matrix.normal(M = normal_parameter_list[[group]]$beta_center, 
-                            U = normal_parameter_list[[group]]$row_cov, 
-                            V = sigma)
+      beta <- 
+        rmatrixnorm(M = normal_parameter_list[[group]]$beta_center, 
+                    U = as.positive.definite(normal_parameter_list[[group]]$row_cov), 
+                    V = as.positive.definite(sigma))
       
       #---- **predicted Y ----
       X = synthetic_data[i, rownames(beta)]
