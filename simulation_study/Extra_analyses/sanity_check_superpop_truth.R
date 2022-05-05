@@ -53,7 +53,7 @@ glm(Other ~ Female + Black + Hispanic,
   mutate("RR" = exp(estimate))
 
 #---- **sex/gender + race/ethnicity only | impairment class ----
-glm(Unimpaired ~ Female + Black + Hispanic, 
+glm(Dementia ~ Female + Black + Hispanic, 
     family = "poisson", data = ADAMS_analytic) %>% 
   tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
   mutate("RR" = exp(estimate))
