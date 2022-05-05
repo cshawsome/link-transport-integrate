@@ -2,8 +2,8 @@ fast_impute <-
   function(predictor_matrix, data, path_for_output, method, m, maxit, chunk){
     
     #---- check filepath ----
-    if(!dir.exists(path_for_output)){
-      dir.create(path_for_output, recursive = TRUE)
+    if(!dir.exists(paste0(path_for_output, "MI/chunk_", chunk))){
+      dir.create(paste0(path_for_output, "MI/chunk_", chunk), recursive = TRUE)
     }
     
     #---- where matrix ----
@@ -71,9 +71,6 @@ fast_impute <-
     }
     
     #---- save results ----
-    #create directory for results
-    dir.create(here::here(paste0(path_for_output, "MI/chunk_", chunk)))
-    
     #---- **where matrix ----
     write_csv(as.data.frame(where), 
               file = paste0(path_for_output, "MI/chunk_", chunk, "/where.csv"))
