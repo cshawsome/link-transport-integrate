@@ -105,6 +105,13 @@ table(HRS_clean$`Not working`, HRS_clean$Hispanic, useNA = "ifany")
 table(HRS_clean$`Not working`, HRS_clean$Hispanic, useNA = "ifany")/
   sum(HRS_clean$Hispanic)
 
+#---- ****missingness ----
+colSums(is.na(HRS_clean))/nrow(HRS_clean)
+colSums(is.na(HRS_clean %>% filter(White == 1)))/sum(HRS_clean$White)
+colSums(is.na(HRS_clean %>% filter(Black == 1)))/sum(HRS_clean$Black)
+colSums(is.na(HRS_clean %>% filter(Hispanic == 1)))/sum(HRS_clean$Hispanic)
+
+
 #---- **CC ----
 #---- ****married/partnered ----
 table(HRS_analytic$PCOUPLE, useNA = "ifany")
