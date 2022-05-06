@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "magrittr", "here", "broom", "miceFast", "ggforce", 
-       "locfit", "LaplacesDemon")
+       "locfit", "LaplacesDemon", "MCMCpack")
 
 options(scipen = 999)
 
