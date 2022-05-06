@@ -52,23 +52,22 @@ glm(Other ~ Female + Black + Hispanic,
   tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
   mutate("RR" = exp(estimate))
 
-#---- **sex/gender + race/ethnicity only | impairment class ----
-glm(Dementia ~ Female + Black + Hispanic, 
+#---- **sex/gender + race/ethnicity + stroke | impairment class ----
+glm(Dementia ~ Female + Black + Hispanic + Astroke, 
     family = "poisson", data = ADAMS_analytic) %>% 
   tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
   mutate("RR" = exp(estimate))
 
-glm(MCI ~ Female + Black + Hispanic, 
+glm(MCI ~ Female + Black + Hispanic + Astroke, 
     family = "poisson", data = ADAMS_analytic %>% filter(Dementia == 0)) %>% 
   tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
   mutate("RR" = exp(estimate))
 
-glm(Other ~ Female + Black + Hispanic, 
+glm(Other ~ Female + Black + Hispanic + Astroke, 
     family = "poisson", data = ADAMS_analytic %>% 
       filter(Dementia == 0 & MCI == 0)) %>% 
   tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
   mutate("RR" = exp(estimate))
-
 
 #---- try one imputation of superpop with selected vars betas ----
 #---- **source functions ----
