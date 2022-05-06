@@ -256,7 +256,7 @@ superpop <- read_csv(paste0(path_to_box, "analyses/simulation_study/",
                             "normal_1000000_ADAMS_fixed_betas.csv"))
 
 #---- **test overall model ----
-glm(Dementia ~ age_Z + female + black + hispanic, 
+glm(Dementia ~ age_Z + female + black + hispanic + stroke, 
     family = "poisson", data = superpop) %>% 
   tidy(., conf.int = TRUE, conf.level = 0.95, exponentiate = FALSE) %>% 
   mutate("RR" = exp(estimate))
