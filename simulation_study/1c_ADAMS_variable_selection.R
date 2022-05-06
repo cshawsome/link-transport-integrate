@@ -134,49 +134,50 @@ write_csv(selected_vars %>%
           paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
                  "model_coefficients.csv"))
 
-#---- subset vars for synthetic data gen ----
-selected_var_list <- 
-  c("Black", "Hispanic", "Female",  "`Not working`", "Retired", 
-    "`Married/partnered`","ANCACTUS", "ANSCISOR",  "ANPRES", "ANSMEM2_Better", 
-    "ANSMEM2_Worse", "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", 
-    "Amoderate_drinking", "Aheavy_drinking")
-
-#---- **preallocate results matrix ----
-selected_vars_results <- 
-  data.frame(matrix(nrow = length(selected_var_list) + 1, ncol = 4)) %>% 
-  set_colnames(c("data_name", "Unimpaired", "Other", "MCI"))
-
-selected_vars_results[, "data_name"] <- c("(Intercept)", selected_var_list)
-
-#---- **models ----
-for(class in c("Unimpaired", "Other", "MCI")){
-  if(class == "Unimpaired"){
-    model_data <- ADAMS_imputed_stacked
-  } else if(class == "Other"){
-    model_data <- ADAMS_imputed_stacked %>% filter(Unimpaired == 0)
-  } else{
-    model_data <- ADAMS_imputed_stacked %>% filter(Unimpaired == 0 & Other == 0)
-  }
-  
-  model <- 
-    glm(as.formula(paste0(class,  "~", 
-                          paste(selected_var_list, collapse = "+"))), 
-        family = binomial(link = "logit"), data = model_data, 
-        weights = weights)
-  
-  selected_vars_results[, class] <- coefficients(model) 
-}
-
-#---- **format results ----
-selected_vars_results %<>% 
-  mutate_at("data_name", function(x) str_remove_all(x, "`")) %>%
-  left_join(., variable_labels, by = c("data_name" = "ADAMS")) %>%
-  dplyr::select("data_label", "Unimpaired", "Other", "MCI") 
-
-#---- **save results ----
-write_csv(selected_vars_results,
-          paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
-                 "selected_vars_model_coefficients.csv"))
+#---- OLD ----
+# #---- subset vars for synthetic data gen ----
+# selected_var_list <- 
+#   c("Black", "Hispanic", "Female",  "`Not working`", "Retired", 
+#     "`Married/partnered`","ANCACTUS", "ANSCISOR",  "ANPRES", "ANSMEM2_Better", 
+#     "ANSMEM2_Worse", "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", 
+#     "Amoderate_drinking", "Aheavy_drinking")
+# 
+# #---- **preallocate results matrix ----
+# selected_vars_results <- 
+#   data.frame(matrix(nrow = length(selected_var_list) + 1, ncol = 4)) %>% 
+#   set_colnames(c("data_name", "Unimpaired", "Other", "MCI"))
+# 
+# selected_vars_results[, "data_name"] <- c("(Intercept)", selected_var_list)
+# 
+# #---- **models ----
+# for(class in c("Unimpaired", "Other", "MCI")){
+#   if(class == "Unimpaired"){
+#     model_data <- ADAMS_imputed_stacked
+#   } else if(class == "Other"){
+#     model_data <- ADAMS_imputed_stacked %>% filter(Unimpaired == 0)
+#   } else{
+#     model_data <- ADAMS_imputed_stacked %>% filter(Unimpaired == 0 & Other == 0)
+#   }
+#   
+#   model <- 
+#     glm(as.formula(paste0(class,  "~", 
+#                           paste(selected_var_list, collapse = "+"))), 
+#         family = binomial(link = "logit"), data = model_data, 
+#         weights = weights)
+#   
+#   selected_vars_results[, class] <- coefficients(model) 
+# }
+# 
+# #---- **format results ----
+# selected_vars_results %<>% 
+#   mutate_at("data_name", function(x) str_remove_all(x, "`")) %>%
+#   left_join(., variable_labels, by = c("data_name" = "ADAMS")) %>%
+#   dplyr::select("data_label", "Unimpaired", "Other", "MCI") 
+# 
+# #---- **save results ----
+# write_csv(selected_vars_results,
+#           paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
+#                  "selected_vars_model_coefficients.csv"))
 
 # #---- Sanity check ----
 # ADAMS_imputed_stacked %<>% mutate("Intercept" = 1)
@@ -189,7 +190,6 @@ write_csv(selected_vars_results,
 # 
 # pred_probs <- inv.logit(X %*% beta)
 
-#---- OLD ----
 # #---- models ----
 # #---- **Unimpaired vs. Impaired ----
 # unimpaired_v_impaired <- glm(Unimpaired ~ AAGE_Z + Black + Hispanic + 
