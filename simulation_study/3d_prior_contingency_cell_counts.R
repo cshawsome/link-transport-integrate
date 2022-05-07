@@ -28,8 +28,16 @@ prior_imputed_clean <-
                                  variable_labels$data_label)) 
 
 #---- categorical vars ----
-#notation from Schafer 1997
-W <- c("black", "hispanic", "stroke")
+#---- **selected variables ----
+selected_vars <- 
+  read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
+                  "model_coefficients.csv"))
+
+#---- **detect categorical ----
+all_cat_vars <- selected_vars[!str_detect(selected_vars$data_label, "_Z"), 
+                              "data_label"] %>% unlist()
+#remove "Intercept"
+all_cat_vars <- all_cat_vars[-1]
 
 #---- imputation props ----
 get_props <- function(data, W){
@@ -45,7 +53,7 @@ get_props <- function(data, W){
     set_names(c("Dementia", "MCI", "Other", "Unimpaired"))
 }
 
-imputation_props <- lapply(prior_imputed_clean, get_props, W) %>%
+imputation_props <- lapply(prior_imputed_clean, get_props, all_cat_vars) %>%
   saveRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
                  "imputation_cell_props"))
 
