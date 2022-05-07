@@ -40,5 +40,3 @@ for(dataset in unique(superpopulations_data$dataset_name)){
 
 write_csv(truth, paste0(path_to_box, "analyses/simulation_study/truth.csv"))
 
-
-
