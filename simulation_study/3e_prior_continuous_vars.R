@@ -40,10 +40,10 @@ W <- c("black", "hispanic", "stroke")
 #continuous vars (notation from Schafer 1997)
 Z <- selected_vars[str_detect(selected_vars, "Z")]
 
-#---- **prior: cell counts ----
-alpha_0_dist <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                 "imputation_cell_props")) 
+# #---- **prior: cell counts ----
+# alpha_0_dist <-
+#   readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/",
+#                  "imputation_cell_props"))
 
 #---- **contrasts matrix ----
 #categorical vars contrasts matrix
