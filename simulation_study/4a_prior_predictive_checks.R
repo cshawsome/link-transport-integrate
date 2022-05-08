@@ -101,15 +101,16 @@ create_HRS_datasets <- function(superpop, n){
     unite("dataset_name", c("dist", "size", "prior"), sep = "_")
 }
 
+set.seed(20220507)
+
 for(n in c(500, 1000, 2000, 4000, 8000)){
   if(!exists("synthetic_data_list")){
-    synthetic_data_list <- lapply(superpop_data_list[c(1, 2)], function(x) 
-      create_HRS_datasets(x, n))
+    synthetic_data_list <- 
+      lapply(superpop_data_list, function(x) create_HRS_datasets(x, n))
   } else{
     synthetic_data_list <- 
-      append(synthetic_data_list, 
-             lapply(superpop_data_list[c(1, 2)], function(x) 
-               create_HRS_datasets(x, n)))
+      append(synthetic_data_list, lapply(superpop_data_list, function(x) 
+        create_HRS_datasets(x, n)))
   }
 }
 
