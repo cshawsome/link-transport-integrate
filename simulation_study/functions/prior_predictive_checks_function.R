@@ -341,8 +341,8 @@ prior_predictive_checks <-
 # prior_Sigma = prior_Sigma
 # prior_V_inv = prior_V_inv
 # prior_beta = priors_beta
-# nu_0 = nu_0
-# kappa_0 = kappa_0
+# nu_0 = nu_0[, unique(synthetic_data_list[[1]]$dataset_name)]
+# kappa_0_mat = kappa_0_mat
 # contrasts_matrix = A
 # path_to_folder = paste0(path_to_box, "figures/simulation_study/HCAP_HRS_",
 #                         unique(synthetic_data_list[[1]][, "dataset_name"]),
