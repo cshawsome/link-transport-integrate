@@ -39,21 +39,13 @@ selected_vars <-
   read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
                   "model_coefficients.csv"))
 
-#---- **detect categorical ----
-all_cat_vars <- selected_vars[!str_detect(selected_vars$data_label, "_Z"), 
-                              "data_label"] %>% unlist()
-#remove "Intercept"
-all_cat_vars <- as.vector(all_cat_vars[-1])
-
-#categorical vars that continuous vars depend on (notation from Schafer 1997)
+#---- **categorical ----
+#notation from Schafer 1997
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
 Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"), 
                    "data_label"] %>% unlist() %>% as.vector()
-
-# #Sanity check-- need to add one for intercept
-# nrow(selected_vars) == sum(length(all_cat_vars), length(Z), 1)
 
 #---- specifying priors ----
 #---- **latent classes ----
@@ -123,10 +115,9 @@ set.seed(20220329)
 start <- Sys.time()
 plan(multisession, workers = (availableCores() - 2))
 
-future_lapply(synthetic_data_list[seq(31, 43, by = 3)], function(x)
+future_lapply(synthetic_data_list, function(x)
   prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
-                          all_categorical_vars = all_cat_vars,
-                          selected_categorical_vars = W, continuous_vars = Z, 
+                          categorical_vars = W, continuous_vars = Z, 
                           variable_labels, color_palette, 
                           dataset_to_copy = x %>% 
                             group_by(married_partnered) %>% 
