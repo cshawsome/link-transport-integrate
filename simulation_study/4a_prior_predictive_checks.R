@@ -114,6 +114,9 @@ for(n in c(500, 1000, 2000, 4000, 8000)){
   }
 }
 
+# #Sanity check
+# lapply(synthetic_data_list, function(x) unique(x$dataset_name))
+
 #---- run checks ----
 #1.7 days for all checks to run in serial
 set.seed(20220329)
