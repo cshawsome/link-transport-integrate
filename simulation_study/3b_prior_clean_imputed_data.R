@@ -53,8 +53,8 @@ ADAMS_imputed <- lapply(ADAMS_imputed, function(x) x %<>%
 # tail(colnames(test))
 
 #---- representative health variables ----
-health_vars <- c("adla", "bmi_derived", "diabe", "drinks_per_week", "hearte", 
-                 "hibpe", "smoken", "stroke")
+health_vars <- c("adla", "iadla", "bmi_derived", "diabe", "drinks_per_week", 
+                 "hearte", "hibpe", "smoken", "stroke")
 
 rep_vars <- function(data, vars){
   for(var in vars){
