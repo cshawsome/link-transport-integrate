@@ -37,7 +37,7 @@ selected_vars <-
 all_cat_vars <- selected_vars[!str_detect(selected_vars$data_label, "_Z"), 
                               "data_label"] %>% unlist()
 #remove "Intercept"
-all_cat_vars <- all_cat_vars[-1]
+all_cat_vars <- as.vector(all_cat_vars[-1])
 
 #---- imputation props ----
 get_props <- function(data, W){
