@@ -17,12 +17,12 @@ source(here::here("simulation_study", "functions",
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **data paths ----
-synthetic_data_paths <- 
+superpop_data_paths <- 
   list.files(path = paste0(path_to_box, 
-                           "analyses/simulation_study/synthetic_data/HRS"), 
+                           "analyses/simulation_study/superpopulations"), 
              full.names = TRUE, pattern = "*.csv")
 
-synthetic_data_list <- lapply(synthetic_data_paths, read_results)
+superpop_data_list <- lapply(superpop_data_paths, read_results)
 
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
