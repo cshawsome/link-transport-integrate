@@ -17,7 +17,10 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 ADAMS_analytic <- 
   read_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_analytic.csv"))
 
-#---- imputation ----
+HCAP_analytic <- 
+  read_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_analytic.csv"))
+
+#---- ADAMS imputation ----
 #---- **pare down list of vars based on ADAMS variable selection ----
 remove <- c("avg_proxy_cog_Better", "avg_proxy_cog_Same", "avg_proxy_cog_Worse", "proxy_Spouse", 
             "proxy_Child", "proxy_Other_Relative", "proxy_Other")
