@@ -6,7 +6,7 @@ if (!require("pacman")){
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
        "locfit", "wesanderson", "RColorBrewer", "devtools", "gifski", 
        "transformr", "moments", "qdapRegex", "future.apply", "mvnfast", 
-       "LaplacesDemon")
+       "LaplacesDemon", "vroom")
 install_github("thomasp85/gganimate")
 library(gganimate)
 
@@ -20,12 +20,12 @@ source(here::here("simulation_study", "functions",
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **data paths ----
-synthetic_data_paths <- 
+superpop_data_paths <- 
   list.files(path = paste0(path_to_box, 
-                           "analyses/simulation_study/synthetic_data/HRS"), 
+                           "analyses/simulation_study/superpopulations"), 
              full.names = TRUE, pattern = "*.csv")
 
-synthetic_data_list <- lapply(synthetic_data_paths, read_results)
+superpop_data_list <- lapply(superpop_data_paths, read_results)
 
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
@@ -34,12 +34,18 @@ variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 color_palette <- read_csv(here::here("color_palette.csv")) 
 
 #---- define vars ----
-#categorical vars (notation from Schafer 1997)
+#---- **selected variables ----
+selected_vars <- 
+  read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
+                  "model_coefficients.csv"))
+
+#---- **categorical ----
+#notation from Schafer 1997
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
-Z <- colnames(synthetic_data_list[[1]])[str_detect(
-  colnames(synthetic_data_list[[1]]), "_Z")]
+Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"), 
+                   "data_label"] %>% unlist() %>% as.vector()
 
 #---- specifying priors ----
 #---- **latent classes ----
@@ -75,16 +81,41 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 #DOF for inverse wishart
 nu_0 <- read_csv(paste0(path_to_box, "analyses/nu_0.csv")) %>% 
   column_to_rownames("dataset_name") %>% t()
+
 #scaling for inverse wishart as variance of Beta
 kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
 
-#---- **run checks ----
+#---- create one set of synthetic HRS ----
+create_HRS_datasets <- function(superpop, n){
+  sample_n(superpop, size = n) %>% 
+    separate(dataset_name, sep = "_", into = c("dist", "size", "prior")) %>% 
+    mutate_at("size", as.numeric) %>% mutate(size = n) %>% 
+    unite("dataset_name", c("dist", "size", "prior"), sep = "_")
+}
+
+set.seed(20220507)
+
+for(n in c(500, 1000, 2000, 4000, 8000)){
+  if(!exists("synthetic_data_list")){
+    synthetic_data_list <- 
+      lapply(superpop_data_list, function(x) create_HRS_datasets(x, n))
+  } else{
+    synthetic_data_list <- 
+      append(synthetic_data_list, lapply(superpop_data_list, function(x) 
+        create_HRS_datasets(x, n)))
+  }
+}
+
+# #Sanity check
+# lapply(synthetic_data_list, function(x) unique(x$dataset_name))
+
+#---- run checks in parallel ----
 #1.7 days for all checks to run in serial
 set.seed(20220329)
 start <- Sys.time()
 plan(multisession, workers = (availableCores() - 2))
 
-future_lapply(synthetic_data_list[seq(31, 43, by = 3)], function(x)
+future_lapply(synthetic_data_list, function(x)
   prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
                           categorical_vars = W, continuous_vars = Z, 
                           variable_labels, color_palette, 

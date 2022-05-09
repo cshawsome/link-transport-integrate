@@ -28,7 +28,12 @@ prior_imputed_clean <-
                                  variable_labels$data_label)) 
 
 #---- categorical vars ----
-#notation from Schafer 1997
+#---- **selected variables ----
+selected_vars <- 
+  read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
+                  "model_coefficients.csv"))
+
+#---- **categorical ----
 W <- c("black", "hispanic", "stroke")
 
 #---- imputation props ----

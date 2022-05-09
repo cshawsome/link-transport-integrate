@@ -25,7 +25,10 @@ HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
                 "HISPANIC") %>%
   #N = 43398
   #filter to those who completed 2016 Wave interview (N = 20911; dropped n = 22487)
-  filter(PIWTYPE == 1)
+  filter(PIWTYPE == 1) %>% 
+  #get rid of leading 0
+  mutate_at("HHIDPN", as.numeric) %>% 
+  mutate_at("HHIDPN", as.character)
 
 #---- **HRS Core ----
 HRS_core_data_path <- 
@@ -36,7 +39,10 @@ HRS_core_dict_path <-
 HRS_core <- read_da_dct(HRS_core_data_path, HRS_core_dict_path, 
                         HHIDPN = "TRUE") %>% 
   #select variables: ID, employment status 
-  dplyr::select("HHIDPN", "PJ005M1")
+  dplyr::select("HHIDPN", "PJ005M1") %>% 
+  #get rid of leading 0
+  mutate_at("HHIDPN", as.numeric) %>% 
+  mutate_at("HHIDPN", as.character)
 
 #---- **RAND variables ----
 rand_waves <- 13

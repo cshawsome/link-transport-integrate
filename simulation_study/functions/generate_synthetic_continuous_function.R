@@ -1,9 +1,9 @@
 generate_synthetic_continuous <- 
-  function(data, sample_size, unimpaired_prop = 0.25, mci_prop = 0.25, 
-           dementia_prop = 0.25, dist, parameters, selected_vars_estimates, 
+  function(data, sample_size, dementia_prop = 0.25, mci_prop = 0.25, 
+           other_prop = 0.25, dist, parameters, selected_vars_estimates, 
            path_to_results, scenario_name = NA){
     #---- check parameters ----
-    if(sum(unimpaired_prop, mci_prop, dementia_prop) > 1){
+    if(sum(dementia_prop, mci_prop, other_prop) > 1){
       stop("Impairment proportions sum to more than 1. Please check values.") 
     }
     
@@ -16,25 +16,25 @@ generate_synthetic_continuous <-
       mutate("HHIDPN" = seq(1, sample_size))
     
     #---- assign impairment category ----
-    other_prop <- 1 - sum(unimpaired_prop, mci_prop, dementia_prop)
+    unimpaired_prop <- 1 - sum(dementia_prop, mci_prop, other_prop)
     
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      if(group != "Dementia"){
+      if(group != "Unimpaired"){
         synthetic_data %<>% mutate(!!paste0(group, "_prob") := 0)
       }
       synthetic_data %<>% mutate({{group}} := 0)
     }
     
     #---- **predicted probabilities ----
-    for(group in c("Unimpaired", "Other", "MCI")){
+    for(group in c("Dementia", "MCI", "Other")){
       X <- as.matrix(synthetic_data[, selected_vars_estimates$data_label])
       beta <- as.matrix(selected_vars_estimates[, group])
       
-      synthetic_data[, paste0(group, "_prob")] <- expit(X %*% beta)
+      synthetic_data[, paste0(group, "_prob")] <- exp(X %*% beta)
     }
     
     #---- **group assignment ----
-    for(group in c("Unimpaired", "Other", "MCI", "Dementia")){
+    for(group in c("Dementia", "MCI", "Other", "Unimpaired")){
       num_people <- round(get(paste0(tolower(group), "_prop"))*sample_size)
       
       synthetic_data %<>% 
@@ -42,16 +42,17 @@ generate_synthetic_continuous <-
                  rowSums(synthetic_data[, c("Unimpaired", "Other", "MCI", 
                                             "Dementia")])) 
       
-      if(group == "Dementia"){
-        indices <- synthetic_data %>% filter(group_membership == 0) %>% 
-          dplyr::select("HHIDPN") %>% unlist()
+      subset <- synthetic_data %>% filter(group_membership == 0)
+      
+      if(group == "Unimpaired"){
+        indices <- subset %>% dplyr::select("HHIDPN") %>% unlist()
         
       } else{
-        indices <- synthetic_data %>% filter(group_membership == 0) %>% 
-          arrange(desc(!!sym(paste0(group, "_prob")))) %>% 
+        indices <- 
+          sample_n(subset, size = num_people, 
+                   weight = unlist(subset[, paste0(group, "_prob")])) %>% 
           dplyr::select("HHIDPN") %>% unlist()
-        
-        indices <- indices[1:num_people]
+          
       }
       
       synthetic_data[indices, group] <- 1
@@ -142,20 +143,21 @@ generate_synthetic_continuous <-
   }
 
 # #---- testing ----
-# data <- HRS_analytic
+# data <- HRS_imputed
 # sample_size <- 1000
-# unimpaired_prop = 0.35
-# mci_prop = 0.10
 # dementia_prop = 0.35
+# mci_prop = 0.10
+# other_prop = 0.20
 # dist <- "normal"
 # scenario_name = NA
 # parameters <- normal_parameter_list
-# selected_vars_estimates <- selected_vars_betas
+# selected_vars_estimates <- fixed_betas
 # path_to_results = paste0(path_to_box, "analyses/simulation_study/",
-#                          "superpopulations/")
+#                          "test_superpopulations/")
 # 
-# generate_synthetic_continuous(data, sample_size, unimpaired_prop,
-#                               mci_prop, dementia_prop, dist,
-#                               parameters, path_to_results)
-# 
-# 
+# generate_synthetic_continuous(data, sample_size, dementia_prop,
+#                               mci_prop, other_prop, dist, 
+#                               selected_vars_estimates, parameters, 
+#                               path_to_results)
+
+

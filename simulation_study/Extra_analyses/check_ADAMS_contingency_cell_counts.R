@@ -27,6 +27,7 @@ single_ADAMS_analytic %<>%
   rename_at(., vars(variable_labels$ADAMS), ~ variable_labels$data_label)
 
 #---- contingency cell IDs ----
+#there is a cell with only 2 people in it, sticking with race/ethnicity x stroke instead
 W <- c("black", "hispanic", "female", "stroke")
 
 single_ADAMS_analytic %<>% 
