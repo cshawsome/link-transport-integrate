@@ -100,8 +100,17 @@ HCAP <- left_join(HCAP_2016, HRS_tracker, by = "HHIDPN") %>%
   left_join(., RAND, by = "HHIDPN")
 
 #---- clean data ----
-#---- **check HCAP select ----
+#---- **HCAP select ----
 # #these should all be 1, but looked in HCAP documentation and the sample size 
 # # for HCAP is correct even though there is one person with a 2 (not selected)
 # table(HCAP$HCAP_SELECT, useNA = "ifany")
+
+#---- **2016 couple status ----
+# table(HCAP$PCOUPLE, useNA = "ifany")
+
+#change 5 = no to 0 = no
+HCAP %<>% mutate_at(.vars = "PCOUPLE", function(x) ifelse(x == 5, 0, 1))
+
+# #Sanity check
+# table(HCAP$PCOUPLE, useNA = "ifany")
 
