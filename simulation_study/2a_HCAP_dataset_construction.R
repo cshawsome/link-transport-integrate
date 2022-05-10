@@ -269,3 +269,6 @@ HCAP %<>% mutate_at("H1RTICSPRES",
 
 # #Sanity check
 # table(HCAP$H1RTICSPRES, useNA = "ifany")
+
+#---- **animal naming ----
+# table(HCAP$H1RAFSCORE, useNA = "ifany")
