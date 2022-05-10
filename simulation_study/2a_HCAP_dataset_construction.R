@@ -123,3 +123,57 @@ HCAP %<>%
 # #Sanity check
 # table(HCAP$GENDER, HCAP$GENDER_label)
 # table(HCAP$Female, useNA = "ifany")
+
+#---- **age ----
+# table(HCAP$PAGE, useNA = "ifany")
+
+#restrict to 70+ (N = 2610, dropped n = 13,534)
+HCAP %<>% filter(PAGE >= 886)
+
+#---- **race ----
+#table(HCAP$RACE, useNA = "ifany")
+HCAP %<>% 
+  mutate(RACE_label = as.factor(case_when(RACE == 1 ~ "White", 
+                                          RACE == 2 ~ "Black", 
+                                          RACE == 7 ~ "Other"))) %>% 
+  mutate("RACE_White" = ifelse(RACE_label == "White", 1, 0), 
+         "RACE_Black" = ifelse(RACE_label == "Black", 1, 0), 
+         "RACE_Other" = ifelse(RACE_label == "Other", 1, 0))
+
+# #Sanity check
+# table(HCAP$RACE_label, HCAP$RACE_White, useNA = "ifany")
+# table(HCAP$RACE_label, HCAP$RACE_Black, useNA = "ifany")
+# table(HCAP$RACE_label, HCAP$RACE_Other, useNA = "ifany")
+
+#---- **hispanic ----
+#table(HCAP$HISPANIC, useNA = "ifany")
+
+#change 5 = no to 0 = no, combine all hispanic types and set 0 = not obtained to NA
+HCAP %<>% mutate("HISPANIC_indicator" = case_when(HISPANIC %in% c(1, 2, 3) ~ 1, 
+                                                  HISPANIC %in% c(0, 5) ~ 0))
+
+# #Sanity check
+# table(HCAP$HISPANIC, HCAP$HISPANIC_indicator, useNA = "ifany")
+
+#---- **race/ethnicity ----
+HCAP %<>% 
+  mutate(ETHNIC_label = 
+           case_when(HISPANIC_indicator == 1 ~ "Hispanic",
+                     HISPANIC_indicator == 0 & RACE_label == "White" ~ "White",
+                     HISPANIC_indicator == 0 & RACE_label == "Black" ~ "Black", 
+                     HISPANIC_indicator == 0 & RACE_label == "Other" ~ "Other")) %>% 
+  mutate("White" = ifelse(ETHNIC_label == "White", 1, 0), 
+         "Black" = ifelse(ETHNIC_label == "Black", 1, 0), 
+         "Hispanic" = ifelse(ETHNIC_label == "Hispanic", 1, 0), 
+         "Other" = ifelse(ETHNIC_label == "Other", 1, 0))
+
+# #Sanity check
+# table(HCAP$ETHNIC_label, HCAP$White, useNA = "ifany")
+# table(HCAP$ETHNIC_label, HCAP$Black, useNA = "ifany")
+# table(HCAP$ETHNIC_label, HCAP$Hispanic, useNA = "ifany")
+# table(HCAP$ETHNIC_label, HCAP$Other, useNA = "ifany")
+
+#restrict to White, Black, Hispanic (to align with ADAMS data) 
+# (N = 2551, dropped n = 59)
+
+HCAP %<>% filter(Other == 0)
