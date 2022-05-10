@@ -128,7 +128,7 @@ HCAP %<>%
 # table(HCAP$PAGE, useNA = "ifany")
 
 #restrict to 70+ (N = 2610, dropped n = 13,534)
-HCAP %<>% filter(PAGE >= 886)
+HCAP %<>% filter(PAGE >= 70)
 
 #---- **race ----
 #table(HCAP$RACE, useNA = "ifany")
@@ -177,3 +177,36 @@ HCAP %<>%
 # (N = 2551, dropped n = 59)
 
 HCAP %<>% filter(Other == 0)
+
+#---- **employment status ----
+#table(HCAP$PJ005M1, useNA = "ifany")
+HCAP %<>% 
+  mutate("PJ005M1_label" = 
+           case_when(PJ005M1 == 1 ~ "Working now", 
+                     PJ005M1 == 2 ~ "Unemployed and looking for work", 
+                     PJ005M1 == 3 ~ "Temporarily laid off", 
+                     PJ005M1 == 4 ~ "Disabled", 
+                     PJ005M1 == 5 ~ "Retired", 
+                     PJ005M1 == 6 ~ "Homemaker", 
+                     PJ005M1 == 7 ~ "Other", 
+                     PJ005M1 == 8 ~ "On leave")) %>%
+  mutate("PJ005M1_collapsed_label" = 
+           case_when(PJ005M1 == 1 ~ "Working", 
+                     PJ005M1 == 5 ~ "Retired", 
+                     PJ005M1 %in% c(2, 3, 4, 6, 7, 8) ~ "Not working")) %>% 
+  mutate("Working" = ifelse(PJ005M1_collapsed_label == "Working", 1, 0), 
+         "Retired" = ifelse(PJ005M1_collapsed_label == "Retired", 1, 0), 
+         "Not working" = ifelse(PJ005M1_collapsed_label == "Not working", 1, 0))
+
+# #Sanity check
+# table(HCAP$PJ005M1, HCAP$PJ005M1_label, "useNA" = "ifany")
+# table(HCAP$PJ005M1_label, HCAP$PJ005M1_collapsed_label, "useNA" = "ifany")
+# table(HCAP$PJ005M1_collapsed_label, HCAP$Working, useNA = "ifany")
+# table(HCAP$PJ005M1_collapsed_label, HCAP$Retired, useNA = "ifany")
+# table(HCAP$PJ005M1_collapsed_label, HCAP$`Not working`, useNA = "ifany")
+
+#---- **subjective cognitive change ----
+table(HCAP$r13pstmem, useNA = "ifany")
+HCAP %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0), 
+                 "subj_cog_same" = ifelse(r13pstmem == 2, 1, 0), 
+                 "subj_cog_worse" = ifelse(r13pstmem == 3, 1, 0))
