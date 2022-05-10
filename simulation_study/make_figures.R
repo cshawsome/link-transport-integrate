@@ -274,7 +274,9 @@ results_paths <-
   list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
              full.names = TRUE, pattern = "*.csv")
 
-results <- do.call(rbind, lapply(results_paths, read_results))
+results <- do.call(rbind, lapply(results_paths, read_results)) %>% 
+  #restrict results for now
+  filter(prior_props == "ADAMS")
 
 #---- **truth ----
 truth <- 
@@ -285,7 +287,12 @@ truth <-
                     into = c("Distribution", "sample_size", "prior_props"), 
                     sep = "_") %>% 
   mutate_at(c("term", "Distribution"), str_to_sentence) %>% 
-  rename_with(c("term", "estimate"), .fn = ~ c("race_eth", "beta"))
+  rename_with(c("term", "estimate"), .fn = ~ c("race_eth", "beta")) %>% 
+  #restrict results for now
+  filter(prior_props == "ADAMS")
+
+truth$Distribution <- 
+  factor(truth$Distribution, levels = c("Normal", "Lognormal", "Bathtub"))
 
 #---- **plot data ----
 results_summary <- results %>%
@@ -298,26 +305,25 @@ results_summary <- results %>%
   pivot_longer(cols = !c("Distribution", "sample_size"), 
                names_to = c("race_eth", ".value"),
                names_sep = "_") %>% 
-  mutate_at("race_eth", str_to_sentence)
+  mutate_at("race_eth", str_to_sentence) 
 
+results_summary$Distribution <- 
+  factor(results_summary$Distribution, levels = c("Normal", "Lognormal", "Bathtub"))
+  
 #---- color palette ----
-dist_colors <- unique(results$color)
-names(dist_colors) <- unique(results$distribution)
+navy <- "#135467"
 
 #---- **plot ----
 ggplot(results_summary, 
-       aes(x = beta, y = Distribution, color = Distribution)) +
-  geom_point(size = 2.0, position = position_dodge(-0.8)) + 
+       aes(x = beta, y = sample_size)) +
+  geom_point(size = 2.0, position = position_dodge(-0.8), color = navy) + 
   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = .3,
-                position = position_dodge(-0.8)) +
-  theme_bw() + xlab("Beta") +
+                position = position_dodge(-0.8), color = navy) +
+  theme_bw() + xlab("Beta") + ylab("Sample Size") +
   theme(legend.position = "bottom", legend.direction = "horizontal") + 
-  scale_color_manual(values = dist_colors) + 
-  geom_vline(xintercept = 0, linetype = "dashed", color = "dark grey") + 
-  geom_vline(data = truth %>% 
-               filter(Distribution == "Normal" & prior_props == "ADAMS"), 
-             aes(xintercept = beta)) +
-  facet_grid(rows = vars(race_eth), cols = vars(sample_size)) 
+  geom_vline(xintercept = 0, color = "dark gray", linetype = "dashed") + 
+  geom_vline(data = truth, aes(xintercept = beta)) +
+  facet_grid(rows = vars(race_eth), cols = vars(Distribution))  
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
                          "HRS_model_results.jpeg"))
