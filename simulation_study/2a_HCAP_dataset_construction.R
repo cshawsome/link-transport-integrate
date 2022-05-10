@@ -226,3 +226,14 @@ HCAP %<>%
 # hist(HCAP$H1RMSESCORE)
 # hist(HCAP$H1RMSESCORE_norm)
 # table(HCAP$H1RMSESCORE_norm, useNA = "ifany")
+
+#---- **BWC 20 ----
+# table(HCAP$r13bwc20, useNA = "ifany")
+
+HCAP %<>% 
+  mutate_at("r13bwc20", 
+            #Mark "correct second try" as "correct"  
+            function(x) ifelse(x == 2, 1, x))
+
+# #Sanity check
+# table(HCAP$r13bwc20, useNA = "ifany")
