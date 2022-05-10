@@ -219,6 +219,9 @@ HCAP %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0),
                  "subj_cog_same" = ifelse(r13pstmem == 2, 1, 0), 
                  "subj_cog_worse" = ifelse(r13pstmem == 3, 1, 0))
 
+#---- **HRS cognitive test score ----
+# table(HCAP$r13cogtot, useNA = "ifany")
+
 #---- **MMSE ----
 #table(HCAP$H1RMSESCORE, useNA = "ifany")
 HCAP %<>% 
@@ -330,3 +333,24 @@ HCAP %<>% mutate_at("H1RTMASCORE",
 
 # #Sanity check
 # table(HCAP$H1RTMASCORE, useNA = "ifany")
+
+#---- **filter: missing all neurospych + general cognitive measures ----
+neuro_cog_measures <- c("H1RMSESCORE", "H1RTICSSCISOR", "H1RTICSCACTUS", 
+                        "H1RTICSPRES", "H1RAFSCORE", "H1RWLDELSCORE", 
+                        "H1RWLRECYSCORE", "H1RWLRECNSCORE", "H1RCPIMMSCORE", 
+                        "H1RCPDELSCORE", "H1RTMASCORE", "r13ser7", "r13bwc20", 
+                        "r13cogtot", "r13pstmem", "H1RWLIMMSCORE", 
+                        "H1RIMMSTORYSCORE", "H1RDELSTORYSCORE")
+
+HCAP %<>% 
+  mutate("num_cog_measures" = 
+           rowSums(!is.na(HCAP %>% 
+                            dplyr::select(all_of(neuro_cog_measures))))) %>% 
+  #N = 2444; dropped n = 106
+  filter(num_cog_measures > 0)
+
+# #Sanity check
+# table(HCAP$num_cog_measures, useNA = "ifany")
+
+#---- **summarize missingness ----
+colMeans(is.na(HCAP))
