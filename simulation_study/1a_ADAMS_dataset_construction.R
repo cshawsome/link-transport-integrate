@@ -201,28 +201,25 @@ ADAMS %<>%
 # hist(ADAMS$ANMSETOT_norm)
 # table(ADAMS$ANMSETOT_norm, useNA = "ifany")
 
-#---- **BWC 20 and 86 ----
+#---- **BWC 20 ----
 # table(ADAMS$ANBWC201, useNA = "ifany")
 # table(ADAMS$ANBWC202, useNA = "ifany")
 # table(ADAMS$ANBWC861, useNA = "ifany")
 # table(ADAMS$ANBWC862, useNA = "ifany")
 ADAMS %<>% 
-  mutate_at(.vars = c("ANBWC201", "ANBWC202", "ANBWC861", "ANBWC862"), 
+  mutate_at(.vars = c("ANBWC201", "ANBWC202"), 
             #Missing/refused  
             function(x) ifelse(x > 6, NA, x)) %>% 
-  mutate_at(.vars = c("ANBWC201", "ANBWC202", "ANBWC861", "ANBWC862"), 
+  mutate_at(.vars = c("ANBWC201", "ANBWC202"), 
             #restart
             function(x) ifelse(x == 6, 0, x)) 
 
 #Take the higher score
-ADAMS %<>% mutate("ANBWC20" = pmax(ANBWC201, ANBWC202, na.rm = TRUE), 
-                  "ANBWC86" = pmax(ANBWC861, ANBWC862, na.rm = TRUE))
+ADAMS %<>% mutate("ANBWC20" = pmax(ANBWC201, ANBWC202, na.rm = TRUE))
 
 # #Sanity check
 # View(ADAMS[, c("ANBWC201", "ANBWC202", "ANBWC20")])
-# View(ADAMS[, c("ANBWC861", "ANBWC862", "ANBWC86")])
 # table(ADAMS$ANBWC20, useNA = "ifany")
-# table(ADAMS$ANBWC86, useNA = "ifany")
 
 #---- **serial 7s ----
 #table(ADAMS$ANSER7T, useNA = "ifany")
@@ -261,15 +258,6 @@ ADAMS %<>% mutate_at(.vars = c("ANAFTOT"),
 
 # #Sanity check
 # table(ADAMS$ANAFTOT, useNA = "ifany")
-
-#---- **Boston naming test ----
-# table(ADAMS$ANBNTTOT, useNA = "ifany")
-ADAMS %<>% mutate_at(.vars = c("ANBNTTOT"), 
-                     #Missing/refused  
-                     function(x) ifelse(x > 15, NA, x)) 
-
-# #Sanity check
-# table(ADAMS$ANBNTTOT, useNA = "ifany")
 
 #---- **10-word recall (immediate and delayed) ----
 # table(ADAMS$ANIMMCR1, useNA = "ifany")
@@ -455,11 +443,10 @@ for(var in wave_updated_vars){
 # colnames(ADAMS)
 
 #---- **filter: missing all neurospych + general cognitive measures ----
-neuro_cog_measures <- c("SELFCOG", "ANMSETOT_norm", "ANBWC20", "ANBWC86", 
-                        "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", "ANAFTOT", 
-                        "ANBNTTOT", "ANIMMCR", "ANDELCOR", "ANRECYES", "ANRECNO", 
-                        "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", 
-                        "ANTMASEC")
+neuro_cog_measures <- c("SELFCOG", "ANMSETOT_norm", "ANBWC20", "ANSER7T", 
+                        "ANSCISOR", "ANCACTUS", "ANPRES", "ANAFTOT", "ANIMMCR", 
+                        "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", 
+                        "ANWM2TOT", "ANCPTOT", "ANRCPTOT", "ANTMASEC")
 
 ADAMS %<>% 
   mutate("num_cog_measures" = 
@@ -520,8 +507,7 @@ ADAMS %<>%
 # table(ADAMS$r6bwc86, useNA = "ifany")
 # table(ADAMS$ANBWC20, useNA = "ifany")
 
-bwc_vars <- c(paste0("r", cog_test_waves, "bwc20"), 
-              paste0("r", seq(5, 6), "bwc86"))
+bwc_vars <- c(paste0("r", cog_test_waves, "bwc20"))
 ADAMS %<>% 
   mutate_at(.vars = all_of(bwc_vars), 
             #Correct on 2nd try = correct
@@ -529,7 +515,6 @@ ADAMS %<>%
 
 # #Sanity check
 # table(ADAMS$r5bwc20, useNA = "ifany")
-# table(ADAMS$r6bwc86, useNA = "ifany")
 
 #---- **HRS object naming: cactus, scissors ----
 # table(ADAMS$ANCACTUS, useNA = "ifany")
@@ -640,7 +625,7 @@ remove <- c("AASSESS", "AACURRWK", "AACURRWK_collapsed_label", "AACURRWK_label",
             "ADFDX1", "ANSMEM2", "ANSMEM2_collapsed_label", "ANSMEM2_label", 
             paste0("AGQ", c(seq(14, 29), 101)), "avg_proxy_cog", "ETHNIC",
             "avg_proxy_cog_label", "avg_proxy_cog_collapsed_label", "GENDER",
-            paste0("ANBWC", c("201", "202", "861", "862")), "GENDER_label",
+            paste0("ANBWC", c("201", "202")), "GENDER_label",
             paste0("ANIMMCR", seq(1, 3)), "ETHNIC_label", "num_cog_measures", 
             "proxy_type_label", "proxy_type_collapsed_label", 
             paste0("r", cog_test_waves, "pstmem"), 
