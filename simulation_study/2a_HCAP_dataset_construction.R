@@ -10,27 +10,29 @@ p_load("tidyverse", "here", "magrittr", "haven", "labelled", "forcats",
 source(here("functions", "read_da_dct.R"))
 
 #---- import data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
 #---- **RAND ----
 rand_waves <- 13 #Corresponding to HCAP
 
 rand_variables = 
-  #HHIDPN, gender, race, ethnicity
-  c("hhidpn", "ragender", "raracem", "rahispan", 
-    #Sampling variables: marital status, coupled household status,
-    paste0("r", rand_waves, "mstat"), paste0("h", hrs_waves, "cpl"), 
-    #Sociodemographics: age at beginning interview
-    paste0("r", hrs_waves, "agey_b"),
-    #Health and health behaviors: BMI, IADLs, stroke (ever/never)
-    paste0("r", hrs_waves, "bmi"), paste0("r", hrs_waves, "iadla"),
-    paste0("r", hrs_waves, "stroke"),
-    #Cognitive variables: serial 7s, immediate word recall, delayed word recall, 
-    # total MMSE score
-    paste0("r", hrs_waves, "ser7"),
-    paste0("r", hrs_waves, "imrc"), paste0("r", hrs_waves, "dlrc"), 
-    paste0("r", hrs_waves, "cogtot"))
+  #HHIDPN, 
+  c("hhidpn",
+    #Health and health behaviors: BMI, ADLs, IADLs, stroke (ever/never), 
+    # hypertension (ever/never), diabetes (ever/never), CVD (ever/never), 
+    # smoker (yes/no), days drinking, number drinks/day,
+    paste0("r", rand_waves, "bmi"), paste0("r", rand_waves, "adla"), 
+    paste0("r", rand_waves, "iadla"), paste0("r", rand_waves, "stroke"), 
+    paste0("r", rand_waves, "hibpe"), paste0("r", rand_waves, "diabe"),
+    paste0("r", rand_waves, "hearte"), paste0("r", rand_waves, "smoken"),
+    paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"),
+    #Cognitive variables: serial 7s, total MMSE score, BWC (20),
+    # subjective cognitive change
+    paste0("r", rand_waves, "ser7"), paste0("r", rand_waves, "cogtot"), 
+    paste0("r", rand_waves, "bwc20"), paste0("r", rand_waves, "pstmem"))
 
-RAND <- read_dta(paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS/", 
-                        "RAND_longitudinal/STATA/randhrs1992_2016v2.dta"), 
+RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/", 
+                        "randhrs1992_2018v1.dta"), 
                  col_select = all_of(rand_variables)) %>% 
   mutate_at("hhidpn", as.character)
 
