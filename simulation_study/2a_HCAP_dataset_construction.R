@@ -240,3 +240,19 @@ HCAP %<>%
 
 #---- **serial 7s ----
 #table(HCAP$r13ser7, useNA = "ifany")
+
+#---- **object naming: cactus, scissors ----
+# table(HCAP$H1RTICSSCISOR, useNA = "ifany")
+# table(HCAP$H1RTICSCACTUS, useNA = "ifany")
+
+HCAP %<>% 
+  mutate_at(.vars = c("H1RTICSSCISOR", "H1RTICSCACTUS"), 
+            #refused  
+            function(x) ifelse(x == 9, NA, x)) %>% 
+  mutate_at(.vars = c("H1RTICSSCISOR", "H1RTICSCACTUS"), 
+            #don't know/incorrect  
+            function(x) ifelse(x %in% c(5, 8), 0, x))
+
+#Sanity check
+table(HCAP$H1RTICSSCISOR, useNA = "ifany")
+table(HCAP$H1RTICSCACTUS, useNA = "ifany")
