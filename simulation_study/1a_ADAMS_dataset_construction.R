@@ -37,20 +37,18 @@ ADAMS_neuropsych_dict_path <-
 ADAMS_neuropsych <- 
   read_da_dct(ADAMS_neuropsych_data_path, ADAMS_neuropsych_dict_path,
               HHIDPN = "TRUE") %>% 
-  #select variables: ID, MMSE, backwards count (20), backwards count (86), 
-  #                  serial 7s, item naming (scissors), item naming (cactus), 
-  #                  President naming, animal naming, Boston naming test, 
-  #                  immediate word recall, delayed word recall, 
-  #                  word list recognition (yes), word list recognition (no), 
-  #                  immediate story recall, delayed story recall, 
-  #                  immediate constructional praxis, 
-  #                  delayed constructional praxis, trails A,
-  #                  subjective cognitive change
-  dplyr::select("HHIDPN", "ANMSETOT", "ANBWC201", "ANBWC202", "ANBWC861", 
-                "ANBWC862", "ANSER7T", "ANSCISOR", "ANCACTUS", "ANPRES", 
-                "ANAFTOT", "ANBNTTOT", "ANIMMCR1", "ANIMMCR2", "ANIMMCR3", 
-                "ANDELCOR", "ANRECYES", "ANRECNO", "ANWM1TOT", "ANWM2TOT", 
-                "ANCPTOT", "ANRCPTOT", "ANTMASEC", "ANSMEM2")
+  #select variables: ID, MMSE, backwards count (20), serial 7s, 
+  # item naming (scissors), item naming (cactus), President naming, 
+  # animal naming, immediate word recall, delayed word recall, 
+  # word list recognition (yes), word list recognition (no), 
+  # immediate story recall, delayed story recall, 
+  # immediate constructional praxis, delayed constructional praxis, trails A,
+  # subjective cognitive change
+  dplyr::select("HHIDPN", "ANMSETOT", "ANBWC201", "ANBWC202", "ANSER7T", 
+                "ANSCISOR", "ANCACTUS", "ANPRES", "ANAFTOT", "ANIMMCR1", 
+                "ANIMMCR2", "ANIMMCR3", "ANDELCOR", "ANRECYES", "ANRECNO", 
+                "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", "ANTMASEC", 
+                "ANSMEM2")
 
 #---- **dementia dx ----
 ADAMS_demdx_data_path <- 
