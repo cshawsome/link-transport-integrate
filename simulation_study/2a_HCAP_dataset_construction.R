@@ -80,6 +80,16 @@ HCAP_data_path <- paste0(path_to_box, "data/HCAP/HC16/HC16da/HC16HP_R.da")
 HCAP_dict_path <- paste0(path_to_box, "data/HCAP/HC16/HC16sta/HC16HP_R.dct")
 
 HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") %>% 
+  #select variables: ID, total MMSE score, object naming (scissor, cactus), 
+  # president naming, animal naming, word recall (immediate), 
+  # word recall (delayed), word list recall (yes, no), 
+  # brave man recall (immediate), story recall (immediate), 
+  # constructional praxis (immediate), constructional praxis (delayed), trails A
+  dplyr::select("HHIDPN", "H1RMSESCORE", "H1RTICSSCISOR", "H1RTICSCACTUS", 
+                "H1RTICSPRES", "H1RAFSCORE", "H1RWLIMM1SCORE", "H1RWLIMM2SCORE", 
+                "H1RWLIMM3SCORE", "H1RWLDELSCORE", "H1RWLRECYSCORE", 
+                "H1RWLRECNSCORE", "H1RBMIMMSCORE", "H1RLMIMMSCORE", 
+                "H1RCPIMMSCORE", "H1RCPDELSCORE", "H1RTMASCORE") %>% 
   #get rid of leading 0
   mutate_at("HHIDPN", as.numeric) %>% 
   mutate_at("HHIDPN", as.character)
@@ -88,4 +98,10 @@ HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") %>%
 HCAP <- left_join(HCAP_2016, HRS_tracker, by = "HHIDPN") %>% 
   left_join(., HRS_core, by = "HHIDPN") %>%
   left_join(., RAND, by = "HHIDPN")
+
+#---- clean data ----
+#---- **check HCAP select ----
+# #these should all be 1, but looked in HCAP documentation and the sample size 
+# # for HCAP is correct even though there is one person with a 2 (not selected)
+# table(HCAP$HCAP_SELECT, useNA = "ifany")
 
