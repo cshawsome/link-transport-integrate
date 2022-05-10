@@ -84,12 +84,14 @@ HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") %>%
   # president naming, animal naming, word recall (immediate), 
   # word recall (delayed), word list recall (yes, no), 
   # brave man recall (immediate), story recall (immediate), 
+  # brave man recall (delayed), story recall (delayed), 
   # constructional praxis (immediate), constructional praxis (delayed), trails A
   dplyr::select("HHIDPN", "H1RMSESCORE", "H1RTICSSCISOR", "H1RTICSCACTUS", 
                 "H1RTICSPRES", "H1RAFSCORE", "H1RWLIMM1SCORE", "H1RWLIMM2SCORE", 
                 "H1RWLIMM3SCORE", "H1RWLDELSCORE", "H1RWLRECYSCORE", 
-                "H1RWLRECNSCORE", "H1RBMIMMSCORE", "H1RLMIMMSCORE", 
-                "H1RCPIMMSCORE", "H1RCPDELSCORE", "H1RTMASCORE") %>% 
+                "H1RWLRECNSCORE", "H1RBMIMMSCORE", "H1RLMIMMSCORE",
+                "H1RBMDELSCORE", "H1RLMDELSCORE", "H1RCPIMMSCORE", 
+                "H1RCPDELSCORE", "H1RTMASCORE") %>% 
   #get rid of leading 0
   mutate_at("HHIDPN", as.numeric) %>% 
   mutate_at("HHIDPN", as.character)
@@ -287,3 +289,34 @@ HCAP %<>%
 #               "H1RWLIMMSCORE")])
 # table(HCAP$H1RWLIMMSCORE, useNA = "ifany")
 # table(HCAP$H1RWLDELSCORE, useNA = "ifany")
+
+#---- **word list recognition (yes/no) ----
+# table(HCAP$H1RWLRECYSCORE, useNA = "ifany")
+# table(HCAP$H1RWLRECNSCORE, useNA = "ifany")
+
+#---- **story recall (immediate and delayed) ----
+# table(HCAP$H1RBMIMMSCORE, useNA = "ifany")
+# table(HCAP$H1RLMIMMSCORE, useNA = "ifany")
+# table(HCAP$H1RBMDELSCORE, useNA = "ifany")
+# table(HCAP$H1RLMDELSCORE, useNA = "ifany")
+
+#sum brave man and the one logical memory story that HCAP uses (attempt to 
+# harmonize with ADAMS)
+HCAP %<>% mutate("H1RIMMSTORYSCORE" = H1RBMIMMSCORE + H1RLMIMMSCORE, 
+                 "H1RDELSTORYSCORE" = H1RBMDELSCORE + H1RLMDELSCORE)
+
+# #Sanity check
+# table(HCAP$H1RIMMSTORYSCORE, useNA = "ifany")
+# table(HCAP$H1RDELSTORYSCORE, useNA = "ifany")
+
+#---- **constructional praxis (immediate and delayed) ----
+table(HCAP$ANCPTOT, useNA = "ifany")
+table(HCAP$ANRCPTOT, useNA = "ifany")
+
+HCAP %<>% mutate_at(.vars = c("ANCPTOT", "ANRCPTOT"), 
+                     #Missing/refused  
+                     function(x) ifelse(x > 11, NA, x))
+
+#Sanity check
+table(HCAP$ANCPTOT, useNA = "ifany")
+table(HCAP$ANRCPTOT, useNA = "ifany")
