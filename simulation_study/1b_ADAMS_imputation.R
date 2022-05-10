@@ -108,6 +108,7 @@ predict <- predict[!rownames(predict) %in% remove, ]
 colSums(predict[, not_predictors])
 
 #---- imputation ----
+#About 5 mins
 set.seed(20220202)
 start <- Sys.time()
 fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
