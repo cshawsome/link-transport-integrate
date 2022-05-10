@@ -237,3 +237,6 @@ HCAP %<>%
 
 # #Sanity check
 # table(HCAP$r13bwc20, useNA = "ifany")
+
+#---- **serial 7s ----
+#table(HCAP$r13ser7, useNA = "ifany")
