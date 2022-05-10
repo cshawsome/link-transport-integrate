@@ -310,13 +310,23 @@ HCAP %<>% mutate("H1RIMMSTORYSCORE" = H1RBMIMMSCORE + H1RLMIMMSCORE,
 # table(HCAP$H1RDELSTORYSCORE, useNA = "ifany")
 
 #---- **constructional praxis (immediate and delayed) ----
-table(HCAP$ANCPTOT, useNA = "ifany")
-table(HCAP$ANRCPTOT, useNA = "ifany")
+# table(HCAP$H1RCPIMMSCORE, useNA = "ifany")
+# table(HCAP$H1RCPDELSCORE, useNA = "ifany")
 
-HCAP %<>% mutate_at(.vars = c("ANCPTOT", "ANRCPTOT"), 
-                     #Missing/refused  
-                     function(x) ifelse(x > 11, NA, x))
+HCAP %<>% mutate_at(.vars = c("H1RCPIMMSCORE", "H1RCPDELSCORE"), 
+                     #Participant cannot draw  
+                     function(x) ifelse(x == 97, NA, x))
 
-#Sanity check
-table(HCAP$ANCPTOT, useNA = "ifany")
-table(HCAP$ANRCPTOT, useNA = "ifany")
+# #Sanity check
+# table(HCAP$H1RCPIMMSCORE, useNA = "ifany")
+# table(HCAP$H1RCPDELSCORE, useNA = "ifany")
+
+#---- **trails A ----
+# table(HCAP$H1RTMASCORE, useNA = "ifany")
+
+HCAP %<>% mutate_at("H1RTMASCORE",
+                     #unable to complete within 5 mins
+                     function(x) ifelse(x > 900, NA, x))
+
+# #Sanity check
+# table(HCAP$H1RTMASCORE, useNA = "ifany")
