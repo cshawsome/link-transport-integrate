@@ -272,3 +272,18 @@ HCAP %<>% mutate_at("H1RTICSPRES",
 
 #---- **animal naming ----
 # table(HCAP$H1RAFSCORE, useNA = "ifany")
+
+#---- **10-word recall (immediate and delayed) ----
+# table(HCAP$H1RWLIMM1SCORE, useNA = "ifany")
+# table(HCAP$H1RWLDELSCORE, useNA = "ifany")
+
+HCAP %<>% 
+  #Best of 3 immediate recall trials
+  mutate("H1RWLIMMSCORE" = pmax(H1RWLIMM1SCORE, H1RWLIMM2SCORE, H1RWLIMM3SCORE, 
+                                na.rm = TRUE))
+
+# #Sanity check
+# View(HCAP[, c("H1RWLIMM1SCORE", "H1RWLIMM2SCORE", "H1RWLIMM3SCORE", 
+#               "H1RWLIMMSCORE")])
+# table(HCAP$H1RWLIMMSCORE, useNA = "ifany")
+# table(HCAP$H1RWLDELSCORE, useNA = "ifany")
