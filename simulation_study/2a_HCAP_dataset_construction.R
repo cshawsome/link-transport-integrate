@@ -256,3 +256,16 @@ HCAP %<>%
 #Sanity check
 table(HCAP$H1RTICSSCISOR, useNA = "ifany")
 table(HCAP$H1RTICSCACTUS, useNA = "ifany")
+
+#---- **President naming ----
+# table(HCAP$H1RTICSPRES, useNA = "ifany")
+
+HCAP %<>% mutate_at("H1RTICSPRES", 
+                    #refused  
+                    function(x) ifelse(x == 9, NA, x)) %>% 
+  mutate_at("H1RTICSPRES", 
+            #don't know/incorrect  
+            function(x) ifelse(x %in% c(5, 8), 0, x))
+
+# #Sanity check
+# table(HCAP$H1RTICSPRES, useNA = "ifany")
