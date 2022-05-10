@@ -43,23 +43,49 @@ val_labels(RAND) <- NULL
 
 #---- **HRS tracker ----
 HRS_tracker_data_path <- 
-  paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS_tracker/trk2018_3/", 
-         "TRK2018TR_R.da")
+  paste0(path_to_box, "data/HRS_tracker/trk2018_3/TRK2018TR_R.da")
+
 HRS_tracker_dict_path <- 
-  paste0("/Users/CrystalShaw/Box/Dissertation/data/HRS_tracker/trk2018_3/", 
-         "TRK2018TR_R.dct")
+  paste0(path_to_box, "data/HRS_tracker/trk2018_3/TRK2018TR_R.dct")
 
 HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path, 
                            HHIDPN = "TRUE") %>% 
+  #select variables: ID, HCAP selection, married/partnered status, sex/gender,
+  # age, race, ethnicity, years of education, 2016 interview type
+  dplyr::select("HHIDPN", "HCAP_SELECT", "PCOUPLE", "GENDER", "PAGE", "RACE", 
+                "HISPANIC", "SCHLYRS", "PIWTYPE") %>%
   #Participated in 2016 HRS
-  filter(PIWTYPE == 1)  
+  filter(PIWTYPE == 1) %>%  
+  #get rid of leading 0
+  mutate_at("HHIDPN", as.numeric) %>% 
+  mutate_at("HHIDPN", as.character)
+
+#---- **HRS Core ----
+HRS_core_data_path <- 
+  paste0(path_to_box, "data/HRS/Core_files/h16core/h16da/H16J_R.da")
+HRS_core_dict_path <- 
+  paste0(path_to_box, "data/HRS/Core_files/h16core/h16sta/H16J_R.dct")
+
+HRS_core <- read_da_dct(HRS_core_data_path, HRS_core_dict_path, 
+                        HHIDPN = "TRUE") %>% 
+  #select variables: ID, employment status 
+  dplyr::select("HHIDPN", "PJ005M1") %>% 
+  #get rid of leading 0
+  mutate_at("HHIDPN", as.numeric) %>% 
+  mutate_at("HHIDPN", as.character)
 
 #---- **HCAP ----
-HCAP_data_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                         "HCAP/HC16/HC16da/HC16HP_R.da")
+HCAP_data_path <- paste0(path_to_box, "data/HCAP/HC16/HC16da/HC16HP_R.da")
 
-HCAP_dict_path <- paste0("/Users/CrystalShaw/Box/Dissertation/data/", 
-                         "HCAP/HC16/HC16sta/HC16HP_R.dct")
+HCAP_dict_path <- paste0(path_to_box, "data/HCAP/HC16/HC16sta/HC16HP_R.dct")
 
-HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") 
+HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") %>% 
+  #get rid of leading 0
+  mutate_at("HHIDPN", as.numeric) %>% 
+  mutate_at("HHIDPN", as.character)
+
+#---- join data ----
+HCAP <- left_join(HCAP_2016, HRS_tracker, by = "HHIDPN") %>% 
+  left_join(., HRS_core, by = "HHIDPN") %>%
+  left_join(., RAND, by = "HHIDPN")
 
