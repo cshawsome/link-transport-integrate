@@ -114,3 +114,12 @@ HCAP %<>% mutate_at(.vars = "PCOUPLE", function(x) ifelse(x == 5, 0, 1))
 # #Sanity check
 # table(HCAP$PCOUPLE, useNA = "ifany")
 
+#---- **sex/gender ----
+#table(HCAP$GENDER, useNA = "ifany")
+HCAP %<>% 
+  mutate(GENDER_label = as.factor(ifelse(GENDER == 1, "Male", "Female"))) %>% 
+  mutate("Female" = ifelse(GENDER_label == "Female", 1, 0))
+
+# #Sanity check
+# table(HCAP$GENDER, HCAP$GENDER_label)
+# table(HCAP$Female, useNA = "ifany")
