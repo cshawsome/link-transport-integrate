@@ -178,6 +178,12 @@ HCAP %<>%
 
 HCAP %<>% filter(Other == 0)
 
+#---- **education ----
+#table(HCAP$SCHLYRS, useNA = "ifany")
+
+#remove person missing years of education (N = 2550, dropped n = 1)
+HCAP %<>% filter(SCHLYRS < 99)
+
 #---- **employment status ----
 #table(HCAP$PJ005M1, useNA = "ifany")
 HCAP %<>% 
@@ -206,7 +212,17 @@ HCAP %<>%
 # table(HCAP$PJ005M1_collapsed_label, HCAP$`Not working`, useNA = "ifany")
 
 #---- **subjective cognitive change ----
-table(HCAP$r13pstmem, useNA = "ifany")
+# table(HCAP$r13pstmem, useNA = "ifany")
 HCAP %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0), 
                  "subj_cog_same" = ifelse(r13pstmem == 2, 1, 0), 
                  "subj_cog_worse" = ifelse(r13pstmem == 3, 1, 0))
+
+#---- **MMSE ----
+#table(HCAP$H1RMSESCORE, useNA = "ifany")
+HCAP %<>% 
+  mutate("H1RMSESCORE_norm" = normMMSE(H1RMSESCORE))
+
+# #Sanity check
+# hist(HCAP$H1RMSESCORE)
+# hist(HCAP$H1RMSESCORE_norm)
+# table(HCAP$H1RMSESCORE_norm, useNA = "ifany")
