@@ -9,7 +9,8 @@ p_load("tidyverse", "broom", "sjPlot", "gridExtra", "magrittr", "glmnet")
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 ADAMS_imputed_clean <- 
-  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned")) %>%
+  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/chunk_1/", 
+                 "MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
@@ -21,11 +22,10 @@ variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 #sociodemographics: "AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS_Z", 
 # "Not working", "Retired", "Married/partnered"
 # 
-# neuropsych_gen_cog: "ANMSETOT_norm_Z", "ANBNTTOT_Z", "ANIMMCR_Z", "ANDELCOR_Z",
-# "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z",
-# "ANWM2TOT_Z", "ANBWC20_Z", "ANBWC86_Z", "ANCPTOT_Z", "ANRCPTOT_Z",
-# "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR",  "ANPRES", "ANSMEM2_Better",
-# "ANSMEM2_Worse"
+# neuropsych_gen_cog: "ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", "ANSER7T_Z", 
+# "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", "ANWM2TOT_Z", 
+# "ANBWC20_Z", "ANCPTOT_Z", "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", 
+# "ANSCISOR",  "ANPRES", "ANSMEM2_Better", "ANSMEM2_Worse"
 # 
 # functional: "Aadla_Z", "Aiadla_Z"
 # 
@@ -38,9 +38,9 @@ variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 var_list <- c("AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS_Z", "Not working", 
               "Retired", "Married/partnered", "ANMSETOT_norm_Z", "ANIMMCR_Z", 
               "ANDELCOR_Z", "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", 
-              "ANWM1TOT_Z","ANWM2TOT_Z", "ANBWC20_Z", "ANBWC86_Z", "ANCPTOT_Z", 
-              "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR",  
-              "ANPRES", "ANSMEM2_Better", "ANSMEM2_Worse", "Aadla_Z", "Aiadla_Z", 
+              "ANWM1TOT_Z","ANWM2TOT_Z", "ANBWC20_Z", "ANCPTOT_Z", "ANRCPTOT_Z", 
+              "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR", "ANPRES", 
+              "ANSMEM2_Better", "ANSMEM2_Worse", "Aadla_Z", "Aiadla_Z", 
               "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", 
               "Asmoken", "Amoderate_drinking", "Aheavy_drinking")
 
