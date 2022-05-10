@@ -204,8 +204,7 @@ ADAMS %<>%
 #---- **BWC 20 ----
 # table(ADAMS$ANBWC201, useNA = "ifany")
 # table(ADAMS$ANBWC202, useNA = "ifany")
-# table(ADAMS$ANBWC861, useNA = "ifany")
-# table(ADAMS$ANBWC862, useNA = "ifany")
+
 ADAMS %<>% 
   mutate_at(.vars = c("ANBWC201", "ANBWC202"), 
             #Missing/refused  
