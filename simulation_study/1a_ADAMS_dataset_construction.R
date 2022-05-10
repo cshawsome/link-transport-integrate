@@ -80,7 +80,7 @@ rand_variables <-
     #Health and health behaviors (ever/never stroke, ever/never
     #   hypertension, ever/never diabetes, ever/never cvd, BMI, height, weight, 
     #   IADLs, ADLs, smokes now, number days drinking per week, number drinks/day) 
-    #Cognitive tests (backwards count 20 and 86, item naming (scissors and 
+    #Cognitive tests (backwards count 20, item naming (scissors and 
     #   cactus), immediate and delayed word recall, serial 7s, President naming, 
     #   subjective cognitive decline, total cognition score)
     paste0("r", cog_test_waves, "mpart"),
@@ -90,14 +90,14 @@ rand_variables <-
     paste0("r", rand_waves, "weight"), paste0("r", rand_waves, "iadla"), 
     paste0("r", rand_waves, "adla"), paste0("r", rand_waves, "smoken"), 
     paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"), 
-    paste0("r", cog_test_waves, "bwc20"), paste0("r", seq(5, 6), "bwc86"), 
-    paste0("r", cog_test_waves, "scis"), paste0("r", cog_test_waves, "cact"), 
-    paste0("r", cog_test_waves, "imrc"), paste0("r", cog_test_waves, "dlrc"),
-    paste0("r", cog_test_waves, "ser7"), paste0("r", cog_test_waves, "pres"), 
-    paste0("r", cog_test_waves, "pstmem"), paste0("r", cog_test_waves, "cogtot"))
+    paste0("r", cog_test_waves, "bwc20"), paste0("r", cog_test_waves, "scis"), 
+    paste0("r", cog_test_waves, "cact"), paste0("r", cog_test_waves, "imrc"), 
+    paste0("r", cog_test_waves, "dlrc"), paste0("r", cog_test_waves, "ser7"), 
+    paste0("r", cog_test_waves, "pres"), paste0("r", cog_test_waves, "pstmem"), 
+    paste0("r", cog_test_waves, "cogtot"))
 
 RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/", 
-                        "randhrs1992_2016v2.dta"), 
+                        "randhrs1992_2018v1.dta"), 
                  col_select = all_of(rand_variables)) %>% 
   mutate_at("hhidpn", as.character) %>% rename("HHIDPN" = "hhidpn")
 
