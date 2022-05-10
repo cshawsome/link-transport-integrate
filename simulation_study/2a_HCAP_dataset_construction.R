@@ -354,3 +354,5 @@ HCAP %<>%
 
 #---- **summarize missingness ----
 colMeans(is.na(HCAP))
+
+#---- imputation-specific variables ----
