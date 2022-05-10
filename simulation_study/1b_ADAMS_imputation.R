@@ -118,7 +118,7 @@ end <- Sys.time() - start
 
 #---- read in results ----
 ADAMS_imputed <- 
-  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets"))
+  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/chunk_1/MI_datasets"))
 
 #---- derive post-imputation variables ----
 hrs_waves <- seq(4, 7)
@@ -272,10 +272,10 @@ ADAMS_imputed <- lapply(ADAMS_imputed, select_cat, Proxy)
 #---- define predictor variable types ----
 sociodemographics <- c("Female", "Married/partnered", "Not working", "Retired", 
                        "AAGE", "EDYRS", "Black", "Hispanic")
-neuropsych <- c("ANAFTOT", "ANBNTTOT", "ANCPTOT", "ANRCPTOT", "ANMSETOT_norm", 
-                "ANRECNO", "ANRECYES", "ANTMASEC", "ANWM1TOT", "ANWM2TOT")
-gen_cog <- c("SELFCOG", "ANBWC20", "ANBWC86", "ANCACTUS", "ANDELCOR", "ANIMMCR",
-             "ANPRES", "ANSCISOR", "ANSER7T", "ANSMEM2_Better", "ANSMEM2_Worse", 
+neuropsych <- c("ANAFTOT", "ANCPTOT", "ANRCPTOT", "ANMSETOT_norm", "ANRECNO", 
+                "ANRECYES", "ANTMASEC", "ANWM1TOT", "ANWM2TOT")
+gen_cog <- c("SELFCOG", "ANBWC20", "ANCACTUS", "ANDELCOR", "ANIMMCR", "ANPRES", 
+             "ANSCISOR", "ANSER7T", "ANSMEM2_Better", "ANSMEM2_Worse", 
              "avg_proxy_cog_Better", "avg_proxy_cog_Worse")
 functional <- c("Aadla", "Aiadla")
 health <- c("Adiabe", "Ahearte", "Ahibpe", "Asmoken", "Astroke", 
@@ -298,11 +298,10 @@ ADAMS_imputed_clean <-
 # lapply(ADAMS_imputed_clean, ncol)
 
 #---- standardize continuous vars ----
-standardize_vars <- c("AAGE", "EDYRS", "ANMSETOT_norm", "ANAFTOT", "ANBNTTOT", 
-                      "ANCPTOT", "ANRCPTOT","ANRECNO", "ANRECYES", "ANTMASEC", 
-                      "ANWM1TOT", "ANWM2TOT", "SELFCOG", "ANBWC20", "ANBWC86", 
-                      "ANDELCOR", "ANIMMCR", "ANSER7T", "Aadla", "Aiadla", 
-                      "Abmi_derived")
+standardize_vars <- c("AAGE", "EDYRS", "ANMSETOT_norm", "ANAFTOT", "ANCPTOT", 
+                      "ANRCPTOT","ANRECNO", "ANRECYES", "ANTMASEC", "ANWM1TOT", 
+                      "ANWM2TOT", "SELFCOG", "ANBWC20", "ANDELCOR", "ANIMMCR", 
+                      "ANSER7T", "Aadla", "Aiadla", "Abmi_derived")
 
 Z_score <- function(data, vars){
   subset <- data %>% dplyr::select(all_of(vars)) %>% 
@@ -322,5 +321,5 @@ ADAMS_imputed_clean <- lapply(ADAMS_imputed_clean, Z_score, standardize_vars)
 
 #---- **save clean datasets ----
 saveRDS(ADAMS_imputed_clean, 
-        file = paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
+        file = paste0(path_to_box, "data/ADAMS/cleaned/MI/chunk_1/", 
                       "MI_datasets_cleaned"))
