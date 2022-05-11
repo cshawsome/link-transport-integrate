@@ -109,7 +109,38 @@ for(n in c(500, 1000, 2000, 4000, 8000)){
 # #Sanity check
 # lapply(synthetic_data_list, function(x) unique(x$dataset_name))
 
-#---- run checks in parallel ----
+#---- **dataset names ----
+dataset_names <- 
+  unlist(lapply(synthetic_data_list, function(x) unique(x$dataset_name)))
+
+#---- run single check ----
+#About 1 hour per scenario
+set.seed(20220329)
+start <- Sys.time()
+
+lapply(synthetic_data_list[which(dataset_names == "normal_500_ADAMS")], 
+       function(x)
+  prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
+                          categorical_vars = W, continuous_vars = Z, 
+                          variable_labels, color_palette, 
+                          dataset_to_copy = x %>% 
+                            group_by(married_partnered) %>% 
+                            slice_sample(prop = 0.5) %>% 
+                            mutate("(Intercept)" = 1) %>% ungroup(), 
+                          num_synthetic = 1000, unimpaired_betas, 
+                          unimpaired_cov, other_betas, other_cov, 
+                          mci_betas, mci_cov, alpha_0_dist, prior_Sigma, 
+                          prior_V_inv, prior_beta, 
+                          nu_0 = nu_0[, unique(x$dataset_name)], kappa_0_mat, 
+                          contrasts_matrix = A, 
+                          path_to_folder = 
+                            paste0(path_to_box,
+                                   "figures/simulation_study/HCAP_HRS_", 
+                                   unique(x[, "dataset_name"]), 
+                                   "/prior_predictive_checks/")))
+end <- Sys.time() - start
+
+#---- run all checks in parallel ----
 #1.7 days for all checks to run in serial
 set.seed(20220329)
 start <- Sys.time()
