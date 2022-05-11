@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "magrittr", "LaplacesDemon", "boot")
+p_load("here", "tidyverse", "magrittr", "LaplacesDemon", "boot", "MCMCpack")
 
 options(scipen = 999)
 
@@ -41,7 +41,7 @@ HRS_analytic %<>% mutate("Intercept" = 1) %>%
 #---- synthetic data ----
 set.seed(20220303)
 
-#About 3.3 hours
+#About 2.2 hours for all superpops
 start <- Sys.time()
 for(dist_name in c("normal", "lognormal", "bathtub")){
   #---- ****compare with ADAMS ----
@@ -55,22 +55,22 @@ for(dist_name in c("normal", "lognormal", "bathtub")){
                                   paste0(path_to_box, "analyses/", 
                                          "simulation_study/superpopulations/"))
   #---- ****mostly unimpaired ----
-  generate_synthetic_continuous(HRS_analytic, sample_size = 1000000, 
-                                dementia_prop = 0.20, mci_prop = 0.20, 
-                                other_prop = 0.10, dist = dist_name, 
-                                parameters = normal_parameter_list, 
+  generate_synthetic_continuous(HRS_analytic, sample_size = 1000000,
+                                dementia_prop = 0.20, mci_prop = 0.20,
+                                other_prop = 0.10, dist = dist_name,
+                                parameters = normal_parameter_list,
                                 selected_vars_estimates = fixed_betas,
-                                path_to_results = 
-                                  paste0(path_to_box, "analyses/", 
-                                         "simulation_study/superpopulations/")) 
+                                path_to_results =
+                                  paste0(path_to_box, "analyses/",
+                                         "simulation_study/superpopulations/"))
   #---- ****mostly dementia ----
-  generate_synthetic_continuous(HRS_analytic, sample_size = 1000000, 
-                                dementia_prop = 0.50, mci_prop = 0.20, 
-                                other_prop = 0.10, dist = dist_name, 
-                                parameters = normal_parameter_list, 
+  generate_synthetic_continuous(HRS_analytic, sample_size = 1000000,
+                                dementia_prop = 0.50, mci_prop = 0.20,
+                                other_prop = 0.10, dist = dist_name,
+                                parameters = normal_parameter_list,
                                 selected_vars_estimates = fixed_betas,
-                                path_to_results = 
-                                  paste0(path_to_box, "analyses/", 
-                                         "simulation_study/superpopulations/")) 
+                                path_to_results =
+                                  paste0(path_to_box, "analyses/",
+                                         "simulation_study/superpopulations/"))
 }
 end <- Sys.time() - start
