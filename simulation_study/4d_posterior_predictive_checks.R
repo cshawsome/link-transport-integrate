@@ -16,21 +16,12 @@ source(here::here("simulation_study", "functions",
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **data paths ----
-synthetic_data_paths <- 
+superpop_data_paths <- 
   list.files(path = paste0(path_to_box, 
-                           "analyses/simulation_study/synthetic_data/HRS"), 
+                           "analyses/simulation_study/superpopulations"), 
              full.names = TRUE, pattern = "*.csv")
 
-#subset for now
-synthetic_data_paths <- 
-  synthetic_data_paths[
-    str_detect(synthetic_data_paths, 
-               paste0("synthetic_normal_500_ADAMS|synthetic_normal_1000_ADAMS|", 
-                      "synthetic_normal_2000_ADAMS|synthetic_normal_4000_ADAMS|", 
-                      "synthetic_normal_8000_ADAMS"))]
-
-
-synthetic_data_list <- lapply(synthetic_data_paths, read_results)
+superpop_data_list <- lapply(superpop_data_paths, read_results)
 
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
@@ -54,25 +45,55 @@ Z <- colnames(synthetic_data_list[[1]])[str_detect(
 A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
   as.matrix()
 
+#---- create one set of synthetic HRS ----
+create_HRS_datasets <- function(superpop, n){
+  sample_n(superpop, size = n) %>% 
+    separate(dataset_name, sep = "_", into = c("dist", "size", "prior")) %>% 
+    mutate_at("size", as.numeric) %>% mutate(size = n) %>% 
+    unite("dataset_name", c("dist", "size", "prior"), sep = "_")
+}
+
+set.seed(20220507)
+
+for(n in c(500, 1000, 2000, 4000, 8000)){
+  if(!exists("synthetic_data_list")){
+    synthetic_data_list <- 
+      lapply(superpop_data_list, function(x) create_HRS_datasets(x, n))
+  } else{
+    synthetic_data_list <- 
+      append(synthetic_data_list, lapply(superpop_data_list, function(x) 
+        create_HRS_datasets(x, n)))
+  }
+}
+
+# #Sanity check
+# lapply(synthetic_data_list, function(x) unique(x$dataset_name))
+
+#---- **dataset names ----
+dataset_names <- 
+  unlist(lapply(synthetic_data_list, function(x) unique(x$dataset_name)))
+
 #---- posterior predictive checks ----
 set.seed(20220329)
 start <- Sys.time()
-lapply(synthetic_data_list[40], function(x)
-  posterior_predictive_checks(dataset_to_copy = x %>% 
-                                group_by(married_partnered) %>% 
-                                slice_sample(prop = 0.5) %>% 
-                                mutate("(Intercept)" = 1) %>% ungroup(), 
-                              categorical_covariates = W, 
-                              continuous_covariates = Z, contrasts_matrix = A,
-                              cell_ID_key, variable_labels, color_palette,
-                              path_to_analyses_folder = 
-                                paste0(path_to_box, 
-                                       "analyses/simulation_study/HCAP_HRS_", 
-                                       unique(x[, "dataset_name"]), "/"), 
-                              path_to_figures_folder = 
-                                paste0(path_to_box,
-                                       "figures/simulation_study/HCAP_HRS_", 
-                                       unique(x[, "dataset_name"]), "/")))
+lapply(synthetic_data_list[which(dataset_names == "normal_500_ADAMS")], 
+       function(x)
+         posterior_predictive_checks(dataset_to_copy = x %>% 
+                                       group_by(married_partnered) %>% 
+                                       slice_sample(prop = 0.5) %>% 
+                                       mutate("(Intercept)" = 1) %>% ungroup(), 
+                                     categorical_covariates = W, 
+                                     continuous_covariates = Z, 
+                                     contrasts_matrix = A,
+                                     cell_ID_key, variable_labels, color_palette,
+                                     path_to_analyses_folder = 
+                                       paste0(path_to_box, 
+                                              "analyses/simulation_study/HCAP_HRS_", 
+                                              unique(x[, "dataset_name"]), "/"), 
+                                     path_to_figures_folder = 
+                                       paste0(path_to_box,
+                                              "figures/simulation_study/HCAP_HRS_", 
+                                              unique(x[, "dataset_name"]), "/")))
 
 end <- Sys.time() - start
 
