@@ -22,8 +22,9 @@ HCAP_analytic <-
 
 #---- ADAMS imputation ----
 #---- **pare down list of vars based on ADAMS variable selection ----
-remove <- c("avg_proxy_cog_Better", "avg_proxy_cog_Same", "avg_proxy_cog_Worse", "proxy_Spouse", 
-            "proxy_Child", "proxy_Other_Relative", "proxy_Other")
+remove <- c("avg_proxy_cog_Better", "avg_proxy_cog_Same", "avg_proxy_cog_Worse", 
+            "proxy_Spouse", "proxy_Child", "proxy_Other_Relative", 
+            "proxy_Other")
 
 ADAMS_subset <- ADAMS_analytic %>% dplyr::select(-all_of(remove))
 
@@ -38,11 +39,10 @@ sociodem_vars <- c("AAGE", "EDYRS", "Female", "Black", "Hispanic",
                    "Married/partnered", "Working", "Retired", "Not working")
 
 ADAMS_vars <- c("SELFCOG", "ANMSETOT", "ANSER7T", "ANSCISOR", "ANCACTUS", 
-                "ANPRES", "ANAFTOT", "ANBNTTOT", "ANDELCOR", "ANRECYES",
-                "ANRECNO", "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", 
-                "ANTMASEC", "ANBWC20", "ANBWC86", "ANIMMCR", "ANSMEM2_Better", 
-                "ANSMEM2_Same", "ANSMEM2_Worse", "Dementia", "Other", 
-                "MCI")
+                "ANPRES", "ANAFTOT", "ANDELCOR", "ANRECYES", "ANRECNO", 
+                "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", "ANTMASEC", 
+                "ANBWC20", "ANIMMCR", "ANSMEM2_Better", "ANSMEM2_Same", 
+                "ANSMEM2_Worse", "Dementia", "Other", "MCI")
 
 HRS_vars <- c(paste0("r", cog_waves, "mpart"), paste0("r", hrs_waves, "height"), 
               paste0("r", hrs_waves, "weight"), paste0("r", hrs_waves, "smoken"), 
@@ -52,9 +52,8 @@ HRS_vars <- c(paste0("r", cog_waves, "mpart"), paste0("r", hrs_waves, "height"),
               paste0("r", hrs_waves, "adla"), paste0("r", hrs_waves, "iadla"), 
               paste0("r", cog_waves, "imrc"), paste0("r", cog_waves, "dlrc"), 
               paste0("r", cog_waves, "ser7"), paste0("r", cog_waves, "bwc20"), 
-              paste0("r", seq(5, 6), "bwc86"), paste0("r", cog_waves, "scis"), 
-              paste0("r", cog_waves, "cact"), paste0("r", cog_waves, "pres"), 
-              paste0("r", cog_waves, "cogtot"), 
+              paste0("r", cog_waves, "scis"), paste0("r", cog_waves, "cact"), 
+              paste0("r", cog_waves, "pres"), paste0("r", cog_waves, "cogtot"), 
               paste0("r", cog_waves, "pstmem_Better"), 
               paste0("r", cog_waves, "pstmem_Same"), 
               paste0("r", cog_waves, "pstmem_Worse"))
@@ -94,7 +93,6 @@ predict[needs_imputing[which(needs_imputing %in% HRS_vars)], ADAMS_vars] <- 0
 
 #---- ****ADAMS extra predictors ----
 predict["ANBWC20", paste0("r", cog_waves, "bwc20")] <- 1
-predict["ANBWC86", paste0("r", seq(5, 6), "bwc86")] <- 1
 predict["ANCACTUS", paste0("r", cog_waves, "cact")] <- 1
 predict["SELFCOG", paste0("r", cog_waves, "cogtot")] <- 1
 predict["ANDELCOR", paste0("r", cog_waves, "dlrc")] <- 1
@@ -136,5 +134,4 @@ future_apply(chunks, 1, function(x)
   future.seed = TRUE)
 end <- Sys.time() - start
 plan(sequential)
-
 
