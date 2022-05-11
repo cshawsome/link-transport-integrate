@@ -91,7 +91,7 @@ kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>%
 start <- Sys.time()
 lapply(synthetic_data_list[2], 
        function(dataset) 
-         for(seed in 21:100){
+         for(seed in 1:100){
            simulation_function(warm_up = 100, starting_props = rep(0.25, 4), 
                                unimpaired_preds, other_preds, mci_preds, 
                                categorical_vars = W, continuous_vars = Z, 
