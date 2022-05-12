@@ -37,15 +37,19 @@ cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>%
   mutate_all(as.character)
 
 #---- **impairement class color palette ----
-color_palette <- read_csv(here::here("color_palette.csv")) 
+color_palette <- read_csv(here::here("color_palette.csv"))
+
+#---- **all sim scenarios matrix ----
+all_sim_scenarios <- read_csv(paste0(path_to_box, "analyses/simulation_study/", 
+                                     "sim_study_scenarios.csv"))
 
 #---- define vars ----
 #categorical vars (notation from Schafer 1997)
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
-Z <- colnames(synthetic_data_list[[1]])[str_detect(
-  colnames(synthetic_data_list[[1]]), "_Z")]
+Z <- colnames(superpop_data_list[[1]])[str_detect(
+  colnames(superpop_data_list[[1]]), "_Z")]
 
 #---- specifying priors ----
 #---- **latent classes ----
@@ -79,10 +83,11 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
-nu_0 <- 65
+nu_0 <- read_csv(paste0(path_to_box, "analyses/nu_0.csv")) %>% 
+  column_to_rownames("dataset_name") %>% t()
+
 #scaling for inverse wishart as variance of Beta
-kappa_0 <- c(0.85, 0.85, 0.85, 0.85) %>% 
-  set_names(c("Unimpaired", "MCI", "Dementia", "Other"))
+kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
 
 #---- run sim ----
 start <- Sys.time()
