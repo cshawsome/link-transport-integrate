@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -cwd #uses current working directory
 # error = Merged with joblog
-#$ -o joblogs/joblog.$JOB_ID.$TASK_ID #creates a file called joblog.jobidnumber to write to. 
+#$ -o /u/home/c/cshaw343/joblogs/joblog.$JOB_ID.$TASK_ID #creates a file called joblog.jobidnumber to write to. 
 #$ -j y 
 #$ -l h_rt=1:00:00,h_data=4G #requests 1 hours, 2GB of data (per core) 
 #$ -pe shared 1 #requests 1 core
@@ -33,6 +33,6 @@ export OMP_NUM_THREADS=1 #uses max 1 thread (needs to match -pe shared)
 
 echo "======"
 echo SGE_TASK_ID=$SGE_TASK_ID      
-R CMD BATCH --no-save --no-restore "--args scenario_num=$SGE_TASK_ID "  simulation_run.R output/output.$JOB_ID.$SGE_TASK_ID
-echo R CMD BATCH --no-save --no-restore \'--args scenario_num=$SGE_TASK_ID \'  simulation_run.R output/output.$JOB_ID.$SGE_TASK_ID
+R CMD BATCH --no-save --no-restore "--args scenario_num=$SGE_TASK_ID num_replicates=10"  /u/home/c/cshaw343/RScripts/simulation_run.R /u/home/c/cshaw343/output/output.$JOB_ID.$SGE_TASK_ID
+echo R CMD BATCH --no-save --no-restore \'--args scenario_num=$SGE_TASK_ID num_replicates=10 \'  /u/home/c/cshaw343/RScripts/simulation_run.R /u/home/c/cshaw343/output/output.$JOB_ID.$SGE_TASK_ID
 
