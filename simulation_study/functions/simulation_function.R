@@ -1,10 +1,10 @@
 simulation_function <- 
   function(warm_up, starting_props, unimpaired_preds, other_preds, 
            mci_preds, categorical_vars, continuous_vars, id_var, variable_labels, 
-           dataset, cell_ID_key, color_palette, num_synthetic, unimpaired_betas, 
-           unimpaired_cov, other_betas, other_cov, mci_betas, mci_cov, 
-           alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0, 
-           contrasts_matrix, seed, truth, path_to_results){
+           superpopulation, cell_ID_key, color_palette, num_synthetic, 
+           unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
+           mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
+           kappa_0, contrasts_matrix, truth, path_to_results){
     
     #---- pre-allocated results ----
     result_names <- 
@@ -16,14 +16,10 @@ simulation_function <-
         "Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
         "Other_coverage", "black_beta", "black_se", "black_LCI", "black_UCI",
         "hispanic_beta", "hispanic_se", "hispanic_LCI", "hispanic_UCI",
-        "black_coverage", "hispanic_coverage", "seed", "time")
+        "black_coverage", "hispanic_coverage", "time")
     
     results <- matrix(ncol = length(result_names), nrow = 1) %>% 
       set_colnames(all_of(result_names))
-    
-    #---- seed setting ----
-    set.seed(seed)
-    results[, "seed"] <- seed
     
     #---- start time ----
     start <- Sys.time()
@@ -141,43 +137,42 @@ simulation_function <-
     }
   }
 
-# #---- testing ----
-# warm_up = 100
-# starting_props = rep(0.25, 4)
-# unimpaired_preds
-# other_preds
-# mci_preds
-# categorical_vars = W
-# continuous_vars = Z
-# id_var = "HHIDPN"
-# variable_labels
-# dataset = synthetic_data_list[[2]]
-# cell_ID_key
-# color_palette
-# num_synthetic = 1000
-# unimpaired_betas
-# unimpaired_cov
-# other_betas
-# other_cov
-# mci_betas
-# mci_cov
-# alpha_0_dist
-# prior_Sigma
-# prior_V_inv
-# prior_beta
-# nu_0
-# kappa_0
-# contrasts_matrix = A
-# seed = 21
-# truth
-# path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
-# 
-# for(seed in 1:3){
-#   simulation_function(warm_up, starting_props, unimpaired_preds, other_preds,
-#                       mci_preds, categorical_vars, continuous_vars, id_var,
-#                       variable_labels, dataset, cell_ID_key, color_palette,
-#                       num_synthetic, unimpaired_betas, unimpaired_cov,
-#                       other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist,
-#                       prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0,
-#                       contrasts_matrix, seed, truth, path_to_results)
-# }
+#---- testing ----
+warm_up = 100
+starting_props = rep(0.25, 4)
+unimpaired_preds
+other_preds
+mci_preds
+categorical_vars = W
+continuous_vars = Z
+id_var = "HHIDPN"
+variable_labels
+dataset = superpop_data_list[[7]]
+cell_ID_key
+color_palette
+num_synthetic = 1000
+unimpaired_betas
+unimpaired_cov
+other_betas
+other_cov
+mci_betas
+mci_cov
+alpha_0_dist
+prior_Sigma
+prior_V_inv
+prior_beta
+nu_0
+kappa_0
+contrasts_matrix = A
+truth
+path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
+
+for(seed in 1:3){
+  simulation_function(warm_up, starting_props, unimpaired_preds, other_preds,
+                      mci_preds, categorical_vars, continuous_vars, id_var,
+                      variable_labels, dataset, cell_ID_key, color_palette,
+                      num_synthetic, unimpaired_betas, unimpaired_cov,
+                      other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist,
+                      prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0,
+                      contrasts_matrix, seed, truth, path_to_results)
+}
