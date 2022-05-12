@@ -1,10 +1,11 @@
 simulation_function <- 
   function(warm_up, starting_props, unimpaired_preds, other_preds, 
            mci_preds, categorical_vars, continuous_vars, id_var, variable_labels, 
-           superpopulation, cell_ID_key, color_palette, num_synthetic, 
-           unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
-           mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
-           kappa_0, contrasts_matrix, truth, path_to_results){
+           scenario, superpops_list, all_scenarios_list, cell_ID_key, 
+           color_palette, num_synthetic, unimpaired_betas, unimpaired_cov, 
+           other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
+           prior_Sigma, prior_V_inv, prior_beta, nu_0_vec, kappa_0_mat, 
+           contrasts_matrix, truth, path_to_results){
     
     #---- pre-allocated results ----
     result_names <- 
@@ -21,13 +22,34 @@ simulation_function <-
     results <- matrix(ncol = length(result_names), nrow = 1) %>% 
       set_colnames(all_of(result_names))
     
+    #---- superpop names ----
+    superpop_names <- 
+      unlist(lapply(superpops_list, function(x) unique(x[, "dataset_name"])))
+    
+    #---- scenario name ----
+    scenario_name <- unlist(unite(all_sim_scenarios[scenario, ], col = "name", 
+                                  sep = "_"))
+    
+    superpop_index <- which(superpop_names == 
+                              paste0(all_sim_scenarios[scenario, "distribution"], 
+                                     "_1000000_", 
+                                     all_sim_scenarios[scenario, "prior_prop"]))
+    
+    superpop_name <- superpops_list[[superpop_index]]$dataset_name[1]
+    
     #---- start time ----
     start <- Sys.time()
     
-    #---- create synthetic HCAP ----
-    dataset_to_copy <- dataset %>% group_by(married_partnered) %>% 
-      slice_sample(prop = 0.5) %>% 
-      mutate("(Intercept)" = 1) %>% ungroup()
+    dataset_to_copy <- 
+      #---- create synthetic HRS ----
+    superpops_list[[superpop_index]] %>% 
+      slice_sample(n = unlist(all_sim_scenarios[scenario, "sample_size"]), 
+                   replace = FALSE) %>%
+      #---- create synthetic HCAP ----
+    group_by(married_partnered) %>% 
+      slice_sample(prop = 0.5, replace = FALSE) %>% 
+      mutate("(Intercept)" = 1) %>% ungroup() %>% 
+      mutate("dataset_name" = scenario_name)
     
     #---- **true impairment class counts ----
     results[, 
@@ -43,7 +65,8 @@ simulation_function <-
                          color_palette, num_synthetic, unimpaired_betas, 
                          unimpaired_cov, other_betas, other_cov, mci_betas, 
                          mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
-                         prior_beta, nu_0, kappa_0, contrasts_matrix,
+                         prior_beta, nu_0 = nu_0_vec[, scenario_name], 
+                         kappa_0_mat, contrasts_matrix,
                          path_to_analyses_folder = NA, 
                          path_to_figures_folder = NA, data_only = TRUE)
     
@@ -98,7 +121,8 @@ simulation_function <-
     pooled_model <- summary(mice::pool(models))
     
     #---- ****truth table ----
-    truth_table <- truth[which(truth$dataset_name == dataset$dataset_name[1]), ] 
+    truth_table <- 
+      truth[which(truth$dataset_name == superpop_name), ] 
     
     for(race_eth in c("black", "hispanic")){
       #---- ****estimates ----
@@ -128,7 +152,8 @@ simulation_function <-
     results[, "time"] <- as.numeric(difftime(Sys.time(), start, units = "mins"))
     
     #---- write results ----
-    file_path <- paste0(path_to_results, dataset$dataset_name[1], ".csv")
+    file_path <- 
+      paste0(path_to_results, scenario_name, ".csv")
     
     if(file.exists(file_path)){
       write_csv(as.data.frame(results), file = file_path, append = TRUE)
@@ -137,42 +162,51 @@ simulation_function <-
     }
   }
 
-#---- testing ----
-warm_up = 100
-starting_props = rep(0.25, 4)
-unimpaired_preds
-other_preds
-mci_preds
-categorical_vars = W
-continuous_vars = Z
-id_var = "HHIDPN"
-variable_labels
-dataset = superpop_data_list[[7]]
-cell_ID_key
-color_palette
-num_synthetic = 1000
-unimpaired_betas
-unimpaired_cov
-other_betas
-other_cov
-mci_betas
-mci_cov
-alpha_0_dist
-prior_Sigma
-prior_V_inv
-prior_beta
-nu_0
-kappa_0
-contrasts_matrix = A
-truth
-path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
-
-for(seed in 1:3){
-  simulation_function(warm_up, starting_props, unimpaired_preds, other_preds,
-                      mci_preds, categorical_vars, continuous_vars, id_var,
-                      variable_labels, dataset, cell_ID_key, color_palette,
-                      num_synthetic, unimpaired_betas, unimpaired_cov,
-                      other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist,
-                      prior_Sigma, prior_V_inv, prior_beta, nu_0, kappa_0,
-                      contrasts_matrix, seed, truth, path_to_results)
-}
+# #---- testing ----
+# warm_up = 100
+# starting_props = rep(0.25, 4)
+# unimpaired_preds
+# other_preds
+# mci_preds
+# categorical_vars = W
+# continuous_vars = Z
+# id_var = "HHIDPN"
+# variable_labels
+# scenario = 1
+# superpops_list = superpop_data_list
+# all_scenarios_list = all_sim_scenarios
+# cell_ID_key
+# color_palette
+# num_synthetic = 1000
+# unimpaired_betas
+# unimpaired_cov
+# other_betas
+# other_cov
+# mci_betas
+# mci_cov
+# alpha_0_dist
+# prior_Sigma
+# prior_V_inv
+# prior_beta
+# nu_0_vec
+# kappa_0
+# contrasts_matrix = A
+# truth
+# path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
+# 
+# set.seed(20220512)
+# 
+# replicate(2, 
+#           simulation_function(warm_up, starting_props, unimpaired_preds, 
+#                               other_preds, mci_preds, categorical_vars, 
+#                               continuous_vars, id_var, variable_labels, 
+#                               scenario = 1, 
+#                               superpops_list = superpop_data_list, 
+#                               all_sim_scenarios, 
+#                               cell_ID_key, color_palette, num_synthetic, 
+#                               unimpaired_betas, unimpaired_cov, other_betas, 
+#                               other_cov, mci_betas, mci_cov, alpha_0_dist, 
+#                               prior_Sigma, prior_V_inv, prior_beta, nu_0_vec, 
+#                               kappa_0_mat, contrasts_matrix, truth, 
+#                               path_to_results))
+# 
