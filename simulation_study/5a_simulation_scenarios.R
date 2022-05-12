@@ -6,9 +6,9 @@ if (!require("pacman")){
 p_load("tidyverse", "magrittr")
 
 #---- all scenarios ----
-dists <- c("Normal", "Lognormal", "Bathtub")
+dists <- c("normal", "lognormal", "bathtub")
 samples_sizes <- c(500, 1000, 2000, 4000, 8000)
-prior_props <- c("ADAMS", "Unimpaired", "Dementia")
+prior_props <- c("ADAMS", "unimpaired", "dementia")
 
 sim_scenarios <- 
   as.data.frame(expand.grid(dists, samples_sizes, prior_props)) %>% 
