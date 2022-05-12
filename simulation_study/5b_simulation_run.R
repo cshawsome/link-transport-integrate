@@ -18,19 +18,13 @@ source(here::here("simulation_study", "functions", "simulation_function.R"))
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-#---- **synthetic data ----
-synthetic_data_paths <- 
+#---- **data paths ----
+superpop_data_paths <- 
   list.files(path = paste0(path_to_box, 
-                           "analyses/simulation_study/synthetic_data/HRS"), 
+                           "analyses/simulation_study/superpopulations"), 
              full.names = TRUE, pattern = "*.csv")
 
-#subset for now
-synthetic_data_paths <- 
-  synthetic_data_paths[
-    str_detect(synthetic_data_paths, 
-               "synthetic_normal_500_ADAMS|synthetic_normal_1000_ADAMS")]
-
-synthetic_data_list <- lapply(synthetic_data_paths, read_results)
+superpop_data_list <- lapply(superpop_data_paths, read_results)
 
 #---- **truth table ----
 truth <- read_csv(paste0(path_to_box, "analyses/simulation_study/truth.csv"))
