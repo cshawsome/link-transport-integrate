@@ -1,3 +1,6 @@
+#This script is formatted to run on UCLA Hoffman, so all file paths reference the
+# directory setup on that computing cluster
+
 #---- Package loading + options ----
 if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
