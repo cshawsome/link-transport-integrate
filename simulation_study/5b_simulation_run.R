@@ -7,7 +7,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MCMCpack", "locfit", 
-       "vroom", "mvnfast")
+       "vroom", "mvnfast", "mice")
 
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
@@ -83,30 +83,32 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
-nu_0 <- read_csv(paste0(path_to_box, "analyses/nu_0.csv")) %>% 
+nu_0_vec <- read_csv(paste0(path_to_box, "analyses/nu_0.csv")) %>% 
   column_to_rownames("dataset_name") %>% t()
 
 #scaling for inverse wishart as variance of Beta
 kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
 
 #---- run sim ----
-start <- Sys.time()
-lapply(synthetic_data_list[2], 
-       function(dataset) 
-         for(seed in 1:100){
-           simulation_function(warm_up = 100, starting_props = rep(0.25, 4), 
-                               unimpaired_preds, other_preds, mci_preds, 
-                               categorical_vars = W, continuous_vars = Z, 
-                               id_var = "HHIDPN", variable_labels, dataset, 
-                               cell_ID_key, color_palette, num_synthetic = 1000, 
-                               unimpaired_betas, unimpaired_cov, other_betas, 
-                               other_cov, mci_betas, mci_cov, alpha_0_dist,
-                               prior_Sigma, prior_V_inv, prior_beta, nu_0, 
-                               kappa_0, contrasts_matrix = A, seed, truth, 
-                               path_to_results = 
-                                 paste0(path_to_box, 
-                                        "analyses/simulation_study/results/"))})
+set.seed(20220512)
 
-end <- Sys.time() - start
+replicate(2,
+          simulation_function(warm_up = 100, starting_props = rep(0.25, 4), 
+                              unimpaired_preds, other_preds, mci_preds, 
+                              categorical_vars = W, continuous_vars = Z, 
+                              id_var = "HHIDPN", variable_labels, scenario = 1,
+                              superpops_list = superpop_data_list,
+                              all_scenarios_list = all_sim_scenarios, 
+                              cell_ID_key, color_palette, 
+                              num_synthetic = 1000, unimpaired_betas, 
+                              unimpaired_cov, other_betas, other_cov, mci_betas, 
+                              mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
+                              prior_beta, nu_0_vec, kappa_0_mat, 
+                              contrasts_matrix = A, truth,
+                              path_to_results = 
+                                paste0(path_to_box, 
+                                       "analyses/simulation_study/results/")))
+
+
 
 
