@@ -33,6 +33,6 @@ export OMP_NUM_THREADS=1 #uses max 1 thread (needs to match -pe shared)
 
 echo "======"
 echo SGE_TASK_ID=$SGE_TASK_ID      
-R CMD BATCH --no-save --no-restore "--args scenario_num=$SGE_TASK_ID num_replicates=10"  /u/home/c/cshaw343/RScripts/simulation_run.R /u/home/c/cshaw343/output/output.$JOB_ID.$SGE_TASK_ID
-echo R CMD BATCH --no-save --no-restore \'--args scenario_num=$SGE_TASK_ID num_replicates=10 \'  /u/home/c/cshaw343/RScripts/simulation_run.R /u/home/c/cshaw343/output/output.$JOB_ID.$SGE_TASK_ID
+R CMD BATCH --no-save --no-restore "--args scenario_num=$SGE_TASK_ID num_replicates=10"  /u/home/c/cshaw343/RScripts/5b_simulation_run.R /u/home/c/cshaw343/output/output.$JOB_ID.$SGE_TASK_ID
+echo R CMD BATCH --no-save --no-restore \'--args scenario_num=$SGE_TASK_ID num_replicates=10 \'  /u/home/c/cshaw343/RScripts/5b_simulation_run.R /u/home/c/cshaw343/output/output.$JOB_ID.$SGE_TASK_ID
 
