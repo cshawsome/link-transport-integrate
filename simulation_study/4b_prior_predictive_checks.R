@@ -118,7 +118,7 @@ dataset_names <-
 set.seed(20220329)
 start <- Sys.time()
 
-lapply(synthetic_data_list[which(dataset_names == "normal_500_ADAMS")], 
+lapply(synthetic_data_list[which(dataset_names == "normal_1000_ADAMS")], 
        function(x)
   prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
                           categorical_vars = W, continuous_vars = Z, 
