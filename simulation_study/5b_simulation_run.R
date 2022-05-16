@@ -103,7 +103,7 @@ nu_0_vec <- read_csv(paste0(path_to_data, "nu_0.csv")) %>%
   column_to_rownames("dataset_name") %>% t()
 
 #scaling for inverse wishart as variance of Beta
-kappa_0_mat <- read_csv(paste0(path_to_data, "analyses/kappa_0_matrix.csv"))
+kappa_0_mat <- read_csv(paste0(path_to_data, "kappa_0_matrix.csv"))
 
 #---- run sim ----
 set.seed(20220512)
