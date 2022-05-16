@@ -30,8 +30,8 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "DirichletReg", "magrittr", "here", "MCMCpack", "locfit", 
-       "vroom", "mvnfast", "mice")
+p_load("tidyverse", "DirichletReg", "magrittr", "MCMCpack", "locfit", "vroom", 
+       "mvnfast", "mice")
 
 #---- source functions ----
 path_to_RScripts <- "/u/home/c/cshaw343/link_transport_integrate/RScripts/"
