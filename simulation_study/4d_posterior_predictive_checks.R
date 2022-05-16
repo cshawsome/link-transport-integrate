@@ -76,7 +76,7 @@ dataset_names <-
 #---- posterior predictive checks ----
 set.seed(20220329)
 start <- Sys.time()
-lapply(synthetic_data_list[which(dataset_names == "normal_500_ADAMS")], 
+lapply(synthetic_data_list[which(dataset_names == "normal_1000_ADAMS")], 
        function(x)
          posterior_predictive_checks(dataset_to_copy = x %>% 
                                        group_by(married_partnered) %>% 
