@@ -31,7 +31,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "DirichletReg", "magrittr", "MCMCpack", "locfit", "vroom", 
-       "mvnfast", "mice")
+       "mvnfast", "mice", "LaplacesDemon")
 
 #---- source functions ----
 path_to_RScripts <- "/u/home/c/cshaw343/link_transport_integrate/RScripts/"
