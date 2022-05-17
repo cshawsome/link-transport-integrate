@@ -88,7 +88,7 @@ generate_synthetic <-
     #---- max index ----
     max_index <- length(priors_beta)
     
-    #---- nu_0 and kappa_0 hyperpriors ----
+    #---- nu_0 and kappa_0 hyperparameters ----
     nu_0 <- 
       nu_0_mat[
         which(nu_0_mat$dataset_name == 
