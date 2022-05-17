@@ -9,6 +9,7 @@ p_load("tidyverse", "magrittr")
 dists <- c("normal", "lognormal", "bathtub")
 samples_sizes <- c(500, 1000, 2000, 4000, 8000)
 prior_props <- c("ADAMS", "unimpaired", "dementia")
+seeds <- c()
 
 sim_scenarios <- 
   as.data.frame(expand.grid(dists, samples_sizes, prior_props)) %>% 
