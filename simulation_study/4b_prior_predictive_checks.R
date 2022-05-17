@@ -161,7 +161,7 @@ future_lapply(synthetic_data_list[indices], function(x)
                           unimpaired_cov, other_betas, other_cov, 
                           mci_betas, mci_cov, alpha_0_dist, prior_Sigma, 
                           prior_V_inv, prior_beta, 
-                          nu_0 = nu_0[, unique(x$dataset_name)], kappa_0_mat, 
+                          nu_0_mat, kappa_0_mat, 
                           contrasts_matrix = A, 
                           path_to_folder = 
                             paste0(path_to_box,
