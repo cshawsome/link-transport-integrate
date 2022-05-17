@@ -73,8 +73,7 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
-nu_0 <- read_csv(paste0(path_to_box, "analyses/nu_0.csv")) %>% 
-  column_to_rownames("dataset_name") %>% t()
+nu_0_mat <- read_csv(paste0(path_to_box, "analyses/nu_0_matrix.csv")) 
 #scaling for inverse wishart as variance of Beta
 kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
 
@@ -105,11 +104,10 @@ dataset_names <-
 
 #---- generate one set for tuning ----
 #About 1.5 hours to generate data for all datasets
-
 set.seed(20220329)
 start <- Sys.time()
 
-lapply(synthetic_data_list[which(dataset_names == "normal_1000_ADAMS")], 
+lapply(synthetic_data_list[which(dataset_names == "normal_500_ADAMS")], 
        function(x)
          generate_synthetic(warm_up = 100, run_number = 1, 
                             starting_props = c(0.25, 0.25, 0.25, 0.25),
@@ -124,8 +122,7 @@ lapply(synthetic_data_list[which(dataset_names == "normal_1000_ADAMS")],
                             unimpaired_betas, unimpaired_cov, other_betas, 
                             other_cov, mci_betas, mci_cov, alpha_0_dist, 
                             prior_Sigma, prior_V_inv, prior_beta, 
-                            nu_0 = nu_0[, unique(x$dataset_name)], kappa_0_mat, 
-                            contrasts_matrix = A,
+                            nu_0_mat, kappa_0_mat, contrasts_matrix = A,
                             path_to_analyses_folder = 
                               paste0(path_to_box, "analyses/simulation_study/", 
                                      "HCAP_HRS_", 
