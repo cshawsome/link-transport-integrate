@@ -3,7 +3,7 @@ generate_synthetic <-
            mci_preds, categorical_vars, continuous_vars, id_var, variable_labels, 
            dataset_to_copy, cell_ID_key, color_palette, num_synthetic, 
            unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
-           mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0, 
+           mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0_mat, 
            kappa_0_mat, contrasts_matrix, path_to_analyses_folder, 
            path_to_figures_folder, data_only = FALSE){
     
@@ -88,6 +88,17 @@ generate_synthetic <-
     #---- max index ----
     max_index <- length(priors_beta)
     
+    #---- nu_0 and kappa_0 hyperpriors ----
+    nu_0 <- 
+      nu_0_mat[
+        which(nu_0_mat$dataset_name == 
+                unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
+    
+    kappa_0 <- 
+      kappa_0_mat[
+        which(kappa_0_mat$dataset_name == 
+                unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
+    
     #---- start sampling ----
     for(b in 1:B){
       if(b == 1){
@@ -150,6 +161,7 @@ generate_synthetic <-
       if(!data_only){
         latent_class_chain[, b] <- summary 
       }
+      
       
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
         subset <- dataset_to_copy %>% filter(Group == class) 
@@ -221,12 +233,6 @@ generate_synthetic <-
           }
           
           #---- **Mm ----
-          #---- ****grab kappa_0 vec ----
-          kappa_0 <- 
-            kappa_0_mat[
-              which(kappa_0_mat$dataset_name == 
-                      unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
-          
           continuous_covariates <- subset[, continuous_vars] %>% as.matrix
           
           V_inv <- t(A) %*% UtU %*% A 
@@ -259,8 +265,10 @@ generate_synthetic <-
           sigma_mat <- Sigma_prior + ZtZ + third_term
           redraws = 0
           
-          while(is.character(tryCatch(sig_Y <- riwish(v = (nu_0 + nrow(subset)), 
-                                                      S = sigma_mat), 
+          while(is.character(tryCatch(sig_Y <- 
+                                      riwish(v = (as.numeric(nu_0[, class]) + 
+                                                  nrow(subset)), 
+                                             S = sigma_mat), 
                                       error = function(e) "error")) & 
                 redraws <= 100){
             
