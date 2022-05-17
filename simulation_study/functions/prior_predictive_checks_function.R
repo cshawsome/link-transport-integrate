@@ -3,7 +3,7 @@ prior_predictive_checks <-
            continuous_vars, variable_labels, color_palette, dataset_to_copy, 
            num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 
            other_cov, mci_betas, mci_cov, alpha_0_dist, prior_Sigma, 
-           prior_V_inv, prior_beta, nu_0, kappa_0_mat, contrasts_matrix, 
+           prior_V_inv, prior_beta, nu_0_mat, kappa_0_mat, contrasts_matrix, 
            path_to_folder){
     
     #---- create folders for results ----
@@ -74,15 +74,20 @@ prior_predictive_checks <-
                       seq(1, nrow(contrasts_matrix))), 1, paste0,
           collapse = ":"))
       
+      #---- hyperparameters ----
+      kappa_0 <- 
+        kappa_0_mat[
+          which(kappa_0_mat$dataset_name == 
+                  unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
+      
+      nu_0 <- 
+        nu_0_mat[
+          which(nu_0_mat$dataset_name == 
+                  unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
+      
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
         #---- **index for random draws ----
         random_draw <- sample(seq(1, max_index), size = 1)
-        
-        #---- ****grab kappa_0 vec ----
-        kappa_0 <- 
-          kappa_0_mat[
-            which(kappa_0_mat$dataset_name == 
-                    unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
         
         #---- **contingency cells ----
         subset <- synthetic_sample %>% filter(Group == class)
@@ -133,7 +138,7 @@ prior_predictive_checks <-
             prior_Sigma[[random_draw]][[
               class]][, seq(1, length(continuous_vars))])
         
-        sig_Y <- riwish(v = (nu_0), S = Sigma_prior)
+        sig_Y <- riwish(v = as.numeric(nu_0[, class]), S = Sigma_prior)
         
         #---- **beta_0 ----
         V_0_inv <- 
