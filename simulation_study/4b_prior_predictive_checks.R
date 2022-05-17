@@ -79,8 +79,7 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
-nu_0 <- read_csv(paste0(path_to_box, "analyses/nu_0.csv")) %>% 
-  column_to_rownames("dataset_name") %>% t()
+nu_0_mat <- read_csv(paste0(path_to_box, "analyses/nu_0_matrix.csv"))
 
 #scaling for inverse wishart as variance of Beta
 kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
