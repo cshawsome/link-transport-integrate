@@ -99,8 +99,7 @@ A = read_csv(paste0(path_to_data, "contrasts_matrix.csv")) %>% as.matrix()
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
-nu_0_vec <- read_csv(paste0(path_to_data, "nu_0.csv")) %>% 
-  column_to_rownames("dataset_name") %>% t()
+nu_0_mat <- read_csv(paste0(path_to_data, "nu_0_matrix.csv"))
 
 #scaling for inverse wishart as variance of Beta
 kappa_0_mat <- read_csv(paste0(path_to_data, "kappa_0_matrix.csv"))
@@ -122,7 +121,7 @@ replicate(num_replicates,
                               num_synthetic = 1000, unimpaired_betas, 
                               unimpaired_cov, other_betas, other_cov, mci_betas, 
                               mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
-                              prior_beta, nu_0_vec, kappa_0_mat, 
+                              prior_beta, nu_0_mat, kappa_0_mat, 
                               contrasts_matrix = A, truth, seed,
                               path_to_results = 
                                 paste0("/u/home/c/cshaw343/", 
