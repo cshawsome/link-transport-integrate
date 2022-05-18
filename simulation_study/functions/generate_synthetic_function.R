@@ -266,9 +266,10 @@ generate_synthetic <-
           redraws = 0
           
           while(is.character(tryCatch(sig_Y <- 
-                                      riwish(v = (as.numeric(nu_0[, class]) + 
-                                                  nrow(subset)), 
-                                             S = sigma_mat), 
+                                      MCMCpack::riwish(
+                                        v = (as.numeric(nu_0[, class]) + 
+                                             nrow(subset)), 
+                                        S = sigma_mat), 
                                       error = function(e) "error")) & 
                 redraws <= 100){
             
