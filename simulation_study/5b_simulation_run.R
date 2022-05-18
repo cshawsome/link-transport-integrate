@@ -105,9 +105,11 @@ nu_0_vec <- read_csv(paste0(path_to_data, "nu_0.csv")) %>%
 #scaling for inverse wishart as variance of Beta
 kappa_0_mat <- read_csv(paste0(path_to_data, "kappa_0_matrix.csv"))
 
-#---- run sim ----
-set.seed(20220512)
+#---- set seed ----
+seed <- all_sim_scenarios[scenario_num, "seed"]
+set.seed(seed)
 
+#---- run sim ----
 replicate(num_replicates,
           simulation_function(warm_up = 100, starting_props = rep(0.25, 4), 
                               unimpaired_preds, other_preds, mci_preds, 
@@ -121,7 +123,7 @@ replicate(num_replicates,
                               unimpaired_cov, other_betas, other_cov, mci_betas, 
                               mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
                               prior_beta, nu_0_vec, kappa_0_mat, 
-                              contrasts_matrix = A, truth,
+                              contrasts_matrix = A, truth, seed,
                               path_to_results = 
                                 paste0("/u/home/c/cshaw343/", 
                                        "link_transport_integrate/results/")))
