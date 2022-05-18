@@ -3,17 +3,17 @@
 # error = Merged with joblog
 #$ -o /u/home/c/cshaw343/link_transport_integrate/joblogs/joblog.$JOB_ID.$TASK_ID #creates a file called joblog.jobidnumber to write to. 
 #$ -j y 
-#$ -l h_rt=12:00:00,h_data=7G #requests 12 hours, 27GB of data (per core) 
+#$ -l h_rt=3:00:00,h_data=7G #requests 3 hours, 7GB of data (per core) 
 #$ -pe shared 1 #requests 1 core
 # Email address to notify
 #$ -M $USER@mail #don't change this line, finds your email in the system 
 # Notify when
 #$ -m bea #sends you an email (b) when the job begins (e) when job ends (a) when job is aborted (error)
 # submit array job:
-# SINGLE RUNS:
-#$ -t 1-1:1
+# SINGLE BATCH RUNS:
+#$ -t 1-50:1
 # FOR THE FULL RUN USE INSTEAD:
-##$ -t 1-45:1
+##$ -t 1-2250:1
 ## 
 
 # load the job environment:
@@ -33,6 +33,6 @@ export OMP_NUM_THREADS=1 #uses max 1 thread (needs to match -pe shared)
 
 echo "======"
 echo SGE_TASK_ID=$SGE_TASK_ID      
-R CMD BATCH --no-save --no-restore "--args scenario_num=$SGE_TASK_ID num_replicates=1000"  /u/home/c/cshaw343/link_transport_integrate/RScripts/simulation_run.R /u/home/c/cshaw343/link_transport_integrate/output/output.$JOB_ID.$SGE_TASK_ID
-echo R CMD BATCH --no-save --no-restore \'--args scenario_num=$SGE_TASK_ID num_replicates=1000 \'  /u/home/c/cshaw343/link_transport_integrate/RScripts/simulation_run.R /u/home/c/cshaw343/link_transport_integrate/output/output.$JOB_ID.$SGE_TASK_ID
+R CMD BATCH --no-save --no-restore "--args scenario_num=$SGE_TASK_ID num_replicates=20"  /u/home/c/cshaw343/link_transport_integrate/RScripts/simulation_run.R /u/home/c/cshaw343/link_transport_integrate/output/output.$JOB_ID.$SGE_TASK_ID
+echo R CMD BATCH --no-save --no-restore \'--args scenario_num=$SGE_TASK_ID num_replicates=20 \'  /u/home/c/cshaw343/link_transport_integrate/RScripts/simulation_run.R /u/home/c/cshaw343/link_transport_integrate/output/output.$JOB_ID.$SGE_TASK_ID
 
