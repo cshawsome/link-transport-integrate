@@ -10,10 +10,10 @@
 # Notify when
 #$ -m bea #sends you an email (b) when the job begins (e) when job ends (a) when job is aborted (error)
 # submit array job:
-# SINGLE RUNS:
+# SINGLE BATCH RUNS:
 #$ -t 1-1:1
 # FOR THE FULL RUN USE INSTEAD:
-##$ -t 1-45:1
+##$ -t 1-2250:1
 ## 
 
 # load the job environment:
