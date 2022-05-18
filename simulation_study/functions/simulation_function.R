@@ -28,7 +28,7 @@ simulation_function <-
     
     #---- scenario name ----
     scenario_name <- 
-      unlist(
+      as.character(
         unite(all_sim_scenarios[scenario, 
                                 c("distribution", "sample_size", "prior_prop")], 
               col = "name", sep = "_"))
