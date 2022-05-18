@@ -17,7 +17,7 @@ simulation_function <-
         "Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
         "Other_coverage", "black_beta", "black_se", "black_LCI", "black_UCI",
         "hispanic_beta", "hispanic_se", "hispanic_LCI", "hispanic_UCI",
-        "black_coverage", "hispanic_coverage", "time", "seed")
+        "black_coverage", "hispanic_coverage", "time", "seed", "dataset_name")
     
     results <- matrix(ncol = length(result_names), nrow = 1) %>% 
       set_colnames(all_of(result_names))
@@ -156,6 +156,9 @@ simulation_function <-
     
     #---- seed ----
     results[, "seed"] <- seed
+    
+    #---- dataset name ----
+    results[, "dataset_name"] <- scenario_name
     
     #---- write results ----
     file_path <- 
