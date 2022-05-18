@@ -4,7 +4,7 @@ simulation_function <-
            scenario, superpops_list, all_scenarios_list, cell_ID_key, 
            color_palette, num_synthetic, unimpaired_betas, unimpaired_cov, 
            other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
-           prior_Sigma, prior_V_inv, prior_beta, nu_0_vec, kappa_0_mat, 
+           prior_Sigma, prior_V_inv, prior_beta, nu_0_mat, kappa_0_mat, 
            contrasts_matrix, truth, seed, path_to_results){
     
     #---- pre-allocated results ----
@@ -68,8 +68,7 @@ simulation_function <-
                          color_palette, num_synthetic, unimpaired_betas, 
                          unimpaired_cov, other_betas, other_cov, mci_betas, 
                          mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
-                         prior_beta, nu_0 = nu_0_vec[, scenario_name], 
-                         kappa_0_mat, contrasts_matrix,
+                         prior_beta, nu_0_mat, kappa_0_mat, contrasts_matrix,
                          path_to_analyses_folder = NA, 
                          path_to_figures_folder = NA, data_only = TRUE)
     
