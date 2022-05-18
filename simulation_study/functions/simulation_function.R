@@ -5,7 +5,7 @@ simulation_function <-
            color_palette, num_synthetic, unimpaired_betas, unimpaired_cov, 
            other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
            prior_Sigma, prior_V_inv, prior_beta, nu_0_vec, kappa_0_mat, 
-           contrasts_matrix, truth, path_to_results){
+           contrasts_matrix, truth, seed, path_to_results){
     
     #---- pre-allocated results ----
     result_names <- 
@@ -17,7 +17,7 @@ simulation_function <-
         "Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
         "Other_coverage", "black_beta", "black_se", "black_LCI", "black_UCI",
         "hispanic_beta", "hispanic_se", "hispanic_LCI", "hispanic_UCI",
-        "black_coverage", "hispanic_coverage", "time")
+        "black_coverage", "hispanic_coverage", "time", "seed")
     
     results <- matrix(ncol = length(result_names), nrow = 1) %>% 
       set_colnames(all_of(result_names))
@@ -27,8 +27,11 @@ simulation_function <-
       unlist(lapply(superpops_list, function(x) unique(x[, "dataset_name"])))
     
     #---- scenario name ----
-    scenario_name <- unlist(unite(all_sim_scenarios[scenario, ], col = "name", 
-                                  sep = "_"))
+    scenario_name <- 
+      unlist(
+        unite(all_sim_scenarios[scenario, 
+                                c("distribution", "sample_size", "prior_prop")], 
+              col = "name", sep = "_"))
     
     superpop_index <- which(superpop_names == 
                               paste0(all_sim_scenarios[scenario, "distribution"], 
@@ -150,6 +153,9 @@ simulation_function <-
     
     #---- end time ----
     results[, "time"] <- as.numeric(difftime(Sys.time(), start, units = "mins"))
+    
+    #---- seed ----
+    results[, "seed"] <- seed
     
     #---- write results ----
     file_path <- 
