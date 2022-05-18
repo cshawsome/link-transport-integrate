@@ -38,8 +38,8 @@ color_palette <- read_csv(here::here("color_palette.csv"))
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
-Z <- colnames(synthetic_data_list[[1]])[str_detect(
-  colnames(synthetic_data_list[[1]]), "_Z")]
+Z <- colnames(superpop_data_list[[1]])[str_detect(
+  colnames(superpop_data_list[[1]]), "_Z")]
 
 #---- **contrasts matrix ----
 A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
