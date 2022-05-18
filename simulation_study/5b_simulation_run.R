@@ -105,8 +105,8 @@ nu_0_mat <- read_csv(paste0(path_to_data, "nu_0_matrix.csv"))
 kappa_0_mat <- read_csv(paste0(path_to_data, "kappa_0_matrix.csv"))
 
 #---- set seed ----
-seed <- all_sim_scenarios[scenario_num, "seed"]
-set.seed(as.numeric(seed))
+seed <- as.numeric(all_sim_scenarios[scenario_num, "seed"])
+set.seed(seed)
 
 #---- run sim ----
 replicate(num_replicates,
