@@ -107,7 +107,7 @@ dataset_names <-
 set.seed(20220329)
 start <- Sys.time()
 
-lapply(synthetic_data_list[which(dataset_names == "lognormal_1000_ADAMS")], 
+lapply(synthetic_data_list[which(dataset_names == "lognormal_4000_ADAMS")], 
        function(x)
          generate_synthetic(warm_up = 100, run_number = 1, 
                             starting_props = c(0.25, 0.25, 0.25, 0.25),
