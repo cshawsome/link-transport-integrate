@@ -458,7 +458,8 @@ generate_synthetic <-
         scale_x_continuous(breaks = seq(0, B, by = 100)) + 
         facet_grid(rows = vars(factor(Group, 
                                       levels = c("Unimpaired", "MCI", "Dementia", 
-                                                 "Other")))) + theme_bw() + 
+                                                 "Other"))), 
+                   scales = "free") + theme_bw() + 
         theme(legend.position = "bottom")
       
       ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
