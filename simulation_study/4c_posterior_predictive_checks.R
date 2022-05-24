@@ -5,7 +5,7 @@ if (!require("pacman")){
 
 p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack", 
        "locfit", "wesanderson", "RColorBrewer", "transformr", "moments", 
-       "qdapRegex")
+       "qdapRegex", "future.apply")
 
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
@@ -38,8 +38,8 @@ color_palette <- read_csv(here::here("color_palette.csv"))
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
-Z <- colnames(synthetic_data_list[[1]])[str_detect(
-  colnames(synthetic_data_list[[1]]), "_Z")]
+Z <- colnames(superpop_data_list[[1]])[str_detect(
+  colnames(superpop_data_list[[1]]), "_Z")]
 
 #---- **contrasts matrix ----
 A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
@@ -73,27 +73,33 @@ for(n in c(500, 1000, 2000, 4000, 8000)){
 dataset_names <- 
   unlist(lapply(synthetic_data_list, function(x) unique(x$dataset_name)))
 
-#---- posterior predictive checks ----
+#---- run checks in parallel ----
 set.seed(20220329)
 start <- Sys.time()
-lapply(synthetic_data_list[which(dataset_names == "normal_2000_ADAMS")], 
-       function(x)
-         posterior_predictive_checks(dataset_to_copy = x %>% 
-                                       group_by(married_partnered) %>% 
-                                       slice_sample(prop = 0.5) %>% 
-                                       mutate("(Intercept)" = 1) %>% ungroup(), 
-                                     categorical_covariates = W, 
-                                     continuous_covariates = Z, 
-                                     contrasts_matrix = A,
-                                     cell_ID_key, variable_labels, color_palette,
-                                     path_to_analyses_folder = 
-                                       paste0(path_to_box, 
-                                              "analyses/simulation_study/HCAP_HRS_", 
-                                              unique(x[, "dataset_name"]), "/"), 
-                                     path_to_figures_folder = 
-                                       paste0(path_to_box,
-                                              "figures/simulation_study/HCAP_HRS_", 
-                                              unique(x[, "dataset_name"]), "/")))
+plan(multisession, workers = (availableCores() - 2))
+
+#---- **specify indices ----
+indices <- which(dataset_names %in% 
+                   paste0("normal_", c(500, 1000), "_ADAMS"))
+
+future_lapply(synthetic_data_list[indices], function(x)
+  posterior_predictive_checks(dataset_to_copy = x %>% 
+                                group_by(married_partnered) %>% 
+                                slice_sample(prop = 0.5) %>% 
+                                mutate("(Intercept)" = 1) %>% ungroup(), 
+                              categorical_covariates = W, 
+                              continuous_covariates = Z, 
+                              contrasts_matrix = A,
+                              cell_ID_key, variable_labels, color_palette,
+                              path_to_analyses_folder = 
+                                paste0(path_to_box, 
+                                       "analyses/simulation_study/HCAP_HRS_", 
+                                       unique(x[, "dataset_name"]), "/"), 
+                              path_to_figures_folder = 
+                                paste0(path_to_box,
+                                       "figures/simulation_study/HCAP_HRS_", 
+                                       unique(x[, "dataset_name"]), "/")), 
+  future.seed = TRUE)
 
 end <- Sys.time() - start
-
+plan(sequential)

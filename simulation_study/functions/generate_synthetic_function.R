@@ -266,9 +266,10 @@ generate_synthetic <-
           redraws = 0
           
           while(is.character(tryCatch(sig_Y <- 
-                                      riwish(v = (as.numeric(nu_0[, class]) + 
-                                                  nrow(subset)), 
-                                             S = sigma_mat), 
+                                      MCMCpack::riwish(
+                                        v = (as.numeric(nu_0[, class]) + 
+                                             nrow(subset)), 
+                                        S = sigma_mat), 
                                       error = function(e) "error")) & 
                 redraws <= 100){
             
@@ -457,7 +458,8 @@ generate_synthetic <-
         scale_x_continuous(breaks = seq(0, B, by = 100)) + 
         facet_grid(rows = vars(factor(Group, 
                                       levels = c("Unimpaired", "MCI", "Dementia", 
-                                                 "Other")))) + theme_bw() + 
+                                                 "Other"))), 
+                   scales = "free") + theme_bw() + 
         theme(legend.position = "bottom")
       
       ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
