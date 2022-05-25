@@ -193,7 +193,7 @@ names(group_colors) <- color_palette$Group
 
 #---- **plot data ----
 plot_data <- results %>% 
-  group_by(distribution, sample_size, prior_props) %>% 
+  group_by(Distribution, sample_size, prior_props) %>% 
   summarise_at(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"), 
                mean) %>% 
   mutate_at("sample_size", as.numeric) %>% 
@@ -207,7 +207,7 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, group = class)) +
   scale_color_manual(values = group_colors) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
   theme_bw() + ylab("95% CI Coverage") + 
-  facet_grid(cols = vars(distribution)) + 
+  facet_grid(cols = vars(Distribution)) + 
   guides(color = guide_legend(title = "Group")) + 
   scale_x_continuous(name = "Sample Size", 
                      breaks = unique(plot_data$sample_size))
@@ -240,7 +240,7 @@ names(group_colors) <- color_palette$Group
 
 #---- **plot data ----
 plot_data <- results %>% 
-  dplyr::select("sample_size", "distribution", 
+  dplyr::select("sample_size", "Distribution", 
                 paste0("percent_increase_", 
                        c("Unimpaired", "MCI", "Dementia", "Other"))) %>%
   mutate_at("sample_size", as.numeric) %>% 
@@ -258,7 +258,7 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) +
   geom_boxplot() +
   scale_color_manual(values = group_colors) + 
   geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
-  ylab("Percent Bias") + facet_grid(cols = vars(distribution)) + 
+  ylab("Percent Bias") + facet_grid(cols = vars(Distribution)) + 
   guides(color = guide_legend(title = "Group")) + 
   scale_x_discrete(name = "Sample Size", 
                    breaks = unique(plot_data$sample_size))
@@ -308,7 +308,8 @@ results_summary <- results %>%
   mutate_at("race_eth", str_to_sentence) 
 
 results_summary$Distribution <- 
-  factor(results_summary$Distribution, levels = c("Normal", "Lognormal", "Bathtub"))
+  factor(results_summary$Distribution, 
+         levels = c("Normal", "Lognormal", "Bathtub"))
   
 #---- color palette ----
 navy <- "#135467"
