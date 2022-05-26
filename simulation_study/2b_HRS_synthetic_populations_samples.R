@@ -137,4 +137,3 @@ saveRDS(synthetic_HCAP_list,
         file = paste0(path_to_box, 
                       "analyses/simulation_study/synthetic_HCAP_list"))
 
-
