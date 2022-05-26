@@ -38,7 +38,7 @@ source(here("simulation_study", "functions",
 HRS_analytic %<>% mutate("Intercept" = 1) %>% 
   rename_at(vars(variable_labels$HRS), ~ variable_labels$data_label)
 
-#---- synthetic data ----
+#---- synthetic superpopulations ----
 set.seed(20220303)
 
 #About 2.2 hours for all superpops
@@ -75,7 +75,22 @@ for(dist_name in c("normal", "lognormal", "bathtub")){
 }
 end <- Sys.time() - start
 
-#---- create one set of synthetic HRS ----
+#---- synthetic HRS ----
+#---- **source functions ----
+source(here::here("functions", "read_results.R"))
+
+#---- **read in superpop data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+#---- **data paths ----
+superpop_data_paths <- 
+  list.files(path = paste0(path_to_box, 
+                           "analyses/simulation_study/superpopulations"), 
+             full.names = TRUE, pattern = "*.csv")
+
+superpop_data_list <- lapply(superpop_data_paths, read_results)
+
+#---- **create one set of synthetic HRS ----
 create_HRS_datasets <- function(superpop, n){
   sample_n(superpop, size = n) %>% 
     separate(dataset_name, sep = "_", into = c("dist", "size", "prior")) %>% 
@@ -86,21 +101,40 @@ create_HRS_datasets <- function(superpop, n){
 set.seed(20220507)
 
 for(n in c(500, 1000, 2000, 4000, 8000)){
-  if(!exists("synthetic_data_list")){
-    synthetic_data_list <- 
+  if(!exists("synthetic_HRS_list")){
+    synthetic_HRS_list <- 
       lapply(superpop_data_list, function(x) create_HRS_datasets(x, n))
   } else{
-    synthetic_data_list <- 
-      append(synthetic_data_list, lapply(superpop_data_list, function(x) 
+    synthetic_HRS_list <- 
+      append(synthetic_HRS_list, lapply(superpop_data_list, function(x) 
         create_HRS_datasets(x, n)))
   }
 }
 
-#---- create one set of synthetic HRS ----
-create_HRS_datasets <- function(superpop, n){
-  sample_n(superpop, size = n) %>% 
-    separate(dataset_name, sep = "_", into = c("dist", "size", "prior")) %>% 
-    mutate_at("size", as.numeric) %>% mutate(size = n) %>% 
-    unite("dataset_name", c("dist", "size", "prior"), sep = "_")
-}
+#---- **save data ----
+saveRDS(synthetic_HRS_list, 
+        file = paste0(path_to_box, 
+                      "analyses/simulation_study/synthetic_HRS_list"))
+
+#---- synthetic HCAP ----
+#---- **read in synthetic HRS data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+synthetic_HRS_list <- 
+  readRDS(paste0(path_to_box, "analyses/simulation_study/synthetic_HRS_list"))
+
+#---- **create one set of synthetic HCAP ----
+set.seed(20220507)
+
+synthetic_HCAP_list <- 
+  lapply(synthetic_HRS_list, 
+         function(x) 
+           x %>% group_by(married_partnered) %>% slice_sample(prop = 0.5) %>% 
+           mutate("(Intercept)" = 1) %>% ungroup())
+
+#---- **save data ----
+saveRDS(synthetic_HCAP_list, 
+        file = paste0(path_to_box, 
+                      "analyses/simulation_study/synthetic_HCAP_list"))
+
 
