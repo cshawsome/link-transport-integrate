@@ -87,7 +87,7 @@ indices <- which(dataset_names %in%
 set.seed(20220329)
 start <- Sys.time()
 
-lapply(synthetic_data_list[indices], 
+lapply(synthetic_HCAP_list[indices], 
        function(x)
          generate_synthetic(warm_up = 100, run_number = 1, 
                             starting_props = c(0.25, 0.25, 0.25, 0.25),
