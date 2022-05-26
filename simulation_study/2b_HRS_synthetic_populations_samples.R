@@ -74,3 +74,33 @@ for(dist_name in c("normal", "lognormal", "bathtub")){
                                          "simulation_study/superpopulations/"))
 }
 end <- Sys.time() - start
+
+#---- create one set of synthetic HRS ----
+create_HRS_datasets <- function(superpop, n){
+  sample_n(superpop, size = n) %>% 
+    separate(dataset_name, sep = "_", into = c("dist", "size", "prior")) %>% 
+    mutate_at("size", as.numeric) %>% mutate(size = n) %>% 
+    unite("dataset_name", c("dist", "size", "prior"), sep = "_")
+}
+
+set.seed(20220507)
+
+for(n in c(500, 1000, 2000, 4000, 8000)){
+  if(!exists("synthetic_data_list")){
+    synthetic_data_list <- 
+      lapply(superpop_data_list, function(x) create_HRS_datasets(x, n))
+  } else{
+    synthetic_data_list <- 
+      append(synthetic_data_list, lapply(superpop_data_list, function(x) 
+        create_HRS_datasets(x, n)))
+  }
+}
+
+#---- create one set of synthetic HRS ----
+create_HRS_datasets <- function(superpop, n){
+  sample_n(superpop, size = n) %>% 
+    separate(dataset_name, sep = "_", into = c("dist", "size", "prior")) %>% 
+    mutate_at("size", as.numeric) %>% mutate(size = n) %>% 
+    unite("dataset_name", c("dist", "size", "prior"), sep = "_")
+}
+
