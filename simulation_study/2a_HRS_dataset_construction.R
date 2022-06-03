@@ -49,16 +49,16 @@ rand_waves <- 13
 rand_variables <- 
   c("hhidpn",
     #Cognition (object naming (scissors and cactus), president naming, 
-    # subjective cognitive decline)
+    # vice-president naming, subjective cognitive decline)
     #Health and health behaviors (ever/never stroke, ever/never diabetes, 
     # ever/never CVD, ever/never hypertension, smokes now, 
     # drinking days per week, number of drinks per day)
     paste0("r", rand_waves, "cact"), paste0("r", rand_waves, "scis"), 
-    paste0("r", rand_waves, "pres"), paste0("r", rand_waves, "pstmem"),
-    paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "diabe"), 
-    paste0("r", rand_waves, "hearte"), paste0("r", rand_waves, "hibpe"), 
-    paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"), 
-    paste0("r", rand_waves, "drinkn"))
+    paste0("r", rand_waves, "pres"), paste0("r", rand_waves, "vp"), 
+    paste0("r", rand_waves, "pstmem"), paste0("r", rand_waves, "stroke"), 
+    paste0("r", rand_waves, "diabe"), paste0("r", rand_waves, "hearte"), 
+    paste0("r", rand_waves, "hibpe"), paste0("r", rand_waves, "smoken"), 
+    paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"))
 
 RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/", 
                         "randhrs1992_2018v1.dta"), 
