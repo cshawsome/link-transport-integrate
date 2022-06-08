@@ -75,7 +75,8 @@ A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 #DOF for inverse wishart
 nu_0_mat <- read_csv(paste0(path_to_box, "analyses/nu_0_matrix.csv")) 
 #scaling for inverse wishart as variance of Beta
-kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
+kappa_0_mat <- 
+  read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
 
 #---- create one set of synthetic HRS ----
 create_HRS_datasets <- function(superpop, n){
@@ -107,7 +108,7 @@ dataset_names <-
 set.seed(20220329)
 start <- Sys.time()
 
-lapply(synthetic_data_list[which(dataset_names == "lognormal_8000_ADAMS")], 
+lapply(synthetic_data_list[which(dataset_names == "normal_8000_ADAMS")], 
        function(x)
          generate_synthetic(warm_up = 100, run_number = 1, 
                             starting_props = c(0.25, 0.25, 0.25, 0.25),
@@ -134,4 +135,44 @@ lapply(synthetic_data_list[which(dataset_names == "lognormal_8000_ADAMS")],
                             data_only = FALSE))
 
 end <- Sys.time() - start
+
+#---- generate datasets in parallel ----
+indices <- 
+  which(dataset_names %in% 
+          paste0("lognormal_", c(2000), "_ADAMS"))
+
+#About 1.5 hours to generate data for all datasets
+set.seed(20220329)
+start <- Sys.time()
+plan(multisession, workers = (availableCores() - 2))
+
+future_lapply(synthetic_data_list[indices], 
+       function(x)
+         generate_synthetic(warm_up = 100, run_number = 1, 
+                            starting_props = c(0.25, 0.25, 0.25, 0.25),
+                            unimpaired_preds, other_preds, mci_preds, 
+                            categorical_vars = W, continuous_vars = Z, 
+                            id_var = "HHIDPN", variable_labels, 
+                            dataset_to_copy = x %>% 
+                              group_by(married_partnered) %>% 
+                              slice_sample(prop = 0.5) %>% 
+                              mutate("(Intercept)" = 1) %>% ungroup(), 
+                            cell_ID_key, color_palette, num_synthetic = 1000, 
+                            unimpaired_betas, unimpaired_cov, other_betas, 
+                            other_cov, mci_betas, mci_cov, alpha_0_dist, 
+                            prior_Sigma, prior_V_inv, prior_beta, 
+                            nu_0_mat, kappa_0_mat, contrasts_matrix = A,
+                            path_to_analyses_folder = 
+                              paste0(path_to_box, "analyses/simulation_study/", 
+                                     "HCAP_HRS_", 
+                                     unique(x[, "dataset_name"]), "/"), 
+                            path_to_figures_folder = 
+                              paste0(path_to_box,
+                                     "figures/simulation_study/HCAP_HRS_", 
+                                     unique(x[, "dataset_name"]), "/"), 
+                            data_only = FALSE), 
+       future.seed = TRUE)
+
+end <- Sys.time() - start
+plan(sequential)
 
