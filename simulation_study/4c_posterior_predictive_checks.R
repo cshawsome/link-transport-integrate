@@ -80,7 +80,7 @@ plan(multisession, workers = (availableCores() - 2))
 
 #---- **specify indices ----
 indices <- which(dataset_names %in% 
-                   paste0("normal_", c(500, 1000), "_ADAMS"))
+                   paste0("normal_", c(500, 1000, 2000), "_ADAMS"))
 
 future_lapply(synthetic_data_list[indices], function(x)
   posterior_predictive_checks(dataset_to_copy = x %>% 
