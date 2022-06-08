@@ -161,3 +161,25 @@ saveRDS(synthetic_HCAP_list,
         file = paste0(path_to_box, 
                       "analyses/simulation_study/synthetic_HCAP_list"))
 
+#---- summary stats ----
+#---- **read in synthetic HCAP data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+synthetic_HCAP_list <- 
+  readRDS(paste0(path_to_box, "analyses/simulation_study/synthetic_HCAP_list"))
+
+#---- **filter to normal list ----
+dataset_names <- 
+  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
+
+indices <- which(dataset_names %in% 
+                   paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
+
+synthetic_HCAP_list <- synthetic_HCAP_list[indices]
+
+#---- **summarize race/ethnicity x dementia ---- 
+test <- synthetic_HCAP_list[[5]]
+
+table(test$White, test$black, test$hispanic, test$Dementia) %>% 
+  as.data.frame %>% filter(!Freq == 0) %>% 
+  set_colnames(c("White", "Black", "Hispanic", "Dementia", "Freq"))

@@ -83,7 +83,7 @@ kappa_0_mat <-
 #About 1.5 hours to generate data for all datasets in serial
 
 #---- **specify indices ----
-indices <- which(dataset_names %in% paste0("normal_", c(4000, 8000), "_ADAMS"))
+indices <- which(dataset_names %in% paste0("normal_", c(500), "_ADAMS"))
 
 set.seed(20220329)
 start <- Sys.time()
@@ -91,7 +91,7 @@ plan(multisession, workers = (availableCores() - 2))
 
 future_lapply(synthetic_HCAP_list[indices], 
               function(x)
-                generate_synthetic(warm_up = 500, run_number = 1, 
+                generate_synthetic(warm_up = 100, run_number = 1, 
                                    starting_props = c(0.25, 0.25, 0.25, 0.25),
                                    unimpaired_preds, other_preds, mci_preds, 
                                    categorical_vars = W, continuous_vars = Z, 

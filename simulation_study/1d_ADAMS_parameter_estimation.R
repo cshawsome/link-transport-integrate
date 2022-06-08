@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse")
+p_load("tidyverse", "magrittr")
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -36,6 +36,27 @@ ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>%
 # #Sanity check
 # nrow(ADAMS_imputed_stacked) == 25*nrow(ADAMS_imputed_clean[[1]])
 # table(ADAMS_imputed_stacked$cell_ID, useNA = "ifany")
+
+#---- **summary stats ----
+#---- ****means/medians continous vars ----
+test_subset <- ADAMS_imputed_clean[[1]]
+continuous_vars <- 
+  colnames(test_subset)[str_detect(colnames(test_subset), "_Z")] 
+
+subset <- test_subset %>% filter(Dementia == 1)
+
+cbind(summarize_at(subset, continuous_vars, .funs = "mean") %>% t() %>% 
+  set_colnames("mean"), 
+  summarize_at(subset, continuous_vars, .funs = "median") %>% t() %>% 
+    set_colnames("median"))
+
+#---- ****race x dem counts ----
+test_subset <- ADAMS_imputed_clean[[1]]
+
+table(test_subset$White, test_subset$Black, test_subset$Hispanic, 
+      test_subset$Dementia) %>% 
+  as.data.frame %>% filter(!Freq == 0) %>% 
+  set_colnames(c("White", "Black", "Hispanic", "Dementia", "Freq"))
 
 #---- parameter estimation ----
 continuous_vars <- selected_vars[str_detect(selected_vars, "_Z")] 

@@ -89,10 +89,9 @@ generate_synthetic <-
     max_index <- length(priors_beta)
     
     #---- nu_0 and kappa_0 hyperparameters ----
-    nu_0 <- 20
-      # nu_0_mat[
-      #   which(nu_0_mat$dataset_name == 
-      #           unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
+    nu_0_mat[
+      which(nu_0_mat$dataset_name ==
+              unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
     
     kappa_0 <- 
       kappa_0_mat[
@@ -295,7 +294,7 @@ generate_synthetic <-
                             seq(1, nrow(cross_class_label)), ":", b)] <- 
             t(A %*% beta_Sigma_Y)
           
-           #---- ****draw data ----
+          #---- ****draw data ----
           #reformat contingency table
           contingency_table %<>% set_colnames("Count") %>% 
             cbind(contrasts_matrix[, -1])
