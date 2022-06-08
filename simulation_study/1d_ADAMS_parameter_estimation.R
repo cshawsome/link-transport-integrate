@@ -49,7 +49,8 @@ for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
   
   #---- ****predictors and outcomes ----
   X <- as.matrix(filtered_data[, c("black", "hispanic", "stroke")] %>% 
-                   mutate("Intercept" = 1)) 
+                   mutate("Intercept" = 1) %>% 
+                   dplyr::select("Intercept", everything())) 
   Y <- as.matrix(filtered_data[, continuous_vars])
   
   #---- ****row covariance ----
