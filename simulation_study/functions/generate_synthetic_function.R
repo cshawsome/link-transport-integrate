@@ -89,7 +89,7 @@ generate_synthetic <-
     max_index <- length(priors_beta)
     
     #---- nu_0 and kappa_0 hyperparameters ----
-    nu_0_mat[
+    nu_0 <- nu_0_mat[
       which(nu_0_mat$dataset_name ==
               unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
     
@@ -270,7 +270,8 @@ generate_synthetic <-
           
           while(is.character(tryCatch(sig_Y <- 
                                       MCMCpack::riwish(
-                                        v = (nu_0 + nrow(subset)), 
+                                        v = (as.numeric(nu_0[, class]) + 
+                                             nrow(subset)), 
                                         S = sigma_mat), 
                                       error = function(e) "error")) & 
                 redraws <= 100){
@@ -535,7 +536,7 @@ generate_synthetic <-
 # continuous_vars = Z
 # id_var = "HHIDPN"
 # variable_labels
-# dataset_to_copy = synthetic_HCAP_list[[1]] 
+# dataset_to_copy = synthetic_HCAP_list[[1]]
 # cell_ID_key
 # color_palette
 # num_synthetic = 1000
@@ -561,4 +562,4 @@ generate_synthetic <-
 #          "figures/simulation_study/HCAP_HRS_",
 #          unique(synthetic_HCAP_list[[1]][, "dataset_name"]),
 #          "/")
-# data_only = TRUE
+# data_only = FALSE
