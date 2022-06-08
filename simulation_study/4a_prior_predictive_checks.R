@@ -146,8 +146,9 @@ start <- Sys.time()
 plan(multisession, workers = (availableCores() - 2))
 
 #---- **specify indices ----
-indices <- which(dataset_names %in% 
-                   paste0("normal_", c(2000, 4000, 8000), "_ADAMS"))
+indices <- 
+  which(dataset_names %in% 
+          paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
 
 #---- **run parallel checks ----
 future_lapply(synthetic_data_list[indices], function(x)

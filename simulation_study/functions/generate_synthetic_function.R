@@ -89,10 +89,10 @@ generate_synthetic <-
     max_index <- length(priors_beta)
     
     #---- nu_0 and kappa_0 hyperparameters ----
-    nu_0 <- 
-      nu_0_mat[
-        which(nu_0_mat$dataset_name == 
-                unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
+    nu_0 <- 20
+      # nu_0_mat[
+      #   which(nu_0_mat$dataset_name == 
+      #           unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
     
     kappa_0 <- 
       kappa_0_mat[
@@ -162,29 +162,29 @@ generate_synthetic <-
         latent_class_chain[, b] <- summary 
       }
       
-      
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
         subset <- dataset_to_copy %>% filter(Group == class) 
         if(nrow(subset) == 0){
           next
         } else{
-          random_draw <- sample(seq(1, max_index), size = 1)
-          posterior_first_count <- 
-            alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
           
-          posterior_second_count <- subset[, categorical_vars] %>% 
+          observed_count <- subset[, categorical_vars] %>% 
             unite("cell_ID", sep = "") %>% table() 
           
-          if(length(posterior_second_count) < nrow(cell_ID_key)){
+          if(length(observed_count) < nrow(cell_ID_key)){
             missing <- 
-              which(!cell_ID_key$cell_ID %in% names(posterior_second_count))
+              which(!cell_ID_key$cell_ID %in% names(observed_count))
             new_counts <- vector(length = nrow(cell_ID_key))
             new_counts[missing] <- 0
-            new_counts[-missing] <- posterior_second_count
-            posterior_second_count <- new_counts
+            new_counts[-missing] <- observed_count
+            observed_count <- new_counts
           }
           
-          posterior_count <- posterior_first_count + posterior_second_count
+          random_draw <- sample(seq(1, max_index), size = 1)
+          prior_count <- 
+            alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
+          
+          posterior_count <- prior_count + observed_count
           
           #---- **p(contingency table cell) ----
           pi_chain[, paste0(class, ":", b)] <- 
@@ -247,28 +247,31 @@ generate_synthetic <-
                 class]][, seq(1, length(continuous_vars))])
           
           M <- solve(V_inv + unlist(kappa_0[, class])*V_0_inv)
-          m <-  t(A) %*% t(U) %*% continuous_covariates - 
+          m <-  t(A) %*% t(U) %*% continuous_covariates + 
             unlist(kappa_0[, class])*V_0_inv %*% beta_0
           
           Mm <- M %*% m
           
           #---- ****draw Sigma | Y ----
           ZtZ <- t(continuous_covariates) %*% continuous_covariates
-          third_term <- unlist(kappa_0[, class])*t(beta_0) %*% V_0_inv %*% beta_0
+          third_term <- 
+            unlist(kappa_0[, class])*t(beta_0) %*% V_0_inv %*% beta_0
+          fourth_term <- t(m) %*% M %*% m
           
-          random_draw <- sample(seq(1, max_index), size = 1)
-          Sigma_prior <- 
-            as.matrix(
-              prior_Sigma[[random_draw]][[
-                class]][, seq(1, length(continuous_vars))])
+          # random_draw <- sample(seq(1, max_index), size = 1)
+          # Sigma_prior <- 
+          #   as.matrix(
+          #     prior_Sigma[[random_draw]][[
+          #       class]][, seq(1, length(continuous_vars))])
           
-          sigma_mat <- Sigma_prior + ZtZ + third_term
+          Sigma_prior <- diag(1, nrow = ncol(continuous_covariates))
+          
+          sigma_mat <- Sigma_prior + ZtZ + third_term - fourth_term
           redraws = 0
           
           while(is.character(tryCatch(sig_Y <- 
                                       MCMCpack::riwish(
-                                        v = (as.numeric(nu_0[, class]) + 
-                                             nrow(subset)), 
+                                        v = (nu_0 + nrow(subset)), 
                                         S = sigma_mat), 
                                       error = function(e) "error")) & 
                 redraws <= 100){
@@ -292,7 +295,7 @@ generate_synthetic <-
                             seq(1, nrow(cross_class_label)), ":", b)] <- 
             t(A %*% beta_Sigma_Y)
           
-          #---- ****draw data ----
+           #---- ****draw data ----
           #reformat contingency table
           contingency_table %<>% set_colnames("Count") %>% 
             cbind(contrasts_matrix[, -1])
@@ -437,7 +440,8 @@ generate_synthetic <-
       
       ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
              path = paste0(path_to_figures_folder, "diagnostics/run_", 
-                           run_number), device = "jpeg")
+                           run_number), height = 7, width = 10, units = "in", 
+             device = "jpeg")
       
       #---- ****Sigma chain ----
       Sigma_chain_data <- Sigma_chain %>% as.data.frame() %>% 
@@ -532,10 +536,7 @@ generate_synthetic <-
 # continuous_vars = Z
 # id_var = "HHIDPN"
 # variable_labels
-# dataset_to_copy = synthetic_data_list[[5]] %>%
-#   group_by(married_partnered) %>%
-#   slice_sample(prop = 0.50) %>%
-#   mutate("(Intercept)" = 1) %>% ungroup()
+# dataset_to_copy = synthetic_HCAP_list[[1]] 
 # cell_ID_key
 # color_palette
 # num_synthetic = 1000
@@ -554,11 +555,11 @@ generate_synthetic <-
 # contrasts_matrix = A
 # path_to_analyses_folder =
 #   paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_",
-#          unique(synthetic_data_list[[2]][, "dataset_name"]),
+#          unique(synthetic_HCAP_list[[1]][, "dataset_name"]),
 #          "/")
 # path_to_figures_folder =
 #   paste0(path_to_box,
 #          "figures/simulation_study/HCAP_HRS_",
-#          unique(synthetic_data_list[[2]][, "dataset_name"]),
+#          unique(synthetic_HCAP_list[[1]][, "dataset_name"]),
 #          "/")
 # data_only = TRUE
