@@ -1,10 +1,11 @@
 prior_predictive_checks <- 
   function(unimpaired_preds, other_preds, mci_preds, categorical_vars, 
-           continuous_vars, variable_labels, color_palette, dataset_to_copy, 
-           num_synthetic, unimpaired_betas, unimpaired_cov, other_betas, 
-           other_cov, mci_betas, mci_cov, alpha_0_dist, prior_Sigma, 
-           prior_V_inv, prior_beta, nu_0_mat, kappa_0_mat, contrasts_matrix, 
-           path_to_folder){
+           continuous_vars, continuous_check_test = FALSE,
+           continuous_check = c("Unimpaired", "MCI", "Dementia", "Other"), 
+           variable_labels, color_palette, dataset_to_copy, num_synthetic, 
+           unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
+           mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0_mat, 
+           kappa_0_mat, contrasts_matrix, path_to_folder){
     
     #---- create folders for results ----
     if(!dir.exists(paste0(path_to_folder, "impairment_classes/"))){
@@ -19,6 +20,20 @@ prior_predictive_checks <-
                           tolower(class)), recursive = TRUE)
       }
       
+      if(!dir.exists(paste0(path_to_folder, "continuous_vars/error_set/", 
+                            tolower(class)))){
+        dir.create(paste0(path_to_folder, "continuous_vars/error_set/", 
+                          tolower(class)), recursive = TRUE)
+      }
+      
+      if(continuous_check_test & 
+         !dir.exists(paste0(path_to_folder, "continuous_vars/test_set/", 
+                            tolower(class)))){
+        
+        dir.create(paste0(path_to_folder, "continuous_vars/test_set/", 
+                          tolower(class)), recursive = TRUE)
+        
+      }
     }
     
     #---- select variables ----
@@ -266,7 +281,7 @@ prior_predictive_checks <-
     }
     
     #---- **class-specific continuous ----
-    for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+    for(class in continuous_check){
       true_data <- dataset_to_copy %>% 
         dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
         filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
@@ -286,7 +301,7 @@ prior_predictive_checks <-
       for(var in continuous_vars){
         data <- continuous_list[, c(var, "run", "Type", "Color")] 
         
-        if(is.na(sum(data[, var]))){
+        if(is.na(sum(data[, var])) | continuous_check_test){
           continuous_plot <- 
             ggplot(data = data, aes(color = Type, fill = Type)) + 
             geom_density(aes(x = data[, 1]), alpha = 0.5) + 
@@ -296,9 +311,15 @@ prior_predictive_checks <-
             scale_color_manual(values = rev(unique(data$Color))) + 
             scale_fill_manual(values = rev(unique(data$Color)))
           
-          ggsave(filename = paste0(path_to_folder, "continuous_vars/", 
-                                   tolower(class), "/", var, ".jpeg"), 
-                 height = 3, width = 5, units = "in")
+          if(continuous_check_test){
+            ggsave(filename = paste0(path_to_folder, "continuous_vars/test_set/", 
+                                     tolower(class), "/", var, ".jpeg"), 
+                   height = 3, width = 5, units = "in")
+          } else{
+            ggsave(filename = paste0(path_to_folder, "continuous_vars/error_set/", 
+                                     tolower(class), "/", var, ".jpeg"), 
+                   height = 3, width = 5, units = "in")
+          }
           
         } else{
           continuous_plot <- 
@@ -333,8 +354,7 @@ prior_predictive_checks <-
 # continuous_vars = Z
 # variable_labels = variable_labels
 # color_palette = color_palette
-# dataset_to_copy = synthetic_data_list[[1]] %>% group_by(married_partnered) %>%
-#   slice_sample(prop = 0.5) %>% mutate("(Intercept)" = 1) %>% ungroup()
+# dataset_to_copy = synthetic_HCAP_list[[7]]
 # num_synthetic = 1000
 # unimpaired_betas = unimpaired_betas
 # unimpaired_cov = unimpaired_cov
