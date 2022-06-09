@@ -93,7 +93,7 @@ lapply(synthetic_HCAP_list[which(dataset_names == "normal_500_ADAMS")],
        function(x)
          prior_predictive_checks(unimpaired_preds, other_preds, mci_preds,
                                  categorical_vars = W, continuous_vars = Z,
-                                 continuous_check_test = TRUE,
+                                 continuous_check_test = FALSE,
                                  continuous_check = 
                                    c("Unimpaired", "MCI", "Dementia", "Other"),
                                  variable_labels, color_palette,
