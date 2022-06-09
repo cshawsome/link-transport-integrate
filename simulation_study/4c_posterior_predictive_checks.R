@@ -52,7 +52,15 @@ plan(multisession, workers = (availableCores() - 2))
 
 #---- **specify indices ----
 indices <- which(dataset_names %in% 
+<<<<<<< HEAD
                    paste0("normal_", c(500), "_ADAMS"))
+=======
+<<<<<<< HEAD
+                   paste0("normal_", c(500, 1000, 2000), "_ADAMS"))
+=======
+                   paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
+>>>>>>> a0c210dc9d68913f8ca67e362176ed52136290f6
+>>>>>>> d171c82974dc827ff058cf306afd3628f60f8aad
 
 future_lapply(synthetic_HCAP_list[indices], function(x)
   posterior_predictive_checks(dataset_to_copy = x, categorical_covariates = W, 

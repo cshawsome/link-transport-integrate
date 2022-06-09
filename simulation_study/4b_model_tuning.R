@@ -76,9 +76,10 @@ A <- read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>%
 #DOF for inverse wishart
 nu_0_mat <- read_csv(paste0(path_to_box, "analyses/nu_0_matrix.csv")) 
 #scaling for inverse wishart as variance of Beta
-kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
+kappa_0_mat <- 
+  read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
 
-#---- generate sets for tuning ----
+#---- generate datasets in parallel ----
 #About 1.5 hours to generate data for all datasets in serial
 
 #---- **specify indices ----
@@ -114,4 +115,3 @@ future_lapply(synthetic_HCAP_list[indices],
 
 end <- Sys.time() - start
 plan(sequential)
-
