@@ -9,7 +9,11 @@ simulation_function <-
     
     #---- pre-allocated results ----
     result_names <- 
-      c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other", 
+      c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other",
+        "true_Unimpaired_white", "true_MCI_white", "true_Dementia_white", 
+        "true_Other_white", "true_Unimpaired_black", "true_MCI_black", 
+        "true_Dementia_black", "true_Other_black", "true_Unimpaired_hispanic", 
+        "true_MCI_hispanic", "true_Dementia_hispanic", "true_Other_hispanic",
         "mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other",
         "bias_Unimpaired", "bias_MCI", "bias_Dementia", "bias_Other",
         "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other",
@@ -58,6 +62,16 @@ simulation_function <-
     results[, 
             c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other")] <- 
       colSums(dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])
+    
+    #---- ****stratified ----
+    for(race in c("White", "black", "hispanic")){
+      results[, paste0(c("true_Unimpaired", "true_MCI", "true_Dementia", 
+                         "true_Other"), "_", tolower(race))] <- 
+        colSums(dataset_to_copy[which(
+          dataset_to_copy[, race] == 1), 
+                                c("Unimpaired", "MCI", "Dementia", "Other")])
+    }
+    
     
     #---- generate synthetic data ----
     synthetic_HCAP <- 
