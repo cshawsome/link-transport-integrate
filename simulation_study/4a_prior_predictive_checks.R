@@ -93,7 +93,7 @@ lapply(synthetic_HCAP_list[which(dataset_names == "normal_8000_ADAMS")],
        function(x)
          prior_predictive_checks(unimpaired_preds, other_preds, mci_preds,
                                  categorical_vars = W, continuous_vars = Z,
-                                 continuous_check_test = TRUE,
+                                 continuous_check_test = FALSE,
                                  continuous_check = 
                                    c("Unimpaired", "MCI", "Dementia", "Other"),
                                  variable_labels, color_palette,
@@ -110,35 +110,37 @@ lapply(synthetic_HCAP_list[which(dataset_names == "normal_8000_ADAMS")],
                                           "/prior_predictive_checks/")))
 end <- Sys.time() - start
 
-# #---- run checks in parallel ----
-# #1.7 days for all checks to run in serial
-# #1.3 hours for 5 runs in parallel
-# set.seed(20220329)
-# start <- Sys.time()
-# plan(multisession, workers = (availableCores() - 2))
-# 
-# #---- **specify indices ----
-# indices <- 
-#   which(dataset_names %in% 
-#           paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
-# 
-# #---- **run parallel checks ----
-# future_lapply(synthetic_HCAP_list[indices], function(x)
-#   prior_predictive_checks(unimpaired_preds, other_preds, mci_preds, 
-#                           categorical_vars = W, continuous_vars = Z, 
-#                           variable_labels, color_palette, 
-#                           dataset_to_copy = x , 
-#                           num_synthetic = 1000, unimpaired_betas, 
-#                           unimpaired_cov, other_betas, other_cov, 
-#                           mci_betas, mci_cov, alpha_0_dist, prior_Sigma, 
-#                           prior_V_inv, prior_beta, 
-#                           nu_0_mat, kappa_0_mat, 
-#                           contrasts_matrix = A, 
-#                           path_to_folder = 
-#                             paste0(path_to_box,
-#                                    "figures/simulation_study/HCAP_HRS_", 
-#                                    unique(x[, "dataset_name"]), 
-#                                    "/prior_predictive_checks/")), 
-#   future.seed = TRUE)
-# end <- Sys.time() - start
-# plan(sequential)
+#---- run checks in parallel ----
+#1.7 days for all checks to run in serial
+#1.3 hours for 5 runs in parallel
+set.seed(20220329)
+start <- Sys.time()
+plan(multisession, workers = (availableCores() - 2))
+
+#---- **specify indices ----
+indices <-
+  which(dataset_names %in%
+          paste0("normal_", c(1000, 2000, 4000), "_ADAMS"))
+
+#---- **run parallel checks ----
+future_lapply(synthetic_HCAP_list[indices], function(x)
+  prior_predictive_checks(unimpaired_preds, other_preds, mci_preds,
+                          categorical_vars = W, continuous_vars = Z,
+                          continuous_check_test = FALSE,
+                          continuous_check = 
+                            c("Unimpaired", "MCI", "Dementia", "Other"),
+                          variable_labels, color_palette,
+                          dataset_to_copy = x,
+                          num_synthetic = 1000, unimpaired_betas,
+                          unimpaired_cov, other_betas, other_cov,
+                          mci_betas, mci_cov, alpha_0_dist, prior_Sigma,
+                          prior_V_inv, prior_beta, nu_0_mat, kappa_0_mat,
+                          contrasts_matrix = A,
+                          path_to_folder =
+                            paste0(path_to_box,
+                                   "figures/simulation_study/HCAP_HRS_",
+                                   unique(x[, "dataset_name"]),
+                                   "/prior_predictive_checks/")),
+  future.seed = TRUE)
+end <- Sys.time() - start
+plan(sequential)
