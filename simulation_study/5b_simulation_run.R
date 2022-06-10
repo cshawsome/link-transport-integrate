@@ -110,7 +110,7 @@ set.seed(seed)
 
 #---- run sim ----
 replicate(num_replicates,
-          simulation_function(warm_up = 500, starting_props = rep(0.25, 4), 
+          simulation_function(warm_up = 100, starting_props = rep(0.25, 4), 
                               unimpaired_preds, other_preds, mci_preds, 
                               categorical_vars = W, continuous_vars = Z, 
                               id_var = "HHIDPN", variable_labels, 

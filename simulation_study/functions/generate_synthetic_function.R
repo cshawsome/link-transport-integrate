@@ -337,6 +337,10 @@ generate_synthetic <-
         }
       }
       
+      #---- ****correct "White" column ----
+      dataset_to_copy %<>% 
+        mutate("White" = if_else(black == 0 & hispanic == 0, 1, 0))
+      
       #---- ****save synthetic sample ----
       if(b > warm_up){
         if(!exists("dataset_list")){
