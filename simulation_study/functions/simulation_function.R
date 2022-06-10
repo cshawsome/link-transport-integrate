@@ -173,10 +173,10 @@ simulation_function <-
         strat_mean_counts
       
       #---- **CI ----
-      results[, paste0("LCI_", colnames(counts))] <- 
-        apply(counts, 2, function(x) quantile(x, 0.25))
+      results[, paste0("LCI_", colnames(strat_counts), "_", tolower(race))] <- 
+        apply(strat_counts, 2, function(x) quantile(x, 0.25))
       
-      results[, paste0("UCI_", colnames(counts))] <- 
+      results[, paste0("UCI_", colnames(strat_counts), "_", tolower(race))] <- 
         apply(counts, 2, function(x) quantile(x, 0.975))
       
       #---- **bias ----
