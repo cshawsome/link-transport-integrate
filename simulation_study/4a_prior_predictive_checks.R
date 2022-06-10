@@ -89,7 +89,7 @@ kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
 set.seed(20220329)
 start <- Sys.time()
 
-lapply(synthetic_HCAP_list[which(dataset_names == "normal_8000_ADAMS")],
+lapply(synthetic_HCAP_list[which(dataset_names == "normal_4000_ADAMS")],
        function(x)
          prior_predictive_checks(unimpaired_preds, other_preds, mci_preds,
                                  categorical_vars = W, continuous_vars = Z,
