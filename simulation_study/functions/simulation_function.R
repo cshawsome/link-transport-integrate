@@ -137,7 +137,7 @@ simulation_function <-
     
     #---- **mean counts ----
     mean_counts <- round(colMeans(counts))
-    results[, paste0("mean_", colnames(counts))] <- mean_counts
+    results[, paste0("mean_", names(mean_counts))] <- mean_counts
     
     #---- **CI ----
     results[, paste0("LCI_", colnames(counts))] <- 
@@ -169,8 +169,27 @@ simulation_function <-
       
       #---- **mean counts ----
       strat_mean_counts <- round(colMeans(strat_counts))
-      results[, paste0("mean_", colnames(counts), "_", race)] <- 
+      results[, paste0("mean_", names(strat_mean_counts), "_", tolower(race))] <- 
         strat_mean_counts
+      
+      #---- **CI ----
+      results[, paste0("LCI_", colnames(counts))] <- 
+        apply(counts, 2, function(x) quantile(x, 0.25))
+      
+      results[, paste0("UCI_", colnames(counts))] <- 
+        apply(counts, 2, function(x) quantile(x, 0.975))
+      
+      #---- **bias ----
+      results[, paste0("bias_", colnames(counts))] <- 
+        mean_counts - results[, paste0("true_", colnames(counts))]
+      
+      #---- **coverage ----
+      for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+        results[, paste0(class, "_coverage")] <- 
+          (results[, paste0("true_", class)] >= results[, paste0("LCI_", class)])*
+          (results[, paste0("true_", class)] <= results[, paste0("UCI_", class)])
+      }
+      
     }
     
     
