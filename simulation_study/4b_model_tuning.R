@@ -83,7 +83,8 @@ kappa_0_mat <-
 #About 1.5 hours to generate data for all datasets in serial
 
 #---- **specify indices ----
-indices <- which(dataset_names %in% paste0("normal_", c(500), "_ADAMS"))
+indices <- 
+  which(dataset_names %in% paste0("normal_", c(1000, 2000, 4000, 8000), "_ADAMS"))
 
 set.seed(20220329)
 start <- Sys.time()
