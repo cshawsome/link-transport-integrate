@@ -10,16 +10,49 @@ simulation_function <-
     #---- pre-allocated results ----
     result_names <- 
       c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other",
-        "true_Unimpaired_white", "true_MCI_white", "true_Dementia_white", 
-        "true_Other_white", "true_Unimpaired_black", "true_MCI_black", 
-        "true_Dementia_black", "true_Other_black", "true_Unimpaired_hispanic", 
-        "true_MCI_hispanic", "true_Dementia_hispanic", "true_Other_hispanic",
+        paste0(c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other"), 
+               "_white"),
+        paste0(c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other"), 
+               "_black"),
+        paste0(c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other"), 
+               "_hispanic"),
         "mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other",
+        paste0(c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other"), 
+               "_white"), 
+        paste0(c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other"), 
+               "_black"), 
+        paste0(c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other"), 
+               "_hispanic"),
         "bias_Unimpaired", "bias_MCI", "bias_Dementia", "bias_Other",
+        paste0(c("bias_Unimpaired", "bias_MCI", "bias_Dementia", "bias_Other"), 
+               "_white"), 
+        paste0(c("bias_Unimpaired", "bias_MCI", "bias_Dementia", "bias_Other"), 
+               "_black"),
+        paste0(c("bias_Unimpaired", "bias_MCI", "bias_Dementia", "bias_Other"), 
+               "_hispanic"), 
         "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other",
+        paste0(c("LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other"), 
+               "_white"),
+        paste0(c("LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other"), 
+               "_black"),
+        paste0(c("LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other"), 
+               "_hispanic"),
         "UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other",
+        paste0(c("UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other"), 
+               "_white"),
+        paste0(c("UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other"), 
+               "_black"),
+        paste0(c("UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other"), 
+               "_hispanic"),
         "Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
-        "Other_coverage", "black_beta", "black_se", "black_LCI", "black_UCI",
+        "Other_coverage", 
+        paste0(c("Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
+               "Other_coverage"), "_white"),
+        paste0(c("Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
+                 "Other_coverage"), "_black"),
+        paste0(c("Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
+                 "Other_coverage"), "_hispanic"),
+        "black_beta", "black_se", "black_LCI", "black_UCI",
         "hispanic_beta", "hispanic_se", "hispanic_LCI", "hispanic_UCI",
         "black_coverage", "hispanic_coverage", "time", "seed", "dataset_name")
     
@@ -69,9 +102,8 @@ simulation_function <-
                          "true_Other"), "_", tolower(race))] <- 
         colSums(dataset_to_copy[which(
           dataset_to_copy[, race] == 1), 
-                                c("Unimpaired", "MCI", "Dementia", "Other")])
+          c("Unimpaired", "MCI", "Dementia", "Other")])
     }
-    
     
     #---- generate synthetic data ----
     synthetic_HCAP <- 
@@ -86,9 +118,21 @@ simulation_function <-
                          path_to_analyses_folder = NA, 
                          path_to_figures_folder = NA, data_only = TRUE)
     
+    #---- function to clean missing counts ----
+    all_classes <- c("Unimpaired", "MCI", "Dementia", "Other")
+    
+    clean_counts <- function(counts, all_classes){
+      missing_class <- setdiff(all_classes, names(counts))
+      
+      if(length(missing_class) > 0){counts[missing_class] <- 0}
+      
+      return(counts[all_classes])
+    } 
+    
     #---- impairment class counts ----
     counts <- 
-      lapply(synthetic_HCAP, function(x) table(x[, "Group"])) %>% 
+      lapply(synthetic_HCAP, function(x) table(x[, "Group"])) %>%
+      lapply(., function(x) clean_counts(x, all_classes)) %>% 
       do.call(rbind, .)
     
     #---- **mean counts ----
@@ -112,6 +156,24 @@ simulation_function <-
         (results[, paste0("true_", class)] >= results[, paste0("LCI_", class)])*
         (results[, paste0("true_", class)] <= results[, paste0("UCI_", class)])
     }
+    
+    #---- stratified class counts ----
+    for(race in c("White", "black", "hispanic")){
+      strat_datasets <- 
+        lapply(synthetic_HCAP, function(x) x %>% filter(!!as.symbol(race) == 1))
+      
+      strat_counts <- 
+        lapply(strat_datasets, function(x) table(x[, "Group"])) %>% 
+        lapply(., function(x) clean_counts(x, all_classes)) %>% 
+        do.call(rbind, .)
+      
+      #---- **mean counts ----
+      strat_mean_counts <- round(colMeans(strat_counts))
+      results[, paste0("mean_", colnames(counts), "_", race)] <- 
+        strat_mean_counts
+    }
+    
+    
     
     #---- models ----
     #---- **add weights ----
