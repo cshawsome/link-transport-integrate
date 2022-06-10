@@ -180,19 +180,19 @@ simulation_function <-
         apply(counts, 2, function(x) quantile(x, 0.975))
       
       #---- **bias ----
-      results[, paste0("bias_", colnames(counts))] <- 
-        mean_counts - results[, paste0("true_", colnames(counts))]
+      results[, paste0("bias_", colnames(strat_counts), "_", tolower(race))] <- 
+        strat_mean_counts - 
+        results[, paste0("true_", colnames(strat_counts), "_", tolower(race))]
       
       #---- **coverage ----
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-        results[, paste0(class, "_coverage")] <- 
-          (results[, paste0("true_", class)] >= results[, paste0("LCI_", class)])*
-          (results[, paste0("true_", class)] <= results[, paste0("UCI_", class)])
+        results[, paste0(class, "_coverage_", tolower(race))] <- 
+          (results[, paste0("true_", class, "_", tolower(race))] >= 
+             results[, paste0("LCI_", class, "_", tolower(race))])*
+          (results[, paste0("true_", class, "_", tolower(race))] <= 
+             results[, paste0("UCI_", class, "_", tolower(race))])
       }
-      
     }
-    
-    
     
     #---- models ----
     #---- **add weights ----
