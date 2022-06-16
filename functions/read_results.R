@@ -16,7 +16,7 @@ read_results <- function(path, skip = 0){
       mutate("dataset_name" = dataset_name) %>% 
       separate(dataset_name, 
                into = c("Distribution", "sample_size", "prior_props"), 
-               sep = "_") %>% 
+               sep = "_", remove = FALSE) %>% 
       mutate_at("Distribution", str_to_title) %>% 
       mutate("color" = case_when(Distribution == "Normal" ~ "#135467", 
                                  Distribution == "Lognormal" ~ "#f0824f", 
