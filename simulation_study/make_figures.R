@@ -193,7 +193,7 @@ names(group_colors) <- color_palette$Group
 
 #---- **check number of runs ----
 table(results$dataset_name, useNA = "ifany")
-                   
+
 #---- **plot data ----
 plot_data <- results %>% 
   group_by(Distribution, sample_size, prior_props) %>% 
@@ -229,10 +229,21 @@ results_paths <-
 results <- do.call(rbind, lapply(results_paths, read_results))
 
 #---- ****% bias ----
+#---- ******overall ----
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
   results %<>% 
     mutate(!!paste0("percent_increase_", class) := 
              !!sym(paste0("bias_", class))/!!sym(paste0("true_", class))*100)
+}
+
+#---- ******by race ----
+for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+  for(race in c("white", "black", "hispanic")){
+    results %<>% 
+      mutate(!!paste0("percent_increase_", class, "_", race) := 
+               !!sym(paste0("bias_", class, "_", race))/
+               !!sym(paste0("true_", class, "_", race))*100)
+  }
 }
 
 #---- ****% bias proportion ----
@@ -243,6 +254,7 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
              !!sym(paste0("true_", class))/(as.numeric(sample_size)*0.5))
 }
 
+#---- ******overall ----
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
   results %<>% 
     mutate(!!paste0(class, "_prop") := 
@@ -263,7 +275,36 @@ color_palette <- read_csv(here("color_palette.csv"))
 group_colors <- color_palette$Color
 names(group_colors) <- color_palette$Group
 
-#---- **plot data ----
+#---- **plot data: counts ----
+plot_data <- results %>% 
+  dplyr::select("sample_size", "Distribution", 
+                paste0("percent_increase_", 
+                       c("Unimpaired", "MCI", "Dementia", "Other"))) %>%
+  mutate_at("sample_size", as.numeric) %>% 
+  mutate("sample_size" = 0.5*sample_size) %>% 
+  mutate_at("sample_size", as.factor) %>%
+  pivot_longer(paste0("percent_increase_", 
+                      c("Unimpaired", "MCI", "Dementia", "Other")),
+               names_to = c("text", "class"), 
+               names_sep = "_increase_") %>% 
+  mutate_at("class", function(x) str_remove(x, pattern = "_prop")) %>%
+  mutate_at("class", function(x) 
+    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other")))
+
+#---- **plot: count ----
+ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) + 
+  geom_boxplot() +
+  scale_color_manual(values = group_colors) + 
+  geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
+  ylab("Percent Bias") + facet_grid(cols = vars(Distribution)) + 
+  guides(color = guide_legend(title = "Group")) + 
+  scale_x_discrete(name = "Sample Size", 
+                   breaks = unique(plot_data$sample_size))
+
+ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+                         "impairement_class_percent_bias_counts.jpeg"))
+
+#---- **plot data: prop ----
 plot_data <- results %>% 
   dplyr::select("sample_size", "Distribution", 
                 paste0("percent_increase_", 
@@ -279,7 +320,7 @@ plot_data <- results %>%
   mutate_at("class", function(x) 
     factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other")))
 
-#---- **plot ----
+#---- **plot: prop ----
 ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) + 
   geom_boxplot() +
   scale_color_manual(values = group_colors) + 
@@ -290,20 +331,39 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) +
                    breaks = unique(plot_data$sample_size))
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
-                         "impairement_class_percent_bias.jpeg"))
+                         "impairement_class_percent_bias_prop.jpeg"))
 
-#---- **plot x race ----
+#---- **plot data: counts x race ----
+cols_by_race <- expand_grid("percent_increase", 
+                            c("Unimpaired", "MCI", "Dementia", "Other"), 
+                            c("white", "black", "hispanic")) %>% 
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+plot_data <- results %>% 
+  dplyr::select("sample_size", "Distribution", all_of(cols_by_race)) %>%
+  mutate_at("sample_size", as.numeric) %>% 
+  mutate("sample_size" = 0.5*sample_size) %>% 
+  mutate_at("sample_size", as.factor) %>%
+  pivot_longer(all_of(cols_by_race), names_to = c("text", "class_race"), 
+               names_sep = "_increase_") %>% 
+  separate(col = "class_race", into = c("class", "race"), sep = "_") %>%
+  mutate_at("race", function(x) str_to_sentence(x)) %>%
+  mutate_at("class", function(x) 
+    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
+  mutate_at("race", function(x) 
+    factor(x, levels = c("White", "Black", "Hispanic")))
+
 ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) + 
   geom_boxplot() +
   scale_color_manual(values = group_colors) + 
   geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
-  ylab("Percent Bias") + facet_grid(cols = vars(Distribution)) + 
+  ylab("Percent Bias") + facet_grid(cols = vars(race)) + 
   guides(color = guide_legend(title = "Group")) + 
   scale_x_discrete(name = "Sample Size", 
                    breaks = unique(plot_data$sample_size))
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
-                         "impairement_class_percent_bias.jpeg"))
+                         "impairement_class_percent_bias_count_by_race.jpeg"))
 
 #---- Figure X: HRS model results ----
 #---- **read in data ----
@@ -323,8 +383,8 @@ truth <-
   filter(term %in% c("black", "hispanic")) %>% 
   dplyr::select("term", "estimate", "dataset_name") %>% 
   separate(dataset_name, 
-                    into = c("Distribution", "sample_size", "prior_props"), 
-                    sep = "_") %>% 
+           into = c("Distribution", "sample_size", "prior_props"), 
+           sep = "_") %>% 
   mutate_at(c("term", "Distribution"), str_to_sentence) %>% 
   rename_with(c("term", "estimate"), .fn = ~ c("race_eth", "beta")) %>% 
   #restrict results for now
@@ -352,22 +412,23 @@ results_summary$sample_size <-
 
 results_summary$Distribution <- 
   factor(truth$Distribution, levels = c("Normal", "Lognormal", "Bathtub"))
-  
+
 #---- color palette ----
 navy <- "#135467"
 
 #---- **plot ----
-ggplot(results_summary %>% filter(!sample_size %in% c("500", "1000")), 
+ggplot(results_summary, 
+       #%>% filter(!sample_size %in% c("500", "1000")), 
        aes(x = beta, y = sample_size)) +
   geom_point(size = 2.0, position = position_dodge(-0.8), color = navy) + 
-  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = .3,
-                position = position_dodge(-0.8), color = navy) +
+  # geom_errorbar(aes(xmin = LCI, xmax = UCI), width = .3,
+  #               position = position_dodge(-0.8), color = navy) +
   theme_bw() + xlab("Beta") + ylab("Sample Size") +
   theme(legend.position = "bottom", legend.direction = "horizontal") + 
   geom_vline(xintercept = 0, color = "dark gray", linetype = "dashed") + 
   geom_vline(data = truth %>% filter(Distribution == "Normal"), 
              aes(xintercept = beta)) +
-  facet_grid(rows = vars(race_eth), cols = vars(Distribution))  
+  facet_grid(cols = vars(race_eth))  
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
                          "HRS_model_results.jpeg"))
