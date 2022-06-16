@@ -192,11 +192,7 @@ group_colors <- color_palette$Color
 names(group_colors) <- color_palette$Group
 
 #---- **check number of runs ----
-results %<>% unite("scenario_name", 
-                   c("Distribution", "sample_size", "prior_props"), 
-                   remove = FALSE)
-
-table(results$scenario_name, useNA = "ifany")
+table(results$dataset_name, useNA = "ifany")
                    
 #---- **plot data ----
 plot_data <- results %>% 
