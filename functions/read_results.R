@@ -1,9 +1,9 @@
-read_results <- function(path){
+read_results <- function(path, skip = 0){
   #---- truth table results + synthetic datasets ----
   if(str_detect(path, "superpopulations")){
     dataset_name <- str_split(path, pattern = "superpopulations/")[[1]][2]
     dataset_name <- str_remove(dataset_name, pattern = ".csv")
-    return(data.table::fread(path, fill = TRUE) %>% 
+    return(data.table::fread(path, fill = TRUE, skip = skip) %>% 
              mutate("dataset_name" = dataset_name))
   }
   
@@ -12,7 +12,7 @@ read_results <- function(path){
     dataset_name <- str_split(path, pattern = "results/")[[1]][2]
     dataset_name <- str_remove(dataset_name, pattern = ".csv")
     
-    data <- data.table::fread(path, fill = TRUE) %>% 
+    data <- data.table::fread(path, fill = TRUE, skip = skip) %>% 
       mutate("dataset_name" = dataset_name) %>% 
       separate(dataset_name, 
                into = c("Distribution", "sample_size", "prior_props"), 
@@ -29,7 +29,7 @@ read_results <- function(path){
   if(str_detect(path, "HRS_synthetic")){
     dataset_name <- str_split(path, pattern = "HRS_synthetic_")[[1]][2]
     dataset_name <- str_remove(dataset_name, pattern = ".csv")
-    return(data.table::fread(path, fill = TRUE) %>% 
+    return(data.table::fread(path, fill = TRUE, skip = skip) %>% 
              mutate("dataset_name" = dataset_name))
   }
   
