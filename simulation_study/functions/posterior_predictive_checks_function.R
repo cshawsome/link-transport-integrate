@@ -77,7 +77,7 @@ posterior_predictive_checks <-
              aes(x = run, y = prob, colour = as.factor(chain))) +       
       geom_line(aes(group = as.factor(chain)), alpha = 0.60) + xlab("Run") + 
       ylab("Proportion") + guides(color = guide_legend(title = "Chain")) + 
-      scale_color_manual(values = wes_palette("Darjeeling2")) +
+      scale_color_manual(values = rev(wes_palette("Darjeeling2"))) +
       theme_bw() +
       facet_wrap(facets = 
                    vars(factor(Group, 
@@ -119,7 +119,7 @@ posterior_predictive_checks <-
           filter(chain == chain_num & sample == num) 
         
         for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-          counts <- subsample %>% filter(!!as.symbol(group) == 1) %>% 
+          counts <- subsample %>% filter(Group == group) %>% 
             dplyr::select(all_of(categorical_covariates)) %>% 
             unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
             set_colnames(c("cell_ID", "Freq")) %>% left_join(., cell_ID_key)
@@ -250,7 +250,7 @@ posterior_predictive_checks <-
     
     #medians from synthetic datasets
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      subsample <- synthetic_sample %>% filter(!!sym(group) == 1)
+      subsample <- synthetic_sample %>% filter(Group == group)
       
       for(var in continuous_covariates){
         subset <- subsample %>% 
@@ -381,7 +381,7 @@ posterior_predictive_checks <-
     
     #skewness from synthetic datasets
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      subsample <- synthetic_sample %>% filter(!!sym(group) == 1)
+      subsample <- synthetic_sample %>% filter(Group == group)
       
       for(var in continuous_covariates){
         subset <- subsample %>% 
@@ -517,21 +517,18 @@ posterior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# dataset_to_copy = synthetic_data_list[[1]] %>% 
-#   group_by(married_partnered) %>% 
-#   slice_sample(prop = 0.5) %>% 
-#   mutate("(Intercept)" = 1) %>% ungroup() 
-# categorical_covariates = W 
-# continuous_covariates = Z 
-# contrasts_matrix = A
-# path_to_analyses_folder = 
-#   paste0(path_to_box, 
-#          "analyses/simulation_study/HCAP_HRS_", 
-#          unique(synthetic_data_list[[1]][, "dataset_name"]), "/") 
-# path_to_figures_folder = 
-#   paste0(path_to_box,
-#          "figures/simulation_study/HCAP_HRS_", 
-#          unique(synthetic_data_list[[1]][, "dataset_name"]), "/")
-# 
+#---- test function ----
+dataset_to_copy = synthetic_HCAP_list[[7]] 
+categorical_covariates = W
+continuous_covariates = Z
+contrasts_matrix = A
+path_to_analyses_folder =
+  paste0(path_to_box,
+         "analyses/simulation_study/HCAP_HRS_",
+         unique(synthetic_HCAP_list[[7]][, "dataset_name"]), "/")
+path_to_figures_folder =
+  paste0(path_to_box,
+         "figures/simulation_study/HCAP_HRS_",
+         unique(synthetic_HCAP_list[[7]][, "dataset_name"]), "/")
+
 
