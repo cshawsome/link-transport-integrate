@@ -340,6 +340,7 @@ truth <-
            sep = "_") %>% 
   mutate_at(c("term", "Distribution"), str_to_sentence) %>% 
   rename_with(c("term", "estimate"), .fn = ~ c("race_eth", "beta")) %>% 
+  mutate_at("race_eth", function(x) paste0(x, " vs. White")) %>%
   #restrict results for now
   filter(prior_props == "ADAMS")
 
@@ -358,6 +359,7 @@ results_summary <- results %>%
                names_to = c("race_eth", ".value"),
                names_sep = "_") %>% 
   mutate_at("race_eth", str_to_sentence) %>% 
+  mutate_at("race_eth", function(x) paste0(x, " vs. White")) %>%
   mutate_at("sample_size", as.numeric) %>% 
   mutate("sample_size" = 0.5*sample_size) 
 
@@ -375,10 +377,10 @@ navy <- "#135467"
 ggplot(results_summary, 
        #%>% filter(!sample_size %in% c("500", "1000")), 
        aes(x = beta, y = sample_size)) +
-  geom_point(size = 2.25, position = position_dodge(-0.8), color = navy) + 
+  geom_point(size = 4, position = position_dodge(-0.8), color = navy) + 
   # geom_errorbar(aes(xmin = LCI, xmax = UCI), width = .3,
   #               position = position_dodge(-0.8), color = navy) +
-  theme_bw() + xlab("Beta") + ylab("\"HCAP\" Sample Size") +
+  theme_bw() + xlab("Beta (log RR)") + ylab("\"HCAP\" Sample Size") +
   theme(legend.position = "bottom", legend.direction = "horizontal") + 
   geom_vline(xintercept = 0, color = "dark gray", linetype = "dashed", size = 1) + 
   geom_vline(data = truth %>% filter(Distribution == "Normal"), 
