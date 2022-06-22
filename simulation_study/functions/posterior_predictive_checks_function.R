@@ -91,8 +91,82 @@ posterior_predictive_checks <-
            path = paste0(path_to_figures_folder, "diagnostics/"), 
            width = 10, height = 5, units = "in", device = "jpeg")
     
-    #---- pre-allocate results matrix ----
-    #---- **synthetic counts ----
+    #---- categorical checks ----
+    #---- **race/ethnicity x stroke overall ----
+    #---- ****pre-allocate results matrix ----
+    #---- ****synthetic counts ----
+    synthetic_counts <- 
+      matrix(0, nrow = nrow(contrasts_matrix)*num_chains, 
+             ncol = (num_samples + 2)) %>% as.data.frame() %>% 
+      set_colnames(c(seq(1, num_samples), "cell", "chain"))
+    
+    cells <- contrasts_matrix[, -1] %>% as.data.frame() %>% 
+      unite("cell_ID", sep = "") %>% left_join(cell_ID_key)
+    
+    synthetic_counts[, "cell"] <- rep(cells$cell_name, num_chains)
+    
+    synthetic_counts[, "chain"] <- rep(seq(1, num_chains), 
+                                       each = nrow(contrasts_matrix)) 
+    
+    for(chain_num in unique(synthetic_sample$chain)){
+      #counts from synthetic datasets
+      for(num in 1:num_samples){
+        subsample <- synthetic_sample %>% 
+          filter(chain == chain_num & sample == num) 
+        
+        counts <- subsample %>% 
+          dplyr::select(all_of(categorical_covariates)) %>% 
+          unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+          set_colnames(c("cell_ID", "Freq")) %>% left_join(., cell_ID_key)
+        
+        counts[which(is.na(counts$Freq)), "Freq"] <- 0
+        
+        synthetic_counts[
+          which(synthetic_counts$chain == chain_num & 
+                  synthetic_counts$cell %in% counts$cell_name), num] <- 
+          counts$Freq
+        
+      }
+    }
+    
+    synthetic_count_plot_data <- synthetic_counts %>% mutate("truth" = 0) 
+    
+    #true counts
+    counts <- dataset_to_copy %>% 
+      dplyr::select(all_of(categorical_covariates)) %>% 
+      unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+      set_colnames(c("cell_ID", "Freq")) %>% 
+      left_join(cell_ID_key, .)
+    
+    counts[which(is.na(counts$Freq)), "Freq"] <- 0
+    
+    synthetic_count_plot_data[
+      which(synthetic_count_plot_data$cell %in% counts$cell_name), "truth"] <- 
+      counts$Freq
+    
+    synthetic_count_plot_data %<>% 
+      pivot_longer(-c("cell", "chain", "truth")) 
+    
+    #---- **plot ----
+    for(chain in 1:num_chains){
+      subset <- synthetic_count_plot_data %>% filter(chain == chain)
+      ggplot(data = subset , aes(x = value)) + 
+        geom_histogram(fill = "black", color = "black") + theme_bw() + 
+        xlab("Contingency Cell Count") + ylab("") + 
+        facet_wrap(facets = vars(cell), ncol = 2, scales = "free") +
+        geom_vline(aes(xintercept = truth), color = "#f2caaa", size = 1) +
+        theme(text = element_text(size = 6), 
+              strip.text = element_text(size = 6))  
+      
+      ggsave(filename = paste0(path_to_figures_folder, 
+                               "posterior_predictive_checks/run_", chain, 
+                               "/cell_counts/overall_count.jpeg"), 
+             width = 3, height = 4, units = "in")
+    }
+    
+    #---- **race/ethnicity x stroke x group ----
+    #---- ****pre-allocate results matrix ----
+    #---- ****synthetic counts ----
     synthetic_counts <- 
       matrix(0, nrow = nrow(contrasts_matrix)*4*num_chains, 
              ncol = (num_samples + 3)) %>% as.data.frame() %>% 
@@ -109,12 +183,6 @@ posterior_predictive_checks <-
     
     synthetic_counts[, "chain"] <- rep(seq(1, num_chains), 
                                        each = nrow(contrasts_matrix)*4) 
-    
-    #---- categorical checks ----
-    #---- **race/ethnicity x stroke overall ----
-    
-    
-    #---- **race/ethnicity x stroke x group ----
     for(chain_num in unique(synthetic_sample$chain)){
       #counts from synthetic datasets
       for(num in 1:num_samples){
@@ -160,7 +228,7 @@ posterior_predictive_checks <-
       pivot_longer(-c("group", "cell", "chain", "truth")) %>% 
       left_join(color_palette, by = c("group" = "Group"))
     
-    #---- **plot ----
+    #---- ****plot ----
     for(chain in 1:num_chains){
       for(dem_group in unique(synthetic_count_plot_data$group)){
         subset <- synthetic_count_plot_data %>% 
@@ -520,18 +588,18 @@ posterior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# dataset_to_copy = synthetic_HCAP_list[[7]] 
-# categorical_covariates = W
-# continuous_covariates = Z
-# contrasts_matrix = A
-# path_to_analyses_folder =
-#   paste0(path_to_box,
-#          "analyses/simulation_study/HCAP_HRS_",
-#          unique(synthetic_HCAP_list[[7]][, "dataset_name"]), "/")
-# path_to_figures_folder =
-#   paste0(path_to_box,
-#          "figures/simulation_study/HCAP_HRS_",
-#          unique(synthetic_HCAP_list[[7]][, "dataset_name"]), "/")
-# 
-# 
+#---- test function ----
+dataset_to_copy = synthetic_HCAP_list[[7]]
+categorical_covariates = W
+continuous_covariates = Z
+contrasts_matrix = A
+path_to_analyses_folder =
+  paste0(path_to_box,
+         "analyses/simulation_study/HCAP_HRS_",
+         unique(synthetic_HCAP_list[[7]][, "dataset_name"]), "/")
+path_to_figures_folder =
+  paste0(path_to_box,
+         "figures/simulation_study/HCAP_HRS_",
+         unique(synthetic_HCAP_list[[7]][, "dataset_name"]), "/")
+
+
