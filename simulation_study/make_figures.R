@@ -206,14 +206,16 @@ plot_data <- results %>%
 
 #---- **plot ----
 ggplot(data = plot_data, aes(x = sample_size, y = value, group = class)) + 
-  geom_line(aes(color = class)) + geom_point(aes(color = class)) + 
+  geom_line(aes(color = class), size = 1) + 
+  geom_point(aes(color = class), size = 1.5) + 
   scale_color_manual(values = group_colors) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
   theme_bw() + ylab("95% CI Coverage") + 
-  facet_grid(cols = vars(Distribution)) + 
+  #facet_grid(cols = vars(Distribution)) + 
   guides(color = guide_legend(title = "Group")) + 
-  scale_x_continuous(name = "Sample Size", 
-                     breaks = unique(plot_data$sample_size))
+  scale_x_continuous(name = "\"HCAP\" Sample Size", 
+                     breaks = unique(plot_data$sample_size)) + 
+  theme(text = element_text(size = 18))       
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
                          "impairement_class_coverage.jpeg"))
@@ -246,29 +248,6 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
   }
 }
 
-#---- ****% bias proportion ----
-#true proportion
-for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-  results %<>% 
-    mutate(!!paste0("true_", class, "_prop") := 
-             !!sym(paste0("true_", class))/(as.numeric(sample_size)*0.5))
-}
-
-#---- ******overall ----
-for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-  results %<>% 
-    mutate(!!paste0(class, "_prop") := 
-             !!sym(paste0("mean_", class))/(as.numeric(sample_size)*0.5))
-}
-
-for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-  results %<>% 
-    mutate(!!paste0("percent_increase_", class, "_prop") := 
-             (!!sym(paste0(class, "_prop")) - 
-                !!sym(paste0("true_", class, "_prop")))/
-             !!sym(paste0("true_", class, "_prop"))*100)
-}
-
 #---- **color palette ----
 color_palette <- read_csv(here("color_palette.csv"))
 
@@ -293,45 +272,18 @@ plot_data <- results %>%
 
 #---- **plot: count ----
 ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) + 
-  geom_boxplot() +
+  geom_boxplot(size = 1) +
   scale_color_manual(values = group_colors) + 
   geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
-  ylab("Percent Bias") + facet_grid(cols = vars(Distribution)) + 
+  ylab("Percent Bias") + 
+  #facet_grid(cols = vars(Distribution)) + 
   guides(color = guide_legend(title = "Group")) + 
-  scale_x_discrete(name = "Sample Size", 
-                   breaks = unique(plot_data$sample_size))
+  scale_x_discrete(name = "\"HCAP\" Sample Size", 
+                   breaks = unique(plot_data$sample_size)) + 
+  theme(text = element_text(size = 18))       
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
                          "impairement_class_percent_bias_counts.jpeg"))
-
-#---- **plot data: prop ----
-plot_data <- results %>% 
-  dplyr::select("sample_size", "Distribution", 
-                paste0("percent_increase_", 
-                       c("Unimpaired", "MCI", "Dementia", "Other"), "_prop")) %>%
-  mutate_at("sample_size", as.numeric) %>% 
-  mutate("sample_size" = 0.5*sample_size) %>% 
-  mutate_at("sample_size", as.factor) %>%
-  pivot_longer(paste0("percent_increase_", 
-                      c("Unimpaired", "MCI", "Dementia", "Other"), "_prop"),
-               names_to = c("text", "class"), 
-               names_sep = "_increase_") %>% 
-  mutate_at("class", function(x) str_remove(x, pattern = "_prop")) %>%
-  mutate_at("class", function(x) 
-    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other")))
-
-#---- **plot: prop ----
-ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) + 
-  geom_boxplot() +
-  scale_color_manual(values = group_colors) + 
-  geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
-  ylab("Percent Bias") + facet_grid(cols = vars(Distribution)) + 
-  guides(color = guide_legend(title = "Group")) + 
-  scale_x_discrete(name = "Sample Size", 
-                   breaks = unique(plot_data$sample_size))
-
-ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
-                         "impairement_class_percent_bias_prop.jpeg"))
 
 #---- **plot data: counts x race ----
 cols_by_race <- expand_grid("percent_increase", 
@@ -354,13 +306,14 @@ plot_data <- results %>%
     factor(x, levels = c("White", "Black", "Hispanic")))
 
 ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) + 
-  geom_boxplot() +
+  geom_boxplot(size = 0.60) +
   scale_color_manual(values = group_colors) + 
   geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
   ylab("Percent Bias") + facet_grid(cols = vars(race)) + 
   guides(color = guide_legend(title = "Group")) + 
-  scale_x_discrete(name = "Sample Size", 
-                   breaks = unique(plot_data$sample_size))
+  scale_x_discrete(name = "\"HCAP\" Sample Size", 
+                   breaks = unique(plot_data$sample_size)) + 
+  theme(text = element_text(size = 18))       
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
                          "impairement_class_percent_bias_count_by_race.jpeg"))
@@ -404,11 +357,13 @@ results_summary <- results %>%
   pivot_longer(cols = !c("Distribution", "sample_size"), 
                names_to = c("race_eth", ".value"),
                names_sep = "_") %>% 
-  mutate_at("race_eth", str_to_sentence) 
+  mutate_at("race_eth", str_to_sentence) %>% 
+  mutate_at("sample_size", as.numeric) %>% 
+  mutate("sample_size" = 0.5*sample_size) 
 
 results_summary$sample_size <- 
   factor(results_summary$sample_size, 
-         levels = c("500", "1000", "2000", "4000", "8000"))
+         levels = c("250", "500", "1000", "2000", "4000"))
 
 results_summary$Distribution <- 
   factor(truth$Distribution, levels = c("Normal", "Lognormal", "Bathtub"))
@@ -420,18 +375,20 @@ navy <- "#135467"
 ggplot(results_summary, 
        #%>% filter(!sample_size %in% c("500", "1000")), 
        aes(x = beta, y = sample_size)) +
-  geom_point(size = 2.0, position = position_dodge(-0.8), color = navy) + 
+  geom_point(size = 2.25, position = position_dodge(-0.8), color = navy) + 
   # geom_errorbar(aes(xmin = LCI, xmax = UCI), width = .3,
   #               position = position_dodge(-0.8), color = navy) +
-  theme_bw() + xlab("Beta") + ylab("Sample Size") +
+  theme_bw() + xlab("Beta") + ylab("\"HCAP\" Sample Size") +
   theme(legend.position = "bottom", legend.direction = "horizontal") + 
-  geom_vline(xintercept = 0, color = "dark gray", linetype = "dashed") + 
+  geom_vline(xintercept = 0, color = "dark gray", linetype = "dashed", size = 1) + 
   geom_vline(data = truth %>% filter(Distribution == "Normal"), 
-             aes(xintercept = beta)) +
-  facet_grid(cols = vars(race_eth))  
+             aes(xintercept = beta), size = 1) +
+  facet_grid(cols = vars(race_eth)) + theme(text = element_text(size = 18))   
+
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
-                         "HRS_model_results.jpeg"))
+                         "HRS_model_results.jpeg"), 
+       height = 6, width = 15, units = "in")
 
 
 
