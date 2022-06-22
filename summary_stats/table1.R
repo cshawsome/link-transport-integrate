@@ -8,7 +8,80 @@ p_load("here", "tidyverse", "magrittr", "haven", "stringr", "NormPsy")
 
 options(scipen = 999)
 
-#---- read in data ----
+#---- ADAMS ----
+#---- **read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+ADAMS_imputed_clean <- 
+  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/chunk_1/", 
+                 "MI_datasets_cleaned")) %>%
+  lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
+
+#one subset
+ADAMS_subset <- ADAMS_imputed_clean[[1]]
+
+#---- **race/ethnicity ----
+mean(ADAMS_subset$White)
+mean(ADAMS_subset$Black)
+mean(ADAMS_subset$Hispanic)
+
+#---- Synthetic Superpop ----
+#---- **read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+superpopulations_paths <- 
+  list.files(path = paste0(path_to_box, 
+                           "analyses/simulation_study/superpopulations"), 
+             full.names = TRUE, pattern = "*.csv")
+
+superpopulations_data <- 
+  do.call(rbind, lapply(superpopulations_paths, read_results))
+
+#---- **race/ethnicity ----
+mean(superpopulations_data$White)
+mean(superpopulations_data$black)
+mean(superpopulations_data$hispanic)
+
+#---- Synthetic HRS ----
+#---- **read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+synthetic_HRS_list <- 
+  readRDS(paste0(path_to_box, "analyses/simulation_study/synthetic_HRS_list"))
+
+#filter to normal data for now
+dataset_names <- 
+  unlist(lapply(synthetic_HRS_list, function(x) unique(x$dataset_name)))
+
+indices <- which(dataset_names %in% 
+                   paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
+
+#---- **race/ethnicity ----
+lapply(synthetic_HRS_list[indices], function(x) mean(x$White))
+lapply(synthetic_HRS_list[indices], function(x) mean(x$black))
+lapply(synthetic_HRS_list[indices], function(x) mean(x$hispanic))
+
+#---- Synthetic HCAP ----
+#---- **read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+synthetic_HCAP_list <- 
+  readRDS(paste0(path_to_box, "analyses/simulation_study/synthetic_HCAP_list"))
+
+#filter to normal data for now
+dataset_names <- 
+  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
+
+indices <- which(dataset_names %in% 
+                   paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
+
+#---- **race/ethnicity ----
+lapply(synthetic_HCAP_list[indices], function(x) mean(x$White))
+lapply(synthetic_HCAP_list[indices], function(x) mean(x$black))
+lapply(synthetic_HCAP_list[indices], function(x) mean(x$hispanic))
+
+#---- HRS ----
+#---- **read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 HRS_clean <- 
@@ -17,7 +90,6 @@ HRS_clean <-
 HRS_analytic <- 
   read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
 
-#---- HRS ----
 #---- **clean ----
 #---- ****married/partnered ----
 table(HRS_clean$PCOUPLE, useNA = "ifany")
