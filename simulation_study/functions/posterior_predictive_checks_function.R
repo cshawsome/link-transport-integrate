@@ -111,7 +111,10 @@ posterior_predictive_checks <-
                                        each = nrow(contrasts_matrix)*4) 
     
     #---- categorical checks ----
-    #---- **race/ethnicity x stroke ----
+    #---- **race/ethnicity x stroke overall ----
+    
+    
+    #---- **race/ethnicity x stroke x group ----
     for(chain_num in unique(synthetic_sample$chain)){
       #counts from synthetic datasets
       for(num in 1:num_samples){
