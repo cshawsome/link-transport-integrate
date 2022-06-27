@@ -392,8 +392,3 @@ ggsave(filename = paste0(path_to_box, "figures/simulation_study/",
                          "HRS_model_results.jpeg"), 
        height = 6, width = 15, units = "in")
 
-
-
-
-
-
