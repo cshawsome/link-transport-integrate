@@ -13,6 +13,8 @@ library(gganimate)
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
 
+source(here::here("simulation_study", "functions", "specify_priors.R"))
+
 source(here::here("simulation_study", "functions", 
                   "prior_predictive_checks_function.R"))
 
