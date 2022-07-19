@@ -1,7 +1,7 @@
 prior_predictive_checks <- 
   function(dataset_to_copy, calibration_sample = FALSE, calibration_prop = NA, 
-           calibration_sample_name = NA, path_to_data, path_to_output_folder,
-           continuous_check_test = FALSE, 
+           calibration_sample_name = NA, path_to_raw_prior_sample, path_to_data, 
+           path_to_output_folder, continuous_check_test = FALSE, 
            continuous_check = c("Unimpaired", "MCI", "Dementia", "Other"), 
            categorical_vars, continuous_vars, variable_labels, color_palette,
            contrasts_matrix, kappa_0_mat, nu_0_mat, num_synthetic){
@@ -59,12 +59,12 @@ prior_predictive_checks <-
         assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
       }
       
-      #---- ****contingency cells ----
+      #---- **contingency cells ----
       alpha_0_dist <- 
         readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
                        "imputation_cell_props")) 
       
-      #--- ****beta and sigma ----
+      #--- **beta and sigma ----
       priors_beta <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
                                     "prior_data/priors_beta")) 
       prior_V_inv <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
@@ -72,7 +72,39 @@ prior_predictive_checks <-
       prior_Sigma <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
                                     "prior_data/priors_Sigma")) 
     } else{
+      #---- read in raw prior sample ----
+      prior_imputed_clean <- readRDS(path_to_raw_prior_sample) %>%
+        lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
       
+      #---- **prep sample ----
+      variable_labels_ADAMS <- variable_labels %>% 
+        filter(ADAMS %in% colnames(prior_imputed_clean[[1]]))
+      
+      prior_imputed_clean <- 
+        lapply(prior_imputed_clean, 
+               function(x) rename_at(x, vars(variable_labels_ADAMS$ADAMS), ~ 
+                                       variable_labels_ADAMS$data_label)) 
+      
+      #---- selected vars ----
+      selected_vars <- 
+        read_csv(paste0(path_to_data, 
+                        "analyses/simulation_study/variable_selection/", 
+                        "model_coefficients.csv")) 
+      
+      #unimpaired model predictors
+      unimpaired_preds <- selected_vars %>% 
+        filter(data_label != "Intercept" & Unimpaired != 0) %>% 
+        dplyr::select(data_label) %>% unlist()
+      
+      #other model predictors
+      other_preds <- selected_vars %>% 
+        filter(data_label != "Intercept" & Other != 0) %>% 
+        dplyr::select(data_label) %>% unlist()
+      
+      #mci model predictors
+      mci_preds <- selected_vars %>% 
+        filter(data_label != "Intercept" & MCI != 0) %>% 
+        dplyr::select(data_label) %>% unlist()
     }
     
     #---- select variables ----
