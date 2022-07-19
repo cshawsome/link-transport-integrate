@@ -68,7 +68,7 @@ plan(multisession, workers = (availableCores() - 2))
 #---- **specify indices ----
 indices <-
   which(dataset_names %in%
-          paste0("normal_", c(8000), "_ADAMS"))
+          paste0("normal_", c(500), "_ADAMS"))
 
 #---- **run parallel checks ----
 future_lapply(synthetic_HCAP_list[indices], function(x)
@@ -80,12 +80,11 @@ future_lapply(synthetic_HCAP_list[indices], function(x)
                                    "figures/simulation_study/HCAP_HRS_",
                                    unique(x[, "dataset_name"]),
                                    "/prior_predictive_checks/"), 
-                          continuous_check_test = FALSE,
-                          continuous_check = 
-                            c("Unimpaired", "MCI", "Dementia", "Other"),
+                          continuous_check_test = TRUE,
+                          continuous_check = c("MCI"),
                           categorical_vars = W, continuous_vars = Z,
                           variable_labels, color_palette, contrasts_matrix = A,
                           kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
-                          num_sythetic = 1000), future.seed = TRUE)
+                          num_synthetic = 1000), future.seed = TRUE)
 end <- Sys.time() - start
 plan(sequential)
