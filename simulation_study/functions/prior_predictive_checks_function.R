@@ -105,6 +105,10 @@ prior_predictive_checks <-
       mci_preds <- selected_vars %>% 
         filter(data_label != "Intercept" & MCI != 0) %>% 
         dplyr::select(data_label) %>% unlist()
+      
+      #---- calibration subset ----
+      calibration_subset <- 
+        slice_sample(dataset_to_copy, prop = calibration_prop)
     }
     
     #---- select variables ----
