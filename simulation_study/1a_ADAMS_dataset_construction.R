@@ -340,7 +340,7 @@ ADAMS %<>% mutate_at(.vars = c("ANSMEM2"),
 # table(ADAMS$ANSMEM2_Better, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
 # table(ADAMS$ANSMEM2_Same, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
 # table(ADAMS$ANSMEM2_Worse, ADAMS$ANSMEM2_collapsed_label, useNA = "ifany")
-
+ 
 #---- **proxy cognition ----
 # table(ADAMS$AGQ14, useNA = "ifany")
 # table(ADAMS$AGQ29, useNA = "ifany")
