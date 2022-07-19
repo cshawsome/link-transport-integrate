@@ -1,17 +1,10 @@
 prior_predictive_checks <- 
-  function(dataset_to_copy, calibration_sample = FALSE, 
+  function(dataset_to_copy, calibration_sample = FALSE, calibration_prop = NA, 
            calibration_sample_name = NA, path_to_data, path_to_output_folder,
-           continuous_check_test = FALSE,
-    
-    
-    
-    unimpaired_preds, other_preds, mci_preds, categorical_vars, 
-           continuous_vars, continuous_check_test = FALSE,
+           continuous_check_test = FALSE, 
            continuous_check = c("Unimpaired", "MCI", "Dementia", "Other"), 
-           variable_labels, color_palette, dataset_to_copy, num_synthetic, 
-           unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
-           mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0_mat, 
-           kappa_0_mat, contrasts_matrix, path_to_output_folder){
+           categorical_vars, continuous_vars, variable_labels, color_palette,
+           contrasts_matrix, kappa_0_mat, nu_0_mat, num_synthetic){
     
     #---- update path to output folder ----
     if(!calibration_sample){
@@ -54,7 +47,30 @@ prior_predictive_checks <-
     
     #---- set prior data ----
     if(!calibration_sample){
+      #---- **latent classes ----
+      for(group in c("unimpaired", "mci", "other")){
+        assign(paste0(group, "_betas"), 
+               vroom(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                            "latent_class_", group, "_betas.csv"), delim = ","))
+        assign(paste0(group, "_cov"), 
+               readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                              "latent_class_", group, "_cov")))
+        
+        assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
+      }
       
+      #---- ****contingency cells ----
+      alpha_0_dist <- 
+        readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
+                       "imputation_cell_props")) 
+      
+      #--- ****beta and sigma ----
+      priors_beta <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
+                                    "prior_data/priors_beta")) 
+      prior_V_inv <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
+                                    "prior_data/priors_V_inv"))  
+      prior_Sigma <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
+                                    "prior_data/priors_Sigma")) 
     } else{
       
     }
