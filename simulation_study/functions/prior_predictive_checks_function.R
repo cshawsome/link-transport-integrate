@@ -1,39 +1,62 @@
 prior_predictive_checks <- 
-  function(unimpaired_preds, other_preds, mci_preds, categorical_vars, 
+  function(dataset_to_copy, calibration_sample = FALSE, 
+           calibration_sample_name = NA, path_to_data, path_to_output_folder,
+           continuous_check_test = FALSE,
+    
+    
+    
+    unimpaired_preds, other_preds, mci_preds, categorical_vars, 
            continuous_vars, continuous_check_test = FALSE,
            continuous_check = c("Unimpaired", "MCI", "Dementia", "Other"), 
            variable_labels, color_palette, dataset_to_copy, num_synthetic, 
            unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
            mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0_mat, 
-           kappa_0_mat, contrasts_matrix, path_to_folder){
+           kappa_0_mat, contrasts_matrix, path_to_output_folder){
+    
+    #---- update path to output folder ----
+    if(!calibration_sample){
+      path_to_output_folder <- 
+        paste0(path_to_output_folder, "no_calibration_sample/")
+    } else{
+      path_to_output_folder <- 
+        paste0(path_to_output_folder, "calibration_", calibration_sample_name, 
+               "/")
+    }
     
     #---- create folders for results ----
-    if(!dir.exists(paste0(path_to_folder, "impairment_classes/"))){
-      dir.create(paste0(path_to_folder, "impairment_classes/"), 
+    if(!dir.exists(paste0(path_to_output_folder, "impairment_classes/"))){
+      dir.create(paste0(path_to_output_folder, "impairment_classes/"), 
                  recursive = TRUE) 
     }
     
     for(class in c("unimpaired", "mci", "dementia", "other")){
-      if(!dir.exists(paste0(path_to_folder, "continuous_vars/", 
+      if(!dir.exists(paste0(path_to_output_folder, "continuous_vars/", 
                             tolower(class)))){
-        dir.create(paste0(path_to_folder, "continuous_vars/", 
+        dir.create(paste0(path_to_output_folder, "continuous_vars/", 
                           tolower(class)), recursive = TRUE)
       }
       
-      if(!dir.exists(paste0(path_to_folder, "continuous_vars/error_set/", 
+      if(!dir.exists(paste0(path_to_output_folder, "continuous_vars/error_set/", 
                             tolower(class)))){
-        dir.create(paste0(path_to_folder, "continuous_vars/error_set/", 
+        dir.create(paste0(path_to_output_folder, "continuous_vars/error_set/", 
                           tolower(class)), recursive = TRUE)
       }
       
       if(continuous_check_test & 
-         !dir.exists(paste0(path_to_folder, "continuous_vars/test_set/", 
+         !dir.exists(paste0(path_to_output_folder, "continuous_vars/test_set/", 
                             tolower(class)))){
         
-        dir.create(paste0(path_to_folder, "continuous_vars/test_set/", 
+        dir.create(paste0(path_to_output_folder, "continuous_vars/test_set/", 
                           tolower(class)), recursive = TRUE)
         
       }
+    }
+    
+    #---- set prior data ----
+    if(!calibration_sample){
+      
+    } else{
+      
     }
     
     #---- select variables ----
@@ -248,7 +271,7 @@ prior_predictive_checks <-
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
             color = color_palette[which(color_palette$Group == class), "Color"])
         
-        ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
+        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", class, 
                                  "_line_only.jpeg"), 
                height = 3, width = 5, units = "in")
       } else{
@@ -261,7 +284,7 @@ prior_predictive_checks <-
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
             color = unique(subset$Color))
         
-        ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
+        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", class, 
                                  "_line_only.jpeg"), 
                height = 3, width = 5, units = "in")
         
@@ -274,7 +297,7 @@ prior_predictive_checks <-
           geom_vline(xintercept = to_copy_dementia_plot_data[[
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2)
         
-        ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
+        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", class, 
                                  ".jpeg"), 
                height = 3, width = 5, units = "in")
       }
@@ -312,11 +335,11 @@ prior_predictive_checks <-
             scale_fill_manual(values = rev(unique(data$Color)))
           
           if(continuous_check_test){
-            ggsave(filename = paste0(path_to_folder, "continuous_vars/test_set/", 
+            ggsave(filename = paste0(path_to_output_folder, "continuous_vars/test_set/", 
                                      tolower(class), "/", var, ".jpeg"), 
                    height = 3, width = 5, units = "in")
           } else{
-            ggsave(filename = paste0(path_to_folder, "continuous_vars/error_set/", 
+            ggsave(filename = paste0(path_to_output_folder, "continuous_vars/error_set/", 
                                      tolower(class), "/", var, ".jpeg"), 
                    height = 3, width = 5, units = "in")
           }
@@ -337,7 +360,7 @@ prior_predictive_checks <-
           animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
                   res = 150, renderer = gifski_renderer())
           
-          anim_save(filename = paste0(path_to_folder, "continuous_vars/", 
+          anim_save(filename = paste0(path_to_output_folder, "continuous_vars/", 
                                       tolower(class), "/", var, ".gif"),
                     animation = last_animation(),
                     renderer = gifski_renderer())
@@ -369,6 +392,6 @@ prior_predictive_checks <-
 # nu_0 = nu_0[, unique(synthetic_data_list[[1]]$dataset_name)]
 # kappa_0_mat = kappa_0_mat
 # contrasts_matrix = A
-# path_to_folder = paste0(path_to_box, "figures/simulation_study/HCAP_HRS_",
+# path_to_output_folder = paste0(path_to_box, "figures/simulation_study/HCAP_HRS_",
 #                         unique(synthetic_data_list[[1]][, "dataset_name"]),
 #                         "/prior_predictive_checks/")
