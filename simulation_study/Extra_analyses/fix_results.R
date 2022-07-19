@@ -58,10 +58,10 @@ result_names <-
     "black_coverage", "hispanic_coverage", "time", "seed", "dataset_name")
 
 #---- fix files ----
-for(path in results_paths){
-  read_results(path, skip = 1001) %>% 
-    set_colnames(c(all_of(result_names), 
-                   "Distribution", "sample_size", "prior_props", "color")) %>% 
+for(path in results_paths[5]){
+  read_results(path, skip = 1001) %>%
+    set_colnames(c(all_of(result_names),
+                   "Distribution", "sample_size", "prior_props", "color")) %>%
     write_csv(path)
 }
 
