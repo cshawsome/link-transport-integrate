@@ -487,12 +487,14 @@ generate_synthetic <-
         theme(legend.position = "bottom")
       
       if(!calibration_sample){
-        ggsave(filename = "latent_class_chain.jpeg", plot = gamma_chain_plot, 
+        ggsave(filename = "latent_class_chain.jpeg", 
+               plot = latent_class_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
                              "no_calibration_sample/run_", run_number), 
                height = 7, width = 10, units = "in", device = "jpeg")
       } else{
-        ggsave(filename = "latent_class_chain.jpeg", plot = gamma_chain_plot, 
+        ggsave(filename = "latent_class_chain.jpeg", 
+               plot = latent_class_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
                              "calibration_", calibration_sample_name, "/run_", 
                              run_number), height = 7, width = 10, units = "in", 
@@ -527,12 +529,12 @@ generate_synthetic <-
         theme(legend.position = "bottom")
       
       if(!calibration_sample){
-        ggsave(filename = "pi_chain.jpeg", plot = gamma_chain_plot, 
+        ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
                              "no_calibration_sample/run_", run_number), 
                height = 7, width = 10, units = "in", device = "jpeg")
       } else{
-        ggsave(filename = "pi_chain.jpeg", plot = gamma_chain_plot, 
+        ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
                              "calibration_", calibration_sample_name, "/run_", 
                              run_number), height = 7, width = 10, units = "in", 
@@ -563,12 +565,12 @@ generate_synthetic <-
         theme(legend.position = "bottom")
       
       if(!calibration_sample){
-        ggsave(filename = "Sigma_chain.jpeg", plot = gamma_chain_plot, 
+        ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
                              "no_calibration_sample/run_", run_number), 
                height = 7, width = 12, units = "in", device = "jpeg")
       } else{
-        ggsave(filename = "Sigma_chain.jpeg", plot = gamma_chain_plot, 
+        ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
                              "calibration_", calibration_sample_name, "/run_", 
                              run_number), height = 7, width = 12, units = "in", 
@@ -602,12 +604,12 @@ generate_synthetic <-
         theme(legend.position = "bottom")
       
       if(!calibration_sample){
-        ggsave(filename = "mu_chain.jpeg", plot = gamma_chain_plot, 
+        ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
                              "no_calibration_sample/run_", run_number), 
                height = 15, width = 12, units = "in", device = "jpeg")
       } else{
-        ggsave(filename = "mu_chain.jpeg", plot = gamma_chain_plot, 
+        ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
                              "calibration_", calibration_sample_name, "/run_", 
                              run_number), height = 15, width = 12, units = "in", 
