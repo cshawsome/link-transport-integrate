@@ -1,31 +1,62 @@
 generate_synthetic <- 
-  function(warm_up, run_number, starting_props, unimpaired_preds, other_preds, 
-           mci_preds, categorical_vars, continuous_vars, id_var, variable_labels, 
-           dataset_to_copy, cell_ID_key, color_palette, num_synthetic, 
-           unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
-           mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0_mat, 
-           kappa_0_mat, contrasts_matrix, path_to_analyses_folder, 
-           path_to_figures_folder, data_only = FALSE){
+  function(warm_up, run_number, starting_props, dataset_to_copy, 
+           calibration_sample = FALSE, calibration_prop = NA, 
+           calibration_sample_name = NA, path_to_raw_prior_sample, path_to_data, 
+           path_to_analyses_folder, path_to_figures_folder, categorical_vars, 
+           continuous_vars, id_var, variable_labels, cell_ID_key, color_palette, 
+           contrasts_matrix, kappa_0_mat, nu_0_mat, num_synthetic, 
+           data_only = FALSE){
     
     #---- check subfolders for results ----
-    if(!data_only){
-      if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                            run_number))){
-        dir.create(paste0(path_to_analyses_folder, "synthetic_data/run_", 
-                          run_number), recursive = TRUE)
+    if(!calibration_sample){
+      if(!data_only){
+        if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/", 
+                              "no_calibration_sample/run_", run_number))){
+          dir.create(paste0(path_to_analyses_folder, "synthetic_data/", 
+                            "no_calibration_sample/run_", run_number), 
+                     recursive = TRUE)
+        }
+        
+        if(!dir.exists(paste0(path_to_figures_folder, "diagnostics/", 
+                              "no_calibration_sample/run_", run_number))){
+          dir.create(paste0(path_to_figures_folder, "diagnostics/", 
+                            "no_calibration_sample/run_", run_number), 
+                     recursive = TRUE)
+        }
+        
+        if(!dir.exists(paste0(path_to_analyses_folder, "diagnostics_data/", 
+                              "no_calibration_sample/run_", run_number))){
+          dir.create(paste0(path_to_analyses_folder, "diagnostics_data/", 
+                            "no_calibration_sample/run_", run_number), 
+                     recursive = TRUE)
+        }
       }
-      
-      if(!dir.exists(paste0(path_to_figures_folder, "diagnostics/run_", 
-                            run_number))){
-        dir.create(paste0(path_to_figures_folder, "diagnostics/run_", 
-                          run_number), recursive = TRUE)
-      }
-      
-      if(!dir.exists(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
-                            run_number))){
-        dir.create(paste0(path_to_analyses_folder, "diagnostics_data/run_", 
-                          run_number), recursive = TRUE)
-      }
+    } else{
+      if(!data_only){
+        if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/", 
+                              "calibration_", calibration_sample_name, "/run_", 
+                              run_number))){
+          dir.create(paste0(path_to_analyses_folder, "synthetic_data/", 
+                            "calibration_", calibration_sample_name, "/run_", 
+                            run_number), recursive = TRUE)
+        }
+        
+        if(!dir.exists(paste0(path_to_figures_folder, "diagnostics/", 
+                              "calibration_", calibration_sample_name, "/run_", 
+                              run_number))){
+          dir.create(paste0(path_to_figures_folder, "diagnostics/", 
+                            "calibration_", calibration_sample_name, "/run_", 
+                            run_number), recursive = TRUE)
+        }
+        
+        if(!dir.exists(paste0(path_to_analyses_folder, "diagnostics_data/", 
+                              "calibration_", calibration_sample_name, "run_", 
+                              run_number))){
+          dir.create(paste0(path_to_analyses_folder, "diagnostics_data/", 
+                            "calibration_", calibration_sample_name, "/run_", 
+                            run_number), recursive = TRUE)
+        }
+      } 
     }
     
     #---- sampling counts ----
