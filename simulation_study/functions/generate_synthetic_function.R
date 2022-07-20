@@ -453,10 +453,18 @@ generate_synthetic <-
                            name = "Predictors") + 
         theme(legend.position = "bottom")
       
-      ggsave(filename = "gamma_chain.jpeg", plot = gamma_chain_plot, 
-             path = paste0(path_to_figures_folder, "diagnostics/run_", 
-                           run_number), height = 7, width = 12, units = "in", 
-             device = "jpeg")
+      if(!calibration_sample){
+        ggsave(filename = "gamma_chain.jpeg", plot = gamma_chain_plot, 
+               path = paste0(path_to_figures_folder, "diagnostics/", 
+                             "no_calibration_sample/run_", run_number), 
+               height = 7, width = 12, units = "in", device = "jpeg")
+      } else{
+        ggsave(filename = "gamma_chain.jpeg", plot = gamma_chain_plot, 
+               path = paste0(path_to_figures_folder, "diagnostics/", 
+                             "calibration_", calibration_sample_name, "/run_", 
+                             run_number), height = 7, width = 12, units = "in", 
+               device = "jpeg")
+      }
       
       #---- ****latent class chain ----
       latent_class_data <- t(latent_class_chain) %>% as.data.frame() %>%
@@ -478,11 +486,18 @@ generate_synthetic <-
         scale_x_continuous(breaks = seq(0, B, by = 100)) + 
         theme(legend.position = "bottom")
       
-      ggsave(filename = "latent_class_chain.jpeg", 
-             plot = latent_class_chain_plot, 
-             path = paste0(path_to_figures_folder, "diagnostics/run_", 
-                           run_number), height = 7, width = 10, units = "in", 
-             device = "jpeg")
+      if(!calibration_sample){
+        ggsave(filename = "latent_class_chain.jpeg", plot = gamma_chain_plot, 
+               path = paste0(path_to_figures_folder, "diagnostics/", 
+                             "no_calibration_sample/run_", run_number), 
+               height = 7, width = 10, units = "in", device = "jpeg")
+      } else{
+        ggsave(filename = "latent_class_chain.jpeg", plot = gamma_chain_plot, 
+               path = paste0(path_to_figures_folder, "diagnostics/", 
+                             "calibration_", calibration_sample_name, "/run_", 
+                             run_number), height = 7, width = 10, units = "in", 
+               device = "jpeg")
+      }
       
       #---- ****pi chain ----
       pi_chain_data <- pi_chain %>% as.data.frame() %>% 
@@ -511,10 +526,18 @@ generate_synthetic <-
                                                  "Other")))) + theme_bw() + 
         theme(legend.position = "bottom")
       
-      ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
-             path = paste0(path_to_figures_folder, "diagnostics/run_", 
-                           run_number), height = 7, width = 10, units = "in", 
-             device = "jpeg")
+      if(!calibration_sample){
+        ggsave(filename = "pi_chain.jpeg", plot = gamma_chain_plot, 
+               path = paste0(path_to_figures_folder, "diagnostics/", 
+                             "no_calibration_sample/run_", run_number), 
+               height = 7, width = 10, units = "in", device = "jpeg")
+      } else{
+        ggsave(filename = "pi_chain.jpeg", plot = gamma_chain_plot, 
+               path = paste0(path_to_figures_folder, "diagnostics/", 
+                             "calibration_", calibration_sample_name, "/run_", 
+                             run_number), height = 7, width = 10, units = "in", 
+               device = "jpeg")
+      }
       
       #---- ****Sigma chain ----
       Sigma_chain_data <- Sigma_chain %>% as.data.frame() %>% 
@@ -539,10 +562,18 @@ generate_synthetic <-
                    scales = "free") + theme_bw() + 
         theme(legend.position = "bottom")
       
-      ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
-             path = paste0(path_to_figures_folder, "diagnostics/run_", 
-                           run_number), height = 7, width = 12, units = "in", 
-             device = "jpeg")
+      if(!calibration_sample){
+        ggsave(filename = "Sigma_chain.jpeg", plot = gamma_chain_plot, 
+               path = paste0(path_to_figures_folder, "diagnostics/", 
+                             "no_calibration_sample/run_", run_number), 
+               height = 7, width = 12, units = "in", device = "jpeg")
+      } else{
+        ggsave(filename = "Sigma_chain.jpeg", plot = gamma_chain_plot, 
+               path = paste0(path_to_figures_folder, "diagnostics/", 
+                             "calibration_", calibration_sample_name, "/run_", 
+                             run_number), height = 7, width = 12, units = "in", 
+               device = "jpeg")
+      }
       
       #---- ****mu chain ----
       mu_chain_data <- mu_chain %>% as.data.frame() %>% 
@@ -570,31 +601,71 @@ generate_synthetic <-
                    scales = "free") + theme_bw() + 
         theme(legend.position = "bottom")
       
-      ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
-             path = paste0(path_to_figures_folder, "diagnostics/run_", 
-                           run_number), height = 15, width = 12, units = "in", 
-             device = "jpeg")
+      if(!calibration_sample){
+        ggsave(filename = "mu_chain.jpeg", plot = gamma_chain_plot, 
+               path = paste0(path_to_figures_folder, "diagnostics/", 
+                             "no_calibration_sample/run_", run_number), 
+               height = 15, width = 12, units = "in", device = "jpeg")
+      } else{
+        ggsave(filename = "mu_chain.jpeg", plot = gamma_chain_plot, 
+               path = paste0(path_to_figures_folder, "diagnostics/", 
+                             "calibration_", calibration_sample_name, "/run_", 
+                             run_number), height = 15, width = 12, units = "in", 
+               device = "jpeg")
+      }
       
       #---- save datasets ----
-      write_csv(gamma_plot_data, 
-                file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                              "run_", run_number, "/gamma_plot_data.csv"))
-      
-      write_csv(latent_class_data, 
-                file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                              "run_", run_number, "/latent_class_data.csv"))
-      
-      write_csv(pi_chain_data, 
-                file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                              "run_", run_number, "/pi_chain_data.csv"))
-      
-      write_csv(Sigma_chain_data, 
-                file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                              "run_", run_number, "/Sigma_chain_data.csv"))
-      
-      write_csv(mu_chain_data, 
-                file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                              "run_", run_number, "/mu_chain_data.csv"))
+      if(!calibration_sample){
+        write_csv(gamma_plot_data, 
+                  file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                                "no_calibration_sample/run_", run_number, 
+                                "/gamma_plot_data.csv"))
+        
+        write_csv(latent_class_data, 
+                  file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                                "no_calibration_sample/run_", run_number, 
+                                "/latent_class_data.csv"))
+        
+        write_csv(pi_chain_data, 
+                  file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                                "no_calibration_sample/run_", run_number, 
+                                "/pi_chain_data.csv"))
+        
+        write_csv(Sigma_chain_data, 
+                  file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                                "no_calibration_sample/run_", run_number, 
+                                "/Sigma_chain_data.csv"))
+        
+        write_csv(mu_chain_data, 
+                  file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                                "no_calibration_sample/run_", run_number, 
+                                "/mu_chain_data.csv"))
+      } else{
+        write_csv(gamma_plot_data, 
+                  file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                                "calibration_", calibration_sample_name, "/run_", 
+                                run_number, "/gamma_plot_data.csv"))
+        
+        write_csv(latent_class_data, 
+                  file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                                "calibration_", calibration_sample_name, "/run_", 
+                                run_number, "/latent_class_data.csv"))
+        
+        write_csv(pi_chain_data, 
+                  file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                                "calibration_", calibration_sample_name, "/run_", 
+                                run_number, "/pi_chain_data.csv"))
+        
+        write_csv(Sigma_chain_data, 
+                  file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                                "calibration_", calibration_sample_name, "/run_", 
+                                run_number, "/Sigma_chain_data.csv"))
+        
+        write_csv(mu_chain_data, 
+                  file = paste0(path_to_analyses_folder, "diagnostics_data/", 
+                                "calibration_", calibration_sample_name, "/run_", 
+                                run_number, "/mu_chain_data.csv"))
+      }
     }
   }
 
