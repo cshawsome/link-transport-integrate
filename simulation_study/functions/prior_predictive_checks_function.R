@@ -292,12 +292,14 @@ prior_predictive_checks <-
             
             new_counts <- new_counts$prop*nrow(subset)
             
+            UtU <- diag(new_counts)
+            
           } else{
             new_counts <- 
               alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
+            
+            UtU <- diag(unlist(new_counts[, 1]))
           }
-          
-          UtU <- diag(unlist(new_counts[, 1])*nrow(subset))
         }
         
         #---- **make U matrix ----
