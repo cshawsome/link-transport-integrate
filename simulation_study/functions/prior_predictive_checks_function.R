@@ -128,6 +128,8 @@ prior_predictive_checks <-
       #---- **split sample ----
       synthetic_sample <- 
         anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
+      
+      calibration_subset %<>% mutate("calibration_sample" = 1)
     }
     
     #---- max index ----
@@ -227,10 +229,10 @@ prior_predictive_checks <-
         
         if(calibration_sample){
           prior_counts <- 
-            rbind(prior_imputed_clean[[random_draw]][, c(W, class)], 
-                  calibration_subset[, c(W, class)]) %>% 
-            filter(!!as.symbol(class) == 1) %>% 
-            unite("cell_ID", all_of(W), sep = "") %>% 
+            rbind(prior_imputed_clean[[random_draw]][, c(categorical_vars, class)], 
+                  calibration_subset[, c(categorical_vars, class)]) %>% 
+            filter(!!sym(class) == 1) %>% 
+            unite("cell_ID", all_of(categorical_vars), sep = "") %>% 
             dplyr::select("cell_ID") %>% table() %>% as.data.frame()
           
           if(nrow(prior_counts) < nrow(cell_ID_key)){
@@ -241,6 +243,8 @@ prior_predictive_checks <-
           }
           
           prior_counts %<>% mutate("prop" = Freq/sum(Freq))
+          
+          prior_UtU <- diag(prior_counts$Freq)
           
           prior_counts <- prior_counts$prop*nrow(subset)
           
@@ -264,10 +268,10 @@ prior_predictive_checks <-
           
           if(calibration_sample){
             new_counts <- 
-              rbind(prior_imputed_clean[[random_draw]][, c(W, class)], 
-                    calibration_subset[, c(W, class)]) %>% 
+              rbind(prior_imputed_clean[[random_draw]][, c(categorical_vars, class)], 
+                    calibration_subset[, c(categorical_vars, class)]) %>% 
               filter(!!as.symbol(class) == 1) %>% 
-              unite("cell_ID", all_of(W), sep = "") %>% 
+              unite("cell_ID", all_of(categorical_vars), sep = "") %>% 
               dplyr::select("cell_ID") %>% table() %>% as.data.frame()
             
             if(nrow(new_counts) < nrow(cell_ID_key)){
@@ -285,7 +289,7 @@ prior_predictive_checks <-
             new_counts <- 
               alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
           }
-  
+          
           UtU <- diag(unlist(new_counts[, 1])*nrow(subset))
         }
         
@@ -302,27 +306,54 @@ prior_predictive_checks <-
           U[index:(index - 1 + contingency_table[j, 1]), j] <- 1
         }
         
-        #---- **draw Sigma_0----
+        #---- **beta_0 + Sigma_0 ----
         if(calibration_sample){
           
+          #---- ****prior U matrix ----
+          prior_U <- matrix(0, nrow = sum(prior_UtU), ncol = nrow(prior_UtU))
+          
+          for(j in 1:ncol(prior_UtU)){
+            if(sum(prior_UtU[, j]) == 0){next}
+            if(j == 1){
+              index = 1
+            } else{
+              index = sum(prior_UtU[, 1:(j - 1)]) + 1
+            }
+            prior_U[index:(index - 1 + sum(prior_UtU[, j])), j] <- 1
+          }
+          
+          continuous_covariates <- 
+            rbind(prior_imputed_clean[[random_draw]][, c(continuous_vars, class)], 
+                  calibration_subset[, c(continuous_vars, class)]) %>% 
+            filter(!!sym(class) == 1) %>% 
+            dplyr::select(all_of(continuous_vars)) %>% as.matrix()
+          
+          V_0_inv <- t(A) %*% prior_UtU %*% A
+          V_0 <- solve(V_0_inv)
+          
+          beta_0 <- V_0 %*% t(A) %*% t(prior_U) %*% continuous_covariates
+          
+          residual <- continuous_covariates - prior_U %*% A %*% beta_0
+          
+          Sigma_prior <- t(residual) %*% residual
+            
         } else{
-          Sigma_prior <- 
+          V_0_inv <- 
             as.matrix(
-              prior_Sigma[[random_draw]][[
+              prior_V_inv[[random_draw]][[class]][, seq(1, ncol(A))])
+          
+          beta_0 <- 
+            as.matrix(
+              priors_beta[[random_draw]][[
                 class]][, seq(1, length(continuous_vars))])
+          
+            Sigma_prior <- 
+              as.matrix(
+                prior_Sigma[[random_draw]][[
+                  class]][, seq(1, length(continuous_vars))])
         }
         
         sig_Y <- riwish(v = as.numeric(nu_0[, class]), S = Sigma_prior)
-        
-        #---- **beta_0 ----
-        V_0_inv <- 
-          as.matrix(
-            prior_V_inv[[random_draw]][[class]][, seq(1, ncol(A))])
-        
-        beta_0 <- 
-          as.matrix(
-            priors_beta[[random_draw]][[
-              class]][, seq(1, length(continuous_vars))])
         
         #---- **draw beta | Sigma----
         beta_Sigma_Y <- 
@@ -359,7 +390,10 @@ prior_predictive_checks <-
                       mu = mu[, paste0(class, ":", j)], Sigma = sig_Y)
           }
         }
-        assign(paste0("Z_", class), subset[, all_of(continuous_vars)])
+        assign(paste0("Z_", class), 
+               rbind(subset[, c(all_of(continuous_vars), "calibration_sample")], 
+                     calibration_subset[, c(all_of(continuous_vars), 
+                                            "calibration_sample")]))
       }
       
       #---- **return ----
