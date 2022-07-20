@@ -268,39 +268,39 @@ prior_predictive_checks <-
         contingency_table <- rmultinom(n = 1, size = nrow(subset), prob = pi)
         UtU <- diag(contingency_table[, 1])
         
-        #---- **draw new UtU if needed ----
-        while(det(t(contrasts_matrix) %*% UtU %*% contrasts_matrix) < 1e-9){
-          #---- ****new random draw index ----
-          random_draw <- sample(seq(1, max_index), size = 1)
-          
-          if(calibration_sample){
-            new_counts <- 
-              rbind(prior_imputed_clean[[random_draw]][, c(categorical_vars, class)], 
-                    calibration_subset[, c(categorical_vars, class)]) %>% 
-              filter(!!as.symbol(class) == 1) %>% 
-              unite("cell_ID", all_of(categorical_vars), sep = "") %>% 
-              dplyr::select("cell_ID") %>% table() %>% as.data.frame()
-            
-            if(nrow(new_counts) < nrow(cell_ID_key)){
-              new_counts <- left_join(cell_ID_key, new_counts) %>% 
-                dplyr::select(c("cell_ID", "Freq")) 
-              
-              new_counts[which(is.na(new_counts$Freq)), "Freq"] <- 0
-            }
-            
-            new_counts %<>% mutate("prop" = Freq/sum(Freq))
-            
-            new_counts <- new_counts$prop*nrow(subset)
-            
-            UtU <- diag(new_counts)
-            
-          } else{
-            new_counts <- 
-              alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
-            
-            UtU <- diag(unlist(new_counts[, 1]))
-          }
-        }
+        # #---- **draw new UtU if needed ----
+        # while(det(t(contrasts_matrix) %*% UtU %*% contrasts_matrix) < 1e-9){
+        #   #---- ****new random draw index ----
+        #   random_draw <- sample(seq(1, max_index), size = 1)
+        #   
+        #   if(calibration_sample){
+        #     new_counts <- 
+        #       rbind(prior_imputed_clean[[random_draw]][, c(categorical_vars, class)], 
+        #             calibration_subset[, c(categorical_vars, class)]) %>% 
+        #       filter(!!as.symbol(class) == 1) %>% 
+        #       unite("cell_ID", all_of(categorical_vars), sep = "") %>% 
+        #       dplyr::select("cell_ID") %>% table() %>% as.data.frame()
+        #     
+        #     if(nrow(new_counts) < nrow(cell_ID_key)){
+        #       new_counts <- left_join(cell_ID_key, new_counts) %>% 
+        #         dplyr::select(c("cell_ID", "Freq")) 
+        #       
+        #       new_counts[which(is.na(new_counts$Freq)), "Freq"] <- 0
+        #     }
+        #     
+        #     new_counts %<>% mutate("prop" = Freq/sum(Freq))
+        #     
+        #     new_counts <- new_counts$prop*nrow(subset)
+        #     
+        #     UtU <- diag(new_counts)
+        #     
+        #   } else{
+        #     new_counts <- 
+        #       alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
+        #     
+        #     UtU <- diag(unlist(new_counts[, 1]))
+        #   }
+        # }
         
         #---- **make U matrix ----
         U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
@@ -342,9 +342,9 @@ prior_predictive_checks <-
           
           beta_0 <- V_0 %*% t(A) %*% t(prior_U) %*% continuous_covariates
           
-          residual <- continuous_covariates - prior_U %*% A %*% beta_0
-          
-          Sigma_prior <- t(residual) %*% residual
+          # residual <- continuous_covariates - prior_U %*% A %*% beta_0
+          # 
+          # Sigma_prior <- t(residual) %*% residual
           
         } else{
           V_0_inv <- 
@@ -356,13 +356,25 @@ prior_predictive_checks <-
               priors_beta[[random_draw]][[
                 class]][, seq(1, length(continuous_vars))])
           
-          Sigma_prior <- 
-            as.matrix(
-              prior_Sigma[[random_draw]][[
-                class]][, seq(1, length(continuous_vars))])
+          # Sigma_prior <- 
+          #   as.matrix(
+          #     prior_Sigma[[random_draw]][[
+          #       class]][, seq(1, length(continuous_vars))])
         }
         
-        sig_Y <- riwish(v = as.numeric(nu_0[, class]), S = Sigma_prior)
+        Sigma_prior <- diag(1, nrow = ncol(continuous_covariates))
+        
+        while(is.character(tryCatch(sig_Y <- 
+                                    MCMCpack::riwish(
+                                      v = as.numeric(nu_0[, class]), 
+                                      S = Sigma_prior), 
+                                    error = function(e) "error")) & 
+              redraws <= 100){
+          
+          Sigma_prior = Sigma_prior + 0.001
+          redraws = redraws + 1
+          #print(paste0("class = ", class, "; b = ", b))            
+        }
         
         #---- **draw beta | Sigma----
         beta_Sigma_Y <- 
