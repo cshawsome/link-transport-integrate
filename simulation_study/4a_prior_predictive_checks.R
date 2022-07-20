@@ -68,12 +68,16 @@ plan(multisession, workers = (availableCores() - 2))
 #---- **specify indices ----
 indices <-
   which(dataset_names %in%
-          paste0("normal_", c(500), "_ADAMS"))
+          paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
 
 #---- **run parallel checks ----
 future_lapply(synthetic_HCAP_list[indices], function(x)
-  prior_predictive_checks(dataset_to_copy = x, calibration_sample = FALSE, 
-                          calibration_prop = NA, calibration_sample_name = NA,
+  prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
+                          calibration_prop = 0.50, 
+                          calibration_sample_name = "HCAP_50",
+                          path_to_raw_prior_sample = 
+                            paste0(path_to_box, "analyses/simulation_study/", 
+                                   "prior_data/MI/MI_datasets_cleaned"), 
                           path_to_data = path_to_box, 
                           path_to_output_folder =
                             paste0(path_to_box,
@@ -81,7 +85,8 @@ future_lapply(synthetic_HCAP_list[indices], function(x)
                                    unique(x[, "dataset_name"]),
                                    "/prior_predictive_checks/"), 
                           continuous_check_test = TRUE,
-                          continuous_check = c("MCI"),
+                          continuous_check = 
+                            c("Unimpaired", "MCI", "Dementia", "Other"),
                           categorical_vars = W, continuous_vars = Z,
                           variable_labels, color_palette, contrasts_matrix = A,
                           kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
