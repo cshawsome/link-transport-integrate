@@ -114,15 +114,23 @@ prior_predictive_checks <-
         slice_sample(dataset_to_copy, prop = calibration_prop)
     }
     
+    #---- calibration flag in dataset to copy ----
+    dataset_to_copy %<>% mutate("calibration_sample" = 0)
+    
+    if(calibration_sample){
+      dataset_to_copy[which(dataset_to_copy$HHIDPN %in% 
+                              calibration_subset$HHIDPN), 
+                      "calibration_sample"] <- 1
+    }
+    
     #---- select variables ----
     vars <- unique(c(unimpaired_preds, other_preds, mci_preds, 
                      "Unimpaired", "MCI", "Dementia", "Other"))
     
     synthetic_sample <- dataset_to_copy %>% 
-      dplyr::select("HHIDPN", all_of(vars)) %>% 
+      dplyr::select("HHIDPN", all_of(vars), "calibration_sample") %>% 
       #pre-allocate columns
-      mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, 
-             "calibration_sample" = 0)
+      mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
     
     if(calibration_sample){
       #---- **split sample ----
@@ -143,8 +151,7 @@ prior_predictive_checks <-
       #---- latent class ----
       group_num = 1
       for(model in c("unimpaired", "other", "mci")){
-        subset_index <- which(synthetic_sample$group_num == 0 & 
-                                synthetic_sample$calibration_sample == 0)
+        subset_index <- which(synthetic_sample$group_num == 0)
         random_draw <- sample(seq(1, max_index), size = 1)
         
         if(calibration_sample){
@@ -336,7 +343,7 @@ prior_predictive_checks <-
           residual <- continuous_covariates - prior_U %*% A %*% beta_0
           
           Sigma_prior <- t(residual) %*% residual
-            
+          
         } else{
           V_0_inv <- 
             as.matrix(
@@ -347,10 +354,10 @@ prior_predictive_checks <-
               priors_beta[[random_draw]][[
                 class]][, seq(1, length(continuous_vars))])
           
-            Sigma_prior <- 
-              as.matrix(
-                prior_Sigma[[random_draw]][[
-                  class]][, seq(1, length(continuous_vars))])
+          Sigma_prior <- 
+            as.matrix(
+              prior_Sigma[[random_draw]][[
+                class]][, seq(1, length(continuous_vars))])
         }
         
         sig_Y <- riwish(v = as.numeric(nu_0[, class]), S = Sigma_prior)
@@ -390,10 +397,7 @@ prior_predictive_checks <-
                       mu = mu[, paste0(class, ":", j)], Sigma = sig_Y)
           }
         }
-        assign(paste0("Z_", class), 
-               rbind(subset[, c(all_of(continuous_vars), "calibration_sample")], 
-                     calibration_subset[, c(all_of(continuous_vars), 
-                                            "calibration_sample")]))
+        assign(paste0("Z_", class), subset[, all_of(continuous_vars)])
       }
       
       #---- **return ----
@@ -417,7 +421,8 @@ prior_predictive_checks <-
     #---- **dem class ----
     to_copy_dementia_plot_data <- 
       as.data.frame(table(
-        dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
+        dataset_to_copy[which(dataset_to_copy$calibration_sample == 0), 
+                        c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
       pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
     
     dem_sub <- lapply(synthetic, "[[", "Group") %>% do.call(cbind, .) %>% 
@@ -475,9 +480,10 @@ prior_predictive_checks <-
     
     #---- **class-specific continuous ----
     for(class in continuous_check){
-      true_data <- dataset_to_copy %>% 
+      true_data <- dataset_to_copy %>% filter(calibration_sample == 0) %>%
         dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
-        filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
+        filter(!!as.symbol(class) == 1) %>%
+        mutate("Color" = "black")
       
       continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
       
@@ -485,7 +491,8 @@ prior_predictive_checks <-
         continuous_list[[i]] <- continuous_list[[i]] %>% 
           dplyr::select(-c("Group")) %>%
           mutate("run" = i, "Type" = "Synthetic") %>% 
-          rbind(., true_data %>% dplyr::select(-!!as.symbol(class)) %>% 
+          rbind(., true_data %>% 
+                  dplyr::select(-!!as.symbol(class)) %>% 
                   mutate("run" = i, "Type" = "Observed"))
       }
       
