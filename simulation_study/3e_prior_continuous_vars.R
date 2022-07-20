@@ -117,7 +117,7 @@ estimate_cont_priors <- function(data, W, Z, A){
     # }
     
     #---- **beta hat ----
-    continuous_covariates <- subset %>% dplyr::select(all_of(Z)) %>% as.matrix
+    continuous_covariates <- subset %>% dplyr::select(all_of(Z)) %>% as.matrix()
     
     V_inv <- t(A) %*% UtU %*% A
     V <- solve(V_inv)
