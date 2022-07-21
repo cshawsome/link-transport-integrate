@@ -364,6 +364,7 @@ prior_predictive_checks <-
         
         Sigma_prior <- diag(1, nrow = ncol(continuous_covariates))
         
+        redraws = 0
         while(is.character(tryCatch(sig_Y <- 
                                     MCMCpack::riwish(
                                       v = as.numeric(nu_0[, class]), 
