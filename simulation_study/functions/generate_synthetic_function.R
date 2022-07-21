@@ -86,13 +86,70 @@ generate_synthetic <-
       prior_Sigma <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
                                     "prior_data/priors_Sigma")) 
     } else{
+      #---- read in raw prior sample ----
+      prior_imputed_clean <- readRDS(path_to_raw_prior_sample) %>%
+        lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
       
+      #---- **prep sample ----
+      variable_labels_ADAMS <- variable_labels %>% 
+        filter(ADAMS %in% colnames(prior_imputed_clean[[1]]))
+      
+      prior_imputed_clean <- 
+        lapply(prior_imputed_clean, 
+               function(x) rename_at(x, vars(variable_labels_ADAMS$ADAMS), ~ 
+                                       variable_labels_ADAMS$data_label)) 
+      
+      #---- selected vars ----
+      selected_vars <- 
+        read_csv(paste0(path_to_data, 
+                        "analyses/simulation_study/variable_selection/", 
+                        "model_coefficients.csv")) 
+      
+      #unimpaired model predictors
+      unimpaired_preds <- c("(Intercept)", selected_vars %>% 
+                              filter(data_label != "Intercept" & Unimpaired != 0) %>% 
+                              dplyr::select(data_label) %>% unlist())
+      
+      #other model predictors
+      other_preds <- c("(Intercept)", selected_vars %>% 
+                         filter(data_label != "Intercept" & Other != 0) %>% 
+                         dplyr::select(data_label) %>% unlist())
+      
+      #mci model predictors
+      mci_preds <- c("(Intercept)", selected_vars %>% 
+                       filter(data_label != "Intercept" & MCI != 0) %>% 
+                       dplyr::select(data_label) %>% unlist())
+      
+      #---- calibration subset ----
+      calibration_subset <- 
+        slice_sample(dataset_to_copy, prop = calibration_prop)
     }
+    
+    #---- calibration flag in dataset to copy ----
+    dataset_to_copy %<>% mutate("calibration_sample" = 0)
+    
+    if(calibration_sample){
+      dataset_to_copy[which(dataset_to_copy$HHIDPN %in% 
+                              calibration_subset$HHIDPN), 
+                      "calibration_sample"] <- 1
+    }
+    
+    #---- select variables ----
+    vars <- unique(c(unimpaired_preds, other_preds, mci_preds, 
+                     "Unimpaired", "MCI", "Dementia", "Other"))
     
     #---- sampling counts ----
     warm_up = warm_up
     synthetic_sets = num_synthetic
     B = warm_up + synthetic_sets
+    
+    if(calibration_sample){
+      #---- **split sample ----
+      dataset_to_copy <- 
+        anti_join(dataset_to_copy, calibration_subset, by = "HHIDPN")
+      
+      calibration_subset %<>% mutate("calibration_sample" = 1)
+    }
     
     #---- count contingency cells ----
     cross_class_label <- dataset_to_copy[, categorical_vars] %>%
@@ -147,7 +204,11 @@ generate_synthetic <-
     }
     
     #---- max index ----
-    max_index <- length(priors_beta)
+    if(calibration_sample){
+      max_index <- length(prior_imputed_clean)
+    } else{
+      max_index <- length(priors_beta)  
+    }
     
     #---- nu_0 and kappa_0 hyperparameters ----
     nu_0 <- nu_0_mat[
@@ -171,8 +232,29 @@ generate_synthetic <-
         for(model in c("unimpaired", "other", "mci")){
           random_draw <- sample(seq(1, max_index), size = 1)
           
-          prior_betas <- get(paste0(model, "_betas"))[, random_draw]
-          prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
+          if(!calibration_sample){
+            prior_betas <- get(paste0(model, "_betas"))[, random_draw]
+            prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
+          } else{
+            
+            if(model == "mci"){
+              class_name = "MCI"
+            } else{
+              class_name = str_to_sentence(model)
+            }
+            
+            latent_class_model <- 
+              glm(formula(paste(class_name, " ~ ", 
+                                paste(get(paste0(model, "_preds"))[-1], 
+                                      collapse = " + "), 
+                                collapse = "")), family = "binomial", 
+                  #don't select (Intercept) variable
+                  data = rbind(prior_imputed_clean[[random_draw]][, vars[-1]], 
+                               calibration_subset[, vars[-1]]))
+            
+            prior_betas <- coefficients(latent_class_model)
+            prior_cov <- vcov(latent_class_model)
+          }
           
           model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
             t(mvnfast::rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov))
@@ -241,8 +323,31 @@ generate_synthetic <-
           }
           
           random_draw <- sample(seq(1, max_index), size = 1)
-          prior_count <- 
-            alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
+          
+          if(!calibration_sample){
+            prior_count <- 
+              alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)  
+          } else{
+            prior_count <- 
+              rbind(prior_imputed_clean[[random_draw]][, c(categorical_vars, class)], 
+                    calibration_subset[, c(categorical_vars, class)]) %>% 
+              filter(!!sym(class) == 1) %>% 
+              unite("cell_ID", all_of(categorical_vars), sep = "") %>% 
+              dplyr::select("cell_ID") %>% table() %>% as.data.frame()
+            
+            if(nrow(prior_count) < nrow(cell_ID_key)){
+              prior_count <- left_join(cell_ID_key, prior_count) %>% 
+                dplyr::select(c("cell_ID", "Freq")) 
+              
+              prior_count[which(is.na(prior_count$Freq)), "Freq"] <- 0
+            }
+            
+            prior_count %<>% mutate("prop" = Freq/sum(Freq))
+            
+            prior_UtU <- diag(prior_count$Freq)
+            
+            prior_count <- prior_count$prop*nrow(subset)
+          }
           
           posterior_count <- prior_count + observed_count
           
@@ -297,14 +402,41 @@ generate_synthetic <-
           
           V_inv <- t(A) %*% UtU %*% A 
           random_draw <- sample(seq(1, max_index), size = 1)
-          V_0_inv <- 
-            as.matrix(
-              prior_V_inv[[random_draw]][[class]][, seq(1, ncol(V_inv))])
           
-          beta_0 <- 
-            as.matrix(
-              priors_beta[[random_draw]][[
-                class]][, seq(1, length(continuous_vars))])
+          if(!calibration_sample){
+            V_0_inv <- 
+              as.matrix(
+                prior_V_inv[[random_draw]][[class]][, seq(1, ncol(V_inv))])
+            
+            beta_0 <- 
+              as.matrix(
+                priors_beta[[random_draw]][[
+                  class]][, seq(1, length(continuous_vars))])
+          } else{
+            #---- ****prior U matrix ----
+            prior_U <- matrix(0, nrow = sum(prior_UtU), ncol = nrow(prior_UtU))
+            
+            for(j in 1:ncol(prior_UtU)){
+              if(sum(prior_UtU[, j]) == 0){next}
+              if(j == 1){
+                index = 1
+              } else{
+                index = sum(prior_UtU[, 1:(j - 1)]) + 1
+              }
+              prior_U[index:(index - 1 + sum(prior_UtU[, j])), j] <- 1
+            }
+            
+            prior_continuous_covariates <- 
+              rbind(prior_imputed_clean[[random_draw]][, c(continuous_vars, class)], 
+                    calibration_subset[, c(continuous_vars, class)]) %>% 
+              filter(!!sym(class) == 1) %>% 
+              dplyr::select(all_of(continuous_vars)) %>% as.matrix()
+            
+            V_0_inv <- t(A) %*% prior_UtU %*% A
+            V_0 <- solve(V_0_inv)
+            
+            beta_0 <- V_0 %*% t(A) %*% t(prior_U) %*% prior_continuous_covariates
+          }
           
           M <- solve(V_inv + unlist(kappa_0[, class])*V_0_inv)
           m <-  t(A) %*% t(U) %*% continuous_covariates + 
