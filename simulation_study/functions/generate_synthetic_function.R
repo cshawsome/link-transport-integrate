@@ -50,7 +50,7 @@ generate_synthetic <-
         }
         
         if(!dir.exists(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                              "calibration_", calibration_sample_name, "run_", 
+                              "calibration_", calibration_sample_name, "/run_", 
                               run_number))){
           dir.create(paste0(path_to_analyses_folder, "diagnostics_data/", 
                             "calibration_", calibration_sample_name, "/run_", 
@@ -121,17 +121,9 @@ generate_synthetic <-
                        dplyr::select(data_label) %>% unlist())
       
       #---- calibration subset ----
+      calibration_var <- paste0("calibration_", calibration_prop*100)
       calibration_subset <- 
-        slice_sample(dataset_to_copy, prop = calibration_prop)
-    }
-    
-    #---- calibration flag in dataset to copy ----
-    dataset_to_copy %<>% mutate("calibration_sample" = 0)
-    
-    if(calibration_sample){
-      dataset_to_copy[which(dataset_to_copy$HHIDPN %in% 
-                              calibration_subset$HHIDPN), 
-                      "calibration_sample"] <- 1
+        dataset_to_copy %>% filter(!!sym(calibration_var) == 1)
     }
     
     #---- select variables ----
