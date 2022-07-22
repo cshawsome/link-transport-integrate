@@ -1,28 +1,33 @@
 posterior_predictive_checks <- 
-  function(dataset_to_copy, categorical_covariates, continuous_covariates, 
-           contrasts_matrix, cell_ID_key, variable_labels, color_palette, 
-           path_to_analyses_folder, path_to_figures_folder){
+  function(dataset_to_copy, calibration_sample = FALSE, categorical_covariates, 
+           continuous_covariates, contrasts_matrix, cell_ID_key, variable_labels, 
+           color_palette, path_to_analyses_folder, path_to_figures_folder){
     
-    #---- read in synthetic data ----
-    file_paths <- 
-      list.dirs(path = paste0(path_to_analyses_folder, "synthetic_data"), 
-                full.names = TRUE, recursive = FALSE)
-    
-    for(chain in 1:length(file_paths)){
-      data_file <- list.files(file_paths[chain], full.names = TRUE)
-      synthetic_sample <- readRDS(data_file)
+    if(!calibration_sample){
+      #---- read in synthetic data ----
+      file_paths <- 
+        list.dirs(path = paste0(path_to_analyses_folder, "synthetic_data"), 
+                  full.names = TRUE, recursive = FALSE)
       
-      #---- **formatting ----
-      #add chain number
-      synthetic_sample <-
-        lapply(synthetic_sample, function(x) x %<>% mutate("chain" = chain))
+      for(chain in 1:length(file_paths)){
+        data_file <- list.files(file_paths[chain], full.names = TRUE)
+        synthetic_sample <- readRDS(data_file)
+        
+        #---- **formatting ----
+        #add chain number
+        synthetic_sample <-
+          lapply(synthetic_sample, function(x) x %<>% mutate("chain" = chain))
+        
+        #add sample number
+        sample_nums <- as.list(seq(1, length(synthetic_sample)))
+        synthetic_sample <- Map(cbind, synthetic_sample, sample = sample_nums)
+      }
       
-      #add sample number
-      sample_nums <- as.list(seq(1, length(synthetic_sample)))
-      synthetic_sample <- Map(cbind, synthetic_sample, sample = sample_nums)
+      synthetic_sample %<>% do.call(rbind, .)
+    } else{
+      
     }
     
-    synthetic_sample %<>% do.call(rbind, .)
     
     #---- number of chains and samples ----
     num_chains <- max(synthetic_sample$chain)
@@ -588,18 +593,18 @@ posterior_predictive_checks <-
     }
   }
 
-#---- test function ----
-dataset_to_copy = synthetic_HCAP_list[[7]]
-categorical_covariates = W
-continuous_covariates = Z
-contrasts_matrix = A
-path_to_analyses_folder =
-  paste0(path_to_box,
-         "analyses/simulation_study/HCAP_HRS_",
-         unique(synthetic_HCAP_list[[7]][, "dataset_name"]), "/")
-path_to_figures_folder =
-  paste0(path_to_box,
-         "figures/simulation_study/HCAP_HRS_",
-         unique(synthetic_HCAP_list[[7]][, "dataset_name"]), "/")
+# #---- test function ----
+# dataset_to_copy = synthetic_HCAP_list[[7]]
+# categorical_covariates = W
+# continuous_covariates = Z
+# contrasts_matrix = A
+# path_to_analyses_folder =
+#   paste0(path_to_box,
+#          "analyses/simulation_study/HCAP_HRS_",
+#          unique(synthetic_HCAP_list[[7]][, "dataset_name"]), "/")
+# path_to_figures_folder =
+#   paste0(path_to_box,
+#          "figures/simulation_study/HCAP_HRS_",
+#          unique(synthetic_HCAP_list[[7]][, "dataset_name"]), "/")
 
 
