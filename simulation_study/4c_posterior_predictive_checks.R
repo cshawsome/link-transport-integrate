@@ -52,12 +52,16 @@ plan(multisession, workers = (availableCores() - 2))
 
 #---- **specify indices ----
 indices <- which(dataset_names %in% 
-                   paste0("normal_", c(8000), "_ADAMS"))
+                   paste0("normal_", c(500), "_ADAMS"))
 
 future_lapply(synthetic_HCAP_list[indices], function(x)
-  posterior_predictive_checks(dataset_to_copy = x, categorical_covariates = W, 
+  posterior_predictive_checks(dataset_to_copy = x, calibration_sample = FALSE, 
+                              calibration_sample_name = "HCAP_50",
+                              categorical_covariates = W, 
                               continuous_covariates = Z, contrasts_matrix = A,
-                              cell_ID_key, variable_labels, color_palette,
+                              cell_ID_key = cell_ID_key, 
+                              variable_labels = variable_labels, 
+                              color_palette = color_palette,
                               path_to_analyses_folder = 
                                 paste0(path_to_box, 
                                        "analyses/simulation_study/HCAP_HRS_", 
