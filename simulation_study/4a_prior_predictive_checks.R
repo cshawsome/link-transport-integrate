@@ -84,7 +84,8 @@ lapply(synthetic_HCAP_list[indices], function(x)
                           continuous_check = 
                             c("Unimpaired", "MCI", "Dementia", "Other"),
                           categorical_vars = W, continuous_vars = Z,
-                          variable_labels, color_palette, contrasts_matrix = A,
+                          variable_labels = variable_labels, 
+                          color_palette = color_palette, contrasts_matrix = A,
                           kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
                           num_synthetic = 1000))
 end <- Sys.time() - start
