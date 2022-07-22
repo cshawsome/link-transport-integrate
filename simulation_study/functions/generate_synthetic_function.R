@@ -139,8 +139,6 @@ generate_synthetic <-
       #---- **split sample ----
       dataset_to_copy <- 
         anti_join(dataset_to_copy, calibration_subset, by = "HHIDPN")
-      
-      calibration_subset %<>% mutate("calibration_sample" = 1)
     }
     
     #---- count contingency cells ----
