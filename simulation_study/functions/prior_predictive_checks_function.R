@@ -120,7 +120,7 @@ prior_predictive_checks <-
                      "Unimpaired", "MCI", "Dementia", "Other"))
     
     synthetic_sample <- dataset_to_copy %>% 
-      dplyr::select("HHIDPN", all_of(vars), "calibration_sample") %>% 
+      dplyr::select("HHIDPN", all_of(vars)) %>% 
       #pre-allocate columns
       mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
     
@@ -128,8 +128,6 @@ prior_predictive_checks <-
       #---- **split sample ----
       synthetic_sample <- 
         anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
-      
-      calibration_subset %<>% mutate("calibration_sample" = 1)
     }
     
     #---- max index ----
@@ -426,11 +424,18 @@ prior_predictive_checks <-
     
     #---- plots ----
     #---- **dem class ----
-    to_copy_dementia_plot_data <- 
-      as.data.frame(table(
-        dataset_to_copy[which(dataset_to_copy$calibration_sample == 0), 
-                        c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
-      pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
+    if(!calibration_sample){
+      to_copy_dementia_plot_data <- 
+        as.data.frame(table(
+          dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
+        pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
+    } else{
+      to_copy_dementia_plot_data <- 
+        as.data.frame(table(
+          dataset_to_copy %>% filter(!!sym(calibration_var) == 0) %>% 
+            dplyr::select(c("Unimpaired", "MCI", "Dementia", "Other")))) %>% 
+        pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
+    }
     
     dem_sub <- lapply(synthetic, "[[", "Group") %>% do.call(cbind, .) %>% 
       set_colnames(seq(1, runs)) %>% as.data.frame() %>%
@@ -487,10 +492,15 @@ prior_predictive_checks <-
     
     #---- **class-specific continuous ----
     for(class in continuous_check){
-      true_data <- dataset_to_copy %>% filter(calibration_sample == 0) %>%
-        dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
-        filter(!!as.symbol(class) == 1) %>%
-        mutate("Color" = "black")
+      if(!calibration_sample){
+        true_data <- dataset_to_copy %>% 
+          dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
+          filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
+      } else{
+        true_data <- dataset_to_copy %>% filter(!!sym(calibration_var) == 0) %>%
+          dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
+          filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
+      }
       
       continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
       
