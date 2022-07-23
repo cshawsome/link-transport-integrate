@@ -224,7 +224,7 @@ posterior_predictive_checks <-
         left_join(cell_ID_key, .)  
     } else{
       counts <- dataset_to_copy %>% 
-        filter(!!sym(paste0("calibration_", 100*calibration_prop) == 0)) %>%
+        filter(!!sym(paste0("calibration_", 100*calibration_prop)) == 0) %>%
         dplyr::select(all_of(categorical_covariates)) %>% 
         unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
         set_colnames(c("cell_ID", "Freq")) %>% 
