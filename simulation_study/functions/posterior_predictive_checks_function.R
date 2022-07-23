@@ -285,6 +285,7 @@ posterior_predictive_checks <-
     
     synthetic_counts[, "chain"] <- rep(seq(1, num_chains), 
                                        each = nrow(contrasts_matrix)*4) 
+    
     for(chain_num in unique(synthetic_sample$chain)){
       #counts from synthetic datasets
       for(num in 1:num_samples){
@@ -292,18 +293,27 @@ posterior_predictive_checks <-
           filter(chain == chain_num & sample == num) 
         
         for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-          counts <- subsample %>% filter(Group == group) %>% 
-            dplyr::select(all_of(categorical_covariates)) %>% 
-            unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-            set_colnames(c("cell_ID", "Freq")) %>% left_join(., cell_ID_key)
+          counts <- subsample %>% filter(Group == group)
           
-          counts[which(is.na(counts$Freq)), "Freq"] <- 0
-          
-          synthetic_counts[
-            which(synthetic_counts$group == group & 
-                    synthetic_counts$chain == chain_num & 
-                    synthetic_counts$cell %in% counts$cell_name), num] <- 
-            counts$Freq
+          if(nrow(counts) == 0){
+            synthetic_counts[
+              which(synthetic_counts$group == group & 
+                      synthetic_counts$chain == chain_num & 
+                      synthetic_counts$cell %in% counts$cell_name), num] <- 0
+          } else{
+            counts <- subsample %>% filter(Group == group) %>% 
+              dplyr::select(all_of(categorical_covariates)) %>% 
+              unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+              set_colnames(c("cell_ID", "Freq")) %>% left_join(cell_ID_key, .)
+            
+            counts[which(is.na(counts$Freq)), "Freq"] <- 0
+            
+            synthetic_counts[
+              which(synthetic_counts$group == group & 
+                      synthetic_counts$chain == chain_num & 
+                      synthetic_counts$cell %in% counts$cell_name), num] <- 
+              counts$Freq
+          }
         }
       }
     }
