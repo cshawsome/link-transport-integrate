@@ -229,7 +229,6 @@ prior_predictive_checks <-
                     paste0("calibration_", 100*calibration_prop)), ]  
       }
       
-      
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
         #---- **index for random draws ----
         random_draw <- sample(seq(1, max_index), size = 1)
