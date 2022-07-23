@@ -116,7 +116,6 @@ posterior_predictive_checks <-
       }
     }
     
-    
     #---- chain convergence ----
     if(!calibration_sample){
       #---- **read in data ----
@@ -340,7 +339,7 @@ posterior_predictive_checks <-
       for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
         counts <- dataset_to_copy %>% 
           filter(!!as.symbol(group) == 1 & 
-                   !!sym(paste0("calibration_", 100*calibration_prop) == 0)) %>% 
+                   !!sym(paste0("calibration_", 100*calibration_prop)) == 0) %>% 
           dplyr::select(all_of(categorical_covariates)) %>% 
           unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
           set_colnames(c("cell_ID", "Freq")) %>% 
@@ -511,7 +510,7 @@ posterior_predictive_checks <-
       } else{
         subsample <- dataset_to_copy %>% 
           filter(!!as.symbol(group) == 1 & 
-                   !!symbol(paste0("calibration_", 100*calibration_prop)) == 0)
+                   !!sym(paste0("calibration_", 100*calibration_prop)) == 0)
       }
       
       for(var in continuous_covariates){
@@ -620,7 +619,7 @@ posterior_predictive_checks <-
                width = 8, height = 10, units = "in")  
       } else{
         ggsave(filename = paste0(path_to_figures_folder, 
-                                 "posterior_predictive_checks/calibration", 
+                                 "posterior_predictive_checks/calibration_", 
                                  calibration_sample_name, "/run_", chain_num, 
                                  "/continuous_vars/skew/overall.jpeg"), 
                width = 8, height = 10, units = "in")
