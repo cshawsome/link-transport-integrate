@@ -1,5 +1,6 @@
 posterior_predictive_checks <- 
-  function(dataset_to_copy, calibration_sample = FALSE, categorical_covariates, 
+  function(dataset_to_copy, calibration_sample = FALSE, calibration_prop, 
+           calibration_sample_name, categorical_covariates, 
            continuous_covariates, contrasts_matrix, cell_ID_key, variable_labels, 
            color_palette, path_to_analyses_folder, path_to_figures_folder){
     
