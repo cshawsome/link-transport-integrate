@@ -201,7 +201,6 @@ generate_synthetic <-
     }
     
     #---- nu_0 and kappa_0 hyperparameters ----
-    
     if(!calibration_sample){
       kappa_0 <- 
         kappa_0_mat[
