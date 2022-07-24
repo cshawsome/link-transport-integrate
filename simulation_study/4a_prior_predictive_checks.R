@@ -81,8 +81,8 @@ lapply(synthetic_HCAP_list[indices], function(x)
                                    unique(x[, "dataset_name"]),
                                    "/prior_predictive_checks/"), 
                           continuous_check_test = TRUE,
-                          continuous_check = 
-                            c("Unimpaired", "MCI", "Dementia", "Other"),
+                          continuous_check = c("Unimpaired", "MCI", "Dementia", 
+                                               "Other"),
                           categorical_vars = W, continuous_vars = Z,
                           variable_labels = variable_labels, 
                           color_palette = color_palette, contrasts_matrix = A,
@@ -90,38 +90,38 @@ lapply(synthetic_HCAP_list[indices], function(x)
                           num_synthetic = 1000))
 end <- Sys.time() - start
 
-#---- run checks in parallel ----
-#1.7 days for all checks to run in serial
-#1.3 hours for 5 runs in parallel
-set.seed(20220329)
-start <- Sys.time()
-plan(multisession, workers = (availableCores() - 2))
-
-#---- **specify indices ----
-indices <-
-  which(dataset_names %in%
-          paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
-
-#---- **run parallel checks ----
-future_lapply(synthetic_HCAP_list[indices], function(x)
-  prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
-                          calibration_prop = 0.50, 
-                          calibration_sample_name = "HCAP_50",
-                          path_to_raw_prior_sample = 
-                            paste0(path_to_box, "analyses/simulation_study/", 
-                                   "prior_data/MI/MI_datasets_cleaned"), 
-                          path_to_data = path_to_box, 
-                          path_to_output_folder =
-                            paste0(path_to_box,
-                                   "figures/simulation_study/HCAP_HRS_",
-                                   unique(x[, "dataset_name"]),
-                                   "/prior_predictive_checks/"), 
-                          continuous_check_test = TRUE,
-                          continuous_check = 
-                            c("Unimpaired", "MCI", "Dementia", "Other"),
-                          categorical_vars = W, continuous_vars = Z,
-                          variable_labels, color_palette, contrasts_matrix = A,
-                          kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
-                          num_synthetic = 1000), future.seed = TRUE)
-end <- Sys.time() - start
-plan(sequential)
+# #---- run checks in parallel ----
+# #1.7 days for all checks to run in serial
+# #1.3 hours for 5 runs in parallel
+# set.seed(20220329)
+# start <- Sys.time()
+# plan(multisession, workers = (availableCores() - 2))
+# 
+# #---- **specify indices ----
+# indices <-
+#   which(dataset_names %in%
+#           paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
+# 
+# #---- **run parallel checks ----
+# future_lapply(synthetic_HCAP_list[indices], function(x)
+#   prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
+#                           calibration_prop = 0.50, 
+#                           calibration_sample_name = "HCAP_50",
+#                           path_to_raw_prior_sample = 
+#                             paste0(path_to_box, "analyses/simulation_study/", 
+#                                    "prior_data/MI/MI_datasets_cleaned"), 
+#                           path_to_data = path_to_box, 
+#                           path_to_output_folder =
+#                             paste0(path_to_box,
+#                                    "figures/simulation_study/HCAP_HRS_",
+#                                    unique(x[, "dataset_name"]),
+#                                    "/prior_predictive_checks/"), 
+#                           continuous_check_test = TRUE,
+#                           continuous_check = 
+#                             c("Unimpaired", "MCI", "Dementia", "Other"),
+#                           categorical_vars = W, continuous_vars = Z,
+#                           variable_labels, color_palette, contrasts_matrix = A,
+#                           kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
+#                           num_synthetic = 1000), future.seed = TRUE)
+# end <- Sys.time() - start
+# plan(sequential)
