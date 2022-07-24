@@ -76,29 +76,6 @@ for(dist_name in c("normal")){
 }
 end <- Sys.time() - start
 
-#---- comparison algorithms ----
-#Predict dementia using published algorithms
-
-#---- **source functions ----
-source(here::here("functions", "read_results.R"))
-
-#---- **read in superpop data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-
-#---- **data paths ----
-superpop_data_paths <- 
-  list.files(path = paste0(path_to_box, 
-                           "analyses/simulation_study/superpopulations"), 
-             full.names = TRUE, pattern = "*.csv")
-
-superpop_data_list <- lapply(superpop_data_paths, read_results)
-
-#---- **Herzog-Wallace ----
-#maximizes specificity
-# predictors = HRS Total Cognition (Total score = 35)
-# score cutoff < 8 = Dementia
-
-
 #---- synthetic HRS ----
 #---- **source functions ----
 source(here::here("functions", "read_results.R"))
@@ -154,8 +131,16 @@ synthetic_HCAP_list <-
   lapply(synthetic_HRS_list, 
          function(x) 
            x %>% group_by(married_partnered) %>% slice_sample(prop = 0.5) %>% 
-           mutate("(Intercept)" = 1) %>% ungroup())
+           mutate("(Intercept)" = 1, 
+                  "calibration_50" = 0) %>% ungroup())
 
+#---- **flag calibration subsample ----
+for(i in 1:length(synthetic_HCAP_list)){
+    synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
+                                    size = 0.5*nrow(synthetic_HCAP_list[[i]]), 
+                                    replace = FALSE), "calibration_50"] <- 1
+}
+           
 #---- **save data ----
 saveRDS(synthetic_HCAP_list, 
         file = paste0(path_to_box, 

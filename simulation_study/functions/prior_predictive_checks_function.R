@@ -1,51 +1,141 @@
 prior_predictive_checks <- 
-  function(unimpaired_preds, other_preds, mci_preds, categorical_vars, 
-           continuous_vars, continuous_check_test = FALSE,
+  function(dataset_to_copy, calibration_sample = FALSE, calibration_prop = NA, 
+           calibration_sample_name = NA, path_to_raw_prior_sample, path_to_data, 
+           path_to_output_folder, continuous_check_test = FALSE, 
            continuous_check = c("Unimpaired", "MCI", "Dementia", "Other"), 
-           variable_labels, color_palette, dataset_to_copy, num_synthetic, 
-           unimpaired_betas, unimpaired_cov, other_betas, other_cov, mci_betas, 
-           mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, prior_beta, nu_0_mat, 
-           kappa_0_mat, contrasts_matrix, path_to_folder){
+           categorical_vars, continuous_vars, variable_labels, color_palette,
+           contrasts_matrix, kappa_0_mat, nu_0_mat, num_synthetic){
+    
+    #---- update path to output folder ----
+    if(!calibration_sample){
+      path_to_output_folder <- 
+        paste0(path_to_output_folder, "no_calibration_sample/")
+    } else{
+      path_to_output_folder <- 
+        paste0(path_to_output_folder, "calibration_", calibration_sample_name, 
+               "/")
+    }
     
     #---- create folders for results ----
-    if(!dir.exists(paste0(path_to_folder, "impairment_classes/"))){
-      dir.create(paste0(path_to_folder, "impairment_classes/"), 
+    if(!dir.exists(paste0(path_to_output_folder, "impairment_classes/"))){
+      dir.create(paste0(path_to_output_folder, "impairment_classes/"), 
                  recursive = TRUE) 
     }
     
     for(class in c("unimpaired", "mci", "dementia", "other")){
-      if(!dir.exists(paste0(path_to_folder, "continuous_vars/", 
+      if(!dir.exists(paste0(path_to_output_folder, "continuous_vars/", 
                             tolower(class)))){
-        dir.create(paste0(path_to_folder, "continuous_vars/", 
+        dir.create(paste0(path_to_output_folder, "continuous_vars/", 
                           tolower(class)), recursive = TRUE)
       }
       
-      if(!dir.exists(paste0(path_to_folder, "continuous_vars/error_set/", 
+      if(!dir.exists(paste0(path_to_output_folder, "continuous_vars/error_set/", 
                             tolower(class)))){
-        dir.create(paste0(path_to_folder, "continuous_vars/error_set/", 
+        dir.create(paste0(path_to_output_folder, "continuous_vars/error_set/", 
                           tolower(class)), recursive = TRUE)
       }
       
       if(continuous_check_test & 
-         !dir.exists(paste0(path_to_folder, "continuous_vars/test_set/", 
+         !dir.exists(paste0(path_to_output_folder, "continuous_vars/test_set/", 
                             tolower(class)))){
         
-        dir.create(paste0(path_to_folder, "continuous_vars/test_set/", 
+        dir.create(paste0(path_to_output_folder, "continuous_vars/test_set/", 
                           tolower(class)), recursive = TRUE)
         
       }
+    }
+    
+    #---- set prior data ----
+    if(!calibration_sample){
+      #---- **latent classes ----
+      for(group in c("unimpaired", "mci", "other")){
+        assign(paste0(group, "_betas"), 
+               vroom(paste0(path_to_data, "analyses/simulation_study/prior_data/", 
+                            "latent_class_", group, "_betas.csv"), delim = ","))
+        assign(paste0(group, "_cov"), 
+               readRDS(paste0(path_to_data, "analyses/simulation_study/prior_data/", 
+                              "latent_class_", group, "_cov")))
+        
+        assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
+      }
+      
+      #---- **contingency cells ----
+      alpha_0_dist <- 
+        readRDS(paste0(path_to_data, "analyses/simulation_study/prior_data/", 
+                       "imputation_cell_props")) 
+      
+      #--- **beta and sigma ----
+      priors_beta <- readRDS(paste0(path_to_data, "analyses/simulation_study/",
+                                    "prior_data/priors_beta")) 
+      prior_V_inv <- readRDS(paste0(path_to_data, "analyses/simulation_study/",
+                                    "prior_data/priors_V_inv"))  
+      prior_Sigma <- readRDS(paste0(path_to_data, "analyses/simulation_study/",
+                                    "prior_data/priors_Sigma")) 
+    } else{
+      #---- read in raw prior sample ----
+      prior_imputed_clean <- readRDS(path_to_raw_prior_sample) %>%
+        lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
+      
+      #---- **prep sample ----
+      variable_labels_ADAMS <- variable_labels %>% 
+        filter(ADAMS %in% colnames(prior_imputed_clean[[1]]))
+      
+      prior_imputed_clean <- 
+        lapply(prior_imputed_clean, 
+               function(x) rename_at(x, vars(variable_labels_ADAMS$ADAMS), ~ 
+                                       variable_labels_ADAMS$data_label)) 
+      
+      #---- selected vars ----
+      selected_vars <- 
+        read_csv(paste0(path_to_data, 
+                        "analyses/simulation_study/variable_selection/", 
+                        "model_coefficients.csv")) 
+      
+      #unimpaired model predictors
+      unimpaired_preds <- c("(Intercept)", selected_vars %>% 
+                              filter(data_label != "Intercept" & Unimpaired != 0) %>% 
+                              dplyr::select(data_label) %>% unlist())
+      
+      #other model predictors
+      other_preds <- c("(Intercept)", selected_vars %>% 
+                         filter(data_label != "Intercept" & Other != 0) %>% 
+                         dplyr::select(data_label) %>% unlist())
+      
+      #mci model predictors
+      mci_preds <- c("(Intercept)", selected_vars %>% 
+                       filter(data_label != "Intercept" & MCI != 0) %>% 
+                       dplyr::select(data_label) %>% unlist())
+      
+      #---- cell ID key ----
+      cell_ID_key <- read_csv(paste0(path_to_data, "data/cell_ID_key.csv"))
+      
+      #---- calibration subset ----
+      calibration_var <- paste0("calibration_", calibration_prop*100)
+      calibration_subset <- 
+        dataset_to_copy %>% filter(!!sym(calibration_var) == 1)
     }
     
     #---- select variables ----
     vars <- unique(c(unimpaired_preds, other_preds, mci_preds, 
                      "Unimpaired", "MCI", "Dementia", "Other"))
     
-    synthetic_sample <- dataset_to_copy %>% dplyr::select(all_of(vars)) %>% 
+    synthetic_sample <- dataset_to_copy %>% 
+      dplyr::select("HHIDPN", all_of(vars)) %>% 
       #pre-allocate columns
       mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
     
+    if(calibration_sample){
+      #---- **split sample ----
+      synthetic_sample <- 
+        anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
+    }
+    
     #---- max index ----
-    max_index <- length(priors_beta)
+    if(calibration_sample){
+      max_index <- length(prior_imputed_clean)
+    } else{
+      max_index <- length(priors_beta)  
+    }
     
     generate_data <- function(color_palette){
       #---- latent class ----
@@ -54,8 +144,29 @@ prior_predictive_checks <-
         subset_index <- which(synthetic_sample$group_num == 0)
         random_draw <- sample(seq(1, max_index), size = 1)
         
-        prior_betas <- get(paste0(model, "_betas"))[, random_draw]
-        prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
+        if(calibration_sample){
+          if(model == "mci"){
+            class_name = "MCI"
+          } else{
+            class_name = str_to_sentence(model)
+          }
+          
+          latent_class_model <- 
+            glm(formula(paste(class_name, " ~ ", 
+                              paste(get(paste0(model, "_preds"))[-1], 
+                                    collapse = " + "), 
+                              collapse = "")), family = "binomial", 
+                #don't select (Intercept) variable
+                data = rbind(prior_imputed_clean[[random_draw]][, vars[-1]], 
+                             calibration_subset[, vars[-1]]))
+          
+          prior_betas <- coefficients(latent_class_model)
+          prior_cov <- vcov(latent_class_model)
+          
+        } else{
+          prior_betas <- get(paste0(model, "_betas"))[, random_draw]
+          prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
+        }
         
         betas <- 
           mvnfast::rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov)
@@ -90,15 +201,33 @@ prior_predictive_checks <-
           collapse = ":"))
       
       #---- hyperparameters ----
-      kappa_0 <- 
-        kappa_0_mat[
-          which(kappa_0_mat$dataset_name == 
-                  unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
-      
-      nu_0 <- 
-        nu_0_mat[
-          which(nu_0_mat$dataset_name == 
-                  unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
+      if(!calibration_sample){
+        kappa_0 <- 
+          kappa_0_mat[
+            which(kappa_0_mat$dataset_name == 
+                    unlist(unique(dataset_to_copy[, "dataset_name"])) & 
+                    kappa_0_mat$calibration_name == "no_calibration"), ]
+        
+        nu_0 <- 
+          nu_0_mat[
+            which(nu_0_mat$dataset_name == 
+                    unlist(unique(dataset_to_copy[, "dataset_name"])) & 
+                    nu_0_mat$calibration_name == "no_calibration"), ]  
+      } else{
+        kappa_0 <- 
+          kappa_0_mat[
+            which(kappa_0_mat$dataset_name == 
+                    unlist(unique(dataset_to_copy[, "dataset_name"])) & 
+                    kappa_0_mat$calibration_name == 
+                    paste0("calibration_", 100*calibration_prop)), ]
+        
+        nu_0 <- 
+          nu_0_mat[
+            which(nu_0_mat$dataset_name == 
+                    unlist(unique(dataset_to_copy[, "dataset_name"])) & 
+                    nu_0_mat$calibration_name == 
+                    paste0("calibration_", 100*calibration_prop)), ]  
+      }
       
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
         #---- **index for random draws ----
@@ -113,8 +242,31 @@ prior_predictive_checks <-
           next
         }
         
-        prior_counts <- 
-          alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
+        if(calibration_sample){
+          prior_counts <- 
+            rbind(prior_imputed_clean[[random_draw]][, c(categorical_vars, class)], 
+                  calibration_subset[, c(categorical_vars, class)]) %>% 
+            filter(!!sym(class) == 1) %>% 
+            unite("cell_ID", all_of(categorical_vars), sep = "") %>% 
+            dplyr::select("cell_ID") %>% table() %>% as.data.frame()
+          
+          if(nrow(prior_counts) < nrow(cell_ID_key)){
+            prior_counts <- left_join(cell_ID_key, prior_counts) %>% 
+              dplyr::select(c("cell_ID", "Freq")) 
+            
+            prior_counts[which(is.na(prior_counts$Freq)), "Freq"] <- 0
+          }
+          
+          prior_counts %<>% mutate("prop" = Freq/sum(Freq))
+          
+          prior_UtU <- diag(prior_counts$Freq)
+          
+          prior_counts <- prior_counts$prop*nrow(subset)
+          
+        } else{
+          prior_counts <- 
+            alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
+        }
         
         #---- **p(contingency table cell) ----
         pi <- 
@@ -124,15 +276,39 @@ prior_predictive_checks <-
         contingency_table <- rmultinom(n = 1, size = nrow(subset), prob = pi)
         UtU <- diag(contingency_table[, 1])
         
-        #---- **draw new UtU if needed ----
-        while(det(t(contrasts_matrix) %*% UtU %*% contrasts_matrix) < 1e-9){
-          #---- ****new random draw index ----
-          random_draw <- sample(seq(1, max_index), size = 1)
-          new_counts <- 
-            alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
-          
-          UtU <- diag(unlist(new_counts[, 1])*nrow(subset))
-        }
+        # #---- **draw new UtU if needed ----
+        # while(det(t(contrasts_matrix) %*% UtU %*% contrasts_matrix) < 1e-9){
+        #   #---- ****new random draw index ----
+        #   random_draw <- sample(seq(1, max_index), size = 1)
+        #   
+        #   if(calibration_sample){
+        #     new_counts <- 
+        #       rbind(prior_imputed_clean[[random_draw]][, c(categorical_vars, class)], 
+        #             calibration_subset[, c(categorical_vars, class)]) %>% 
+        #       filter(!!as.symbol(class) == 1) %>% 
+        #       unite("cell_ID", all_of(categorical_vars), sep = "") %>% 
+        #       dplyr::select("cell_ID") %>% table() %>% as.data.frame()
+        #     
+        #     if(nrow(new_counts) < nrow(cell_ID_key)){
+        #       new_counts <- left_join(cell_ID_key, new_counts) %>% 
+        #         dplyr::select(c("cell_ID", "Freq")) 
+        #       
+        #       new_counts[which(is.na(new_counts$Freq)), "Freq"] <- 0
+        #     }
+        #     
+        #     new_counts %<>% mutate("prop" = Freq/sum(Freq))
+        #     
+        #     new_counts <- new_counts$prop*nrow(subset)
+        #     
+        #     UtU <- diag(new_counts)
+        #     
+        #   } else{
+        #     new_counts <- 
+        #       alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)
+        #     
+        #     UtU <- diag(unlist(new_counts[, 1]))
+        #   }
+        # }
         
         #---- **make U matrix ----
         U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
@@ -147,23 +323,67 @@ prior_predictive_checks <-
           U[index:(index - 1 + contingency_table[j, 1]), j] <- 1
         }
         
-        #---- **draw Sigma_0----
-        Sigma_prior <- 
-          as.matrix(
-            prior_Sigma[[random_draw]][[
-              class]][, seq(1, length(continuous_vars))])
+        #---- **beta_0 + Sigma_0 ----
+        if(calibration_sample){
+          
+          #---- ****prior U matrix ----
+          prior_U <- matrix(0, nrow = sum(prior_UtU), ncol = nrow(prior_UtU))
+          
+          for(j in 1:ncol(prior_UtU)){
+            if(sum(prior_UtU[, j]) == 0){next}
+            if(j == 1){
+              index = 1
+            } else{
+              index = sum(prior_UtU[, 1:(j - 1)]) + 1
+            }
+            prior_U[index:(index - 1 + sum(prior_UtU[, j])), j] <- 1
+          }
+          
+          continuous_covariates <- 
+            rbind(prior_imputed_clean[[random_draw]][, c(continuous_vars, class)], 
+                  calibration_subset[, c(continuous_vars, class)]) %>% 
+            filter(!!sym(class) == 1) %>% 
+            dplyr::select(all_of(continuous_vars)) %>% as.matrix()
+          
+          V_0_inv <- t(A) %*% prior_UtU %*% A
+          V_0 <- solve(V_0_inv)
+          
+          beta_0 <- V_0 %*% t(A) %*% t(prior_U) %*% continuous_covariates
+          
+          # residual <- continuous_covariates - prior_U %*% A %*% beta_0
+          # 
+          # Sigma_prior <- t(residual) %*% residual
+          
+        } else{
+          V_0_inv <- 
+            as.matrix(
+              prior_V_inv[[random_draw]][[class]][, seq(1, ncol(A))])
+          
+          beta_0 <- 
+            as.matrix(
+              priors_beta[[random_draw]][[
+                class]][, seq(1, length(continuous_vars))])
+          
+          # Sigma_prior <- 
+          #   as.matrix(
+          #     prior_Sigma[[random_draw]][[
+          #       class]][, seq(1, length(continuous_vars))])
+        }
         
-        sig_Y <- riwish(v = as.numeric(nu_0[, class]), S = Sigma_prior)
+        Sigma_prior <- diag(1, nrow = ncol(continuous_covariates))
         
-        #---- **beta_0 ----
-        V_0_inv <- 
-          as.matrix(
-            prior_V_inv[[random_draw]][[class]][, seq(1, ncol(A))])
-        
-        beta_0 <- 
-          as.matrix(
-            priors_beta[[random_draw]][[
-              class]][, seq(1, length(continuous_vars))])
+        redraws = 0
+        while(is.character(tryCatch(sig_Y <- 
+                                    MCMCpack::riwish(
+                                      v = as.numeric(nu_0[, class]), 
+                                      S = Sigma_prior), 
+                                    error = function(e) "error")) & 
+              redraws <= 100){
+          
+          Sigma_prior = Sigma_prior + 0.001
+          redraws = redraws + 1
+          #print(paste0("class = ", class, "; b = ", b))            
+        }
         
         #---- **draw beta | Sigma----
         beta_Sigma_Y <- 
@@ -222,10 +442,18 @@ prior_predictive_checks <-
     
     #---- plots ----
     #---- **dem class ----
-    to_copy_dementia_plot_data <- 
-      as.data.frame(table(
-        dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
-      pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
+    if(!calibration_sample){
+      to_copy_dementia_plot_data <- 
+        as.data.frame(table(
+          dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
+        pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
+    } else{
+      to_copy_dementia_plot_data <- 
+        as.data.frame(table(
+          dataset_to_copy %>% filter(!!sym(calibration_var) == 0) %>% 
+            dplyr::select(c("Unimpaired", "MCI", "Dementia", "Other")))) %>% 
+        pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
+    }
     
     dem_sub <- lapply(synthetic, "[[", "Group") %>% do.call(cbind, .) %>% 
       set_colnames(seq(1, runs)) %>% as.data.frame() %>%
@@ -248,7 +476,7 @@ prior_predictive_checks <-
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
             color = color_palette[which(color_palette$Group == class), "Color"])
         
-        ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
+        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", class, 
                                  "_line_only.jpeg"), 
                height = 3, width = 5, units = "in")
       } else{
@@ -261,7 +489,7 @@ prior_predictive_checks <-
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
             color = unique(subset$Color))
         
-        ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
+        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", class, 
                                  "_line_only.jpeg"), 
                height = 3, width = 5, units = "in")
         
@@ -274,7 +502,7 @@ prior_predictive_checks <-
           geom_vline(xintercept = to_copy_dementia_plot_data[[
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2)
         
-        ggsave(filename = paste0(path_to_folder, "impairment_classes/", class, 
+        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", class, 
                                  ".jpeg"), 
                height = 3, width = 5, units = "in")
       }
@@ -282,9 +510,15 @@ prior_predictive_checks <-
     
     #---- **class-specific continuous ----
     for(class in continuous_check){
-      true_data <- dataset_to_copy %>% 
-        dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
-        filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
+      if(!calibration_sample){
+        true_data <- dataset_to_copy %>% 
+          dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
+          filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
+      } else{
+        true_data <- dataset_to_copy %>% filter(!!sym(calibration_var) == 0) %>%
+          dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
+          filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
+      }
       
       continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
       
@@ -292,7 +526,8 @@ prior_predictive_checks <-
         continuous_list[[i]] <- continuous_list[[i]] %>% 
           dplyr::select(-c("Group")) %>%
           mutate("run" = i, "Type" = "Synthetic") %>% 
-          rbind(., true_data %>% dplyr::select(-!!as.symbol(class)) %>% 
+          rbind(., true_data %>% 
+                  dplyr::select(-!!as.symbol(class)) %>% 
                   mutate("run" = i, "Type" = "Observed"))
       }
       
@@ -312,11 +547,11 @@ prior_predictive_checks <-
             scale_fill_manual(values = rev(unique(data$Color)))
           
           if(continuous_check_test){
-            ggsave(filename = paste0(path_to_folder, "continuous_vars/test_set/", 
+            ggsave(filename = paste0(path_to_output_folder, "continuous_vars/test_set/", 
                                      tolower(class), "/", var, ".jpeg"), 
                    height = 3, width = 5, units = "in")
           } else{
-            ggsave(filename = paste0(path_to_folder, "continuous_vars/error_set/", 
+            ggsave(filename = paste0(path_to_output_folder, "continuous_vars/error_set/", 
                                      tolower(class), "/", var, ".jpeg"), 
                    height = 3, width = 5, units = "in")
           }
@@ -337,7 +572,7 @@ prior_predictive_checks <-
           animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
                   res = 150, renderer = gifski_renderer())
           
-          anim_save(filename = paste0(path_to_folder, "continuous_vars/", 
+          anim_save(filename = paste0(path_to_output_folder, "continuous_vars/", 
                                       tolower(class), "/", var, ".gif"),
                     animation = last_animation(),
                     renderer = gifski_renderer())
@@ -369,6 +604,6 @@ prior_predictive_checks <-
 # nu_0 = nu_0[, unique(synthetic_data_list[[1]]$dataset_name)]
 # kappa_0_mat = kappa_0_mat
 # contrasts_matrix = A
-# path_to_folder = paste0(path_to_box, "figures/simulation_study/HCAP_HRS_",
+# path_to_output_folder = paste0(path_to_box, "figures/simulation_study/HCAP_HRS_",
 #                         unique(synthetic_data_list[[1]][, "dataset_name"]),
 #                         "/prior_predictive_checks/")

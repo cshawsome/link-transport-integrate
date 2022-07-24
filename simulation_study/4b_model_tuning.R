@@ -16,6 +16,14 @@ source(here::here("simulation_study", "functions",
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
+#---- **synthetic HCAP ----
+synthetic_HCAP_list <- 
+  readRDS(paste0(path_to_box, "analyses/simulation_study/synthetic_HCAP_list"))
+
+#---- dataset names ----
+dataset_names <- 
+  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
+
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
@@ -26,14 +34,6 @@ cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>%
 #---- **impairement class color palette ----
 color_palette <- read_csv(here::here("color_palette.csv")) 
 
-#---- **synthetic HCAP ----
-synthetic_HCAP_list <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/synthetic_HCAP_list"))
-
-#---- dataset names ----
-dataset_names <- 
-  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
-
 #---- define vars ----
 #categorical vars (notation from Schafer 1997)
 W <- c("black", "hispanic", "stroke")
@@ -41,32 +41,6 @@ W <- c("black", "hispanic", "stroke")
 #continuous vars (notation from Schafer 1997)
 all_vars <- colnames(synthetic_HCAP_list[[1]])
 Z <- all_vars[str_detect(all_vars, "_Z")]
-
-#---- specifying priors ----
-#---- **latent classes ----
-for(group in c("unimpaired", "mci", "other")){
-  assign(paste0(group, "_betas"), 
-         vroom(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                      "latent_class_", group, "_betas.csv"), delim = ","))
-  assign(paste0(group, "_cov"), 
-         readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                        "latent_class_", group, "_cov")))
-  
-  assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
-}
-
-#---- ****contingency cells ----
-alpha_0_dist <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                 "imputation_cell_props")) 
-
-#--- ****beta and sigma ----
-priors_beta <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
-                              "prior_data/priors_beta")) 
-prior_V_inv <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
-                              "prior_data/priors_V_inv"))  
-prior_Sigma <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
-                              "prior_data/priors_Sigma")) 
 
 #---- **contrasts matrix ----
 A <- read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
@@ -84,35 +58,33 @@ kappa_0_mat <-
 
 #---- **specify indices ----
 indices <- 
-  which(dataset_names %in% paste0("normal_", c(8000), "_ADAMS"))
+  which(dataset_names %in% paste0("normal_", c(500), "_ADAMS"))
 
 set.seed(20220329)
 start <- Sys.time()
 plan(multisession, workers = (availableCores() - 2))
 
-future_lapply(synthetic_HCAP_list[indices], 
-              function(x)
-                generate_synthetic(warm_up = 100, run_number = 1, 
-                                   starting_props = c(0.25, 0.25, 0.25, 0.25),
-                                   unimpaired_preds, other_preds, mci_preds, 
-                                   categorical_vars = W, continuous_vars = Z, 
-                                   id_var = "HHIDPN", variable_labels, 
-                                   dataset_to_copy = x, cell_ID_key, 
-                                   color_palette, num_synthetic = 1000, 
-                                   unimpaired_betas, unimpaired_cov, other_betas, 
-                                   other_cov, mci_betas, mci_cov, alpha_0_dist, 
-                                   prior_Sigma, prior_V_inv, prior_beta, 
-                                   nu_0_mat, kappa_0_mat, contrasts_matrix = A,
-                                   path_to_analyses_folder = 
-                                     paste0(path_to_box, 
-                                            "analyses/simulation_study/", 
-                                            "HCAP_HRS_", 
-                                            unique(x[, "dataset_name"]), "/"), 
-                                   path_to_figures_folder = 
-                                     paste0(path_to_box,
-                                            "figures/simulation_study/HCAP_HRS_", 
-                                            unique(x[, "dataset_name"]), "/"), 
-                                   data_only = FALSE), future.seed = TRUE)
+future_lapply(synthetic_HCAP_list[indices], function(x)
+  generate_synthetic(warm_up = 100, run_number = 1, 
+                     starting_props = c(0.25, 0.25, 0.25, 0.25),
+                     dataset_to_copy = x, calibration_sample = TRUE, 
+                     calibration_prop = 0.5, calibration_sample_name = "HCAP_50", 
+                     path_to_raw_prior_sample = 
+                       paste0(path_to_box, "analyses/simulation_study/", 
+                              "prior_data/MI/MI_datasets_cleaned"),
+                     path_to_data = path_to_box, 
+                     path_to_analyses_folder = 
+                       paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
+                              unique(x[, "dataset_name"]), "/"), 
+                     path_to_figures_folder = 
+                       paste0(path_to_box, "figures/simulation_study/HCAP_HRS_", 
+                              unique(x[, "dataset_name"]), "/"), 
+                     categorical_vars = W, continuous_vars = Z, 
+                     id_var = "HHIDPN", variable_labels = variable_labels, 
+                     cell_ID_key = cell_ID_key, color_palette = color_palette, 
+                     contrasts_matrix = A, kappa_0_mat = kappa_0_mat, 
+                     nu_0_mat = nu_0_mat, num_synthetic = 1000, 
+                     data_only = FALSE), future.seed = TRUE)
 
 end <- Sys.time() - start
 plan(sequential)
