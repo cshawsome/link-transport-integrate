@@ -248,7 +248,8 @@ prior_predictive_checks <-
                   calibration_subset[, c(categorical_vars, class)]) %>% 
             filter(!!sym(class) == 1) %>% 
             unite("cell_ID", all_of(categorical_vars), sep = "") %>% 
-            dplyr::select("cell_ID") %>% table() %>% as.data.frame()
+            dplyr::select("cell_ID") %>% table() %>% as.data.frame() %>% 
+            set_colnames(c("cell_ID", "Freq"))
           
           if(nrow(prior_counts) < nrow(cell_ID_key)){
             prior_counts <- left_join(cell_ID_key, prior_counts) %>% 
