@@ -516,13 +516,13 @@ generate_synthetic <-
                      continuous_vars] <- 
                 mvnfast::rmvn(n = contingency_table[j, "Count"],
                               mu = mu_chain[, paste0(class, ":", j, ":", b)], 
-                              sigma = sig_Y)
+                              sigma = as.positive.definite(sig_Y))
             } else{
               subset[index:(index - 1 + contingency_table[j, "Count"]), 
                      continuous_vars] <- 
                 mvnfast::rmvn(n = contingency_table[j, "Count"],
                               mu = mu_chain[, paste0(class, ":", j, ":", b)], 
-                              sigma = sig_Y)
+                              sigma = as.positive.definite(sig_Y))
             }
             
             #W (categorical data)
