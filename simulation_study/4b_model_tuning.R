@@ -53,7 +53,7 @@ nu_0_mat <- read_csv(paste0(path_to_box, "analyses/nu_0_matrix.csv"))
 kappa_0_mat <- 
   read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
 
-#---- generate datasets in parallel ----
+#---- generate datasets in serial ----
 #About 1.5 hours to generate data for all datasets in serial
 
 #---- **specify indices ----
@@ -62,9 +62,8 @@ indices <-
 
 set.seed(20220329)
 start <- Sys.time()
-plan(multisession, workers = (availableCores() - 2))
 
-future_lapply(synthetic_HCAP_list[indices], function(x)
+lapply(synthetic_HCAP_list[indices], function(x)
   generate_synthetic(warm_up = 100, run_number = 1, 
                      starting_props = c(0.25, 0.25, 0.25, 0.25),
                      dataset_to_copy = x, calibration_sample = TRUE, 
@@ -84,7 +83,42 @@ future_lapply(synthetic_HCAP_list[indices], function(x)
                      cell_ID_key = cell_ID_key, color_palette = color_palette, 
                      contrasts_matrix = A, kappa_0_mat = kappa_0_mat, 
                      nu_0_mat = nu_0_mat, num_synthetic = 1000, 
-                     data_only = FALSE), future.seed = TRUE)
+                     data_only = FALSE))
 
 end <- Sys.time() - start
-plan(sequential)
+
+# #---- generate datasets in parallel ----
+# #About 1.5 hours to generate data for all datasets in serial
+# 
+# #---- **specify indices ----
+# indices <- 
+#   which(dataset_names %in% paste0("normal_", c(500), "_ADAMS"))
+# 
+# set.seed(20220329)
+# start <- Sys.time()
+# plan(multisession, workers = (availableCores() - 2))
+# 
+# future_lapply(synthetic_HCAP_list[indices], function(x)
+#   generate_synthetic(warm_up = 100, run_number = 1, 
+#                      starting_props = c(0.25, 0.25, 0.25, 0.25),
+#                      dataset_to_copy = x, calibration_sample = TRUE, 
+#                      calibration_prop = 0.5, calibration_sample_name = "HCAP_50", 
+#                      path_to_raw_prior_sample = 
+#                        paste0(path_to_box, "analyses/simulation_study/", 
+#                               "prior_data/MI/MI_datasets_cleaned"),
+#                      path_to_data = path_to_box, 
+#                      path_to_analyses_folder = 
+#                        paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
+#                               unique(x[, "dataset_name"]), "/"), 
+#                      path_to_figures_folder = 
+#                        paste0(path_to_box, "figures/simulation_study/HCAP_HRS_", 
+#                               unique(x[, "dataset_name"]), "/"), 
+#                      categorical_vars = W, continuous_vars = Z, 
+#                      id_var = "HHIDPN", variable_labels = variable_labels, 
+#                      cell_ID_key = cell_ID_key, color_palette = color_palette, 
+#                      contrasts_matrix = A, kappa_0_mat = kappa_0_mat, 
+#                      nu_0_mat = nu_0_mat, num_synthetic = 1000, 
+#                      data_only = FALSE), future.seed = TRUE)
+# 
+# end <- Sys.time() - start
+# plan(sequential)
