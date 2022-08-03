@@ -66,7 +66,7 @@ start <- Sys.time()
 indices <-
   which(dataset_names %in% paste0("normal_", c(500), "_ADAMS"))
 
-#---- **run parallel checks ----
+#---- **run checks ----
 lapply(synthetic_HCAP_list[indices], function(x)
   prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
                           calibration_prop = 0.50, 
@@ -81,7 +81,7 @@ lapply(synthetic_HCAP_list[indices], function(x)
                                    unique(x[, "dataset_name"]),
                                    "/prior_predictive_checks/"), 
                           continuous_check_test = TRUE,
-                          continuous_check = c("Unimpaired", "MCI", "Dementia", 
+                          continuous_check = c("Unimpaired", "Dementia", 
                                                "Other"),
                           categorical_vars = W, continuous_vars = Z,
                           variable_labels = variable_labels, 
@@ -102,7 +102,7 @@ end <- Sys.time() - start
 #   which(dataset_names %in%
 #           paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
 # 
-# #---- **run parallel checks ----
+# #---- **run checks ----
 # future_lapply(synthetic_HCAP_list[indices], function(x)
 #   prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
 #                           calibration_prop = 0.50, 
