@@ -45,16 +45,15 @@ Z <- all_vars[str_detect(all_vars, "_Z")]
 A <- read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
   as.matrix()
 
-#---- run checks in parallel ----
+#---- run checks in serial ----
 set.seed(20220329)
 start <- Sys.time()
-plan(multisession, workers = (availableCores() - 2))
 
 #---- **specify indices ----
 indices <- which(dataset_names %in% 
                    paste0("normal_", c(500), "_ADAMS"))
 
-future_lapply(synthetic_HCAP_list[indices], function(x)
+lapply(synthetic_HCAP_list[indices], function(x)
   posterior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE,
                               calibration_prop = 0.50, 
                               calibration_sample_name = "HCAP_50",
@@ -70,8 +69,37 @@ future_lapply(synthetic_HCAP_list[indices], function(x)
                               path_to_figures_folder = 
                                 paste0(path_to_box,
                                        "figures/simulation_study/HCAP_HRS_", 
-                                       unique(x[, "dataset_name"]), "/")), 
-  future.seed = TRUE)
+                                       unique(x[, "dataset_name"]), "/")))
 
 end <- Sys.time() - start
-plan(sequential)
+
+# #---- run checks in parallel ----
+# set.seed(20220329)
+# start <- Sys.time()
+# plan(multisession, workers = (availableCores() - 2))
+# 
+# #---- **specify indices ----
+# indices <- which(dataset_names %in% 
+#                    paste0("normal_", c(500), "_ADAMS"))
+# 
+# future_lapply(synthetic_HCAP_list[indices], function(x)
+#   posterior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE,
+#                               calibration_prop = 0.50, 
+#                               calibration_sample_name = "HCAP_50",
+#                               categorical_covariates = W, 
+#                               continuous_covariates = Z, contrasts_matrix = A,
+#                               cell_ID_key = cell_ID_key, 
+#                               variable_labels = variable_labels, 
+#                               color_palette = color_palette,
+#                               path_to_analyses_folder = 
+#                                 paste0(path_to_box, 
+#                                        "analyses/simulation_study/HCAP_HRS_", 
+#                                        unique(x[, "dataset_name"]), "/"), 
+#                               path_to_figures_folder = 
+#                                 paste0(path_to_box,
+#                                        "figures/simulation_study/HCAP_HRS_", 
+#                                        unique(x[, "dataset_name"]), "/")), 
+#   future.seed = TRUE)
+# 
+# end <- Sys.time() - start
+# plan(sequential)
