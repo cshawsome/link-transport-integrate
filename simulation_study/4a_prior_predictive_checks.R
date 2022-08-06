@@ -64,7 +64,7 @@ start <- Sys.time()
 
 #---- **specify indices ----
 indices <-
-  which(dataset_names %in% paste0("normal_", c(500), "_ADAMS"))
+  which(dataset_names %in% paste0("normal_", c(1000), "_ADAMS"))
 
 #---- **run checks ----
 lapply(synthetic_HCAP_list[indices], function(x)
@@ -80,8 +80,8 @@ lapply(synthetic_HCAP_list[indices], function(x)
                                    "figures/simulation_study/HCAP_HRS_",
                                    unique(x[, "dataset_name"]),
                                    "/prior_predictive_checks/"), 
-                          continuous_check_test = TRUE,
-                          continuous_check = c("Unimpaired", "Dementia", 
+                          continuous_check_test = FALSE,
+                          continuous_check = c("Unimpaired", "MCI", "Dementia", 
                                                "Other"),
                           categorical_vars = W, continuous_vars = Z,
                           variable_labels = variable_labels, 
