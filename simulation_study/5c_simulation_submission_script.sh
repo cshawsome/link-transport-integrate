@@ -13,7 +13,7 @@
 # SINGLE BATCH RUNS:
 #$ -t 1-50:1
 # FOR THE FULL RUN USE INSTEAD:
-##$ -t 1-2250:1
+##$ -t 1-4500:1
 ## 
 
 # load the job environment:
@@ -28,6 +28,7 @@ export OMP_NUM_THREADS=1 #uses max 1 thread (needs to match -pe shared)
 #distribution = c("normal", "lognormal", "bathtub")
 #sample_size = c(500, 1000, 2000, 4000, 8000)
 #prior_prop = c("ADAMS", "unimpaired", "dementia")
+#calibration = c("none", "HCAP_50")
 #
 #the task ID indicates the row of the simulation scenario .csv file 
 
