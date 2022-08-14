@@ -80,7 +80,7 @@ lapply(synthetic_HCAP_list[indices], function(x)
                                    "figures/simulation_study/HCAP_HRS_",
                                    unique(x[, "dataset_name"]),
                                    "/prior_predictive_checks/"), 
-                          continuous_check_test = FALSE,
+                          continuous_check_test = TRUE,
                           continuous_check = c("Unimpaired", "MCI", "Dementia", 
                                                "Other"),
                           categorical_vars = W, continuous_vars = Z,
