@@ -2,7 +2,8 @@ simulation_function <-
   function(warm_up, starting_props, categorical_vars, continuous_vars, id_var, 
            variable_labels, scenario, superpops_list, all_scenarios_list, 
            cell_ID_key, color_palette, num_synthetic, contrasts_matrix, 
-           kappa_0_mat, nu_0_mat, truth, seed, path_to_results){
+           kappa_0_mat, nu_0_mat, truth, seed, path_to_raw_prior_sample, 
+           path_to_data, path_to_results){
     
     #---- pre-allocated results ----
     result_names <- 
@@ -115,8 +116,26 @@ simulation_function <-
       
       dataset_to_copy[sample(seq(1, nrow(dataset_to_copy)), 
                              size = calibration_prop*nrow(dataset_to_copy), 
-                             replace = FALSE), paste0("calibration_", 
-                                                      calibration_prop*100)] <- 1
+                             replace = FALSE), 
+                      paste0("calibration_", calibration_prop*100)] <- 1
+      
+      results[, 
+              c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other")] <- 
+        colSums(dataset_to_copy[
+          which(dataset_to_copy[, paste0("calibration_", 
+                                         calibration_prop*100)] == 1), 
+          c("Unimpaired", "MCI", "Dementia", "Other")])
+      
+      #---- ****stratified ----
+      for(race in c("White", "black", "hispanic")){
+        results[, paste0(c("true_Unimpaired", "true_MCI", "true_Dementia", 
+                           "true_Other"), "_", tolower(race))] <- 
+          colSums(dataset_to_copy[which(
+            dataset_to_copy[, race] == 1 & 
+              dataset_to_copy[, paste0("calibration_", 
+                                       calibration_prop*100)] == 1), 
+            c("Unimpaired", "MCI", "Dementia", "Other")])
+      }
     }
     
     #---- generate synthetic data ----
@@ -125,13 +144,21 @@ simulation_function <-
                          starting_props = starting_props, 
                          dataset_to_copy = dataset_to_copy, 
                          calibration_sample = calibration_status, 
-                         calibration_prop = , calibration_sample_name = ,
-                         path_to_raw_prior_sample = , path_to_data = , 
+                         calibration_prop = calibration_prop, 
+                         calibration_sample_name = calibration_sample_name,
+                         path_to_raw_prior_sample = path_to_raw_prior_sample, 
+                         path_to_data = path_to_data, 
                          path_to_analyses_folder = NA, 
-                         path_to_figures_folder = NA, categorical_vars, 
-                         continuous_vars, id_var, variable_labels, cell_ID_key,
-                         color_palette, contrasts_matrix = , kappa_0_mat, 
-                         nu_0_mat, num_synthetic = , data_only = TRUE)
+                         path_to_figures_folder = NA, 
+                         categorical_vars = categorical_vars, 
+                         continuous_vars = continuous_vars, id_var = id_var, 
+                         variable_labels = variable_labels, 
+                         cell_ID_key = cell_ID_key,
+                         color_palette = color_palette, 
+                         contrasts_matrix = contrasts_matrix, 
+                         kappa_0_mat = kappa_0_mat, 
+                         nu_0_mat = nu_0_mat, num_synthetic = num_synthetic, 
+                         data_only = TRUE)
     
     #---- function to clean missing counts ----
     all_classes <- c("Unimpaired", "MCI", "Dementia", "Other")
@@ -280,54 +307,54 @@ simulation_function <-
     }
   }
 
-#---- testing ----
-warm_up = 100
-starting_props = rep(0.25, 4)
-categorical_vars = W
-continuous_vars = Z
-id_var = "HHIDPN"
-variable_labels
-scenario = 801 #HCAP_50 calibration sample size 1000
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-superpop_data_paths <- 
-  list.files(path = paste0(path_to_box, 
-                           "analyses/simulation_study/superpopulations"), 
-             full.names = TRUE, pattern = "*.csv")
-
-superpops_list <- lapply(superpop_data_paths, read_results)
-all_scenarios_list = all_sim_scenarios
-cell_ID_key
-color_palette
-num_synthetic = 1000
-unimpaired_betas
-unimpaired_cov
-other_betas
-other_cov
-mci_betas
-mci_cov
-alpha_0_dist
-prior_Sigma
-prior_V_inv
-prior_beta
-nu_0_vec
-kappa_0
-contrasts_matrix = A
-truth
-path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
-
-set.seed(20220512)
-
-replicate(2,
-          simulation_function(warm_up, starting_props, unimpaired_preds,
-                              other_preds, mci_preds, categorical_vars,
-                              continuous_vars, id_var, variable_labels,
-                              scenario = 1,
-                              superpops_list = superpop_data_list,
-                              all_sim_scenarios,
-                              cell_ID_key, color_palette, num_synthetic,
-                              unimpaired_betas, unimpaired_cov, other_betas,
-                              other_cov, mci_betas, mci_cov, alpha_0_dist,
-                              prior_Sigma, prior_V_inv, prior_beta, nu_0_vec,
-                              kappa_0_mat, contrasts_matrix, truth,
-                              path_to_results))
-
+# #---- testing ----
+# warm_up = 100
+# starting_props = rep(0.25, 4)
+# categorical_vars = W
+# continuous_vars = Z
+# id_var = "HHIDPN"
+# variable_labels
+# scenario = 801 #HCAP_50 calibration sample size 1000
+# path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+# superpop_data_paths <- 
+#   list.files(path = paste0(path_to_box, 
+#                            "analyses/simulation_study/superpopulations"), 
+#              full.names = TRUE, pattern = "*.csv")
+# 
+# superpops_list <- lapply(superpop_data_paths, read_results)
+# all_scenarios_list = all_sim_scenarios
+# cell_ID_key
+# color_palette
+# num_synthetic = 1000
+# unimpaired_betas
+# unimpaired_cov
+# other_betas
+# other_cov
+# mci_betas
+# mci_cov
+# alpha_0_dist
+# prior_Sigma
+# prior_V_inv
+# prior_beta
+# nu_0_vec
+# kappa_0
+# contrasts_matrix = A
+# truth
+# path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
+# 
+# set.seed(20220512)
+# 
+# replicate(2,
+#           simulation_function(warm_up, starting_props, unimpaired_preds,
+#                               other_preds, mci_preds, categorical_vars,
+#                               continuous_vars, id_var, variable_labels,
+#                               scenario = 1,
+#                               superpops_list = superpop_data_list,
+#                               all_sim_scenarios,
+#                               cell_ID_key, color_palette, num_synthetic,
+#                               unimpaired_betas, unimpaired_cov, other_betas,
+#                               other_cov, mci_betas, mci_cov, alpha_0_dist,
+#                               prior_Sigma, prior_V_inv, prior_beta, nu_0_vec,
+#                               kappa_0_mat, contrasts_matrix, truth,
+#                               path_to_results))
+# 
