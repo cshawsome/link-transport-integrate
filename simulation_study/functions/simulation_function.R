@@ -1,11 +1,8 @@
 simulation_function <- 
-  function(warm_up, starting_props, unimpaired_preds, other_preds, 
-           mci_preds, categorical_vars, continuous_vars, id_var, variable_labels, 
-           scenario, superpops_list, all_scenarios_list, cell_ID_key, 
-           color_palette, num_synthetic, unimpaired_betas, unimpaired_cov, 
-           other_betas, other_cov, mci_betas, mci_cov, alpha_0_dist, 
-           prior_Sigma, prior_V_inv, prior_beta, nu_0_mat, kappa_0_mat, 
-           contrasts_matrix, truth, seed, path_to_results){
+  function(warm_up, starting_props, categorical_vars, continuous_vars, id_var, 
+           variable_labels, scenario, superpops_list, all_scenarios_list, 
+           cell_ID_key, color_palette, num_synthetic, contrasts_matrix, 
+           kappa_0_mat, nu_0_mat, truth, seed, path_to_results){
     
     #---- pre-allocated results ----
     result_names <- 
@@ -107,16 +104,15 @@ simulation_function <-
     
     #---- generate synthetic data ----
     synthetic_HCAP <- 
-      generate_synthetic(warm_up, run_number = NA, starting_props,
-                         unimpaired_preds, other_preds, mci_preds, 
-                         categorical_vars, continuous_vars, id_var, 
-                         variable_labels, dataset_to_copy , cell_ID_key, 
-                         color_palette, num_synthetic, unimpaired_betas, 
-                         unimpaired_cov, other_betas, other_cov, mci_betas, 
-                         mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
-                         prior_beta, nu_0_mat, kappa_0_mat, contrasts_matrix,
+      generate_synthetic(warm_up, run_number = NA, starting_props, 
+                         dataset_to_copy, calibration_sample = , 
+                         calibration_prop = , calibration_sample_name = ,
+                         path_to_raw_prior_sample = , path_to_data = , 
                          path_to_analyses_folder = NA, 
-                         path_to_figures_folder = NA, data_only = TRUE)
+                         path_to_figures_folder = NA, categorical_vars, 
+                         continuous_vars, id_var, variable_labels, cell_ID_key,
+                         color_palette, contrasts_matrix = , kappa_0_mat, 
+                         nu_0_mat, num_synthetic = , data_only = TRUE)
     
     #---- function to clean missing counts ----
     all_classes <- c("Unimpaired", "MCI", "Dementia", "Other")

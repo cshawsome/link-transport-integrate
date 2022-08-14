@@ -15,7 +15,7 @@ if(length(args)==0){
   print("No arguments supplied.")
   ##supply default values
   scenario_num = 1
-  num_replicates = 100
+  num_replicates = 1
 }else{
   for(i in 1:length(args)){
     eval(parse(text=args[[i]]))
@@ -74,26 +74,6 @@ W <- c("black", "hispanic", "stroke")
 Z <- colnames(superpop_data_list[[1]])[str_detect(
   colnames(superpop_data_list[[1]]), "_Z")]
 
-#---- specifying priors ----
-#---- **latent classes ----
-for(group in c("unimpaired", "mci", "other")){
-  assign(paste0(group, "_betas"), 
-         vroom(paste0(path_to_data, "latent_class_", group, "_betas.csv"), 
-               delim = ","))
-  assign(paste0(group, "_cov"), 
-         readRDS(paste0(path_to_data, "latent_class_", group, "_cov")))
-  
-  assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
-}
-
-#---- ****contingency cells ----
-alpha_0_dist <- readRDS(paste0(path_to_data, "imputation_cell_props")) 
-
-#--- ****beta and sigma ----
-priors_beta <- readRDS(paste0(path_to_data, "priors_beta")) 
-prior_V_inv <- readRDS(paste0(path_to_data, "priors_V_inv"))  
-prior_Sigma <- readRDS(paste0(path_to_data, "priors_Sigma"))
-
 #---- **contrasts matrix ----
 A = read_csv(paste0(path_to_data, "contrasts_matrix.csv")) %>% as.matrix()
 
@@ -111,22 +91,17 @@ set.seed(seed)
 #---- run sim ----
 replicate(num_replicates,
           simulation_function(warm_up = 100, starting_props = rep(0.25, 4), 
-                              unimpaired_preds, other_preds, mci_preds, 
                               categorical_vars = W, continuous_vars = Z, 
-                              id_var = "HHIDPN", variable_labels, 
+                              id_var = "HHIDPN", 
+                              variable_labels = variable_labels, 
                               scenario = scenario_num,
                               superpops_list = superpop_data_list,
                               all_scenarios_list = all_sim_scenarios, 
-                              cell_ID_key, color_palette, 
-                              num_synthetic = 1000, unimpaired_betas, 
-                              unimpaired_cov, other_betas, other_cov, mci_betas, 
-                              mci_cov, alpha_0_dist, prior_Sigma, prior_V_inv, 
-                              prior_beta, nu_0_mat, kappa_0_mat, 
-                              contrasts_matrix = A, truth, seed,
+                              cell_ID_key = cell_ID_key, 
+                              color_palette = color_palette, 
+                              num_synthetic = 1000, contrasts_matrix = A,
+                              kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
+                              truth = truth, seed = seed,
                               path_to_results = 
                                 paste0("/u/home/c/cshaw343/", 
                                        "link_transport_integrate/results/")))
-
-
-
-
