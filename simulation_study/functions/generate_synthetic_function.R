@@ -342,7 +342,8 @@ generate_synthetic <-
                     calibration_subset[, c(categorical_vars, class)]) %>% 
               filter(!!sym(class) == 1) %>% 
               unite("cell_ID", all_of(categorical_vars), sep = "") %>% 
-              dplyr::select("cell_ID") %>% table() %>% as.data.frame()
+              dplyr::select("cell_ID") %>% table() %>% as.data.frame() %>% 
+              set_colnames(c("cell_ID", "Freq"))
             
             if(nrow(prior_count) < nrow(cell_ID_key)){
               prior_count <- left_join(cell_ID_key, prior_count) %>% 
@@ -515,13 +516,13 @@ generate_synthetic <-
                      continuous_vars] <- 
                 mvnfast::rmvn(n = contingency_table[j, "Count"],
                               mu = mu_chain[, paste0(class, ":", j, ":", b)], 
-                              sigma = sig_Y)
+                              sigma = as.positive.definite(sig_Y))
             } else{
               subset[index:(index - 1 + contingency_table[j, "Count"]), 
                      continuous_vars] <- 
                 mvnfast::rmvn(n = contingency_table[j, "Count"],
                               mu = mu_chain[, paste0(class, ":", j, ":", b)], 
-                              sigma = sig_Y)
+                              sigma = as.positive.definite(sig_Y))
             }
             
             #W (categorical data)

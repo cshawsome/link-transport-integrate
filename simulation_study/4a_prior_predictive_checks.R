@@ -7,7 +7,7 @@ p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack",
        "locfit", "wesanderson", "RColorBrewer", "devtools", "gifski", 
        "transformr", "moments", "qdapRegex", "future.apply", "mvnfast", 
        "LaplacesDemon", "vroom")
-install_github("thomasp85/gganimate")
+# install_github("thomasp85/gganimate")
 library(gganimate)
 
 #---- source functions ----
@@ -66,7 +66,7 @@ start <- Sys.time()
 indices <-
   which(dataset_names %in% paste0("normal_", c(1000), "_ADAMS"))
 
-#---- **run parallel checks ----
+#---- **run checks ----
 lapply(synthetic_HCAP_list[indices], function(x)
   prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
                           calibration_prop = 0.50, 
@@ -102,7 +102,7 @@ end <- Sys.time() - start
 #   which(dataset_names %in%
 #           paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
 # 
-# #---- **run parallel checks ----
+# #---- **run checks ----
 # future_lapply(synthetic_HCAP_list[indices], function(x)
 #   prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
 #                           calibration_prop = 0.50, 
