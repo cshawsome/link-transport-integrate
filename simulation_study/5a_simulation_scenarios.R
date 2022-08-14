@@ -14,7 +14,7 @@ batch_size <- 20
 total_runs <- 1000
 
 max_batch_count <- total_runs/batch_size
-seeds <- seq(1, max_batch_count)
+seeds <- seq(1, max_batch_count*batch_size, by = batch_size)
 
 sim_scenarios <- 
   as.data.frame(expand.grid(dists, samples_sizes, prior_props, calibration, 
