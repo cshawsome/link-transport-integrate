@@ -371,7 +371,7 @@ prior_predictive_checks <-
           #       class]][, seq(1, length(continuous_vars))])
         }
         
-        Sigma_prior <- diag(1, nrow = ncol(continuous_covariates))
+        Sigma_prior <- diag(1, nrow = ncol(continuous_vars))
         
         redraws = 0
         while(is.character(tryCatch(sig_Y <- 
