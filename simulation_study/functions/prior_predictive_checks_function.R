@@ -365,13 +365,13 @@ prior_predictive_checks <-
               priors_beta[[random_draw]][[
                 class]][, seq(1, length(continuous_vars))])
           
-          # Sigma_prior <- 
-          #   as.matrix(
-          #     prior_Sigma[[random_draw]][[
-          #       class]][, seq(1, length(continuous_vars))])
+          Sigma_prior <-
+            as.matrix(
+              prior_Sigma[[random_draw]][[
+                class]][, seq(1, length(continuous_vars))])
         }
         
-        Sigma_prior <- diag(1, nrow = length(continuous_vars))
+        #Sigma_prior <- diag(1, nrow = length(continuous_vars))
         
         redraws = 0
         while(is.character(tryCatch(sig_Y <- 
