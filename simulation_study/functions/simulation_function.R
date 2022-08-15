@@ -65,7 +65,8 @@ simulation_function <-
     scenario_name <- 
       as.character(
         unite(all_sim_scenarios[scenario, 
-                                c("distribution", "sample_size", "prior_prop")], 
+                                c("distribution", "sample_size", "prior_prop", 
+                                  "calibration")], 
               col = "name", sep = "_"))
     
     superpop_index <- which(superpop_names == 
