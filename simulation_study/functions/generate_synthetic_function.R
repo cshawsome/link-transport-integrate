@@ -460,13 +460,18 @@ generate_synthetic <-
             unlist(kappa_0[, class])*t(beta_0) %*% V_0_inv %*% beta_0
           fourth_term <- t(m) %*% M %*% m
           
-          # random_draw <- sample(seq(1, max_index), size = 1)
-          # Sigma_prior <- 
-          #   as.matrix(
-          #     prior_Sigma[[random_draw]][[
-          #       class]][, seq(1, length(continuous_vars))])
+          if(!calibration_sample){
+            random_draw <- sample(seq(1, max_index), size = 1)
+            Sigma_prior <-
+              as.matrix(
+                prior_Sigma[[random_draw]][[
+                  class]][, seq(1, length(continuous_vars))])
+          } else{
+            residual <- continuous_covariates - prior_U %*% A %*% beta_0
+            Sigma_prior <- t(residual) %*% residual
+          }
           
-          Sigma_prior <- diag(1, nrow = ncol(continuous_covariates))
+          #Sigma_prior <- diag(1, nrow = ncol(continuous_covariates))
           
           sigma_mat <- Sigma_prior + ZtZ + third_term - fourth_term
           redraws = 0
