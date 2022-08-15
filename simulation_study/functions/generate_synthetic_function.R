@@ -373,7 +373,7 @@ generate_synthetic <-
           UtU <- diag(contingency_table[, 1])
           
           #---- ****draw new UtU if needed ----
-          # while(det(t(A) %*% UtU %*% A) < 1e-10){
+          # while(det(t(contrasts_matrix) %*% UtU %*% contrasts_matrix) < 1e-10){
           #   
           #   random_draw <- sample(seq(1, max_index), size = 1)
           #   
@@ -410,7 +410,7 @@ generate_synthetic <-
           #---- **Mm ----
           continuous_covariates <- subset[, continuous_vars] %>% as.matrix
           
-          V_inv <- t(A) %*% UtU %*% A 
+          V_inv <- t(contrasts_matrix) %*% UtU %*% contrasts_matrix 
           random_draw <- sample(seq(1, max_index), size = 1)
           
           if(!calibration_sample){
@@ -442,14 +442,15 @@ generate_synthetic <-
               filter(!!sym(class) == 1) %>% 
               dplyr::select(all_of(continuous_vars)) %>% as.matrix()
             
-            V_0_inv <- t(A) %*% prior_UtU %*% A
+            V_0_inv <- t(contrasts_matrix) %*% prior_UtU %*% contrasts_matrix
             V_0 <- solve(V_0_inv)
             
-            beta_0 <- V_0 %*% t(A) %*% t(prior_U) %*% prior_continuous_covariates
+            beta_0 <- V_0 %*% t(contrasts_matrix) %*% t(prior_U) %*% 
+              prior_continuous_covariates
           }
           
           M <- solve(V_inv + unlist(kappa_0[, class])*V_0_inv)
-          m <-  t(A) %*% t(U) %*% continuous_covariates + 
+          m <-  t(contrasts_matrix) %*% t(U) %*% continuous_covariates + 
             unlist(kappa_0[, class])*V_0_inv %*% beta_0
           
           Mm <- M %*% m
@@ -467,7 +468,8 @@ generate_synthetic <-
                 prior_Sigma[[random_draw]][[
                   class]][, seq(1, length(continuous_vars))])
           } else{
-            residual <- continuous_covariates - prior_U %*% A %*% beta_0
+            residual <- 
+              continuous_covariates - U %*% contrasts_matrix %*% beta_0
             Sigma_prior <- t(residual) %*% residual
           }
           
@@ -501,7 +503,7 @@ generate_synthetic <-
           #---- ****compute mu ----
           mu_chain[, paste0(class, ":", 
                             seq(1, nrow(cross_class_label)), ":", b)] <- 
-            t(A %*% beta_Sigma_Y)
+            t(contrasts_matrix %*% beta_Sigma_Y)
           
           #---- ****draw data ----
           #reformat contingency table
