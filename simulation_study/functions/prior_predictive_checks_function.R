@@ -351,7 +351,8 @@ prior_predictive_checks <-
           
           beta_0 <- V_0 %*% t(A) %*% t(prior_U) %*% continuous_covariates
           
-          residual <- continuous_covariates - prior_U %*% A %*% beta_0
+          residual <- continuous_covariates - 
+            prior_U %*% contrasts_matrix %*% beta_0
 
           Sigma_prior <- t(residual) %*% residual
           
