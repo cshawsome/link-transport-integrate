@@ -351,9 +351,9 @@ prior_predictive_checks <-
           
           beta_0 <- V_0 %*% t(A) %*% t(prior_U) %*% continuous_covariates
           
-          # residual <- continuous_covariates - prior_U %*% A %*% beta_0
-          # 
-          # Sigma_prior <- t(residual) %*% residual
+          residual <- continuous_covariates - prior_U %*% A %*% beta_0
+
+          Sigma_prior <- t(residual) %*% residual
           
         } else{
           V_0_inv <- 
