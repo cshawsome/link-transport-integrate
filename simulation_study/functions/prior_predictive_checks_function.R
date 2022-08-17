@@ -137,11 +137,13 @@ prior_predictive_checks <-
     }
     
     generate_data <- function(color_palette){
+      #---- index for random draws ----
+      random_draw <- sample(seq(1, max_index), size = 1)
+      
       #---- latent class ----
       group_num = 1
       for(model in c("unimpaired", "other", "mci")){
         subset_index <- which(synthetic_sample$group_num == 0)
-        random_draw <- sample(seq(1, max_index), size = 1)
         
         if(calibration_sample){
           if(model == "mci"){
@@ -229,8 +231,6 @@ prior_predictive_checks <-
       }
       
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-        #---- **index for random draws ----
-        random_draw <- sample(seq(1, max_index), size = 1)
         
         #---- **contingency cells ----
         subset <- synthetic_sample %>% filter(Group == class)
@@ -427,13 +427,17 @@ prior_predictive_checks <-
       #---- **return ----
       return(list("Group" = synthetic_sample$Group, 
                   "Z_unimpaired" = Z_Unimpaired %>% 
-                    mutate("Group" = "Unimpaired") %>% left_join(color_palette), 
+                    mutate("Group" = "Unimpaired") %>% 
+                    left_join(color_palette, by = "Group"), 
                   "Z_other" = Z_Other %>% 
-                    mutate("Group" = "Other") %>% left_join(color_palette), 
+                    mutate("Group" = "Other") %>% 
+                    left_join(color_palette, by = "Group"), 
                   "Z_mci" = Z_MCI %>% 
-                    mutate("Group" = "MCI") %>% left_join(color_palette), 
+                    mutate("Group" = "MCI") %>% 
+                    left_join(color_palette, by = "Group"), 
                   "Z_dementia" = Z_Dementia %>% 
-                    mutate("Group" = "Dementia") %>% left_join(color_palette)))
+                    mutate("Group" = "Dementia") %>% 
+                    left_join(color_palette, by = "Group")))
     }
     
     #---- multiruns ----
