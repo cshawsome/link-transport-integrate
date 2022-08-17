@@ -86,15 +86,6 @@ generate_synthetic <-
       prior_imputed_clean <- readRDS(path_to_raw_prior_sample) %>%
         lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
       
-      #---- **prep sample ----
-      variable_labels_ADAMS <- variable_labels %>% 
-        filter(ADAMS %in% colnames(prior_imputed_clean[[1]]))
-      
-      prior_imputed_clean <- 
-        lapply(prior_imputed_clean, 
-               function(x) rename_at(x, vars(variable_labels_ADAMS$ADAMS), ~ 
-                                       variable_labels_ADAMS$data_label)) 
-      
       #---- selected vars ----
       selected_vars <- 
         read_csv(paste0(path_to_data, 
