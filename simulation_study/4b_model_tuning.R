@@ -18,7 +18,7 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **synthetic HCAP ----
 synthetic_HCAP_list <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/synthetic_HCAP_list"))
+  readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
 
 #---- dataset names ----
 dataset_names <- 
@@ -32,7 +32,7 @@ cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>%
   mutate_all(as.character)
 
 #---- **impairement class color palette ----
-color_palette <- read_csv(here::here("color_palette.csv")) 
+color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv")) 
 
 #---- define vars ----
 #categorical vars (notation from Schafer 1997)
@@ -43,15 +43,15 @@ all_vars <- colnames(synthetic_HCAP_list[[1]])
 Z <- all_vars[str_detect(all_vars, "_Z")]
 
 #---- **contrasts matrix ----
-A <- read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
+A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% 
   as.matrix()
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
-nu_0_mat <- read_csv(paste0(path_to_box, "analyses/nu_0_matrix.csv")) 
+nu_0_mat <- read_csv(paste0(path_to_box, "data/tuning/nu_0_matrix.csv")) 
 #scaling for inverse wishart as variance of Beta
 kappa_0_mat <- 
-  read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
+  read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix.csv"))
 
 #---- generate datasets in serial ----
 #About 1.5 hours to generate data for all datasets in serial
