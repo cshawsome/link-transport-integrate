@@ -64,27 +64,23 @@ generate_synthetic <-
       #---- **latent classes ----
       for(group in c("unimpaired", "mci", "other")){
         assign(paste0(group, "_betas"), 
-               vroom(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                            "latent_class_", group, "_betas.csv"), delim = ","))
+               vroom(paste0(path_to_box, "data/prior_data/latent_class_", group, 
+                            "_betas.csv"), delim = ","))
         assign(paste0(group, "_cov"), 
-               readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                              "latent_class_", group, "_cov")))
+               readRDS(paste0(path_to_box, "data/prior_data/latent_class_", 
+                              group, "_cov")))
         
         assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
       }
       
       #---- **contingency cells ----
       alpha_0_dist <- 
-        readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                       "imputation_cell_props")) 
+        readRDS(paste0(path_to_box, "data/prior_data/imputation_cell_props")) 
       
       #--- **beta and sigma ----
-      priors_beta <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
-                                    "prior_data/priors_beta")) 
-      prior_V_inv <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
-                                    "prior_data/priors_V_inv"))  
-      prior_Sigma <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
-                                    "prior_data/priors_Sigma")) 
+      priors_beta <- readRDS(paste0(path_to_box, "data/prior_data/priors_beta")) 
+      prior_V_inv <- readRDS(paste0(path_to_box, "data/prior_data/priors_V_inv"))  
+      prior_Sigma <- readRDS(paste0(path_to_box, "data/prior_data/priors_Sigma")) 
     } else{
       #---- read in raw prior sample ----
       prior_imputed_clean <- readRDS(path_to_raw_prior_sample) %>%
@@ -231,6 +227,9 @@ generate_synthetic <-
     
     #---- start sampling ----
     for(b in 1:B){
+      #---- **random index for priors ----
+      random_draw <- sample(seq(1, max_index), size = 1)
+      
       if(b == 1){
         #---- **init group membership ----
         dataset_to_copy[, "group_num"] <- 
@@ -239,8 +238,6 @@ generate_synthetic <-
       } else{
         #---- **latent class gammas ----
         for(model in c("unimpaired", "other", "mci")){
-          random_draw <- sample(seq(1, max_index), size = 1)
-          
           if(!calibration_sample){
             prior_betas <- get(paste0(model, "_betas"))[, random_draw]
             prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
@@ -290,13 +287,11 @@ generate_synthetic <-
         }
       }
       
-      dataset_to_copy[which(dataset_to_copy$group_num == 0), "group_num"] <- 4
-      
       dataset_to_copy[, "Group"] <- 
         case_when(dataset_to_copy$group_num == 1 ~ "Unimpaired", 
                   dataset_to_copy$group_num == 2 ~ "Other", 
                   dataset_to_copy$group_num == 3 ~ "MCI", 
-                  dataset_to_copy$group_num == 4 ~ "Dementia")
+                  dataset_to_copy$group_num == 0 ~ "Dementia")
       
       #---- ****group: summary ----
       summary <- table(dataset_to_copy$group_num)/nrow(dataset_to_copy) 
@@ -330,8 +325,6 @@ generate_synthetic <-
             new_counts[-missing] <- observed_count
             observed_count <- new_counts
           }
-          
-          random_draw <- sample(seq(1, max_index), size = 1)
           
           if(!calibration_sample){
             prior_count <- 
@@ -411,7 +404,6 @@ generate_synthetic <-
           continuous_covariates <- subset[, continuous_vars] %>% as.matrix
           
           V_inv <- t(contrasts_matrix) %*% UtU %*% contrasts_matrix 
-          random_draw <- sample(seq(1, max_index), size = 1)
           
           if(!calibration_sample){
             V_0_inv <- 
@@ -462,7 +454,6 @@ generate_synthetic <-
           fourth_term <- t(m) %*% M %*% m
           
           if(!calibration_sample){
-            random_draw <- sample(seq(1, max_index), size = 1)
             Sigma_prior <-
               as.matrix(
                 prior_Sigma[[random_draw]][[
