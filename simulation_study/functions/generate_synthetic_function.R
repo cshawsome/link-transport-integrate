@@ -339,7 +339,8 @@ generate_synthetic <-
               set_colnames(c("cell_ID", "Freq"))
             
             if(nrow(prior_count) < nrow(cell_ID_key)){
-              prior_count <- left_join(cell_ID_key, prior_count) %>% 
+              prior_count <- 
+                left_join(cell_ID_key, prior_count, by = "cell_ID") %>% 
                 dplyr::select(c("cell_ID", "Freq")) 
               
               prior_count[which(is.na(prior_count$Freq)), "Freq"] <- 0
@@ -611,7 +612,7 @@ generate_synthetic <-
         mutate("run" = seq(1:B)) %>% 
         pivot_longer(-c("run"), names_to = c("Group"), values_to = "prob") %>% 
         arrange(desc(prob)) %>%
-        mutate_at("Group", as.factor) %>% left_join(color_palette)
+        mutate_at("Group", as.factor) %>% left_join(color_palette, by = "Group")
       latent_class_data$Group <- 
         fct_relevel(latent_class_data$Group, 
                     paste0(unique(latent_class_data$Group))) 
@@ -722,7 +723,7 @@ generate_synthetic <-
         rownames_to_column("Z") %>% 
         pivot_longer(-c("Z"), names_to = c("Group", "Cell", "Run"), 
                      names_sep = ":", values_to = "mu") %>% 
-        left_join(color_palette) %>% 
+        left_join(color_palette, by = "Group") %>% 
         left_join(cell_ID_key, by = c("Cell" = "cell_order")) %>%
         mutate_at("Run", as.numeric) %>% mutate_if(is.character, as.factor) %>% 
         mutate_at("Color", as.character)
