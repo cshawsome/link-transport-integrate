@@ -64,7 +64,7 @@ start <- Sys.time()
 
 #---- **specify indices ----
 indices <-
-  which(dataset_names %in% paste0("normal_", c(1000), "_ADAMS"))
+  which(dataset_names %in% paste0("normal_", c(8000), "_ADAMS"))
 
 #---- **run checks ----
 lapply(synthetic_HCAP_list[indices], function(x)

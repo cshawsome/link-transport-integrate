@@ -58,7 +58,7 @@ kappa_0_mat <-
 
 #---- **specify indices ----
 indices <- 
-  which(dataset_names %in% paste0("normal_", c(1000), "_ADAMS"))
+  which(dataset_names %in% paste0("normal_", c(8000), "_ADAMS"))
 
 set.seed(20220329)
 start <- Sys.time()
