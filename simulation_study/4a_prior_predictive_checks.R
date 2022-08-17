@@ -23,11 +23,11 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
 #---- **impairment class color palette ----
-color_palette <- read_csv(here::here("color_palette.csv")) 
+color_palette <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
 #---- **synthetic HCAP ----
 synthetic_HCAP_list <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/synthetic_HCAP_list"))
+  readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
 
 #---- dataset names ----
 dataset_names <- 
@@ -36,7 +36,7 @@ dataset_names <-
 #---- define vars ----
 #---- **selected variables ----
 selected_vars <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
+  read_csv(paste0(path_to_box, "data/variable_selection/", 
                   "model_coefficients.csv"))
 
 #---- **categorical ----
@@ -48,15 +48,15 @@ Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"),
                    "data_label"] %>% unlist() %>% as.vector()
 
 #---- **contrasts matrix ----
-A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
+A = read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% 
   as.matrix()
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
-nu_0_mat <- read_csv(paste0(path_to_box, "analyses/nu_0_matrix.csv"))
+nu_0_mat <- read_csv(paste0(path_to_box, "data/tuning/nu_0_matrix.csv"))
 
 #scaling for inverse wishart as variance of Beta
-kappa_0_mat <- read_csv(paste0(path_to_box, "analyses/kappa_0_matrix.csv"))
+kappa_0_mat <- read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix.csv"))
 
 #---- run checks in serial ----
 set.seed(20220329)
@@ -64,16 +64,16 @@ start <- Sys.time()
 
 #---- **specify indices ----
 indices <-
-  which(dataset_names %in% paste0("normal_", c(8000), "_ADAMS"))
+  which(dataset_names %in% paste0("normal_", c(500), "_ADAMS"))
 
 #---- **run checks ----
 lapply(synthetic_HCAP_list[indices], function(x)
-  prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
+  prior_predictive_checks(dataset_to_copy = x, calibration_sample = FALSE, 
                           calibration_prop = 0.50, 
                           calibration_sample_name = "HCAP_50",
                           path_to_raw_prior_sample = 
-                            paste0(path_to_box, "analyses/simulation_study/", 
-                                   "prior_data/MI/MI_datasets_cleaned"), 
+                            paste0(path_to_box, "data/prior_data/MI/", 
+                                   "MI_datasets_cleaned"), 
                           path_to_data = path_to_box, 
                           path_to_output_folder =
                             paste0(path_to_box,

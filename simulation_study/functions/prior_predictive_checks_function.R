@@ -50,27 +50,26 @@ prior_predictive_checks <-
       #---- **latent classes ----
       for(group in c("unimpaired", "mci", "other")){
         assign(paste0(group, "_betas"), 
-               vroom(paste0(path_to_data, "analyses/simulation_study/prior_data/", 
-                            "latent_class_", group, "_betas.csv"), delim = ","))
+               vroom(paste0(path_to_data, "data/prior_data/latent_class_", 
+                            group, "_betas.csv"), delim = ","))
         assign(paste0(group, "_cov"), 
-               readRDS(paste0(path_to_data, "analyses/simulation_study/prior_data/", 
-                              "latent_class_", group, "_cov")))
+               readRDS(paste0(path_to_data, "data/prior_data/latent_class_", 
+                              group, "_cov")))
         
         assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
       }
       
       #---- **contingency cells ----
       alpha_0_dist <- 
-        readRDS(paste0(path_to_data, "analyses/simulation_study/prior_data/", 
-                       "imputation_cell_props")) 
+        readRDS(paste0(path_to_data, "data/prior_data/imputation_cell_props")) 
       
       #--- **beta and sigma ----
-      priors_beta <- readRDS(paste0(path_to_data, "analyses/simulation_study/",
-                                    "prior_data/priors_beta")) 
-      prior_V_inv <- readRDS(paste0(path_to_data, "analyses/simulation_study/",
-                                    "prior_data/priors_V_inv"))  
-      prior_Sigma <- readRDS(paste0(path_to_data, "analyses/simulation_study/",
-                                    "prior_data/priors_Sigma")) 
+      priors_beta <- 
+        readRDS(paste0(path_to_data, "data/prior_data/priors_beta")) 
+      prior_V_inv <- 
+        readRDS(paste0(path_to_data, "data/prior_data/priors_V_inv"))  
+      prior_Sigma <- 
+        readRDS(paste0(path_to_data, "data/prior_data/priors_Sigma")) 
     } else{
       #---- read in raw prior sample ----
       prior_imputed_clean <- readRDS(path_to_raw_prior_sample) %>%
