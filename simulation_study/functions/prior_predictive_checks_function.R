@@ -241,17 +241,19 @@ prior_predictive_checks <-
             set_colnames(c("cell_ID", "Freq"))
           
           if(nrow(prior_counts) < nrow(cell_ID_key)){
-            prior_counts <- left_join(cell_ID_key, prior_counts) %>% 
+            prior_counts <- 
+              left_join(cell_ID_key, prior_counts, by = "cell_ID") %>% 
               dplyr::select(c("cell_ID", "Freq")) 
             
             prior_counts[which(is.na(prior_counts$Freq)), "Freq"] <- 0
           }
           
           prior_counts %<>% mutate("prop" = Freq/sum(Freq))
-          
           prior_UtU <- diag(prior_counts$Freq)
           
+          #update counts for this particular subset
           prior_counts <- prior_counts$prop*nrow(subset)
+          
           
         } else{
           prior_counts <- 
