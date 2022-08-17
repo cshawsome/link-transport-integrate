@@ -21,6 +21,9 @@ for(directory in data_folders){
     ADAMS_imputed %<>% append(., readRDS(paste0(directory, "/MI_datasets")))
   }
 }
+
+#variable labels
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
   
 #---- derive post-imputation variables ----
 hrs_waves <- seq(4, 7)
@@ -212,7 +215,15 @@ ADAMS_imputed_clean <- lapply(ADAMS_imputed_clean, Z_score, standardize_vars)
 # test <- ADAMS_imputed_clean[[1]]
 # tail(colnames(test))
 
+#---- **name variables ----
+variable_labels_ADAMS <- variable_labels %>% 
+  filter(ADAMS %in% colnames(ADAMS_imputed_clean[[1]]))
+
+ADAMS_imputed_clean <- 
+  lapply(ADAMS_imputed_clean, 
+         function(x) rename_at(x, vars(variable_labels_ADAMS$ADAMS), ~ 
+                                 variable_labels_ADAMS$data_label)) 
+
 #---- **save clean datasets ----
 saveRDS(ADAMS_imputed_clean, 
-        file = paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
-                      "MI_datasets_cleaned"))
+        file = paste0(path_to_box, "data/prior_data/MI/MI_datasets_cleaned"))
