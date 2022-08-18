@@ -175,11 +175,13 @@ prior_predictive_checks <-
         group_num = group_num + 1
       }
       
+      synthetic_sample[which(synthetic_sample$group_num == 0), "group_num"] <- 4
+      
       synthetic_sample[, "Group"] <- 
         case_when(synthetic_sample$group_num == 1 ~ "Unimpaired", 
                   synthetic_sample$group_num == 2 ~ "Other", 
                   synthetic_sample$group_num == 3 ~ "MCI", 
-                  synthetic_sample$group_num == 0 ~ "Dementia")
+                  synthetic_sample$group_num == 4 ~ "Dementia")
       
       #pre-allocate: ncol = num impairement groups * num contingency cells
       # these are contingency-cell specific means for continuous variables by
