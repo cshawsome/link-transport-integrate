@@ -88,14 +88,14 @@ generate_synthetic <-
       
       #---- selected vars ----
       selected_vars <- 
-        read_csv(paste0(path_to_data, 
-                        "analyses/simulation_study/variable_selection/", 
+        read_csv(paste0(path_to_data, "data/variable_selection/", 
                         "model_coefficients.csv")) 
       
       #unimpaired model predictors
-      unimpaired_preds <- c("(Intercept)", selected_vars %>% 
-                              filter(data_label != "Intercept" & Unimpaired != 0) %>% 
-                              dplyr::select(data_label) %>% unlist())
+      unimpaired_preds <- 
+        c("(Intercept)", selected_vars %>% 
+            filter(data_label != "Intercept" & Unimpaired != 0) %>% 
+            dplyr::select(data_label) %>% unlist())
       
       #other model predictors
       other_preds <- c("(Intercept)", selected_vars %>% 
@@ -278,11 +278,13 @@ generate_synthetic <-
         }
       }
       
+      dataset_to_copy[which(dataset_to_copy$group_num == 0), "group_num"] <- 4
+      
       dataset_to_copy[, "Group"] <- 
         case_when(dataset_to_copy$group_num == 1 ~ "Unimpaired", 
                   dataset_to_copy$group_num == 2 ~ "Other", 
                   dataset_to_copy$group_num == 3 ~ "MCI", 
-                  dataset_to_copy$group_num == 0 ~ "Dementia")
+                  dataset_to_copy$group_num == 4 ~ "Dementia")
       
       #---- ****group: summary ----
       summary <- table(dataset_to_copy$group_num)/nrow(dataset_to_copy) 
