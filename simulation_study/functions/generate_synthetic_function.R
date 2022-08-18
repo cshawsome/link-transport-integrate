@@ -191,33 +191,14 @@ generate_synthetic <-
     }
     
     #---- nu_0 and kappa_0 hyperparameters ----
-    if(!calibration_sample){
-      kappa_0 <- 
-        kappa_0_mat[
-          which(kappa_0_mat$dataset_name == 
-                  unlist(unique(dataset_to_copy[, "dataset_name"])) & 
-                  kappa_0_mat$calibration_name == "no_calibration"), ]
-      
-      nu_0 <- 
-        nu_0_mat[
-          which(nu_0_mat$dataset_name == 
-                  unlist(unique(dataset_to_copy[, "dataset_name"])) & 
-                  nu_0_mat$calibration_name == "no_calibration"), ]  
-    } else{
-      kappa_0 <- 
-        kappa_0_mat[
-          which(kappa_0_mat$dataset_name == 
-                  unlist(unique(dataset_to_copy[, "dataset_name"])) & 
-                  kappa_0_mat$calibration_name == 
-                  paste0("calibration_", 100*calibration_prop)), ]
-      
-      nu_0 <- 
-        nu_0_mat[
-          which(nu_0_mat$dataset_name == 
-                  unlist(unique(dataset_to_copy[, "dataset_name"])) & 
-                  nu_0_mat$calibration_name == 
-                  paste0("calibration_", 100*calibration_prop)), ]  
-    }
+    kappa_0 <- 
+      kappa_0_mat[which(kappa_0_mat$dataset_name == 
+                          unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
+    
+    nu_0 <- 
+      nu_0_mat[which(nu_0_mat$dataset_name == 
+                       unlist(unique(dataset_to_copy[, "dataset_name"]))), ]  
+    
     
     #---- start sampling ----
     for(b in 1:B){
