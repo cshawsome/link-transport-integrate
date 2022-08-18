@@ -55,9 +55,13 @@ kappa_0_mat <-
 #---- **rename datasets based on calibration scenario ----
 calibration_scenario = "none"
 synthetic_HCAP_list <- 
-  lapply(synthetic_HCAP_list, function(x) 
+  lapply(synthetic_HCAP_list, function(x)
+    x %<>% mutate("dataset_name_stem" = unlist(unique(x[, "dataset_name"]))))
+
+synthetic_HCAP_list <- 
+  lapply(synthetic_HCAP_list, function(x)
     x %<>% mutate("dataset_name" = 
-                    paste0(unlist(unique(x[, "dataset_name"])), "_", 
+                    paste0(unlist(unique(x[, "dataset_name_stem"])), "_", 
                            calibration_scenario)))
 
 #---- dataset names ----
@@ -83,10 +87,10 @@ lapply(synthetic_HCAP_list[indices], function(x)
                      path_to_data = paste0(path_to_box,"data/"), 
                      path_to_analyses_folder = 
                        paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
-                              unique(x[, "dataset_name"]), "/"), 
+                              unique(x[, "dataset_name_stem"]), "/"), 
                      path_to_figures_folder = 
                        paste0(path_to_box, "figures/simulation_study/HCAP_HRS_", 
-                              unique(x[, "dataset_name"]), "/"), 
+                              unique(x[, "dataset_name_stem"]), "/"), 
                      categorical_vars = W, continuous_vars = Z, 
                      id_var = "HHIDPN", variable_labels = variable_labels, 
                      cell_ID_key = cell_ID_key, color_palette = color_palette, 

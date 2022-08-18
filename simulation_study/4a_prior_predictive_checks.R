@@ -61,9 +61,14 @@ start <- Sys.time()
 #---- **rename datasets based on calibration scenario ----
 calibration_scenario = "none"
 synthetic_HCAP_list <- 
-  lapply(synthetic_HCAP_list, function(x) 
+  lapply(synthetic_HCAP_list, function(x)
+    x %<>% mutate("dataset_name_stem" = unlist(unique(x[, "dataset_name"]))))
+
+synthetic_HCAP_list <- 
+  lapply(synthetic_HCAP_list, function(x)
     x %<>% mutate("dataset_name" = 
-      paste0(unlist(unique(x[, "dataset_name"])), "_", calibration_scenario)))
+                    paste0(unlist(unique(x[, "dataset_name_stem"])), "_", 
+                           calibration_scenario)))
 
 #---- dataset names ----
 dataset_names <- 
@@ -71,7 +76,7 @@ dataset_names <-
 
 #---- **specify indices ----
 indices <-
-  which(dataset_names %in% paste0("normal_", c(2000), "_ADAMS_", 
+  which(dataset_names %in% paste0("normal_", c(4000), "_ADAMS_", 
                                   calibration_scenario))
 
 #---- **run checks ----
@@ -86,7 +91,7 @@ lapply(synthetic_HCAP_list[indices], function(x)
                           path_to_output_folder =
                             paste0(path_to_box,
                                    "figures/simulation_study/HCAP_HRS_",
-                                   unique(x[, "dataset_name"]),
+                                   unique(x[, "dataset_name_stem"]),
                                    "/prior_predictive_checks/"), 
                           continuous_check_test = TRUE,
                           continuous_check = c("Unimpaired", "MCI", "Dementia", 
