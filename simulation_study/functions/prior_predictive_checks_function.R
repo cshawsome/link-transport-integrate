@@ -50,45 +50,34 @@ prior_predictive_checks <-
       #---- **latent classes ----
       for(group in c("unimpaired", "mci", "other")){
         assign(paste0(group, "_betas"), 
-               vroom(paste0(path_to_data, "analyses/simulation_study/prior_data/", 
-                            "latent_class_", group, "_betas.csv"), delim = ","))
+               vroom(paste0(path_to_data, "data/prior_data/latent_class_", 
+                            group, "_betas.csv"), delim = ","))
         assign(paste0(group, "_cov"), 
-               readRDS(paste0(path_to_data, "analyses/simulation_study/prior_data/", 
-                              "latent_class_", group, "_cov")))
+               readRDS(paste0(path_to_data, "data/prior_data/latent_class_", 
+                              group, "_cov")))
         
         assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
       }
       
       #---- **contingency cells ----
       alpha_0_dist <- 
-        readRDS(paste0(path_to_data, "analyses/simulation_study/prior_data/", 
-                       "imputation_cell_props")) 
+        readRDS(paste0(path_to_data, "data/prior_data/imputation_cell_props")) 
       
       #--- **beta and sigma ----
-      priors_beta <- readRDS(paste0(path_to_data, "analyses/simulation_study/",
-                                    "prior_data/priors_beta")) 
-      prior_V_inv <- readRDS(paste0(path_to_data, "analyses/simulation_study/",
-                                    "prior_data/priors_V_inv"))  
-      prior_Sigma <- readRDS(paste0(path_to_data, "analyses/simulation_study/",
-                                    "prior_data/priors_Sigma")) 
+      priors_beta <- 
+        readRDS(paste0(path_to_data, "data/prior_data/priors_beta")) 
+      prior_V_inv <- 
+        readRDS(paste0(path_to_data, "data/prior_data/priors_V_inv"))  
+      prior_Sigma <- 
+        readRDS(paste0(path_to_data, "data/prior_data/priors_Sigma")) 
     } else{
       #---- read in raw prior sample ----
       prior_imputed_clean <- readRDS(path_to_raw_prior_sample) %>%
         lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
       
-      #---- **prep sample ----
-      variable_labels_ADAMS <- variable_labels %>% 
-        filter(ADAMS %in% colnames(prior_imputed_clean[[1]]))
-      
-      prior_imputed_clean <- 
-        lapply(prior_imputed_clean, 
-               function(x) rename_at(x, vars(variable_labels_ADAMS$ADAMS), ~ 
-                                       variable_labels_ADAMS$data_label)) 
-      
       #---- selected vars ----
       selected_vars <- 
-        read_csv(paste0(path_to_data, 
-                        "analyses/simulation_study/variable_selection/", 
+        read_csv(paste0(path_to_data, "data/variable_selection/", 
                         "model_coefficients.csv")) 
       
       #unimpaired model predictors
@@ -138,11 +127,13 @@ prior_predictive_checks <-
     }
     
     generate_data <- function(color_palette){
+      #---- index for random draws ----
+      random_draw <- sample(seq(1, max_index), size = 1)
+      
       #---- latent class ----
       group_num = 1
       for(model in c("unimpaired", "other", "mci")){
         subset_index <- which(synthetic_sample$group_num == 0)
-        random_draw <- sample(seq(1, max_index), size = 1)
         
         if(calibration_sample){
           if(model == "mci"){
@@ -184,11 +175,13 @@ prior_predictive_checks <-
         group_num = group_num + 1
       }
       
+      synthetic_sample[which(synthetic_sample$group_num == 0), "group_num"] <- 4
+      
       synthetic_sample[, "Group"] <- 
         case_when(synthetic_sample$group_num == 1 ~ "Unimpaired", 
                   synthetic_sample$group_num == 2 ~ "Other", 
                   synthetic_sample$group_num == 3 ~ "MCI", 
-                  synthetic_sample$group_num == 0 ~ "Dementia")
+                  synthetic_sample$group_num == 4 ~ "Dementia")
       
       #pre-allocate: ncol = num impairement groups * num contingency cells
       # these are contingency-cell specific means for continuous variables by
@@ -230,8 +223,6 @@ prior_predictive_checks <-
       }
       
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-        #---- **index for random draws ----
-        random_draw <- sample(seq(1, max_index), size = 1)
         
         #---- **contingency cells ----
         subset <- synthetic_sample %>% filter(Group == class)
@@ -252,17 +243,19 @@ prior_predictive_checks <-
             set_colnames(c("cell_ID", "Freq"))
           
           if(nrow(prior_counts) < nrow(cell_ID_key)){
-            prior_counts <- left_join(cell_ID_key, prior_counts) %>% 
+            prior_counts <- 
+              left_join(cell_ID_key, prior_counts, by = "cell_ID") %>% 
               dplyr::select(c("cell_ID", "Freq")) 
             
             prior_counts[which(is.na(prior_counts$Freq)), "Freq"] <- 0
           }
           
           prior_counts %<>% mutate("prop" = Freq/sum(Freq))
-          
           prior_UtU <- diag(prior_counts$Freq)
           
+          #update counts for this particular subset
           prior_counts <- prior_counts$prop*nrow(subset)
+          
           
         } else{
           prior_counts <- 
@@ -351,9 +344,10 @@ prior_predictive_checks <-
           
           beta_0 <- V_0 %*% t(A) %*% t(prior_U) %*% continuous_covariates
           
-          # residual <- continuous_covariates - prior_U %*% A %*% beta_0
-          # 
-          # Sigma_prior <- t(residual) %*% residual
+          residual <- continuous_covariates - 
+            prior_U %*% contrasts_matrix %*% beta_0
+          
+          Sigma_prior <- t(residual) %*% residual
           
         } else{
           V_0_inv <- 
@@ -365,13 +359,13 @@ prior_predictive_checks <-
               priors_beta[[random_draw]][[
                 class]][, seq(1, length(continuous_vars))])
           
-          # Sigma_prior <- 
-          #   as.matrix(
-          #     prior_Sigma[[random_draw]][[
-          #       class]][, seq(1, length(continuous_vars))])
+          Sigma_prior <-
+            as.matrix(
+              prior_Sigma[[random_draw]][[
+                class]][, seq(1, length(continuous_vars))])
         }
         
-        Sigma_prior <- diag(1, nrow = ncol(continuous_covariates))
+        #Sigma_prior <- diag(1, nrow = length(continuous_vars))
         
         redraws = 0
         while(is.character(tryCatch(sig_Y <- 
@@ -427,13 +421,17 @@ prior_predictive_checks <-
       #---- **return ----
       return(list("Group" = synthetic_sample$Group, 
                   "Z_unimpaired" = Z_Unimpaired %>% 
-                    mutate("Group" = "Unimpaired") %>% left_join(color_palette), 
+                    mutate("Group" = "Unimpaired") %>% 
+                    left_join(color_palette, by = "Group"), 
                   "Z_other" = Z_Other %>% 
-                    mutate("Group" = "Other") %>% left_join(color_palette), 
+                    mutate("Group" = "Other") %>% 
+                    left_join(color_palette, by = "Group"), 
                   "Z_mci" = Z_MCI %>% 
-                    mutate("Group" = "MCI") %>% left_join(color_palette), 
+                    mutate("Group" = "MCI") %>% 
+                    left_join(color_palette, by = "Group"), 
                   "Z_dementia" = Z_Dementia %>% 
-                    mutate("Group" = "Dementia") %>% left_join(color_palette)))
+                    mutate("Group" = "Dementia") %>% 
+                    left_join(color_palette, by = "Group")))
     }
     
     #---- multiruns ----

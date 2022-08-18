@@ -184,7 +184,7 @@ posterior_predictive_checks <-
       set_colnames(c(seq(1, num_samples), "cell", "chain"))
     
     cells <- contrasts_matrix[, -1] %>% as.data.frame() %>% 
-      unite("cell_ID", sep = "") %>% left_join(cell_ID_key)
+      unite("cell_ID", sep = "") %>% left_join(cell_ID_key, by = "cell_ID")
     
     synthetic_counts[, "cell"] <- rep(cells$cell_name, num_chains)
     
@@ -200,7 +200,8 @@ posterior_predictive_checks <-
         counts <- subsample %>% 
           dplyr::select(all_of(categorical_covariates)) %>% 
           unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-          set_colnames(c("cell_ID", "Freq")) %>% left_join(., cell_ID_key)
+          set_colnames(c("cell_ID", "Freq")) %>% 
+          left_join(., cell_ID_key, by = "cell_ID")
         
         counts[which(is.na(counts$Freq)), "Freq"] <- 0
         
@@ -220,7 +221,7 @@ posterior_predictive_checks <-
         dplyr::select(all_of(categorical_covariates)) %>% 
         unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
         set_colnames(c("cell_ID", "Freq")) %>% 
-        left_join(cell_ID_key, .)  
+        left_join(cell_ID_key, ., by = "cell_ID")  
     } else{
       counts <- dataset_to_copy %>% 
         filter(!!sym(paste0("calibration_", 100*calibration_prop)) == 0) %>%
@@ -278,7 +279,7 @@ posterior_predictive_checks <-
               each = nrow(contrasts_matrix)), num_chains)
     
     cells <- contrasts_matrix[, -1] %>% as.data.frame() %>% 
-      unite("cell_ID", sep = "") %>% left_join(cell_ID_key)
+      unite("cell_ID", sep = "") %>% left_join(cell_ID_key, by = "cell_ID")
     
     synthetic_counts[, "cell"] <- rep(rep(cells$cell_name, 4), num_chains)
     
@@ -303,7 +304,8 @@ posterior_predictive_checks <-
             counts <- subsample %>% filter(Group == group) %>% 
               dplyr::select(all_of(categorical_covariates)) %>% 
               unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-              set_colnames(c("cell_ID", "Freq")) %>% left_join(cell_ID_key, .)
+              set_colnames(c("cell_ID", "Freq")) %>% 
+              left_join(cell_ID_key, ., by = "cell_ID")
             
             counts[which(is.na(counts$Freq)), "Freq"] <- 0
             
@@ -326,7 +328,7 @@ posterior_predictive_checks <-
           dplyr::select(all_of(categorical_covariates)) %>% 
           unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
           set_colnames(c("cell_ID", "Freq")) %>% 
-          left_join(cell_ID_key, .)
+          left_join(cell_ID_key, ., by = "cell_ID")
         
         counts[which(is.na(counts$Freq)), "Freq"] <- 0
         
@@ -343,7 +345,7 @@ posterior_predictive_checks <-
           dplyr::select(all_of(categorical_covariates)) %>% 
           unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
           set_colnames(c("cell_ID", "Freq")) %>% 
-          left_join(cell_ID_key, .)
+          left_join(cell_ID_key, ., by = "cell_ID")
         
         counts[which(is.na(counts$Freq)), "Freq"] <- 0
         
@@ -748,7 +750,8 @@ posterior_predictive_checks <-
       summarize_at("n", list("mean" = mean, 
                              "lower" = ~ quantile(.x, probs = 0.025), 
                              "upper" = ~ quantile(.x, probs = 0.975))) %>% 
-      left_join(dementia_plot_data) %>% left_join(color_palette) %>%
+      left_join(dementia_plot_data, by = "Group") %>% 
+      left_join(color_palette, by = "Group") %>%
       mutate("chain" = paste0("Chain ", chain))
     
     combined_plot_data$Group <- 

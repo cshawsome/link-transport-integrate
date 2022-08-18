@@ -23,11 +23,11 @@ cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>%
   mutate_all(as.character)
 
 #---- **impairement class color palette ----
-color_palette <- read_csv(here::here("color_palette.csv")) 
+color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv")) 
 
 #---- **synthetic HCAP ----
 synthetic_HCAP_list <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/synthetic_HCAP_list"))
+  readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
 
 #---- dataset names ----
 dataset_names <- 
@@ -42,8 +42,7 @@ all_vars <- colnames(synthetic_HCAP_list[[1]])
 Z <- all_vars[str_detect(all_vars, "_Z")]
 
 #---- **contrasts matrix ----
-A <- read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
-  as.matrix()
+A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
 
 #---- run checks in serial ----
 set.seed(20220329)
@@ -51,10 +50,10 @@ start <- Sys.time()
 
 #---- **specify indices ----
 indices <- which(dataset_names %in% 
-                   paste0("normal_", c(500), "_ADAMS"))
+                   paste0("normal_", c(1000), "_ADAMS"))
 
 lapply(synthetic_HCAP_list[indices], function(x)
-  posterior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE,
+  posterior_predictive_checks(dataset_to_copy = x, calibration_sample = FALSE,
                               calibration_prop = 0.50, 
                               calibration_sample_name = "HCAP_50",
                               categorical_covariates = W, 

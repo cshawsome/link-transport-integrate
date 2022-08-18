@@ -125,10 +125,9 @@ selected_vars %<>% mutate("times_selected" = rowSums(selected_vars[, -1])) %>%
 selected_vars %<>% left_join(., variable_labels, by = c("Variable" = "ADAMS")) 
 
 #---- **save results ----
-saveRDS(variable_selection, paste0(path_to_box, "analyses/simulation_study/", 
-                                   "variable_selection/ADAMS_lasso_models"))
+saveRDS(variable_selection, paste0(path_to_box, "data/variable_selection/", 
+                                   "ADAMS_lasso_models"))
 
 write_csv(selected_vars %>% 
             dplyr::select(c("data_label", "Unimpaired", "Other", "MCI")), 
-          paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
-                 "model_coefficients.csv"))
+          paste0(path_to_box, "data/variable_selection/model_coefficients.csv"))

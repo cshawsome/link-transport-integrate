@@ -11,7 +11,7 @@
 #$ -m bea #sends you an email (b) when the job begins (e) when job ends (a) when job is aborted (error)
 # submit array job:
 # SINGLE BATCH RUNS:
-#$ -t 751-800:1
+#$ -t 1-50:1
 # FOR THE FULL RUN USE INSTEAD:
 ##$ -t 1-4500:1
 ## 

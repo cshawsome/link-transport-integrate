@@ -64,51 +64,41 @@ generate_synthetic <-
       #---- **latent classes ----
       for(group in c("unimpaired", "mci", "other")){
         assign(paste0(group, "_betas"), 
-               vroom(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                            "latent_class_", group, "_betas.csv"), delim = ","))
+               vroom(paste0(path_to_data, "prior_data/latent_class_", group, 
+                            "_betas.csv"), delim = ","))
         assign(paste0(group, "_cov"), 
-               readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                              "latent_class_", group, "_cov")))
+               readRDS(paste0(path_to_data, "prior_data/latent_class_", 
+                              group, "_cov")))
         
         assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
       }
       
       #---- **contingency cells ----
       alpha_0_dist <- 
-        readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                       "imputation_cell_props")) 
+        readRDS(paste0(path_to_data, "prior_data/imputation_cell_props")) 
       
       #--- **beta and sigma ----
-      priors_beta <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
-                                    "prior_data/priors_beta")) 
-      prior_V_inv <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
-                                    "prior_data/priors_V_inv"))  
-      prior_Sigma <- readRDS(paste0(path_to_box, "analyses/simulation_study/",
-                                    "prior_data/priors_Sigma")) 
+      priors_beta <- 
+        readRDS(paste0(path_to_data, "prior_data/priors_beta")) 
+      prior_V_inv <- 
+        readRDS(paste0(path_to_data, "prior_data/priors_V_inv"))  
+      prior_Sigma <- 
+        readRDS(paste0(path_to_data, "prior_data/priors_Sigma")) 
     } else{
       #---- read in raw prior sample ----
       prior_imputed_clean <- readRDS(path_to_raw_prior_sample) %>%
         lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
       
-      #---- **prep sample ----
-      variable_labels_ADAMS <- variable_labels %>% 
-        filter(ADAMS %in% colnames(prior_imputed_clean[[1]]))
-      
-      prior_imputed_clean <- 
-        lapply(prior_imputed_clean, 
-               function(x) rename_at(x, vars(variable_labels_ADAMS$ADAMS), ~ 
-                                       variable_labels_ADAMS$data_label)) 
-      
       #---- selected vars ----
       selected_vars <- 
-        read_csv(paste0(path_to_data, 
-                        "analyses/simulation_study/variable_selection/", 
+        read_csv(paste0(path_to_data, "variable_selection/", 
                         "model_coefficients.csv")) 
       
       #unimpaired model predictors
-      unimpaired_preds <- c("(Intercept)", selected_vars %>% 
-                              filter(data_label != "Intercept" & Unimpaired != 0) %>% 
-                              dplyr::select(data_label) %>% unlist())
+      unimpaired_preds <- 
+        c("(Intercept)", selected_vars %>% 
+            filter(data_label != "Intercept" & Unimpaired != 0) %>% 
+            dplyr::select(data_label) %>% unlist())
       
       #other model predictors
       other_preds <- c("(Intercept)", selected_vars %>% 
@@ -231,6 +221,9 @@ generate_synthetic <-
     
     #---- start sampling ----
     for(b in 1:B){
+      #---- **random index for priors ----
+      random_draw <- sample(seq(1, max_index), size = 1)
+      
       if(b == 1){
         #---- **init group membership ----
         dataset_to_copy[, "group_num"] <- 
@@ -239,8 +232,6 @@ generate_synthetic <-
       } else{
         #---- **latent class gammas ----
         for(model in c("unimpaired", "other", "mci")){
-          random_draw <- sample(seq(1, max_index), size = 1)
-          
           if(!calibration_sample){
             prior_betas <- get(paste0(model, "_betas"))[, random_draw]
             prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
@@ -331,8 +322,6 @@ generate_synthetic <-
             observed_count <- new_counts
           }
           
-          random_draw <- sample(seq(1, max_index), size = 1)
-          
           if(!calibration_sample){
             prior_count <- 
               alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)  
@@ -346,7 +335,8 @@ generate_synthetic <-
               set_colnames(c("cell_ID", "Freq"))
             
             if(nrow(prior_count) < nrow(cell_ID_key)){
-              prior_count <- left_join(cell_ID_key, prior_count) %>% 
+              prior_count <- 
+                left_join(cell_ID_key, prior_count, by = "cell_ID") %>% 
                 dplyr::select(c("cell_ID", "Freq")) 
               
               prior_count[which(is.na(prior_count$Freq)), "Freq"] <- 0
@@ -373,7 +363,7 @@ generate_synthetic <-
           UtU <- diag(contingency_table[, 1])
           
           #---- ****draw new UtU if needed ----
-          # while(det(t(A) %*% UtU %*% A) < 1e-10){
+          # while(det(t(contrasts_matrix) %*% UtU %*% contrasts_matrix) < 1e-10){
           #   
           #   random_draw <- sample(seq(1, max_index), size = 1)
           #   
@@ -410,8 +400,7 @@ generate_synthetic <-
           #---- **Mm ----
           continuous_covariates <- subset[, continuous_vars] %>% as.matrix
           
-          V_inv <- t(A) %*% UtU %*% A 
-          random_draw <- sample(seq(1, max_index), size = 1)
+          V_inv <- t(contrasts_matrix) %*% UtU %*% contrasts_matrix 
           
           if(!calibration_sample){
             V_0_inv <- 
@@ -442,14 +431,15 @@ generate_synthetic <-
               filter(!!sym(class) == 1) %>% 
               dplyr::select(all_of(continuous_vars)) %>% as.matrix()
             
-            V_0_inv <- t(A) %*% prior_UtU %*% A
+            V_0_inv <- t(contrasts_matrix) %*% prior_UtU %*% contrasts_matrix
             V_0 <- solve(V_0_inv)
             
-            beta_0 <- V_0 %*% t(A) %*% t(prior_U) %*% prior_continuous_covariates
+            beta_0 <- V_0 %*% t(contrasts_matrix) %*% t(prior_U) %*% 
+              prior_continuous_covariates
           }
           
           M <- solve(V_inv + unlist(kappa_0[, class])*V_0_inv)
-          m <-  t(A) %*% t(U) %*% continuous_covariates + 
+          m <-  t(contrasts_matrix) %*% t(U) %*% continuous_covariates + 
             unlist(kappa_0[, class])*V_0_inv %*% beta_0
           
           Mm <- M %*% m
@@ -460,13 +450,18 @@ generate_synthetic <-
             unlist(kappa_0[, class])*t(beta_0) %*% V_0_inv %*% beta_0
           fourth_term <- t(m) %*% M %*% m
           
-          # random_draw <- sample(seq(1, max_index), size = 1)
-          # Sigma_prior <- 
-          #   as.matrix(
-          #     prior_Sigma[[random_draw]][[
-          #       class]][, seq(1, length(continuous_vars))])
+          if(!calibration_sample){
+            Sigma_prior <-
+              as.matrix(
+                prior_Sigma[[random_draw]][[
+                  class]][, seq(1, length(continuous_vars))])
+          } else{
+            residual <- 
+              continuous_covariates - U %*% contrasts_matrix %*% beta_0
+            Sigma_prior <- t(residual) %*% residual
+          }
           
-          Sigma_prior <- diag(1, nrow = ncol(continuous_covariates))
+          #Sigma_prior <- diag(1, nrow = ncol(continuous_covariates))
           
           sigma_mat <- Sigma_prior + ZtZ + third_term - fourth_term
           redraws = 0
@@ -496,7 +491,7 @@ generate_synthetic <-
           #---- ****compute mu ----
           mu_chain[, paste0(class, ":", 
                             seq(1, nrow(cross_class_label)), ":", b)] <- 
-            t(A %*% beta_Sigma_Y)
+            t(contrasts_matrix %*% beta_Sigma_Y)
           
           #---- ****draw data ----
           #reformat contingency table
@@ -613,7 +608,7 @@ generate_synthetic <-
         mutate("run" = seq(1:B)) %>% 
         pivot_longer(-c("run"), names_to = c("Group"), values_to = "prob") %>% 
         arrange(desc(prob)) %>%
-        mutate_at("Group", as.factor) %>% left_join(color_palette)
+        mutate_at("Group", as.factor) %>% left_join(color_palette, by = "Group")
       latent_class_data$Group <- 
         fct_relevel(latent_class_data$Group, 
                     paste0(unique(latent_class_data$Group))) 
@@ -724,7 +719,7 @@ generate_synthetic <-
         rownames_to_column("Z") %>% 
         pivot_longer(-c("Z"), names_to = c("Group", "Cell", "Run"), 
                      names_sep = ":", values_to = "mu") %>% 
-        left_join(color_palette) %>% 
+        left_join(color_palette, by = "Group") %>% 
         left_join(cell_ID_key, by = c("Cell" = "cell_order")) %>%
         mutate_at("Run", as.numeric) %>% mutate_if(is.character, as.factor) %>% 
         mutate_at("Color", as.character)
