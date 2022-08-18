@@ -38,6 +38,9 @@ library("LaplacesDemon")
 
 #---- source functions ----
 path_to_RScripts <- "/u/home/c/cshaw343/link_transport_integrate/RScripts/"
+# #code testing
+# path_to_RScripts <- here::here("simulation_study", "functions", "/")
+# source(here::here("functions", "read_results.R"))
 
 source(paste0(path_to_RScripts, "read_results.R"))
 source(paste0(path_to_RScripts, "generate_synthetic_function.R"))
@@ -45,6 +48,8 @@ source(paste0(path_to_RScripts, "simulation_function.R"))
 
 #---- read in data ----
 path_to_data <- "/u/home/c/cshaw343/link_transport_integrate/data/"
+# #code testing
+# path_to_data <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/data/"
 
 #---- **data paths ----
 superpop_data_paths <- 
