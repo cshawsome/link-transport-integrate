@@ -26,12 +26,15 @@ print(scenario_num)
 print(num_replicates)
 
 #---- Package loading + options ----
-if (!require("pacman")){
-  install.packages("pacman", repos='http://cran.us.r-project.org')
-}
-
-p_load("tidyverse", "DirichletReg", "magrittr", "MCMCpack", "locfit", "vroom", 
-       "mvnfast", "mice", "LaplacesDemon")
+library("tidyverse") 
+library("DirichletReg")
+library("magrittr")
+library("MCMCpack") 
+library("locfit")
+library("vroom")
+library("mvnfast")
+library("mice")
+library("LaplacesDemon")
 
 #---- source functions ----
 path_to_RScripts <- "/u/home/c/cshaw343/link_transport_integrate/RScripts/"
