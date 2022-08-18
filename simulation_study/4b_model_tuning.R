@@ -20,10 +20,6 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 synthetic_HCAP_list <- 
   readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
 
-#---- dataset names ----
-dataset_names <- 
-  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
-
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
@@ -56,9 +52,22 @@ kappa_0_mat <-
 #---- generate datasets in serial ----
 #About 1.5 hours to generate data for all datasets in serial
 
+#---- **rename datasets based on calibration scenario ----
+calibration_scenario = "none"
+synthetic_HCAP_list <- 
+  lapply(synthetic_HCAP_list, function(x) 
+    x %<>% mutate("dataset_name" = 
+                    paste0(unlist(unique(x[, "dataset_name"])), "_", 
+                           calibration_scenario)))
+
+#---- dataset names ----
+dataset_names <- 
+  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
+
 #---- **specify indices ----
-indices <- 
-  which(dataset_names %in% paste0("normal_", c(2000), "_ADAMS"))
+indices <-
+  which(dataset_names %in% paste0("normal_", c(4000), "_ADAMS_", 
+                                  calibration_scenario))
 
 set.seed(20220329)
 start <- Sys.time()
