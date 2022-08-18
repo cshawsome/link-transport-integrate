@@ -45,8 +45,8 @@ path_to_data <- "/u/home/c/cshaw343/link_transport_integrate/data/"
 
 #---- **data paths ----
 superpop_data_paths <- 
-  list.files(path = paste0(path_to_data, "superpopulations"), full.names = TRUE, 
-             pattern = "*.csv")
+  list.files(path = paste0(path_to_data, "superpopulations"), 
+             full.names = TRUE, pattern = "*.csv")
 
 superpop_data_list <- lapply(superpop_data_paths, read_results)
 
@@ -54,7 +54,8 @@ superpop_data_list <- lapply(superpop_data_paths, read_results)
 truth <- read_csv(paste0(path_to_data, "truth.csv"))
 
 #---- **variable labels ----
-variable_labels <- read_csv(paste0(path_to_data, "variable_crosswalk.csv")) 
+variable_labels <- 
+  read_csv(paste0(path_to_data, "variable_crosswalk.csv")) 
 
 #---- **cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_data, "cell_ID_key.csv")) %>% 
@@ -79,10 +80,10 @@ A = read_csv(paste0(path_to_data, "contrasts_matrix.csv")) %>% as.matrix()
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
-nu_0_mat <- read_csv(paste0(path_to_data, "nu_0_matrix.csv"))
+nu_0_mat <- read_csv(paste0(path_to_data, "tuning/nu_0_matrix.csv"))
 
 #scaling for inverse wishart as variance of Beta
-kappa_0_mat <- read_csv(paste0(path_to_data, "kappa_0_matrix.csv"))
+kappa_0_mat <- read_csv(paste0(path_to_data, "tuning/kappa_0_matrix.csv"))
 
 #---- set seed ----
 seed <- as.numeric(all_sim_scenarios[scenario_num, "seed"])
@@ -103,7 +104,8 @@ replicate(num_replicates,
                               kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
                               truth = truth, seed = seed, 
                               path_to_raw_prior_sample = 
-                                paste0(path_to_data, "MI_datasets_cleaned"), 
+                                paste0(path_to_data, 
+                                       "prior_data/MI_datasets_cleaned"), 
                               path_to_data = path_to_data, 
                               path_to_results = 
                                 paste0("/u/home/c/cshaw343/", 
