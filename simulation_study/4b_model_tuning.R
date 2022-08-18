@@ -58,7 +58,7 @@ kappa_0_mat <-
 
 #---- **specify indices ----
 indices <- 
-  which(dataset_names %in% paste0("normal_", c(500), "_ADAMS"))
+  which(dataset_names %in% paste0("normal_", c(1000), "_ADAMS"))
 
 set.seed(20220329)
 start <- Sys.time()
@@ -66,12 +66,12 @@ start <- Sys.time()
 lapply(synthetic_HCAP_list[indices], function(x)
   generate_synthetic(warm_up = 100, run_number = 1, 
                      starting_props = c(0.25, 0.25, 0.25, 0.25),
-                     dataset_to_copy = x, calibration_sample = TRUE, 
+                     dataset_to_copy = x, calibration_sample = FALSE, 
                      calibration_prop = 0.5, calibration_sample_name = "HCAP_50", 
                      path_to_raw_prior_sample = 
                        paste0(path_to_box, "data/prior_data/MI/", 
                               "MI_datasets_cleaned"),
-                     path_to_data = path_to_box, 
+                     path_to_data = paste0(path_to_box,"data/"), 
                      path_to_analyses_folder = 
                        paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
                               unique(x[, "dataset_name"]), "/"), 

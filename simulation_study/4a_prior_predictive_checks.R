@@ -68,7 +68,7 @@ indices <-
 
 #---- **run checks ----
 lapply(synthetic_HCAP_list[indices], function(x)
-  prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
+  prior_predictive_checks(dataset_to_copy = x, calibration_sample = FALSE, 
                           calibration_prop = 0.50, 
                           calibration_sample_name = "HCAP_50",
                           path_to_raw_prior_sample = 
