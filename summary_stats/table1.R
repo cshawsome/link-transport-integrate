@@ -12,18 +12,160 @@ options(scipen = 999)
 #---- **read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
+raw_ADAMS <- 
+  read_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"))
+
 ADAMS_imputed_clean <- 
   readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/chunk_1/", 
                  "MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
 
-#one subset
+#one imputed subset
 ADAMS_subset <- ADAMS_imputed_clean[[1]]
 
+#ADAMS training data
+ADAMS_train <- read_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_train.csv"))
+ADAMS_train_IDs <- ADAMS_train$HHIDPN
+ADAMS_train_raw <- raw_ADAMS[which(raw_ADAMS$HHIDPN %in% ADAMS_train_IDs), ]
+
+#ADAMS hold-out data
+ADAMS_test <- read_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_test.csv"))
+ADAMS_test_IDs <- ADAMS_test$HHIDPN
+ADAMS_test_raw <- raw_ADAMS[which(raw_ADAMS$HHIDPN %in% ADAMS_test_IDs), ]
+
+#---- **age ----
+#---- ****train ----
+mean(ADAMS_train_raw$AAGE)
+sd(ADAMS_train_raw$AAGE)
+
+#---- ****test ----
+mean(ADAMS_test_raw$AAGE)
+sd(ADAMS_test_raw$AAGE)
+
 #---- **race/ethnicity ----
+#---- ****imputed subset ----
 mean(ADAMS_subset$White)
 mean(ADAMS_subset$Black)
 mean(ADAMS_subset$Hispanic)
+
+#---- ****train ----
+sum(ADAMS_train_raw$Hispanic)
+mean(ADAMS_train_raw$Hispanic)
+
+sum(ADAMS_train_raw$White)
+mean(ADAMS_train_raw$White)
+
+sum(ADAMS_train_raw$Black)
+mean(ADAMS_train_raw$Black)
+
+#---- ****test ----
+sum(ADAMS_test_raw$Hispanic)
+mean(ADAMS_test_raw$Hispanic)
+
+sum(ADAMS_test_raw$White)
+mean(ADAMS_test_raw$White)
+
+sum(ADAMS_test_raw$Black)
+mean(ADAMS_test_raw$Black)
+
+#---- **normalized MMSE ----
+#---- ****train ----
+mean(ADAMS_train_raw$ANMSETOT_norm)
+sd(ADAMS_train_raw$ANMSETOT_norm)
+
+#---- ****test ----
+mean(ADAMS_test_raw$ANMSETOT_norm)
+sd(ADAMS_test_raw$ANMSETOT_norm)
+
+#---- **immediate word recall ----
+#---- ****train ----
+mean(ADAMS_train_raw$ANIMMCR)
+sd(ADAMS_train_raw$ANIMMCR)
+
+#---- ****test ----
+mean(ADAMS_test_raw$ANIMMCR)
+sd(ADAMS_test_raw$ANIMMCR)
+
+#---- **serial 7s ----
+#---- ****train ----
+mean(ADAMS_train_raw$ANSER7T)
+sd(ADAMS_train_raw$ANSER7T)
+
+#---- ****test ----
+mean(ADAMS_test_raw$ANSER7T)
+sd(ADAMS_test_raw$ANSER7T)
+
+#---- **word list recall (yes) ----
+#---- ****train ----
+mean(ADAMS_train_raw$ANRECYES)
+sd(ADAMS_train_raw$ANRECYES)
+
+#---- ****test ----
+mean(ADAMS_test_raw$ANRECYES)
+sd(ADAMS_test_raw$ANRECYES)
+
+#---- **story recall (immediate) ----
+#---- ****train ----
+mean(ADAMS_train_raw$ANWM1TOT)
+sd(ADAMS_train_raw$ANWM1TOT)
+
+#---- ****test ----
+mean(ADAMS_test_raw$ANWM1TOT)
+sd(ADAMS_test_raw$ANWM1TOT)
+
+#---- **JORM IQ code ----
+#---- ****train ----
+mean(ADAMS_train_raw$proxy_cog)
+sd(ADAMS_train_raw$proxy_cog)
+
+#---- ****test ----
+mean(ADAMS_test_raw$proxy_cog)
+sd(ADAMS_test_raw$proxy_cog)
+
+#---- **delayed word recall ----
+#---- ****train ----
+mean(ADAMS_train_raw$ANDELCOR)
+sd(ADAMS_train_raw$ANDELCOR)
+
+#---- ****test ----
+mean(ADAMS_test_raw$ANDELCOR)
+sd(ADAMS_test_raw$ANDELCOR)
+
+#---- **BMI ----
+#---- ****train ----
+mean(ADAMS_train_raw$Abmi)
+sd(ADAMS_train_raw$Abmi)
+
+#---- ****test ----
+mean(ADAMS_test_raw$Abmi)
+sd(ADAMS_test_raw$Abmi)
+
+#---- **IADLs ----
+#---- ****train ----
+mean(ADAMS_train_raw$Aiadla)
+sd(ADAMS_train_raw$Aiadla)
+
+#---- ****test ----
+mean(ADAMS_test_raw$Aiadla)
+sd(ADAMS_test_raw$Aiadla)
+
+#---- **stroke history ----
+#---- ****train ----
+sum(ADAMS_train_raw$Astroke)
+mean(ADAMS_train_raw$Astroke)
+
+#---- ****test ----
+sum(ADAMS_test_raw$Astroke)
+mean(ADAMS_test_raw$Astroke)
+
+#---- **dementia adjudication ----
+#---- ****train ----
+table(ADAMS_train_raw$Adem_dx_cat)
+table(ADAMS_train_raw$Adem_dx_cat)/nrow(ADAMS_train_raw)
+
+#---- ****test ----
+table(ADAMS_test_raw$Adem_dx_cat)
+table(ADAMS_test_raw$Adem_dx_cat)/nrow(ADAMS_test_raw)
 
 #---- Synthetic Superpop ----
 #---- **read in data ----
