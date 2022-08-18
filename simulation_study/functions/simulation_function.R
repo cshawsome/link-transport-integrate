@@ -124,7 +124,7 @@ simulation_function <-
               c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other")] <- 
         colSums(dataset_to_copy[
           which(dataset_to_copy[, paste0("calibration_", 
-                                         calibration_prop*100)] == 1), 
+                                         calibration_prop*100)] == 0), 
           c("Unimpaired", "MCI", "Dementia", "Other")])
       
       #---- ****stratified ----
