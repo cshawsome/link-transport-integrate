@@ -64,10 +64,10 @@ generate_synthetic <-
       #---- **latent classes ----
       for(group in c("unimpaired", "mci", "other")){
         assign(paste0(group, "_betas"), 
-               vroom(paste0(path_to_box, "data/prior_data/latent_class_", group, 
+               vroom(paste0(path_to_data, "prior_data/latent_class_", group, 
                             "_betas.csv"), delim = ","))
         assign(paste0(group, "_cov"), 
-               readRDS(paste0(path_to_box, "data/prior_data/latent_class_", 
+               readRDS(paste0(path_to_data, "prior_data/latent_class_", 
                               group, "_cov")))
         
         assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
@@ -75,12 +75,15 @@ generate_synthetic <-
       
       #---- **contingency cells ----
       alpha_0_dist <- 
-        readRDS(paste0(path_to_box, "data/prior_data/imputation_cell_props")) 
+        readRDS(paste0(path_to_data, "prior_data/imputation_cell_props")) 
       
       #--- **beta and sigma ----
-      priors_beta <- readRDS(paste0(path_to_box, "data/prior_data/priors_beta")) 
-      prior_V_inv <- readRDS(paste0(path_to_box, "data/prior_data/priors_V_inv"))  
-      prior_Sigma <- readRDS(paste0(path_to_box, "data/prior_data/priors_Sigma")) 
+      priors_beta <- 
+        readRDS(paste0(path_to_data, "prior_data/priors_beta")) 
+      prior_V_inv <- 
+        readRDS(paste0(path_to_data, "prior_data/priors_V_inv"))  
+      prior_Sigma <- 
+        readRDS(paste0(path_to_data, "prior_data/priors_Sigma")) 
     } else{
       #---- read in raw prior sample ----
       prior_imputed_clean <- readRDS(path_to_raw_prior_sample) %>%
@@ -88,7 +91,7 @@ generate_synthetic <-
       
       #---- selected vars ----
       selected_vars <- 
-        read_csv(paste0(path_to_data, "data/variable_selection/", 
+        read_csv(paste0(path_to_data, "variable_selection/", 
                         "model_coefficients.csv")) 
       
       #unimpaired model predictors
