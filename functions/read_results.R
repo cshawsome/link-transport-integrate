@@ -13,14 +13,17 @@ read_results <- function(path, skip = 0){
     dataset_name <- str_remove(dataset_name, pattern = ".csv")
     
     data <- data.table::fread(path, fill = TRUE, skip = skip) %>% 
-      mutate("dataset_name" = dataset_name) %>% 
+      na.omit() %>% mutate("dataset_name" = dataset_name) %>% 
       separate(dataset_name, 
-               into = c("Distribution", "sample_size", "prior_props"), 
+               into = c("Distribution", "sample_size", "prior_props", 
+                        "calibration"), 
                sep = "_", remove = FALSE) %>% 
       mutate_at("Distribution", str_to_title) %>% 
       mutate("color" = case_when(Distribution == "Normal" ~ "#135467", 
                                  Distribution == "Lognormal" ~ "#f0824f", 
-                                 Distribution == "Bathtub" ~ "b51661"))
+                                 Distribution == "Bathtub" ~ "b51661")) %>% 
+      mutate_at(vars(-one_of("time", "dataset_name", "Distribution", "prior_props", 
+                   "calibration", "color")), as.numeric)
     
     return(data)
   }
