@@ -183,7 +183,7 @@ results_paths <-
   list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
              full.names = TRUE, pattern = "*.csv")
 
-results <- do.call(rbind, lapply(results_paths, read_results))
+results <- do.call(rbind, lapply(results_paths, read_results)) 
 
 #---- **color palette ----
 color_palette <- read_csv(here("color_palette.csv"))
@@ -459,7 +459,7 @@ results <- do.call(rbind, lapply(results_paths, read_results)) %>%
 
 #---- **truth ----
 truth <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/truth.csv")) %>% 
+  read_csv(paste0(path_to_box, "data/truth.csv")) %>% 
   filter(term %in% c("black", "hispanic")) %>% 
   dplyr::select("term", "estimate", "dataset_name") %>% 
   separate(dataset_name, 
