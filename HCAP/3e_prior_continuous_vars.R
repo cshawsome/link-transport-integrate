@@ -12,8 +12,7 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **prior imputed clean ----
 prior_imputed_clean <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
-                 "MI_datasets_cleaned")) %>%
+  readRDS(paste0(path_to_box, "data/prior_data/MI/MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
 #---- **variable labels ----
@@ -29,8 +28,7 @@ prior_imputed_clean <-
 
 #---- **variable selection results ----
 selected_vars <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
-                  "model_coefficients.csv")) %>% 
+  read_csv(paste0(path_to_box, "data/variable_selection/model_coefficients.csv")) %>% 
   dplyr::select("data_label") %>% unlist()
 
 #---- ****classify vars ----
@@ -42,13 +40,11 @@ Z <- selected_vars[str_detect(selected_vars, "Z")]
 
 # #---- **prior: cell counts ----
 # alpha_0_dist <-
-#   readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/",
-#                  "imputation_cell_props"))
+#   readRDS(paste0(path_to_box, "data/prior_data/imputation_cell_props"))
 
 #---- **contrasts matrix ----
 #categorical vars contrasts matrix
-A = read_csv(paste0(path_to_box, "analyses/contrasts_matrix.csv")) %>% 
-  as.matrix()
+A = read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
 
 cells <- A %>% as.data.frame() %>% unite("cells", -1, sep = "") %>% 
   dplyr::select(-"Intercept") %>% table() %>% as.data.frame() %>% 
@@ -154,6 +150,5 @@ for(est in c("V_inv", "beta", "Sigma")){
   
   data <- lapply(all_priors, "[[", paste0("priors_", est)) 
   
-  saveRDS(data, paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                       "priors_", est))
+  saveRDS(data, paste0(path_to_box, "data/prior_data/priors_", est))
 }
