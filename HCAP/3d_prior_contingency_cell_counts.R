@@ -12,8 +12,7 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **prior imputed clean ----
 prior_imputed_clean <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
-                 "MI_datasets_cleaned")) %>%
+  readRDS(paste0(path_to_box, "data/prior_data/MI/MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
 #---- **variable labels ----
@@ -30,8 +29,7 @@ prior_imputed_clean <-
 #---- categorical vars ----
 #---- **selected variables ----
 selected_vars <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
-                  "model_coefficients.csv"))
+  read_csv(paste0(path_to_box, "data/variable_selection/model_coefficients.csv"))
 
 #---- **categorical ----
 W <- c("black", "hispanic", "stroke")
@@ -51,8 +49,7 @@ get_props <- function(data, W){
 }
 
 imputation_props <- lapply(prior_imputed_clean, get_props, W) %>%
-  saveRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                 "imputation_cell_props"))
+  saveRDS(paste0(path_to_box, "data/prior_data/imputation_cell_props"))
 
 #---- NEEDS TO BE REFACTORED ----
 #---- plots ----
@@ -62,8 +59,7 @@ cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv"))
 
 #---- ****imputation props ----
 imputation_props <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                 "imputation_cell_props")) 
+  readRDS(paste0(path_to_box, "data/prior_data/imputation_cell_props")) 
 
 #---- ****color palette ----
 color_palette <- read_csv(here("color_palette.csv"))
@@ -91,5 +87,5 @@ ggplot(data = imputation_props_plot_data , aes(x = value)) +
   theme(legend.position = "none")
 
 ggsave(filename = "prior_cell_props.jpeg", plot = last_plot(), 
-       path = paste0(path_to_box, "figures/simulation_study/"), 
+       path = paste0(path_to_box, "figures/HCAP/"), 
        width = 8, height = 8, units = "in", device = "jpeg")
