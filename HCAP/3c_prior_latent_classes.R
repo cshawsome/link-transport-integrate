@@ -12,8 +12,7 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **prior imputed clean ----
 prior_imputed_clean <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/prior_data/MI/", 
-                 "MI_datasets_cleaned")) %>%
+  readRDS(paste0(path_to_box, "data/prior_data/MI/MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
 
 #---- **variable labels ----
@@ -23,8 +22,7 @@ variable_labels <-
 
 #---- **selected variables ----
 selected_vars <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
-                  "model_coefficients.csv")) 
+  read_csv(paste0(path_to_box, "data/variable_selection/model_coefficients.csv")) 
 
 #---- relabel columns ----
 prior_imputed_clean <- 
@@ -99,11 +97,11 @@ for(est in c("betas", "cov")){
       data %<>% set_colnames(seq(1, ncol(data))) %>% 
         mutate("preds" = c("(Intercept)", get(paste0(group, "_preds"))))
       
-      write_csv(data, paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                             "latent_class_", group, "_", est, ".csv"))
+      write_csv(data, paste0(path_to_box, "data/prior_data/latent_class_", group, 
+                             "_", est, ".csv"))
     } else{
-      saveRDS(data, paste0(path_to_box, "analyses/simulation_study/prior_data/", 
-                           "latent_class_", group, "_", est))
+      saveRDS(data, paste0(path_to_box, "data/prior_data/latent_class_", group, 
+                           "_", est))
     }
   }
 }
