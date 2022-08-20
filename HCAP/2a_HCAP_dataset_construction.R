@@ -213,6 +213,30 @@ HCAP %<>%
 # table(HCAP$PJ005M1_collapsed_label, HCAP$Retired, useNA = "ifany")
 # table(HCAP$PJ005M1_collapsed_label, HCAP$`Not working`, useNA = "ifany")
 
+#---- **drinking category ----
+HCAP %<>% 
+  mutate("r13drinks_per_week" = r13drinkn*r13drinkd) %>%
+  mutate("r13drink_cat" = 
+           case_when(r13drinks_per_week == 0 ~ 1,
+                     Female == 0 & 
+                       (r13drinks_per_week >= 1 & r13drinks_per_week < 14) ~ 2,
+                     Female == 1 &
+                       (r13drinks_per_week >= 1 & r13drinks_per_week < 7) ~ 2,
+                     Female == 0 &
+                       (r13drinks_per_week >= 14 | r13drinkn >= 4) ~ 3,
+                     Female == 1 &
+                       (r13drinks_per_week >= 7 | r13drinkn >= 3) ~ 3)) %>% 
+  mutate("r13drink_cat_label" = 
+           case_when(r13drink_cat == 1 ~ "No Drinking", 
+                     r13drink_cat == 2 ~ "Moderate Drinking", 
+                     r13drink_cat == 3 ~ "Heavy Drinking")) %>% 
+  mutate("r13no_drinking" = ifelse(r13drink_cat_label == "No Drinking", 1, 0), 
+         "r13moderate_drinking" = 
+           ifelse(r13drink_cat_label == "Moderate Drinking", 1, 0), 
+         "r13heavy_drinking" = 
+           ifelse(r13drink_cat_label == "Heavy Drinking", 1, 0))
+
+
 #---- **subjective cognitive change ----
 # table(HCAP$r13pstmem, useNA = "ifany")
 HCAP %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0), 
@@ -317,8 +341,8 @@ HCAP %<>% mutate("H1RIMMSTORYSCORE" = H1RBMIMMSCORE + H1RLMIMMSCORE,
 # table(HCAP$H1RCPDELSCORE, useNA = "ifany")
 
 HCAP %<>% mutate_at(.vars = c("H1RCPIMMSCORE", "H1RCPDELSCORE"), 
-                     #Participant cannot draw  
-                     function(x) ifelse(x == 97, NA, x))
+                    #Participant cannot draw  
+                    function(x) ifelse(x == 97, NA, x))
 
 # #Sanity check
 # table(HCAP$H1RCPIMMSCORE, useNA = "ifany")
@@ -328,8 +352,8 @@ HCAP %<>% mutate_at(.vars = c("H1RCPIMMSCORE", "H1RCPDELSCORE"),
 # table(HCAP$H1RTMASCORE, useNA = "ifany")
 
 HCAP %<>% mutate_at("H1RTMASCORE",
-                     #unable to complete within 5 mins
-                     function(x) ifelse(x > 900, NA, x))
+                    #unable to complete within 5 mins
+                    function(x) ifelse(x > 900, NA, x))
 
 # #Sanity check
 # table(HCAP$H1RTMASCORE, useNA = "ifany")
@@ -355,4 +379,27 @@ HCAP %<>%
 #---- **summarize missingness ----
 colMeans(is.na(HCAP))
 
-#---- imputation-specific variables ----
+#---- save datasets ----
+HCAP %>% write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv"))
+
+#---- **standardize continuous vars ----
+standardize_vars <- 
+  c("PAGE", "SCHLYRS", "H1RMSESCORE_norm", "H1RWLIMMSCORE", "H1RWLDELSCORE", 
+    "r13ser7", "H1RAFSCORE", "H1RWLRECYSCORE", "H1RWLRECNSCORE", 
+    "H1RIMMSTORYSCORE", "H1RDELSTORYSCORE", "r13bwc20", "H1RCPIMMSCORE", 
+    "H1RCPDELSCORE", "H1RTMASCORE", "r13cogtot", "r13adla", "r13iadla",
+    "r13bmi")
+
+Z_score <- function(data, vars){
+  subset <- data %>% dplyr::select(all_of(vars)) %>% 
+    mutate_all(scale) %>% set_colnames(paste0(all_of(vars), "_Z")) %>% 
+    mutate_all(as.numeric)
+  
+  data %<>% cbind(., subset)
+  
+  return(data)
+}
+
+HCAP_analytic <- HCAP %>% na.omit() %>% Z_score(., standardize_vars)
+HCAP_analytic %>% 
+  write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic.csv"))
