@@ -87,5 +87,5 @@ ggplot(data = imputation_props_plot_data , aes(x = value)) +
   theme(legend.position = "none")
 
 ggsave(filename = "prior_cell_props.jpeg", plot = last_plot(), 
-       path = paste0(path_to_box, "figures/simulation_study/"), 
+       path = paste0(path_to_box, "figures/HCAP/"), 
        width = 8, height = 8, units = "in", device = "jpeg")
