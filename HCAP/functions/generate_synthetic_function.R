@@ -117,8 +117,7 @@ generate_synthetic <-
     }
     
     #---- select variables ----
-    vars <- unique(c(unimpaired_preds, other_preds, mci_preds, 
-                     "Unimpaired", "MCI", "Dementia", "Other"))
+    vars <- unique(c(unimpaired_preds, other_preds, mci_preds))
     
     #---- sampling counts ----
     warm_up = warm_up
@@ -191,14 +190,8 @@ generate_synthetic <-
     }
     
     #---- nu_0 and kappa_0 hyperparameters ----
-    kappa_0 <- 
-      kappa_0_mat[which(kappa_0_mat$dataset_name == 
-                          unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
-    
-    nu_0 <- 
-      nu_0_mat[which(nu_0_mat$dataset_name == 
-                       unlist(unique(dataset_to_copy[, "dataset_name"]))), ]  
-    
+    kappa_0 <- kappa_0_mat[1, ]
+    nu_0 <- nu_0_mat[1, ]  
     
     #---- start sampling ----
     for(b in 1:B){
