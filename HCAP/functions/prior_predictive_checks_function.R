@@ -29,10 +29,21 @@ prior_predictive_checks <-
                           tolower(class)), recursive = TRUE)
       }
       
+      if(!dir.exists(paste0(path_to_output_folder, "continuous_vars/combined"))){
+        dir.create(paste0(path_to_output_folder, "continuous_vars/combined"), 
+                   recursive = TRUE)
+      }
+      
       if(!dir.exists(paste0(path_to_output_folder, "continuous_vars/error_set/", 
                             tolower(class)))){
         dir.create(paste0(path_to_output_folder, "continuous_vars/error_set/", 
                           tolower(class)), recursive = TRUE)
+      }
+      
+      if(!dir.exists(paste0(path_to_output_folder, "continuous_vars/error_set/", 
+                            "combined"))){
+        dir.create(paste0(path_to_output_folder, "continuous_vars/error_set/", 
+                          "combined"), recursive = TRUE)
       }
       
       if(continuous_check_test & 
@@ -41,6 +52,15 @@ prior_predictive_checks <-
         
         dir.create(paste0(path_to_output_folder, "continuous_vars/test_set/", 
                           tolower(class)), recursive = TRUE)
+        
+      }
+      
+      if(continuous_check_test & 
+         !dir.exists(paste0(path_to_output_folder, "continuous_vars/test_set/", 
+                            "combined"))){
+        
+        dir.create(paste0(path_to_output_folder, "continuous_vars/test_set/", 
+                          "combined"), recursive = TRUE)
         
       }
     }
