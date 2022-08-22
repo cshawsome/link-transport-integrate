@@ -13,8 +13,7 @@ library(gganimate)
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
 
-source(here::here("HCAP", "functions", 
-                  "prior_predictive_checks_function.R"))
+source(here::here("HCAP", "functions", "prior_predictive_checks_function.R"))
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
