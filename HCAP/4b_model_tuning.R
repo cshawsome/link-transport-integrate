@@ -59,26 +59,20 @@ kappa_0_mat <-
 set.seed(20220822)
 start <- Sys.time()
 
-
 generate_synthetic(warm_up = 100, run_number = 1, 
                    starting_props = c(0.25, 0.25, 0.25, 0.25),
-                   dataset_to_copy = x, calibration_sample = FALSE, 
-                   calibration_prop = 0.5, calibration_sample_name = "HCAP_50", 
-                   path_to_raw_prior_sample = 
-                     paste0(path_to_box, "data/prior_data/MI/", 
-                            "MI_datasets_cleaned"),
+                   dataset_to_copy = HCAP_analytic, calibration_sample = FALSE, 
+                   calibration_prop = NA, calibration_sample_name = NA, 
+                   path_to_raw_prior_sample = NA,
                    path_to_data = paste0(path_to_box,"data/"), 
                    path_to_analyses_folder = 
-                     paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
-                            unique(x[, "dataset_name_stem"]), "/"), 
+                     paste0(path_to_box, "analyses/HCAP/"), 
                    path_to_figures_folder = 
-                     paste0(path_to_box, "figures/simulation_study/HCAP_HRS_", 
-                            unique(x[, "dataset_name_stem"]), "/"), 
+                     paste0(path_to_box, "figures/HCAP/"), 
                    categorical_vars = W, continuous_vars = Z, 
                    id_var = "HHIDPN", variable_labels = variable_labels, 
                    cell_ID_key = cell_ID_key, color_palette = color_palette, 
                    contrasts_matrix = A, kappa_0_mat = kappa_0_mat, 
-                   nu_0_mat = nu_0_mat, num_synthetic = 1000, 
-                   data_only = FALSE)
+                   nu_0_mat = nu_0_mat, num_synthetic = 1000, data_only = FALSE)
 
 end <- Sys.time() - start
