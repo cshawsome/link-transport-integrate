@@ -105,8 +105,7 @@ prior_predictive_checks <-
     }
     
     #---- select variables ----
-    vars <- unique(c(unimpaired_preds, other_preds, mci_preds, 
-                     "Unimpaired", "MCI", "Dementia", "Other"))
+    vars <- unique(c(unimpaired_preds, other_preds, mci_preds))
     
     synthetic_sample <- dataset_to_copy %>% 
       dplyr::select("HHIDPN", all_of(vars)) %>% 
@@ -194,33 +193,8 @@ prior_predictive_checks <-
           collapse = ":"))
       
       #---- hyperparameters ----
-      if(!calibration_sample){
-        kappa_0 <- 
-          kappa_0_mat[
-            which(kappa_0_mat$dataset_name == 
-                    unlist(unique(dataset_to_copy[, "dataset_name"])) & 
-                    kappa_0_mat$calibration_name == "no_calibration"), ]
-        
-        nu_0 <- 
-          nu_0_mat[
-            which(nu_0_mat$dataset_name == 
-                    unlist(unique(dataset_to_copy[, "dataset_name"])) & 
-                    nu_0_mat$calibration_name == "no_calibration"), ]  
-      } else{
-        kappa_0 <- 
-          kappa_0_mat[
-            which(kappa_0_mat$dataset_name == 
-                    unlist(unique(dataset_to_copy[, "dataset_name"])) & 
-                    kappa_0_mat$calibration_name == 
-                    paste0("calibration_", 100*calibration_prop)), ]
-        
-        nu_0 <- 
-          nu_0_mat[
-            which(nu_0_mat$dataset_name == 
-                    unlist(unique(dataset_to_copy[, "dataset_name"])) & 
-                    nu_0_mat$calibration_name == 
-                    paste0("calibration_", 100*calibration_prop)), ]  
-      }
+      kappa_0 <- kappa_0_mat[1, ]
+      nu_0 <- nu_0_mat[, ]  
       
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
         
@@ -441,19 +415,6 @@ prior_predictive_checks <-
     
     #---- plots ----
     #---- **dem class ----
-    if(!calibration_sample){
-      to_copy_dementia_plot_data <- 
-        as.data.frame(table(
-          dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
-        pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
-    } else{
-      to_copy_dementia_plot_data <- 
-        as.data.frame(table(
-          dataset_to_copy %>% filter(!!sym(calibration_var) == 0) %>% 
-            dplyr::select(c("Unimpaired", "MCI", "Dementia", "Other")))) %>% 
-        pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
-    }
-    
     dem_sub <- lapply(synthetic, "[[", "Group") %>% do.call(cbind, .) %>% 
       set_colnames(seq(1, runs)) %>% as.data.frame() %>%
       pivot_longer(everything()) 
@@ -468,66 +429,30 @@ prior_predictive_checks <-
       subset <- synthetic_dementia_plot_data %>% filter(value == class)
       
       if(nrow(subset) == 0){
-        #original data only
-        ggplot() + theme_minimal() + ggtitle(class) + xlab("Count") + 
-          ylab("Frequency") +
-          geom_vline(xintercept = to_copy_dementia_plot_data[[
-            which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
-            color = color_palette[which(color_palette$Group == class), "Color"])
-        
-        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", class, 
-                                 "_line_only.jpeg"), 
-               height = 3, width = 5, units = "in")
+        next 
       } else{
-        #original data only
-        ggplot(data = subset) + 
-          geom_histogram(aes(x = n),
-                         color = "white", fill = "white") +
-          theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
-          geom_vline(xintercept = to_copy_dementia_plot_data[[
-            which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
-            color = unique(subset$Color))
-        
-        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", class, 
-                                 "_line_only.jpeg"), 
-               height = 3, width = 5, units = "in")
-        
         #Prior predictive check
         ggplot(data = subset) + 
           geom_histogram(aes(x = n), 
                          color = unique(subset$Color), 
                          fill = unique(subset$Color)) + 
-          theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
-          geom_vline(xintercept = to_copy_dementia_plot_data[[
-            which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2)
+          theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") 
         
-        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", class, 
-                                 ".jpeg"), 
+        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", 
+                                 class, ".jpeg"), 
                height = 3, width = 5, units = "in")
       }
     }
     
     #---- **class-specific continuous ----
     for(class in continuous_check){
-      if(!calibration_sample){
-        true_data <- dataset_to_copy %>% 
-          dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
-          filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
-      } else{
-        true_data <- dataset_to_copy %>% filter(!!sym(calibration_var) == 0) %>%
-          dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
-          filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
-      }
       
       continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
       
       for(i in 1:length(continuous_list)){
         continuous_list[[i]] <- continuous_list[[i]] %>% 
           dplyr::select(-c("Group")) %>%
-          mutate("run" = i, "Type" = "Synthetic") %>% 
-          rbind(., true_data %>% 
-                  dplyr::select(-!!as.symbol(class)) %>% 
-                  mutate("run" = i, "Type" = "Observed"))
+          mutate("run" = i, "Type" = "Synthetic") 
       }
       
       continuous_list %<>% do.call(rbind, .) %>% as.data.frame() 
@@ -546,11 +471,13 @@ prior_predictive_checks <-
             scale_fill_manual(values = rev(unique(data$Color)))
           
           if(continuous_check_test){
-            ggsave(filename = paste0(path_to_output_folder, "continuous_vars/test_set/", 
+            ggsave(filename = paste0(path_to_output_folder, 
+                                     "continuous_vars/test_set/", 
                                      tolower(class), "/", var, ".jpeg"), 
                    height = 3, width = 5, units = "in")
           } else{
-            ggsave(filename = paste0(path_to_output_folder, "continuous_vars/error_set/", 
+            ggsave(filename = paste0(path_to_output_folder, 
+                                     "continuous_vars/error_set/", 
                                      tolower(class), "/", var, ".jpeg"), 
                    height = 3, width = 5, units = "in")
           }
