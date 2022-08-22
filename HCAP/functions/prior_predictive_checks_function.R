@@ -476,7 +476,7 @@ prior_predictive_checks <-
       dplyr::select(Color) %>% unlist() %>% unname()
     
     ggplot(data = synthetic_dementia_plot_data) + 
-      geom_histogram(aes(x = n, color = value, fill = value)) + 
+      geom_histogram(aes(x = n, color = value, fill = value), alpha = 0.5) + 
       scale_color_manual(values = colors) +
       scale_fill_manual(values = colors) +
       theme_minimal() + theme(legend.title=element_blank()) + 
