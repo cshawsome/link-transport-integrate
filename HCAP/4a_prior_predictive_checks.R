@@ -13,27 +13,33 @@ library(gganimate)
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
 
-source(here::here("simulation_study", "functions", 
+source(here::here("HCAP", "functions", 
                   "prior_predictive_checks_function.R"))
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
+#---- **HCAP data ----
+HCAP_analytic <- 
+  read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic.csv")) 
+
 #---- **variable labels ----
-variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
+variable_labels <- 
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
+  filter(HCAP %in% colnames(HCAP_analytic)) 
+
+#label data
+HCAP_analytic %<>% 
+  rename_at(vars(variable_labels$HCAP), ~ variable_labels$data_label) %>% 
+  mutate("(Intercept)" = 1)
 
 #---- **impairment class color palette ----
 color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv")) 
 
-#---- **synthetic HCAP ----
-synthetic_HCAP_list <- 
-  readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
-
 #---- define vars ----
 #---- **selected variables ----
 selected_vars <- 
-  read_csv(paste0(path_to_box, "data/variable_selection/", 
-                  "model_coefficients.csv"))
+  read_csv(paste0(path_to_box, "data/variable_selection/model_coefficients.csv")) 
 
 #---- **categorical ----
 #notation from Schafer 1997
@@ -44,97 +50,35 @@ Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"),
                    "data_label"] %>% unlist() %>% as.vector()
 
 #---- **contrasts matrix ----
-A = read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% 
-  as.matrix()
+A = read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
-nu_0_mat <- read_csv(paste0(path_to_box, "data/tuning/nu_0_matrix.csv"))
+nu_0_mat <- read_csv(paste0(path_to_box, "data/tuning/nu_0_matrix_HCAP.csv"))
 
 #scaling for inverse wishart as variance of Beta
-kappa_0_mat <- read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix.csv"))
+kappa_0_mat <- 
+  read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix_HCAP.csv"))
 
 #---- run checks in serial ----
-set.seed(20220329)
+set.seed(20220819)
 start <- Sys.time()
 
-#---- **rename datasets based on calibration scenario ----
-calibration_scenario = "none"
-synthetic_HCAP_list <- 
-  lapply(synthetic_HCAP_list, function(x)
-    x %<>% mutate("dataset_name_stem" = unlist(unique(x[, "dataset_name"]))))
-
-synthetic_HCAP_list <- 
-  lapply(synthetic_HCAP_list, function(x)
-    x %<>% mutate("dataset_name" = 
-                    paste0(unlist(unique(x[, "dataset_name_stem"])), "_", 
-                           calibration_scenario)))
-
-#---- dataset names ----
-dataset_names <- 
-  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
-
-#---- **specify indices ----
-indices <-
-  which(dataset_names %in% paste0("normal_", c(4000), "_ADAMS_", 
-                                  calibration_scenario))
-
 #---- **run checks ----
-lapply(synthetic_HCAP_list[indices], function(x)
-  prior_predictive_checks(dataset_to_copy = x, calibration_sample = FALSE, 
-                          calibration_prop = 0.50, 
-                          calibration_sample_name = "HCAP_50",
-                          path_to_raw_prior_sample = 
-                            paste0(path_to_box, "data/prior_data/MI/", 
-                                   "MI_datasets_cleaned"), 
-                          path_to_data = path_to_box, 
-                          path_to_output_folder =
-                            paste0(path_to_box,
-                                   "figures/simulation_study/HCAP_HRS_",
-                                   unique(x[, "dataset_name_stem"]),
-                                   "/prior_predictive_checks/"), 
-                          continuous_check_test = TRUE,
-                          continuous_check = c("Unimpaired", "MCI", "Dementia", 
-                                               "Other"),
-                          categorical_vars = W, continuous_vars = Z,
-                          variable_labels = variable_labels, 
-                          color_palette = color_palette, contrasts_matrix = A,
-                          kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
-                          num_synthetic = 1000))
+prior_predictive_checks(dataset_to_copy = HCAP_analytic, 
+                        calibration_sample = FALSE, 
+                        calibration_prop = NA, calibration_sample_name = NA,
+                        path_to_raw_prior_sample = NA, 
+                        path_to_data = path_to_box, 
+                        path_to_output_folder =
+                          paste0(path_to_box,
+                                 "figures/HCAP/prior_predictive_checks/"), 
+                        continuous_check_test = TRUE,
+                        continuous_check = c("Unimpaired", "MCI", "Dementia", 
+                                             "Other"),
+                        categorical_vars = W, continuous_vars = Z,
+                        variable_labels = variable_labels, 
+                        color_palette = color_palette, contrasts_matrix = A,
+                        kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
+                        num_synthetic = 1000)
 end <- Sys.time() - start
-
-# #---- run checks in parallel ----
-# #1.7 days for all checks to run in serial
-# #1.3 hours for 5 runs in parallel
-# set.seed(20220329)
-# start <- Sys.time()
-# plan(multisession, workers = (availableCores() - 2))
-# 
-# #---- **specify indices ----
-# indices <-
-#   which(dataset_names %in%
-#           paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
-# 
-# #---- **run checks ----
-# future_lapply(synthetic_HCAP_list[indices], function(x)
-#   prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
-#                           calibration_prop = 0.50, 
-#                           calibration_sample_name = "HCAP_50",
-#                           path_to_raw_prior_sample = 
-#                             paste0(path_to_box, "analyses/simulation_study/", 
-#                                    "prior_data/MI/MI_datasets_cleaned"), 
-#                           path_to_data = path_to_box, 
-#                           path_to_output_folder =
-#                             paste0(path_to_box,
-#                                    "figures/simulation_study/HCAP_HRS_",
-#                                    unique(x[, "dataset_name"]),
-#                                    "/prior_predictive_checks/"), 
-#                           continuous_check_test = TRUE,
-#                           continuous_check = 
-#                             c("Unimpaired", "MCI", "Dementia", "Other"),
-#                           categorical_vars = W, continuous_vars = Z,
-#                           variable_labels, color_palette, contrasts_matrix = A,
-#                           kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
-#                           num_synthetic = 1000), future.seed = TRUE)
-# end <- Sys.time() - start
-# plan(sequential)
