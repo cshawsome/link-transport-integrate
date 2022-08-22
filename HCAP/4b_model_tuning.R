@@ -10,18 +10,24 @@ p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack",
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
 
-source(here::here("simulation_study", "functions", 
-                  "generate_synthetic_function.R"))
+source(here::here("HCAP", "functions", "generate_synthetic_function.R"))
 
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-#---- **synthetic HCAP ----
-synthetic_HCAP_list <- 
-  readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
+#---- **HCAP data ----
+HCAP_analytic <- 
+  read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic.csv")) 
 
 #---- **variable labels ----
-variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
+variable_labels <- 
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
+  filter(HCAP %in% colnames(HCAP_analytic)) 
+
+#label data
+HCAP_analytic %<>% 
+  rename_at(vars(variable_labels$HCAP), ~ variable_labels$data_label) %>% 
+  mutate("(Intercept)" = 1)
 
 #---- **cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
