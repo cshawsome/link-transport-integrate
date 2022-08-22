@@ -41,12 +41,11 @@ color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv"))
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
-all_vars <- colnames(synthetic_HCAP_list[[1]])
+all_vars <- colnames(HCAP_analytic)
 Z <- all_vars[str_detect(all_vars, "_Z")]
 
 #---- **contrasts matrix ----
-A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% 
-  as.matrix()
+A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
