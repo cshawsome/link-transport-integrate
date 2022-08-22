@@ -81,9 +81,10 @@ prior_predictive_checks <-
                         "model_coefficients.csv")) 
       
       #unimpaired model predictors
-      unimpaired_preds <- c("(Intercept)", selected_vars %>% 
-                              filter(data_label != "Intercept" & Unimpaired != 0) %>% 
-                              dplyr::select(data_label) %>% unlist())
+      unimpaired_preds <- 
+        c("(Intercept)", selected_vars %>% 
+            filter(data_label != "Intercept" & Unimpaired != 0) %>% 
+            dplyr::select(data_label) %>% unlist())
       
       #other model predictors
       other_preds <- c("(Intercept)", selected_vars %>% 
@@ -425,6 +426,7 @@ prior_predictive_checks <-
       mutate_at("name", as.numeric) %>% 
       left_join(., color_palette, by = c("value" = "Group"))
     
+    #---- ****individual ----
     for(class in unique(synthetic_dementia_plot_data$value)){
       subset <- synthetic_dementia_plot_data %>% filter(value == class)
       
@@ -444,7 +446,28 @@ prior_predictive_checks <-
       }
     }
     
-    #---- **class-specific continuous ----
+    #---- ****combined ----
+    synthetic_dementia_plot_data$value <- 
+      factor(synthetic_dementia_plot_data$value, 
+             levels = c("Unimpaired", "MCI", "Dementia", "Other"))
+    
+    colors <- synthetic_dementia_plot_data %>% arrange(value) %>% 
+      group_by(value) %>% slice_head(n = 1) %>% ungroup() %>% 
+      dplyr::select(Color) %>% unlist() %>% unname()
+    
+    ggplot(data = synthetic_dementia_plot_data) + 
+      geom_histogram(aes(x = n, color = value, fill = value)) + 
+      scale_color_manual(values = colors) +
+      scale_fill_manual(values = colors) +
+      theme_minimal() + theme(legend.title=element_blank()) + 
+      ggtitle("Impairment Classes") + xlab("Count") + ylab("Frequency") 
+    
+    ggsave(filename = paste0(path_to_output_folder, 
+                             "impairment_classes/all_classes.jpeg"), 
+           height = 3, width = 5, units = "in")
+    
+    #---- **continuous ----
+    #---- ****class-specific ----
     for(class in continuous_check){
       
       continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
@@ -503,6 +526,78 @@ prior_predictive_checks <-
                     animation = last_animation(),
                     renderer = gifski_renderer())
         }
+      }
+    }
+    
+    #---- ****combined ----
+    true_data <- dataset_to_copy %>%
+      dplyr::select(c(all_of(continuous_vars))) %>% mutate("Color" = "black")
+    
+    for(class in unique(synthetic_dementia_plot_data$value)){
+      
+      continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
+      
+      for(i in 1:length(continuous_list)){
+        continuous_list[[i]] <- continuous_list[[i]] %>% 
+          dplyr::select(-c("Group")) %>%
+          mutate("run" = i, "Type" = "Synthetic", "Color" = "#f2caaa") %>% 
+          rbind(., true_data %>% mutate("run" = i, "Type" = "Observed"))
+      }
+      
+      if(exists("all_continuous_list")){
+        all_continuous_list %<>% append(., continuous_list)
+      } else{
+        all_continuous_list <- continuous_list
+      }
+    }
+    
+    all_continuous_list %<>% do.call(rbind, .) %>% as.data.frame() 
+    
+    for(var in continuous_vars){
+      data <- all_continuous_list[, c(var, "run", "Type", "Color")] 
+      
+      if(is.na(sum(data[, var])) | continuous_check_test){
+        all_continuous_plot <- 
+          ggplot(data = data, aes(color = Type, fill = Type)) + 
+          geom_density(aes(x = data[, 1]), alpha = 0.5) + 
+          theme_minimal() + 
+          xlab(variable_labels[variable_labels$data_label == var, 
+                               "figure_label"]) + 
+          scale_color_manual(values = rev(unique(data$Color))) + 
+          scale_fill_manual(values = rev(unique(data$Color)))
+        
+        if(continuous_check_test){
+          ggsave(filename = paste0(path_to_output_folder, 
+                                   "continuous_vars/test_set/combined/", 
+                                   var, ".jpeg"), 
+                 height = 3, width = 5, units = "in")
+        } else{
+          ggsave(filename = paste0(path_to_output_folder, 
+                                   "continuous_vars/error_set/combined/", 
+                                   var, ".jpeg"), 
+                 height = 3, width = 5, units = "in")
+        }
+        
+      } else{
+        continuous_plot <- 
+          ggplot(data = data, aes(color = Type, fill = Type)) + 
+          geom_density(aes(x = data[, 1]), alpha = 0.5) + 
+          theme_minimal() + 
+          xlab(variable_labels[variable_labels$data_label == var, 
+                               "figure_label"]) + 
+          scale_color_manual(values = rev(unique(data$Color))) + 
+          scale_fill_manual(values = rev(unique(data$Color))) + 
+          transition_states(data$run, transition_length = 1, state_length = 1) +
+          labs(title = "Synthetic {round(frame_time)}") + transition_time(run) +
+          ease_aes('linear')
+        
+        animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
+                res = 150, renderer = gifski_renderer())
+        
+        anim_save(filename = paste0(path_to_output_folder, "continuous_vars/", 
+                                    "combined/", var, ".gif"),
+                  animation = last_animation(),
+                  renderer = gifski_renderer())
       }
     }
   }
