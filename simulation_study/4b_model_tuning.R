@@ -53,7 +53,7 @@ kappa_0_mat <-
 #About 1.5 hours to generate data for all datasets in serial
 
 #---- **rename datasets based on calibration scenario ----
-calibration_scenario = "none"
+calibration_scenario = "HCAP_50"
 synthetic_HCAP_list <- 
   lapply(synthetic_HCAP_list, function(x)
     x %<>% mutate("dataset_name_stem" = unlist(unique(x[, "dataset_name"]))))
@@ -70,8 +70,9 @@ dataset_names <-
 
 #---- **specify indices ----
 indices <-
-  which(dataset_names %in% paste0("normal_", c(4000), "_ADAMS_", 
-                                  calibration_scenario))
+  which(dataset_names %in% 
+          paste0("normal_", c(4000), "_ADAMS_", 
+                 calibration_scenario))
 
 set.seed(20220329)
 start <- Sys.time()
@@ -79,7 +80,7 @@ start <- Sys.time()
 lapply(synthetic_HCAP_list[indices], function(x)
   generate_synthetic(warm_up = 100, run_number = 1, 
                      starting_props = c(0.25, 0.25, 0.25, 0.25),
-                     dataset_to_copy = x, calibration_sample = FALSE, 
+                     dataset_to_copy = x, calibration_sample = TRUE, 
                      calibration_prop = 0.5, calibration_sample_name = "HCAP_50", 
                      path_to_raw_prior_sample = 
                        paste0(path_to_box, "data/prior_data/MI/", 

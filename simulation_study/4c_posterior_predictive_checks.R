@@ -53,7 +53,7 @@ indices <- which(dataset_names %in%
                    paste0("normal_", c(2000), "_ADAMS"))
 
 lapply(synthetic_HCAP_list[indices], function(x)
-  posterior_predictive_checks(dataset_to_copy = x, calibration_sample = FALSE,
+  posterior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE,
                               calibration_prop = 0.50, 
                               calibration_sample_name = "HCAP_50",
                               categorical_covariates = W, 

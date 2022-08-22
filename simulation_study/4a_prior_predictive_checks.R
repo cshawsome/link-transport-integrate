@@ -59,7 +59,7 @@ set.seed(20220329)
 start <- Sys.time()
 
 #---- **rename datasets based on calibration scenario ----
-calibration_scenario = "none"
+calibration_scenario = "HCAP_50"
 synthetic_HCAP_list <- 
   lapply(synthetic_HCAP_list, function(x)
     x %<>% mutate("dataset_name_stem" = unlist(unique(x[, "dataset_name"]))))
@@ -76,12 +76,12 @@ dataset_names <-
 
 #---- **specify indices ----
 indices <-
-  which(dataset_names %in% paste0("normal_", c(4000), "_ADAMS_", 
+  which(dataset_names %in% paste0("normal_", c(2000), "_ADAMS_", 
                                   calibration_scenario))
 
 #---- **run checks ----
 lapply(synthetic_HCAP_list[indices], function(x)
-  prior_predictive_checks(dataset_to_copy = x, calibration_sample = FALSE, 
+  prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
                           calibration_prop = 0.50, 
                           calibration_sample_name = "HCAP_50",
                           path_to_raw_prior_sample = 
