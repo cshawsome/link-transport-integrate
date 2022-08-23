@@ -14,8 +14,19 @@ source(here::here("HCAP", "functions", "posterior_predictive_checks_function.R")
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
+#---- **HCAP data ----
+HCAP_analytic <- 
+  read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic.csv"))
+
 #---- **variable labels ----
-variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
+variable_labels <- 
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
+  filter(HCAP %in% colnames(HCAP_analytic)) 
+
+#label data
+HCAP_analytic %<>% 
+  rename_at(vars(variable_labels$HCAP), ~ variable_labels$data_label) %>% 
+  mutate("(Intercept)" = 1) 
 
 #---- **cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
@@ -23,10 +34,6 @@ cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>%
 
 #---- **impairement class color palette ----
 color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv")) 
-
-#---- **HCAP data ----
-HCAP_analytic <- 
-  read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic.csv"))
 
 #---- define vars ----
 #categorical vars (notation from Schafer 1997)
