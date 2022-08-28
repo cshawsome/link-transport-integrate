@@ -113,7 +113,7 @@ replicate(num_replicates,
                               truth = truth, seed = seed, 
                               path_to_raw_prior_sample = 
                                 paste0(path_to_data, 
-                                       "prior_data/MI_datasets_cleaned"), 
+                                       "prior_data/MI/MI_datasets_cleaned"), 
                               path_to_data = path_to_data, 
                               path_to_results = 
                                 paste0("/u/home/c/cshaw343/", 
