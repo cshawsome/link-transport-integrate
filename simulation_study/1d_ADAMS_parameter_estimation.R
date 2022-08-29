@@ -21,8 +21,8 @@ variable_labels <-
 
 #---- **variable selection results ----
 selected_vars <- 
-  read_csv(paste0(path_to_box, "analyses/simulation_study/variable_selection/", 
-                  "model_coefficients.csv")) %>% 
+  read_csv(paste0(path_to_box, 
+                  "data/variable_selection/model_coefficients.csv")) %>% 
   dplyr::select("data_label") %>% unlist()
 
 #---- **stack data and add cell IDs ----
@@ -58,7 +58,7 @@ table(test_subset$White, test_subset$Black, test_subset$Hispanic,
   as.data.frame %>% filter(!Freq == 0) %>% 
   set_colnames(c("White", "Black", "Hispanic", "Dementia", "Freq"))
 
-#---- parameter estimation ----
+#---- scaled parameter estimation ----
 continuous_vars <- selected_vars[str_detect(selected_vars, "_Z")] 
 
 normal_parameter_list <- list() 
@@ -99,3 +99,46 @@ for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
 saveRDS(normal_parameter_list, paste0(path_to_box, "analyses/simulation_study/", 
                                       "continuous_distribution_parameters/", 
                                       "normal_parameters"))
+
+#---- raw data parameter estimation ----
+continuous_vars <- selected_vars[str_detect(selected_vars, "_Z")] %>% 
+  str_remove("_Z")
+
+normal_parameter_list <- list() 
+
+#---- **Normal distribution ----
+for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+  filtered_data <- 
+    ADAMS_imputed_stacked[which(ADAMS_imputed_stacked[, group] == 1), ]
+  
+  #---- ****predictors and outcomes ----
+  X <- as.matrix(filtered_data[, c("black", "hispanic", "stroke")] %>% 
+                   mutate("Intercept" = 1) %>% 
+                   dplyr::select("Intercept", everything())) 
+  Y <- as.matrix(filtered_data[, continuous_vars])
+  
+  #---- ****row covariance ----
+  XtX_inv <- solve(t(X)%*%X)
+  
+  #---- ****beta_hat ----
+  beta_hat <- XtX_inv%*%t(X)%*%Y
+  
+  #---- ****sigma_hat ----
+  #center matrices and take (matrix)^T(matrix)
+  centered_data <- Y - X%*%beta_hat
+  sigma_hat <- t(centered_data)%*%centered_data
+  
+  #---- ****dof ----
+  #dof = n/25 + p + 1 - q
+  # dividing by 25 because sample size is artificially inflated due to stacking
+  dof = nrow(Y)/25 + ncol(beta_hat) + 1 - nrow(beta_hat)
+  
+  #---- ****store in list ----
+  normal_parameter_list[[group]] <- 
+    list("beta_center" = beta_hat, "row_cov" = XtX_inv, 
+         "sigma_center" = sigma_hat, "sigma_dof" = dof)
+}
+#---- **save parameters ----
+saveRDS(normal_parameter_list, paste0(path_to_box, "analyses/simulation_study/", 
+                                      "continuous_distribution_parameters/", 
+                                      "normal_parameters_raw_data"))
