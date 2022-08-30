@@ -155,6 +155,12 @@ HRS %<>%
 
 HRS %<>% filter(Other == 0)
 
+#---- **years of education ----
+HRS %<>% mutate("SCHLYRS" = ifelse(SCHLYRS > 17, NA, SCHLYRS))
+
+# #Sanity check
+# table(HRS$SCHLYRS, useNA = "ifany")
+
 #---- **employment status ----
 #table(HRS$PJ005M1, useNA = "ifany")
 HRS %<>% 
