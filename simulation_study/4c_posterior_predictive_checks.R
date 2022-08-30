@@ -50,7 +50,7 @@ start <- Sys.time()
 
 #---- **specify indices ----
 indices <- which(dataset_names %in% 
-                   paste0("normal_", c(2000), "_ADAMS"))
+                   paste0("normal_", c(4000), "_ADAMS"))
 
 lapply(synthetic_HCAP_list[indices], function(x)
   posterior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE,
