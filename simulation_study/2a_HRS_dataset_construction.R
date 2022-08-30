@@ -20,9 +20,9 @@ HRS_tracker_dict_path <-
 HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
                            HHIDPN = "TRUE") %>% 
   #select variables: ID, 2016 Wave participation, 2016 married/partnered status, 
-  # sex/gender, age, race, ethnicity, 
+  # sex/gender, age, race, ethnicity, years of education
   dplyr::select("HHIDPN", "PIWTYPE", "PCOUPLE", "GENDER", "PAGE", "RACE", 
-                "HISPANIC") %>%
+                "HISPANIC", "SCHLYRS") %>%
   #N = 43398
   #filter to those who completed 2016 Wave interview (N = 20911; dropped n = 22487)
   filter(PIWTYPE == 1) %>% 
@@ -48,17 +48,21 @@ HRS_core <- read_da_dct(HRS_core_data_path, HRS_core_dict_path,
 rand_waves <- 13
 rand_variables <- 
   c("hhidpn",
-    #Cognition (object naming (scissors and cactus), president naming, 
-    # vice-president naming, subjective cognitive decline)
+    #Cognition (immediate word recall, serial 7s, backwards count (20), 
+    # object naming (scissors and cactus), president naming, 
+    # subjective cognitive decline)
     #Health and health behaviors (ever/never stroke, ever/never diabetes, 
     # ever/never CVD, ever/never hypertension, smokes now, 
-    # drinking days per week, number of drinks per day)
+    # drinking days per week, number of drinks per day, adl, iadl, bmi)
+    paste0("r", rand_waves, "imrc"), paste0("r", rand_waves, "ser7"),
+    paste0("r", rand_waves, "bwc20"), paste0("r", rand_waves, "cogtot"),
     paste0("r", rand_waves, "cact"), paste0("r", rand_waves, "scis"), 
-    paste0("r", rand_waves, "pres"), paste0("r", rand_waves, "vp"), 
-    paste0("r", rand_waves, "pstmem"), paste0("r", rand_waves, "stroke"), 
-    paste0("r", rand_waves, "diabe"), paste0("r", rand_waves, "hearte"), 
-    paste0("r", rand_waves, "hibpe"), paste0("r", rand_waves, "smoken"), 
-    paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"))
+    paste0("r", rand_waves, "pres"), paste0("r", rand_waves, "pstmem"), 
+    paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "diabe"), 
+    paste0("r", rand_waves, "hearte"), paste0("r", rand_waves, "hibpe"), 
+    paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"), 
+    paste0("r", rand_waves, "drinkn"), paste0("r", rand_waves, "adla"), 
+    paste0("r", rand_waves, "iadla"), paste0("r", rand_waves, "bmi"))
 
 RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/", 
                         "randhrs1992_2018v1.dta"), 
@@ -68,11 +72,22 @@ RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/",
 #Remove labeled data format
 val_labels(RAND) <- NULL
 
+#---- **variable labels ----
+variable_labels <- 
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
+  filter(HRS %in% colnames(HRS_analytic)) 
+
 #---- join data ----
 HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>% 
   left_join(., RAND, by = "HHIDPN")
 
 #---- clean data ----
+#---- **age ----
+# table(HRS$PAGE, useNA = "ifany")
+
+#restrict to 70+ (N = 7377, dropped n = 13,534)
+HRS %<>% filter(PAGE >= 70)
+
 #---- **2016 couple status ----
 # table(HRS$PCOUPLE, useNA = "ifany")
 
@@ -91,12 +106,6 @@ HRS %<>%
 # #Sanity check
 # table(HRS$GENDER, HRS$GENDER_label)
 # table(HRS$Female, useNA = "ifany")
-
-#---- **age ----
-# table(HRS$PAGE, useNA = "ifany")
-
-#restrict to 70+ (N = 7377, dropped n = 13,534)
-HRS %<>% filter(PAGE >= 70)
 
 #---- **race ----
 #table(HRS$RACE, useNA = "ifany")
@@ -178,7 +187,7 @@ HRS %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0),
                 "subj_cog_same" = ifelse(r13pstmem == 2, 1, 0), 
                 "subj_cog_worse" = ifelse(r13pstmem == 3, 1, 0))
 
-#---- derive variables ----
+#---- derived variables ----
 #---- **drinking behavior ----
 HRS %<>% 
   mutate("drinks_per_week" = r13drinkd*r13drinkn) %>%
@@ -204,6 +213,13 @@ HRS %<>%
 
 #---- summarize missingness ----
 colMeans(is.na(HRS))
+
+#---- rename columns ----
+variable_labels %<>% filter(HRS %in% colnames(HRS)) 
+
+#---- derived variable bins ----
+
+
 
 #---- save datasets ----
 #clean data
