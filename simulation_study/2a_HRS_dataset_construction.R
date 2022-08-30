@@ -205,6 +205,18 @@ HRS %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0),
 #count corrects on second try as correct
 HRS %<>% mutate_at(.vars = "r13bwc20", function(x) ifelse(x >= 1, 1, 0))
 
+#---- **total cognition ----
+# table(HRS$r13cogtot, useNA = "ifany")
+
+#---- **ADLs ----
+# table(HRS$r13adla, useNA = "ifany")
+
+#---- **IADLs ----
+# table(HRS$r13iadla, useNA = "ifany")
+
+#---- **bmi ----
+# table(HRS$r13bmi, useNA = "ifany")
+
 #---- derived variables ----
 #---- **drinking behavior ----
 HRS %<>% 
