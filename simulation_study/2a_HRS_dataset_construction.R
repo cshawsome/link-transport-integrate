@@ -54,6 +54,7 @@ rand_variables <-
     #Health and health behaviors (ever/never stroke, ever/never diabetes, 
     # ever/never CVD, ever/never hypertension, smokes now, 
     # drinking days per week, number of drinks per day, adl, iadl, bmi)
+    #Proxy indicator
     paste0("r", rand_waves, "imrc"), paste0("r", rand_waves, "ser7"),
     paste0("r", rand_waves, "bwc20"), paste0("r", rand_waves, "cogtot"),
     paste0("r", rand_waves, "cact"), paste0("r", rand_waves, "scis"), 
@@ -62,7 +63,8 @@ rand_variables <-
     paste0("r", rand_waves, "hearte"), paste0("r", rand_waves, "hibpe"), 
     paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"), 
     paste0("r", rand_waves, "drinkn"), paste0("r", rand_waves, "adla"), 
-    paste0("r", rand_waves, "iadla"), paste0("r", rand_waves, "bmi"))
+    paste0("r", rand_waves, "iadla"), paste0("r", rand_waves, "bmi"), 
+    paste0("r", rand_waves, "proxy"))
 
 RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/", 
                         "randhrs1992_2018v1.dta"), 
@@ -73,9 +75,7 @@ RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/",
 val_labels(RAND) <- NULL
 
 #---- **variable labels ----
-variable_labels <- 
-  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
-  filter(HRS %in% colnames(HRS_analytic)) 
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
 #---- join data ----
 HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>% 
