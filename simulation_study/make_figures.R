@@ -196,7 +196,7 @@ table(results$dataset_name, useNA = "ifany")
 
 #---- **plot data ----
 plot_data <- results %>% 
-  group_by(Distribution, sample_size, prior_props) %>% 
+  group_by(Distribution, calibration, sample_size, prior_props) %>% 
   summarise_at(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"), 
                mean) %>% 
   mutate_at("sample_size", as.numeric) %>% 
@@ -211,7 +211,7 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, group = class)) +
   scale_color_manual(values = group_colors) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
   theme_bw() + ylab("95% CI Coverage") + 
-  #facet_grid(cols = vars(Distribution)) + 
+  facet_grid(rows = vars(calibration)) + 
   guides(color = guide_legend(title = "Group")) + 
   scale_x_continuous(name = "\"HCAP\" Sample Size", 
                      breaks = unique(plot_data$sample_size)) + 
@@ -256,7 +256,7 @@ names(group_colors) <- color_palette$Group
 
 #---- **plot data: counts ----
 plot_data <- results %>% 
-  dplyr::select("sample_size", "Distribution", 
+  dplyr::select("calibration", "sample_size", "Distribution", 
                 paste0("percent_increase_", 
                        c("Unimpaired", "MCI", "Dementia", "Other"))) %>%
   mutate_at("sample_size", as.numeric) %>% 
@@ -276,7 +276,7 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) +
   scale_color_manual(values = group_colors) + 
   geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
   ylab("Percent Bias") + 
-  #facet_grid(cols = vars(Distribution)) + 
+  facet_grid(rows = vars(calibration)) + 
   guides(color = guide_legend(title = "Group")) + 
   scale_x_discrete(name = "\"HCAP\" Sample Size", 
                    breaks = unique(plot_data$sample_size)) + 
@@ -292,7 +292,8 @@ cols_by_race <- expand_grid("percent_increase",
   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
 
 plot_data <- results %>% 
-  dplyr::select("sample_size", "Distribution", all_of(cols_by_race)) %>%
+  dplyr::select("calibration", "sample_size", "Distribution", 
+                all_of(cols_by_race)) %>%
   mutate_at("sample_size", as.numeric) %>% 
   mutate("sample_size" = 0.5*sample_size) %>% 
   mutate_at("sample_size", as.factor) %>%
@@ -309,141 +310,142 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) +
   geom_boxplot(size = 0.60) +
   scale_color_manual(values = group_colors) + 
   geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
-  ylab("Percent Bias") + facet_grid(cols = vars(race)) + 
+  ylab("Percent Bias") + 
+  facet_grid(cols = vars(race), rows = vars(calibration), scales = "free_y") + 
   guides(color = guide_legend(title = "Group")) + 
   scale_x_discrete(name = "\"HCAP\" Sample Size", 
                    breaks = unique(plot_data$sample_size)) + 
-  theme(text = element_text(size = 18))       
+  theme(text = element_text(size = 18))    
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
                          "impairement_class_percent_bias_count_by_race.jpeg"))
 
-#----- Figure X: median impairment class counts ----
-#---- **read in data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-
-results_paths <- 
-  list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
-             full.names = TRUE, pattern = "*.csv")
-
-results <- do.call(rbind, lapply(results_paths, read_results))
-
-color_palette <- read_csv(here::here("color_palette.csv"))
-
-#---- **plot data ----
-#truth
-dementia_plot_data <- results %>% group_by(dataset_name, sample_size) %>% 
-  summarise_at(paste0("true_", c("Unimpaired", "MCI", "Dementia", "Other")), 
-               .funs = median) %>% 
-  mutate_at("sample_size", as.numeric) %>%
-  mutate("Sample Size" = paste0("n = ", 0.5*sample_size))
-
-#synthetic
-synthetic_dementia_plot_data <- results %>% group_by(dataset_name) %>%
-  summarise_at(apply(expand_grid(c("mean_", "LCI_", "UCI_"), 
-                                 c("Unimpaired", "MCI", "Dementia", "Other")), 
-                     1, paste, collapse = ""), .funs = median)
-
-#---- **plot ----
-combined_plot_data <- synthetic_dementia_plot_data %>% 
-  left_join(dementia_plot_data) %>% 
-  pivot_longer(apply(expand_grid(c("true_", "mean_", "LCI_", "UCI_"), 
-                                 c("Unimpaired", "MCI", "Dementia", "Other")), 
-                     1, paste, collapse = ""), names_to = c(".value", "Group"), 
-               names_sep = "_") %>% left_join(color_palette) 
-                 
-combined_plot_data$Group <- 
-  factor(combined_plot_data$Group, 
-         levels = c("Unimpaired", "MCI", "Dementia", "Other"))
-
-combined_plot_data$`Sample Size` <- 
-  factor(combined_plot_data$`Sample Size`, 
-         levels = c("n = 250", "n = 500", "n = 1000", "n = 2000", "n = 4000"))
-
-ggplot(data = combined_plot_data, 
-       aes(x = Group, y = mean)) + theme_bw() + 
-  geom_errorbar(aes(ymin = LCI, ymax = UCI, color = Group), 
-                width = 0.10) + 
-  geom_point(aes(size = 1, color = Group)) +
-  geom_point(aes(x = Group, y = true, size = 1), color = "black",
-             shape = 18, alpha = 1) + 
-  xlab("") + ylab("Median Count") + theme(legend.position = "none") + 
-  scale_color_manual(values = combined_plot_data$Color) + 
-  facet_wrap(facets = vars(`Sample Size`), nrow = 2, ncol = 3, scales = "free") +
-  ggtitle("Average 95% Credible intervals from 1000 simulation runs") + 
-  theme(text = element_text(size = 18))       
-
-ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
-                                "avg_impairment_class_all_sims.jpeg"), 
-       height = 7, width = 12, units = "in")
-
-#----- Figure X: median impairment class counts by race ----
-#---- **read in data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-
-results_paths <- 
-  list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
-             full.names = TRUE, pattern = "*.csv")
-
-results <- do.call(rbind, lapply(results_paths, read_results))
-
-color_palette <- read_csv(here::here("color_palette.csv"))
-
-#---- **plot data ----
-#truth
-dementia_plot_data <- results %>% group_by(dataset_name, sample_size) %>% 
-  summarise_at(apply(expand_grid(c("true_"), 
-                                 c("Unimpaired", "MCI", "Dementia", "Other"), 
-                                 c("_white", "_black", "_hispanic")), 
-                     1, paste, collapse = ""), 
-               .funs = median) %>% 
-  mutate_at("sample_size", as.numeric) %>%
-  mutate("Sample Size" = paste0("n = ", 0.5*sample_size))
-
-#synthetic
-synthetic_dementia_plot_data <- results %>% group_by(dataset_name) %>%
-  summarise_at(apply(expand_grid(c("mean_", "LCI_", "UCI_"), 
-                                 c("Unimpaired", "MCI", "Dementia", "Other"), 
-                                 c("_white", "_black", "_hispanic")), 
-                     1, paste, collapse = ""), .funs = median)
-
-#---- **plot ----
-combined_plot_data <- synthetic_dementia_plot_data %>% 
-  left_join(dementia_plot_data) %>% 
-  pivot_longer(apply(expand_grid(c("true_", "mean_", "LCI_", "UCI_"), 
-                                 c("Unimpaired", "MCI", "Dementia", "Other"), 
-                                 c("_white", "_black", "_hispanic")), 
-                     1, paste, collapse = ""), 
-               names_to = c(".value", "Group", "Race"), 
-               names_sep = "_") %>% mutate_at("Race", str_to_sentence)
-
-combined_plot_data$Group <- 
-  factor(combined_plot_data$Group, 
-         levels = c("Unimpaired", "MCI", "Dementia", "Other"))
-
-combined_plot_data$`Sample Size` <- 
-  factor(combined_plot_data$`Sample Size`, 
-         levels = c("n = 250", "n = 500", "n = 1000", "n = 2000", "n = 4000"))
-
-combined_plot_data$Race <- 
-  factor(combined_plot_data$Race, levels = c("White", "Black", "Hispanic"))
-
-ggplot(data = combined_plot_data, 
-       aes(x = Group, y = mean)) + theme_bw() + 
-  geom_errorbar(aes(ymin = LCI, ymax = UCI, color = Group), 
-                width = 0.10) + 
-  geom_point(aes(size = 1, color = Group)) +
-  geom_point(aes(x = Group, y = true, size = 1), color = "black",
-             shape = 18, alpha = 1) + 
-  xlab("") + ylab("Median Count") + theme(legend.position = "none") + 
-  scale_color_manual(values = color_palette$Color) + 
-  facet_grid(cols = vars(Race), rows = vars(`Sample Size`), scales = "free") +
-  ggtitle("Average 95% Credible intervals from 1000 simulation runs") + 
-  theme(text = element_text(size = 18))       
-
-ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
-                         "avg_impairment_class_all_sims_by_race.jpeg"), 
-       height = 10, width = 12, units = "in")
+# #----- Figure X: median impairment class counts ----
+# #---- **read in data ----
+# path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+# 
+# results_paths <- 
+#   list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
+#              full.names = TRUE, pattern = "*.csv")
+# 
+# results <- do.call(rbind, lapply(results_paths, read_results))
+# 
+# color_palette <- read_csv(here::here("color_palette.csv"))
+# 
+# #---- **plot data ----
+# #truth
+# dementia_plot_data <- results %>% group_by(dataset_name, sample_size) %>% 
+#   summarise_at(paste0("true_", c("Unimpaired", "MCI", "Dementia", "Other")), 
+#                .funs = median) %>% 
+#   mutate_at("sample_size", as.numeric) %>%
+#   mutate("Sample Size" = paste0("n = ", 0.5*sample_size))
+# 
+# #synthetic
+# synthetic_dementia_plot_data <- results %>% group_by(dataset_name) %>%
+#   summarise_at(apply(expand_grid(c("mean_", "LCI_", "UCI_"), 
+#                                  c("Unimpaired", "MCI", "Dementia", "Other")), 
+#                      1, paste, collapse = ""), .funs = median)
+# 
+# #---- **plot ----
+# combined_plot_data <- synthetic_dementia_plot_data %>% 
+#   left_join(dementia_plot_data) %>% 
+#   pivot_longer(apply(expand_grid(c("true_", "mean_", "LCI_", "UCI_"), 
+#                                  c("Unimpaired", "MCI", "Dementia", "Other")), 
+#                      1, paste, collapse = ""), names_to = c(".value", "Group"), 
+#                names_sep = "_") %>% left_join(color_palette) 
+#                  
+# combined_plot_data$Group <- 
+#   factor(combined_plot_data$Group, 
+#          levels = c("Unimpaired", "MCI", "Dementia", "Other"))
+# 
+# combined_plot_data$`Sample Size` <- 
+#   factor(combined_plot_data$`Sample Size`, 
+#          levels = c("n = 250", "n = 500", "n = 1000", "n = 2000", "n = 4000"))
+# 
+# ggplot(data = combined_plot_data, 
+#        aes(x = Group, y = mean)) + theme_bw() + 
+#   geom_errorbar(aes(ymin = LCI, ymax = UCI, color = Group), 
+#                 width = 0.10) + 
+#   geom_point(aes(size = 1, color = Group)) +
+#   geom_point(aes(x = Group, y = true, size = 1), color = "black",
+#              shape = 18, alpha = 1) + 
+#   xlab("") + ylab("Median Count") + theme(legend.position = "none") + 
+#   scale_color_manual(values = combined_plot_data$Color) + 
+#   facet_wrap(facets = vars(`Sample Size`), nrow = 2, ncol = 3, scales = "free") +
+#   ggtitle("Average 95% Credible intervals from 1000 simulation runs") + 
+#   theme(text = element_text(size = 18))       
+# 
+# ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+#                                 "avg_impairment_class_all_sims.jpeg"), 
+#        height = 7, width = 12, units = "in")
+# 
+# #----- Figure X: median impairment class counts by race ----
+# #---- **read in data ----
+# path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+# 
+# results_paths <- 
+#   list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
+#              full.names = TRUE, pattern = "*.csv")
+# 
+# results <- do.call(rbind, lapply(results_paths, read_results))
+# 
+# color_palette <- read_csv(here::here("color_palette.csv"))
+# 
+# #---- **plot data ----
+# #truth
+# dementia_plot_data <- results %>% group_by(dataset_name, sample_size) %>% 
+#   summarise_at(apply(expand_grid(c("true_"), 
+#                                  c("Unimpaired", "MCI", "Dementia", "Other"), 
+#                                  c("_white", "_black", "_hispanic")), 
+#                      1, paste, collapse = ""), 
+#                .funs = median) %>% 
+#   mutate_at("sample_size", as.numeric) %>%
+#   mutate("Sample Size" = paste0("n = ", 0.5*sample_size))
+# 
+# #synthetic
+# synthetic_dementia_plot_data <- results %>% group_by(dataset_name) %>%
+#   summarise_at(apply(expand_grid(c("mean_", "LCI_", "UCI_"), 
+#                                  c("Unimpaired", "MCI", "Dementia", "Other"), 
+#                                  c("_white", "_black", "_hispanic")), 
+#                      1, paste, collapse = ""), .funs = median)
+# 
+# #---- **plot ----
+# combined_plot_data <- synthetic_dementia_plot_data %>% 
+#   left_join(dementia_plot_data) %>% 
+#   pivot_longer(apply(expand_grid(c("true_", "mean_", "LCI_", "UCI_"), 
+#                                  c("Unimpaired", "MCI", "Dementia", "Other"), 
+#                                  c("_white", "_black", "_hispanic")), 
+#                      1, paste, collapse = ""), 
+#                names_to = c(".value", "Group", "Race"), 
+#                names_sep = "_") %>% mutate_at("Race", str_to_sentence)
+# 
+# combined_plot_data$Group <- 
+#   factor(combined_plot_data$Group, 
+#          levels = c("Unimpaired", "MCI", "Dementia", "Other"))
+# 
+# combined_plot_data$`Sample Size` <- 
+#   factor(combined_plot_data$`Sample Size`, 
+#          levels = c("n = 250", "n = 500", "n = 1000", "n = 2000", "n = 4000"))
+# 
+# combined_plot_data$Race <- 
+#   factor(combined_plot_data$Race, levels = c("White", "Black", "Hispanic"))
+# 
+# ggplot(data = combined_plot_data, 
+#        aes(x = Group, y = mean)) + theme_bw() + 
+#   geom_errorbar(aes(ymin = LCI, ymax = UCI, color = Group), 
+#                 width = 0.10) + 
+#   geom_point(aes(size = 1, color = Group)) +
+#   geom_point(aes(x = Group, y = true, size = 1), color = "black",
+#              shape = 18, alpha = 1) + 
+#   xlab("") + ylab("Median Count") + theme(legend.position = "none") + 
+#   scale_color_manual(values = color_palette$Color) + 
+#   facet_grid(cols = vars(Race), rows = vars(`Sample Size`), scales = "free") +
+#   ggtitle("Average 95% Credible intervals from 1000 simulation runs") + 
+#   theme(text = element_text(size = 18))       
+# 
+# ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+#                          "avg_impairment_class_all_sims_by_race.jpeg"), 
+#        height = 10, width = 12, units = "in")
 
 #---- Figure X: HRS model results ----
 #---- **read in data ----
@@ -476,13 +478,13 @@ truth$Distribution <-
 
 #---- **plot data ----
 results_summary <- results %>%
-  group_by(Distribution, sample_size) %>%
+  group_by(calibration, Distribution, sample_size) %>%
   summarize_at(.vars = c("black_beta", "hispanic_beta", "black_se", 
                          "hispanic_se", "black_LCI", "hispanic_LCI", 
                          "black_UCI", "hispanic_UCI", "black_coverage", 
                          "hispanic_coverage"), 
                ~mean(., na.rm = TRUE)) %>% 
-  pivot_longer(cols = !c("Distribution", "sample_size"), 
+  pivot_longer(cols = !c("calibration", "Distribution", "sample_size"), 
                names_to = c("race_eth", ".value"),
                names_sep = "_") %>% 
   mutate_at("race_eth", str_to_sentence) %>% 
@@ -512,7 +514,8 @@ ggplot(results_summary,
   geom_vline(xintercept = 0, color = "dark gray", linetype = "dashed", size = 1) + 
   geom_vline(data = truth %>% filter(Distribution == "Normal"), 
              aes(xintercept = beta), size = 1) +
-  facet_grid(cols = vars(race_eth)) + theme(text = element_text(size = 18))   
+  facet_grid(cols = vars(race_eth), rows = vars(calibration)) + 
+  theme(text = element_text(size = 18))   
 
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
