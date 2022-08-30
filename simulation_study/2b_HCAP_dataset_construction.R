@@ -96,6 +96,9 @@ HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") %>%
   mutate_at("HHIDPN", as.numeric) %>% 
   mutate_at("HHIDPN", as.character)
 
+#---- **variable labels ----
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
+
 #---- join data ----
 HCAP <- left_join(HCAP_2016, HRS_tracker, by = "HHIDPN") %>% 
   left_join(., HRS_core, by = "HHIDPN") %>%
@@ -129,7 +132,7 @@ HCAP %<>%
 #---- **age ----
 # table(HCAP$PAGE, useNA = "ifany")
 
-#restrict to 70+ (N = 2610, dropped n = 13,534)
+#restrict to 70+ (N = 2610, dropped n = 886)
 HCAP %<>% filter(PAGE >= 70)
 
 #---- **race ----
@@ -282,9 +285,9 @@ HCAP %<>%
             #don't know/incorrect  
             function(x) ifelse(x %in% c(5, 8), 0, x))
 
-#Sanity check
-table(HCAP$H1RTICSSCISOR, useNA = "ifany")
-table(HCAP$H1RTICSCACTUS, useNA = "ifany")
+# #Sanity check
+# table(HCAP$H1RTICSSCISOR, useNA = "ifany")
+# table(HCAP$H1RTICSCACTUS, useNA = "ifany")
 
 #---- **President naming ----
 # table(HCAP$H1RTICSPRES, useNA = "ifany")
@@ -378,6 +381,18 @@ HCAP %<>%
 
 #---- **summarize missingness ----
 colMeans(is.na(HCAP))
+
+#---- CC HCAP ----
+HCAP_CC <- na.omit(HCAP)
+
+#---- rename columns ----
+variable_labels <- 
+  variable_labels[which(variable_labels$HCAP %in% colnames(HCAP_CC)), ]
+
+HCAP_CC %<>% 
+  rename_at(vars(variable_labels$HCAP), ~ variable_labels$data_label)
+
+#---- derived variable bins ----
 
 #---- save datasets ----
 HCAP %>% write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv"))
