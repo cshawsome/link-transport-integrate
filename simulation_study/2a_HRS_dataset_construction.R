@@ -54,7 +54,7 @@ rand_variables <-
     #Health and health behaviors (ever/never stroke, ever/never diabetes, 
     # ever/never CVD, ever/never hypertension, smokes now, 
     # drinking days per week, number of drinks per day, adl, iadl, bmi)
-    #Proxy indicator
+    #Proxy indicator-- this is always 1 when cognitive test items are missing
     paste0("r", rand_waves, "imrc"), paste0("r", rand_waves, "ser7"),
     paste0("r", rand_waves, "bwc20"), paste0("r", rand_waves, "cogtot"),
     paste0("r", rand_waves, "cact"), paste0("r", rand_waves, "scis"), 
