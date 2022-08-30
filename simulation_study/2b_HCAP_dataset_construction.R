@@ -393,28 +393,84 @@ HCAP_CC %<>%
   rename_at(vars(variable_labels$HCAP), ~ variable_labels$data_label)
 
 #---- derived variable bins ----
+#read in HRS_analytic because bins need to match for variables available in HRS
+HRS_analytic <- 
+  read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
+
+HCAP_CC %<>% 
+  mutate(
+    #---- **age ----
+    "age_cat" = cut(age, breaks = c(70, 75, 80, 85, 90, 107), 
+                    include.lowest = TRUE, right = FALSE), 
+    #---- **education ----
+    "edyrs_cat" = cut(edyrs, breaks = c(0, 0.9, 11, 12, 15, 16, 17),
+                      labels = c("none", "less than HS", "HS", "some college", 
+                                 "college", "graduate studies"),
+                      include.lowest = TRUE), right = TRUE, 
+    #---- **immediate word recall ----
+    "immrc_cat" = cut(immrc, breaks = c(0, 3, 4, 5, 6, 10), 
+                      include.lowest = TRUE, right = TRUE), 
+    #---- **serial 7s ----
+    "ser7_cat" = cut(ser7, breaks = c(0, 4, 5), 
+                     include.lowest = TRUE, right = TRUE), 
+    #---- **hrs cognition ----
+    "hrs_cog_cat" = cut(hrs_cog, breaks = c(0, 17, 20, 23, 25, 35), 
+                        include.lowest = TRUE, right = TRUE), 
+    #---- **adl ----
+    "adl_cat" = ifelse(adl == 0, "none", "any"), 
+    #---- **iadl ----
+    "iadl_cat" = ifelse(iadl == 0, "none", "any"), 
+    #---- **bmi ----
+    "bmi_cat" = cut(bmi, breaks = c(13.6, 23.2, 25.8, 28.3, 31.6, 92.8), 
+                    include.lowest = TRUE, right = TRUE), 
+    #---- **mmse_norm ----
+    "mmse_norm_cat" = cut_number(mmse_norm, n = 5),
+    #---- **delayed word recall ----
+    "delrc_cat" = cut_number(delrc, n = 5),
+    #---- **animal naming ----
+    "animal_naming_cat" = cut_number(animal_naming, n = 5),
+    #---- **word recall yes ----
+    "wrc_yes_cat" = case_when(wrc_yes %in% seq(0, 6) ~ "some", 
+                              wrc_yes %in% seq(7, 10) ~ "most"), 
+    #---- **word recall no ----
+    "wrc_no_cat" = case_when(wrc_no %in% seq(0, 6) ~ "some", 
+                             wrc_no %in% seq(7, 10) ~ "most"), 
+    #---- **immediate story recall ----
+    "imm_story_cat" = cut_number(imm_story, n = 5), 
+    #---- **delayed story recall ----
+    "del_story_cat" = cut_number(del_story, n = 5),
+    #---- **immediate constructional praxis ----
+    "imm_cp_cat" = cut_number(imm_cp, n = 4), 
+    #---- **delayed constructional praxis ----
+    "del_cp_cat" = cut_number(del_cp, n = 4),
+    #---- **trails A ----
+    "trailsA_cat" = cut_number(trailsA, n = 5))
+
+# #Sanity check
+# #HCAP categories need to match HRS categories where available
+# check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "ser7_cat", "hrs_cog_cat", 
+#                 "adl_cat", "iadl_cat", "bmi_cat")
+# 
+# for(var in check_vars){
+#   print(var)
+#   print(table(HRS_analytic[, var]))
+#   print(table(HCAP_CC[, var]))
+# }
+# 
+# 
+# #sum should be 2124
+# check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "ser7_cat", "hrs_cog_cat",
+#                 "adl_cat", "iadl_cat", "bmi_cat", "mmse_norm_cat", "delrc_cat", 
+#                 "animal_naming_cat", "wrc_yes_cat", "wrc_no_cat", 
+#                 "imm_story_cat", "del_story_cat", "imm_cp_cat", "del_cp_cat", 
+#                 "trailsA_cat")
+# 
+# for(var in check_vars){
+#   print(sum(table(HCAP_CC[, var])))
+# }
 
 #---- save datasets ----
 HCAP %>% write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv"))
 
-#---- **standardize continuous vars ----
-standardize_vars <- 
-  c("PAGE", "SCHLYRS", "H1RMSESCORE_norm", "H1RWLIMMSCORE", "H1RWLDELSCORE", 
-    "r13ser7", "H1RAFSCORE", "H1RWLRECYSCORE", "H1RWLRECNSCORE", 
-    "H1RIMMSTORYSCORE", "H1RDELSTORYSCORE", "r13bwc20", "H1RCPIMMSCORE", 
-    "H1RCPDELSCORE", "H1RTMASCORE", "r13cogtot", "r13adla", "r13iadla",
-    "r13bmi")
-
-Z_score <- function(data, vars){
-  subset <- data %>% dplyr::select(all_of(vars)) %>% 
-    mutate_all(scale) %>% set_colnames(paste0(all_of(vars), "_Z")) %>% 
-    mutate_all(as.numeric)
-  
-  data %<>% cbind(., subset)
-  
-  return(data)
-}
-
-HCAP_analytic <- HCAP %>% na.omit() %>% Z_score(., standardize_vars)
-HCAP_analytic %>% 
-  write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic.csv"))
+HCAP_CC %>% 
+  write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv"))
