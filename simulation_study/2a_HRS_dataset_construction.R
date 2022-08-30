@@ -193,6 +193,18 @@ HRS %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0),
                 "subj_cog_same" = ifelse(r13pstmem == 2, 1, 0), 
                 "subj_cog_worse" = ifelse(r13pstmem == 3, 1, 0))
 
+#---- **immediate word recall ----
+# table(HRS$r13imrc, useNA = "ifany")
+
+#---- **serial 7s ----
+# table(HRS$r13ser7, useNA = "ifany")
+
+#---- **backwards count 20 ----
+# table(HRS$r13bwc20, useNA = "ifany")
+
+#count corrects on second try as correct
+HRS %<>% mutate_at(.vars = "r13bwc20", function(x) ifelse(x >= 1, 1, 0))
+
 #---- derived variables ----
 #---- **drinking behavior ----
 HRS %<>% 
