@@ -244,12 +244,52 @@ HRS %<>%
 #---- summarize missingness ----
 colMeans(is.na(HRS))
 
+#---- CC HRS ----
+HRS_CC <- na.omit(HRS)
+
 #---- rename columns ----
-variable_labels %<>% filter(HRS %in% colnames(HRS)) 
+variable_labels <- 
+  variable_labels[which(variable_labels$HRS %in% colnames(HRS_CC)), ]
+
+HRS_CC %<>% 
+  rename_at(vars(variable_labels$HRS), ~ variable_labels$data_label)
 
 #---- derived variable bins ----
+HRS_CC %<>% 
+  mutate(
+    #---- **age ----
+    "age_cat" = cut(age, breaks = c(min(HRS_CC$age), 75, 80, 85, 90, 
+                                    max(HRS_CC$age)), 
+                    include.lowest = TRUE, right = FALSE), 
+    #---- **education ----
+    "edyrs_cat" = cut(edyrs, 
+                      breaks = c(0, 0.9, 5, 8, 11, 12, 15, 16, 
+                                 max(HRS_CC$edyrs, na.rm = TRUE)),
+                      labels = c("none", "elementary", "middle school",
+                                 "some HS", "HS", "some college", "college", 
+                                 "graduate studies"),
+                      include.lowest = TRUE, right = TRUE), 
+    #---- **immediate word recall ----
+    "immrc_cat" = cut_number(immrc, n = 5), 
+    #---- **serial 7s ----
+    "ser7_cat" = cut_number(ser7, n = 2), 
+    #---- **hrs cognition ----
+    "hrs_cog_cat" = cut_number(hrs_cog, n = 5), 
+    #---- **adl ----
+    "adl_cat" = ifelse(adl == 0, "none", "any"), 
+    #---- **iadl ----
+    "iadl_cat" = ifelse(iadl == 0, "none", "any"), 
+    #---- **bmi ----
+    "bmi_cat" = cut_number(bmi, n = 5))
 
-
+# #Sanity check
+# #sum should be 6314
+# check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "ser7_cat", "hrs_cog_cat", 
+#                 "adl_cat", "iadl_cat", "bmi_cat")
+# 
+# for(var in check_vars){
+#   print(sum(table(HRS_CC[, var])))
+# }
 
 #---- save datasets ----
 #clean data
@@ -262,8 +302,6 @@ remove <- c("PIWTYPE", "RACE", "RACE_label", "RACE_White", "RACE_Black",
             "PJ005M1_collapsed_label", "drinks_per_week", "drink_cat", 
             "drink_cat_label", "r13drinkd", "r13drinkn", "r13pstmem")
 
-HRS %>% dplyr::select(-all_of(remove)) %>% 
-  write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_clean.csv"))
-
-HRS %>% dplyr::select(-all_of(remove)) %>% na.omit() %>%
+HRS_CC %>% dplyr::select(-all_of(remove)) %>%
   write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
+
