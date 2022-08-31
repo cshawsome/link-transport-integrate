@@ -263,11 +263,10 @@ HRS_CC %<>%
                     include.lowest = TRUE, right = FALSE), 
     #---- **education ----
     "edyrs_cat" = cut(edyrs, 
-                      breaks = c(0, 0.9, 5, 8, 11, 12, 15, 16, 
+                      breaks = c(0, 0.9, 11, 12, 15, 16, 
                                  max(HRS_CC$edyrs, na.rm = TRUE)),
-                      labels = c("none", "elementary", "middle school",
-                                 "less than HS", "HS", "some college", "college", 
-                                 "graduate studies"),
+                      labels = c("none", "less than HS", "HS", "some college", 
+                                 "college", "graduate studies"),
                       include.lowest = TRUE, right = TRUE), 
     #---- **immediate word recall ----
     "immrc_cat" = cut_number(immrc, n = 5), 

@@ -403,10 +403,11 @@ HCAP_CC %<>%
     "age_cat" = cut(age, breaks = c(70, 75, 80, 85, 90, 107), 
                     include.lowest = TRUE, right = FALSE), 
     #---- **education ----
-    "edyrs_cat" = cut(edyrs, breaks = c(0, 0.9, 11, 12, 15, 16, 17),
+    "edyrs_cat" = cut(edyrs, 
+                      breaks = c(0, 0.9, 11, 12, 15, 16, 17),
                       labels = c("none", "less than HS", "HS", "some college", 
                                  "college", "graduate studies"),
-                      include.lowest = TRUE), right = TRUE, 
+                      include.lowest = TRUE, right = TRUE), 
     #---- **immediate word recall ----
     "immrc_cat" = cut(immrc, breaks = c(0, 3, 4, 5, 6, 10), 
                       include.lowest = TRUE, right = TRUE), 
@@ -472,5 +473,13 @@ HCAP_CC %<>%
 #---- save datasets ----
 HCAP %>% write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv"))
 
-HCAP_CC %>% 
+#pared-down analytic data
+remove <- c("HCAP_SELECT", "PIWTYPE", "RACE", "RACE_label", "RACE_White", 
+            "RACE_Black", "RACE_Other", "HISPANIC", "HISPANIC_indicator", 
+            "ETHNIC_label", "num_cog_measures", "Other", "GENDER", 
+            "GENDER_label", "PJ005M1", "PJ005M1_label", 
+            "PJ005M1_collapsed_label", "r13drinks_per_week", "r13drink_cat", 
+            "r13drink_cat_label", "r13drinkd", "r13drinkn", "r13pstmem")
+
+HCAP_CC %>% dplyr::select(-all_of(remove)) %>%
   write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv"))
