@@ -14,15 +14,14 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 HRS_analytic <- 
   read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
 
+#---- **HCAP analytic dataset ----
+HCAP_analytic <- 
+  read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv"))
+
 # #---- **fixed betas ----
 # fixed_betas <- 
 #   read_csv(paste0(path_to_box, "data/variable_selection/", 
 #                   "fixed_model_coefficients.csv"))
-
-#---- **variable labels ----
-variable_labels <- 
-  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
-  filter(HRS %in% colnames(HRS_analytic)) 
 
 # #---- **continuous distribution parameters ----
 # normal_parameter_list <- 
@@ -33,10 +32,6 @@ variable_labels <-
 #---- source functions ----
 source(here("simulation_study", "functions", 
             "generate_synthetic_neuropscyh_function.R"))
-
-#---- format data ----
-HRS_analytic %<>% mutate("Intercept" = 1) %>% 
-  rename_at(vars(variable_labels$HRS), ~ variable_labels$data_label)
 
 #---- synthetic superpopulations ----
 #Stick with just normal distributions with ADAMS-like proportions of impairment
@@ -136,11 +131,11 @@ synthetic_HCAP_list <-
 
 #---- **flag calibration subsample ----
 for(i in 1:length(synthetic_HCAP_list)){
-    synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
-                                    size = 0.5*nrow(synthetic_HCAP_list[[i]]), 
-                                    replace = FALSE), "calibration_50"] <- 1
+  synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
+                                  size = 0.5*nrow(synthetic_HCAP_list[[i]]), 
+                                  replace = FALSE), "calibration_50"] <- 1
 }
-           
+
 #---- **save data ----
 saveRDS(synthetic_HCAP_list, 
         file = paste0(path_to_box, 
