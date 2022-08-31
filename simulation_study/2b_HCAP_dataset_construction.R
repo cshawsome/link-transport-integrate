@@ -479,7 +479,9 @@ remove <- c("HCAP_SELECT", "PIWTYPE", "RACE", "RACE_label", "RACE_White",
             "ETHNIC_label", "num_cog_measures", "Other", "GENDER", 
             "GENDER_label", "PJ005M1", "PJ005M1_label", 
             "PJ005M1_collapsed_label", "r13drinks_per_week", "r13drink_cat", 
-            "r13drink_cat_label", "r13drinkd", "r13drinkn", "r13pstmem")
+            "r13drink_cat_label", "r13drinkd", "r13drinkn", "r13pstmem", 
+            "H1RWLIMM1SCORE", "H1RWLIMM2SCORE", "H1RWLIMM3SCORE", 
+            "H1RBMIMMSCORE", "H1RLMIMMSCORE", "H1RBMDELSCORE", "H1RLMDELSCORE")
 
 HCAP_CC %>% dplyr::select(-all_of(remove)) %>%
   write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv"))
