@@ -48,23 +48,23 @@ HRS_core <- read_da_dct(HRS_core_data_path, HRS_core_dict_path,
 rand_waves <- 13
 rand_variables <- 
   c("hhidpn",
-    #Cognition (immediate word recall, serial 7s, backwards count (20), 
-    # object naming (scissors and cactus), president naming, 
-    # subjective cognitive decline)
+    #Cognition (immediate word recall, delayed word recall, serial 7s, 
+    # backwards count (20), object naming (scissors and cactus), 
+    # president naming, subjective cognitive decline)
     #Health and health behaviors (ever/never stroke, ever/never diabetes, 
     # ever/never CVD, ever/never hypertension, smokes now, 
     # drinking days per week, number of drinks per day, adl, iadl, bmi)
     #Proxy indicator-- this is always 1 when cognitive test items are missing
-    paste0("r", rand_waves, "imrc"), paste0("r", rand_waves, "ser7"),
-    paste0("r", rand_waves, "bwc20"), paste0("r", rand_waves, "cogtot"),
-    paste0("r", rand_waves, "cact"), paste0("r", rand_waves, "scis"), 
-    paste0("r", rand_waves, "pres"), paste0("r", rand_waves, "pstmem"), 
-    paste0("r", rand_waves, "stroke"), paste0("r", rand_waves, "diabe"), 
-    paste0("r", rand_waves, "hearte"), paste0("r", rand_waves, "hibpe"), 
-    paste0("r", rand_waves, "smoken"), paste0("r", rand_waves, "drinkd"), 
-    paste0("r", rand_waves, "drinkn"), paste0("r", rand_waves, "adla"), 
-    paste0("r", rand_waves, "iadla"), paste0("r", rand_waves, "bmi"), 
-    paste0("r", rand_waves, "proxy"))
+    paste0("r", rand_waves, "imrc"), paste0("r", rand_waves, "dlrc"), 
+    paste0("r", rand_waves, "ser7"), paste0("r", rand_waves, "bwc20"), 
+    paste0("r", rand_waves, "cogtot"), paste0("r", rand_waves, "cact"), 
+    paste0("r", rand_waves, "scis"), paste0("r", rand_waves, "pres"), 
+    paste0("r", rand_waves, "pstmem"), paste0("r", rand_waves, "stroke"), 
+    paste0("r", rand_waves, "diabe"), paste0("r", rand_waves, "hearte"), 
+    paste0("r", rand_waves, "hibpe"), paste0("r", rand_waves, "smoken"), 
+    paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"), 
+    paste0("r", rand_waves, "adla"), paste0("r", rand_waves, "iadla"), 
+    paste0("r", rand_waves, "bmi"), paste0("r", rand_waves, "proxy"))
 
 RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/", 
                         "randhrs1992_2018v1.dta"), 
@@ -196,6 +196,9 @@ HRS %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0),
 #---- **immediate word recall ----
 # table(HRS$r13imrc, useNA = "ifany")
 
+#---- **delayed word recall ----
+# table(HRS$r13dlrc, useNA = "ifany")
+
 #---- **serial 7s ----
 # table(HRS$r13ser7, useNA = "ifany")
 
@@ -245,6 +248,7 @@ HRS %<>%
 colMeans(is.na(HRS))
 
 #---- CC HRS ----
+#keep those missing co
 HRS_CC <- na.omit(HRS)
 
 #---- rename columns ----

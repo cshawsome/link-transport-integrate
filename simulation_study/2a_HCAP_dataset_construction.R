@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "here", "magrittr", "haven", "labelled", "forcats", 
-       "NormPsy")
+       "NormPsy", "tidyr")
 
 #---- source scripts ----
 source(here("functions", "read_da_dct.R"))
@@ -26,7 +26,7 @@ rand_variables =
     paste0("r", rand_waves, "hibpe"), paste0("r", rand_waves, "diabe"),
     paste0("r", rand_waves, "hearte"), paste0("r", rand_waves, "smoken"),
     paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"),
-    #Cognitive variables: serial 7s, total MMSE score, BWC (20),
+    #Cognitive variables: serial 7s, total HRS cognition score, BWC (20),
     # subjective cognitive change
     paste0("r", rand_waves, "ser7"), paste0("r", rand_waves, "cogtot"), 
     paste0("r", rand_waves, "bwc20"), paste0("r", rand_waves, "pstmem"))
@@ -215,6 +215,10 @@ HCAP %<>%
 # table(HCAP$PJ005M1_collapsed_label, HCAP$Working, useNA = "ifany")
 # table(HCAP$PJ005M1_collapsed_label, HCAP$Retired, useNA = "ifany")
 # table(HCAP$PJ005M1_collapsed_label, HCAP$`Not working`, useNA = "ifany")
+# table(HCAP$Working, useNA = "ifany")
+
+#remove person missing years employment status (N = 2549, dropped n = 1)
+HCAP %<>% filter(Working %in% c(0, 1))
 
 #---- **drinking category ----
 HCAP %<>% 
@@ -239,12 +243,20 @@ HCAP %<>%
          "r13heavy_drinking" = 
            ifelse(r13drink_cat_label == "Heavy Drinking", 1, 0))
 
+# #Sanity check
+# table(HCAP$r13no_drinking, useNA = "ifany")
+
+#remove people missing alcohol consumption (N = 2534, dropped n = 15)
+HCAP %<>% filter(r13no_drinking %in% c(0, 1))
 
 #---- **subjective cognitive change ----
 # table(HCAP$r13pstmem, useNA = "ifany")
 HCAP %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0), 
                  "subj_cog_same" = ifelse(r13pstmem == 2, 1, 0), 
                  "subj_cog_worse" = ifelse(r13pstmem == 3, 1, 0))
+
+#Sanity check
+table(HCAP$subj_cog_same, useNA = "ifany")
 
 #---- **HRS cognitive test score ----
 # table(HCAP$r13cogtot, useNA = "ifany")
@@ -361,7 +373,14 @@ HCAP %<>% mutate_at("H1RTMASCORE",
 # #Sanity check
 # table(HCAP$H1RTMASCORE, useNA = "ifany")
 
-#---- **filter: missing all neurospych + general cognitive measures ----
+#---- summarize missingness ----
+colMeans(is.na(HCAP))
+
+#---- **filter participants missing health variables ----
+health_vars <- 
+  
+  
+  #---- **filter: missing all neurospych + general cognitive measures ----
 neuro_cog_measures <- c("H1RMSESCORE", "H1RTICSSCISOR", "H1RTICSCACTUS", 
                         "H1RTICSPRES", "H1RAFSCORE", "H1RWLDELSCORE", 
                         "H1RWLRECYSCORE", "H1RWLRECNSCORE", "H1RCPIMMSCORE", 
@@ -379,8 +398,7 @@ HCAP %<>%
 # #Sanity check
 # table(HCAP$num_cog_measures, useNA = "ifany")
 
-#---- **summarize missingness ----
-colMeans(is.na(HCAP))
+
 
 #---- CC HCAP ----
 HCAP_CC <- na.omit(HCAP)
