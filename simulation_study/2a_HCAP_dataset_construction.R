@@ -390,14 +390,11 @@ HCAP %<>% drop_na(health_vars)
 #There are 337 participants missing at least one cognitive assessment in HCAP
 nrow(HCAP) - nrow(na.omit(HCAP))
 
-#---- CC HCAP ----
-HCAP_CC <- na.omit(HCAP)
-
 #---- rename columns ----
 variable_labels <- 
-  variable_labels[which(variable_labels$HCAP %in% colnames(HCAP_CC)), ]
+  variable_labels[which(variable_labels$HCAP %in% colnames(HCAP)), ]
 
-HCAP_CC %<>% 
+HCAP %<>% 
   rename_at(vars(variable_labels$HCAP), ~ variable_labels$data_label)
 
 #---- derived variable bins ----
