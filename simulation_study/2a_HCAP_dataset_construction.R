@@ -377,28 +377,18 @@ HCAP %<>% mutate_at("H1RTMASCORE",
 colMeans(is.na(HCAP))
 
 #---- **filter participants missing health variables ----
-health_vars <- 
-  
-  
-  #---- **filter: missing all neurospych + general cognitive measures ----
-neuro_cog_measures <- c("H1RMSESCORE", "H1RTICSSCISOR", "H1RTICSCACTUS", 
-                        "H1RTICSPRES", "H1RAFSCORE", "H1RWLDELSCORE", 
-                        "H1RWLRECYSCORE", "H1RWLRECNSCORE", "H1RCPIMMSCORE", 
-                        "H1RCPDELSCORE", "H1RTMASCORE", "r13ser7", "r13bwc20", 
-                        "r13cogtot", "r13pstmem", "H1RWLIMMSCORE", 
-                        "H1RIMMSTORYSCORE", "H1RDELSTORYSCORE")
+health_vars <- c(paste0("r13", c("bmi", "smoken", "hibpe", "diabe", "hearte", 
+                                 "stroke")))
 
-HCAP %<>% 
-  mutate("num_cog_measures" = 
-           rowSums(!is.na(HCAP %>% 
-                            dplyr::select(all_of(neuro_cog_measures))))) %>% 
-  #N = 2444; dropped n = 106
-  filter(num_cog_measures > 0)
+#remove people missing any health variables (N = 2461, dropped n = 73)
+HCAP %<>% drop_na(health_vars) 
 
 # #Sanity check
-# table(HCAP$num_cog_measures, useNA = "ifany")
+# colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
 
-
+#---- **summarize missingness on any cognitive assessment ----
+#There are 337 participants missing at least one cognitive assessment in HCAP
+nrow(HCAP) - nrow(na.omit(HCAP))
 
 #---- CC HCAP ----
 HCAP_CC <- na.omit(HCAP)
