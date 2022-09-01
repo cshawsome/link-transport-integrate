@@ -397,6 +397,11 @@ variable_labels <-
 HCAP %<>% 
   rename_at(vars(variable_labels$HCAP), ~ variable_labels$data_label)
 
+#---- save datasets ----
+HCAP %>% write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv"))
+
+#---- OLD ----
+
 #---- derived variable bins ----
 #read in HRS_analytic because bins need to match for variables available in HRS
 HRS_analytic <- 
@@ -475,8 +480,7 @@ HCAP_CC %<>%
 #   print(sum(table(HCAP_CC[, var])))
 # }
 
-#---- save datasets ----
-HCAP %>% write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv"))
+
 
 #pared-down analytic data
 remove <- c("HCAP_SELECT", "PIWTYPE", "RACE", "RACE_label", "RACE_White", 
