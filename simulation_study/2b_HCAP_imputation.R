@@ -23,7 +23,8 @@ HCAP <- read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv")) %>%
 
 #---- **imputation matrix ----
 hotdeck_vars_mat <- 
-  read_csv(paste0(path_to_box, "data/HCAP/hotdeck_impute_mat.csv"))
+  read_csv(paste0(path_to_box, "data/HCAP/hotdeck_impute_mat.csv")) %>% 
+  column_to_rownames("var_names")
 
 #---- **summarize missingness ----
 #double check that all of these are in the rownames of the imputation matrix
