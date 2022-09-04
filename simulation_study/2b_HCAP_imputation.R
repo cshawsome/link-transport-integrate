@@ -22,7 +22,8 @@ HCAP <- read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv")) %>%
                         "r13drink_cat", "r13drink_cat_label"))
 
 #---- **imputation matrix ----
-
+hotdeck_vars_mat <- 
+  read_csv(paste0(path_to_box, "data/HCAP/hotdeck_impute_mat.csv"))
 
 #---- **summarize missingness ----
 #double check that all of these are in the rownames of the imputation matrix
@@ -94,5 +95,9 @@ for(var in check_vars){
   print(table(HCAP[, var]))
 }
 
-#---- clean: re-derive variable bins
+#---- impute: hotdecking ----
+#flag: subj_cog is the stem for a multilevel variable
+# just clean this up after like in MI code
+
+#---- clean: re-derive variable bins ----
 
