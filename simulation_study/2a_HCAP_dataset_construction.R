@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("tidyverse", "here", "magrittr", "haven", "labelled", "forcats", 
-       "NormPsy", "tidyr")
+       "NormPsy")
 
 #---- source scripts ----
 source(here("functions", "read_da_dct.R"))
