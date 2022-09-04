@@ -9,7 +9,7 @@ p_load("tidyverse", "here", "magrittr", "haven", "labelled", "forcats",
 #---- source scripts ----
 source(here("functions", "read_da_dct.R"))
 
-#---- import data ----
+#---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **RAND ----
