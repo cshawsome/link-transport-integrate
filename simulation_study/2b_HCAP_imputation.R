@@ -100,6 +100,7 @@ for(var in check_vars){
 }
 
 #---- impute: hotdecking ----
+set.seed(20220904)
 HCAP %<>% 
   hotdeck(dataset_to_impute = ., hotdeck_dataset = HCAP, 
           imputation_mat = hotdeck_vars_mat, 
@@ -130,6 +131,16 @@ for(index in fix_these){
 #   mutate(subj_cog_count = subj_cog_better + subj_cog_worse + subj_cog_same)
 # 
 # table(HCAP$subj_cog_count)
+
+#---- last bin check ----
+# #sum should be 2235
+# check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "delrc_cat", "ser7_cat", 
+#                 "adl_cat", "iadl_cat", "wrc_yes_cat", "wrc_no_cat", "imm_cp_cat", 
+#                 "del_cp_cat")
+# 
+# for(var in check_vars){
+#   print(sum(table(HCAP[, var])))
+# }
 
 #---- save dataset ----
 HCAP %>% dplyr::select(-one_of("subj_cog_count")) %>% 
