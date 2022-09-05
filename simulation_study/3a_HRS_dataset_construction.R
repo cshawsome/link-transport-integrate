@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "haven", "labelled", "magrittr")
+p_load("here", "tidyverse", "haven", "labelled", "magrittr", "tidyr")
 
 #---- source scripts ----
 source(here("functions", "read_da_dct.R"))
@@ -94,7 +94,7 @@ HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>%
 #---- **age ----
 # table(HRS$PAGE, useNA = "ifany")
 
-#restrict to 70+ (N = 7377, dropped n = 13,534)
+#restrict to 70+ (N = 7337, dropped n = 13,574)
 HRS %<>% filter(PAGE >= 70)
 
 #---- **2016 couple status ----
@@ -159,9 +159,11 @@ HRS %<>%
 # table(HRS$ETHNIC_label, HRS$Hispanic, useNA = "ifany")
 # table(HRS$ETHNIC_label, HRS$Other, useNA = "ifany")
 
-#restrict to White, Black, Hispanic (to align with ADAMS data) 
-# (N = 7166, dropped n = 171)
+#drop people missing race/ethnicity (N = 7335, dropped n = 2)
+HRS %<>% drop_na(ETHNIC_label)
 
+#restrict to White, Black, Hispanic (to align with ADAMS data) 
+# (N = 7166, dropped n = 169)
 HRS %<>% filter(Other == 0)
 
 #---- **years of education ----
@@ -169,6 +171,9 @@ HRS %<>% mutate("SCHLYRS" = ifelse(SCHLYRS > 17, NA, SCHLYRS))
 
 # #Sanity check
 # table(HRS$SCHLYRS, useNA = "ifany")
+
+#drop people missing education data (N = 7162, dropped n = 4)
+HRS %<>% drop_na(SCHLYRS)
 
 #---- **employment status ----
 #table(HRS$PJ005M1, useNA = "ifany")
@@ -196,6 +201,9 @@ HRS %<>%
 # table(HRS$PJ005M1_collapsed_label, HRS$Working, useNA = "ifany")
 # table(HRS$PJ005M1_collapsed_label, HRS$Retired, useNA = "ifany")
 # table(HRS$PJ005M1_collapsed_label, HRS$`Not working`, useNA = "ifany")
+
+#drop people missing employment status (N = 7138, dropped n = 24)
+HRS %<>% drop_na(Working)
 
 #---- **subjective cognitive change ----
 HRS %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0), 
@@ -253,20 +261,52 @@ HRS %<>%
          "heavy_drinking" = 
            ifelse(drink_cat_label == "Heavy Drinking", 1, 0))
 
-#---- summarize missingness ----
-colMeans(is.na(HRS))
+#remove people missing alcohol consumption (N = 7093, dropped n = 45)
+HRS %<>% drop_na(no_drinking)
 
-#---- CC HRS ----
-#keep those missing co
-HRS_CC <- na.omit(HRS)
+#---- summarize missingness ----
+colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
+
+#---- **filter participants missing health variables ----
+health_vars <- c(paste0("r13", c("bmi", "smoken", "hibpe", "diabe", "hearte", 
+                                 "stroke")))
+
+#remove people missing any health variables (N = 2461, dropped n = 73)
+HRS %<>% drop_na(health_vars) 
+
+# #Sanity check
+# colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
+
+#---- **summarize missingness on any cognitive assessment ----
+#There are 570 participants missing at least one cognitive assessment in HCAP
+subset <- names(colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)])
+remove_vars <- c("r13drinkd", "r13pstmem", "memimp16", "RACE_label", 
+                 "RACE_White", "RACE_Black", "RACE_Other", "drinks_per_week")
+cog_vars <- subset[-which(subset %in% remove_vars)]
+
+nrow(HRS) - nrow(HRS %>% drop_na(all_of(cog_vars)))
+
+#---- **summarize missingness on imputed memory scores ----
+#There are 682 people missing imputed memory scores
+sum(is.na(HRS$memimp16))
+
+#---- **CC cognitive assessments ----
+HRS %<>% drop_na(all_of(cog_vars))
+
+# #Sanity check
+# colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
 
 #---- rename columns ----
 variable_labels <- 
-  variable_labels[which(variable_labels$HRS %in% colnames(HRS_CC)), ]
+  variable_labels[which(variable_labels$HRS %in% colnames(HRS)), ]
 
-HRS_CC %<>% 
+HRS %<>% 
   rename_at(vars(variable_labels$HRS), ~ variable_labels$data_label)
 
+#---- save dataset ----
+HRS %>% write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_clean.csv"))
+
+#---- OLD ----
 #---- derived variable bins ----
 HRS_CC %<>% 
   mutate(
