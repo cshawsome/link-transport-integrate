@@ -53,12 +53,6 @@ HCAP %<>%
                      include.lowest = TRUE, right = TRUE), 
     #---- **hrs cognition ----
     "hrs_cog_cat" = cut_number(hrs_cog, n = 5), 
-    #---- **adl ----
-    "adl_cat" = cut(adl, breaks = c(0, max(HCAP$adl, na.rm = TRUE)), 
-                    include.lowest = TRUE, right = TRUE),
-    #---- **iadl ----
-    "iadl_cat" = cut(iadl, breaks = c(0, max(HCAP$iadl, na.rm = TRUE)), 
-                     include.lowest = TRUE, right = TRUE),
     #---- **mmse_norm ----
     "mmse_norm_cat" = cut_number(mmse_norm, n = 4),
     #---- **animal naming ----
