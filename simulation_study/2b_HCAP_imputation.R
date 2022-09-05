@@ -130,3 +130,7 @@ for(index in fix_these){
 #   mutate(subj_cog_count = subj_cog_better + subj_cog_worse + subj_cog_same)
 # 
 # table(HCAP$subj_cog_count)
+
+#---- save dataset ----
+HCAP %>% dplyr::select(-one_of("subj_cog_count")) %>% 
+  write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv"))
