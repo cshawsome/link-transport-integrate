@@ -30,15 +30,18 @@ hotdeck_vars_mat <-
 #double check that all of these are in the rownames of the imputation matrix
 colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
 
+#---- source functions ----
+source(here::here("simulation_study", "functions", "hotdeck_function.R"))
+
 #---- impute: derive variable bins ----
 HCAP %<>% 
   mutate(
     #---- **age ----
-    "age_cat" = cut(age, breaks = c(70, 75, 80, 85, max(HCAP$age)), 
+    "age_cat" = cut(age, breaks = c(70, 85, max(HCAP$age)), 
                     include.lowest = TRUE, right = FALSE), 
     #---- **education ----
     "edyrs_cat" = cut(edyrs, 
-                      breaks = c(0, 11, 12, 15, max(HCAP$edyrs)),
+                      breaks = c(0, 11, 12, max(HCAP$edyrs)),
                       include.lowest = TRUE, right = TRUE), 
     #---- **immediate word recall ----
     "immrc_cat" = cut(immrc, breaks = c(0, 6, 8, max(HCAP$immrc, na.rm = TRUE)), 
@@ -58,7 +61,7 @@ HCAP %<>%
     "iadl_cat" = cut(iadl, breaks = c(0, max(HCAP$iadl, na.rm = TRUE)), 
                      include.lowest = TRUE, right = TRUE),
     #---- **mmse_norm ----
-    "mmse_norm_cat" = cut_number(mmse_norm, n = 5),
+    "mmse_norm_cat" = cut_number(mmse_norm, n = 4),
     #---- **animal naming ----
     "animal_naming_cat" = cut_number(animal_naming, n = 5),
     #---- **word recall yes ----
@@ -70,7 +73,7 @@ HCAP %<>%
                        breaks = c(0, 9, max(HCAP$wrc_no, na.rm = TRUE)), 
                        include.lowest = TRUE, right = TRUE), 
     #---- **immediate story recall ----
-    "imm_story_cat" = cut_number(imm_story, n = 5), 
+    "imm_story_cat" = cut_number(imm_story, n = 4), 
     #---- **delayed story recall ----
     "del_story_cat" = cut_number(del_story, n = 5),
     #---- **immediate constructional praxis ----
@@ -84,7 +87,7 @@ HCAP %<>%
     #---- **trails A ----
     "trailsA_cat" = cut_number(trailsA, n = 5), 
     #---- **imputed memory ----
-    "memimp16_cat" = cut_number(memimp16, n = 5))
+    "memimp16_cat" = cut_number(memimp16, n = 4))
 
 #Sanity check bins
 check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "delrc_cat", "ser7_cat", 
@@ -97,8 +100,33 @@ for(var in check_vars){
 }
 
 #---- impute: hotdecking ----
-#flag: subj_cog is the stem for a multilevel variable
-# just clean this up after like in MI code
+HCAP %<>% 
+  hotdeck(dataset_to_impute = ., hotdeck_dataset = HCAP, 
+          imputation_mat = hotdeck_vars_mat, 
+          binary_vars = c("subj_cog_better", "subj_cog_worse", "bwc20", "scissor", 
+                          "cactus", "pres"))
 
-#---- clean: re-derive variable bins ----
+#Sanity check
+colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
 
+#---- clean: subjective cog decline vars ----
+HCAP %<>% mutate(subj_cog_count = subj_cog_better + subj_cog_worse)
+
+#check counts
+table(HCAP$subj_cog_count)
+
+#---- **subjective cog same ----
+HCAP %<>% mutate("subj_cog_same" = ifelse(subj_cog_count == 0, 1, 0))
+
+#---- **subjective cog better/worse ----
+fix_these <- which(HCAP$subj_cog_count > 1)
+
+for(index in fix_these){
+  HCAP[index, sample(c("subj_cog_worse", "subj_cog_better"), size = 1)] <- 0
+}
+
+# #Sanity check-- should only have sums equal to 1
+# HCAP %<>% 
+#   mutate(subj_cog_count = subj_cog_better + subj_cog_worse + subj_cog_same)
+# 
+# table(HCAP$subj_cog_count)
