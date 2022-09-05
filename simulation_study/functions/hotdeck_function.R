@@ -1,7 +1,8 @@
-hotdeck <- function(dataset_to_impute, hotdeck_dataset, imputation_mat){
+hotdeck <- function(dataset_to_impute, hotdeck_dataset, imputation_mat, 
+                    binary_vars){
   for(var in rownames(imputation_mat)){
     contingency_cell_vars <- 
-      names(imputation_mat[var, which(imputation_mat[var, ] == 1)])
+      names(imputation_mat[var, which(imputation_mat[var, ] == 1), drop = FALSE])
     
     dataset_to_impute %<>% 
       unite(col = "contingency_cell", all_of(contingency_cell_vars), sep = " | ", 
@@ -28,9 +29,15 @@ hotdeck <- function(dataset_to_impute, hotdeck_dataset, imputation_mat){
         dataset_to_impute[indices, paste0(var, "_pool")] <- nrow(hot_deck_set)
         
         #impute values
-        dataset_to_impute[indices, c(var, paste0(var, "_cat"))] <- 
-          sample_n(hot_deck_set[, c(var, paste0(var, "_cat"))], 
-                   size = length(indices), replace = TRUE)
+        if(var %in% binary_vars){
+          dataset_to_impute[indices, var] <- 
+            sample_n(hot_deck_set[, var], 
+                     size = length(indices), replace = TRUE)
+        } else{
+          dataset_to_impute[indices, c(var, paste0(var, "_cat"))] <- 
+            sample_n(hot_deck_set[, c(var, paste0(var, "_cat"))], 
+                     size = length(indices), replace = TRUE)
+        }
       }
     }
   }
@@ -38,7 +45,9 @@ hotdeck <- function(dataset_to_impute, hotdeck_dataset, imputation_mat){
   return(dataset_to_impute)
 }
 
-#test function
-dataset_to_impute <- HCAP
-hotdeck_dataset <- HCAP
-imputation_mat <- hotdeck_vars_mat
+# #test function
+# dataset_to_impute <- HCAP
+# hotdeck_dataset <- HCAP
+# imputation_mat <- hotdeck_vars_mat
+# binary_vars <- c("subj_cog_better", "subj_cog_worse", "bwc20", "scissor", 
+#                  "cactus", "pres")
