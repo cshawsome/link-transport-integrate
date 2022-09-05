@@ -136,5 +136,5 @@ for(index in fix_these){
 # }
 
 #---- save dataset ----
-HCAP %>% dplyr::select(-one_of("subj_cog_count")) %>% 
+HCAP %>% dplyr::select(-one_of("subj_cog_count", "contingency_cell")) %>% 
   write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv"))
