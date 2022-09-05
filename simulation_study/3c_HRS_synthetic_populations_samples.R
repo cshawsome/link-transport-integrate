@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "magrittr", "LaplacesDemon", "boot", "MCMCpack")
+p_load("here", "tidyverse", "magrittr")
 
 options(scipen = 999)
 
@@ -23,53 +23,21 @@ HCAP_analytic <-
 #   read_csv(paste0(path_to_box, "data/variable_selection/", 
 #                   "fixed_model_coefficients.csv"))
 
-# #---- **continuous distribution parameters ----
-# normal_parameter_list <- 
-#   readRDS(paste0(path_to_box, "analyses/simulation_study/", 
-#                  "continuous_distribution_parameters/", 
-#                  "normal_parameters_raw_data"))
-
 #---- source functions ----
-source(here("simulation_study", "functions", 
-            "generate_synthetic_neuropscyh_function.R"))
+source(here("simulation_study", "functions", "hotdeck_function.R"))
 
-#---- synthetic superpopulations ----
-#Stick with just normal distributions with ADAMS-like proportions of impairment
-set.seed(20220303)
+#---- synthetic superpopulation ----
+set.seed(20220905)
 
-#About 2.2 hours for all superpops
+#About XX hours for superpop
 start <- Sys.time()
-for(dist_name in c("normal")){
-  #---- ****compare with ADAMS ----
-  generate_synthetic_continuous(HRS_analytic, sample_size = 1000000, 
-                                dementia_prop = 0.20, mci_prop = 0.20, 
-                                other_prop = 0.10, dist = dist_name, 
-                                parameters = normal_parameter_list, 
-                                selected_vars_estimates = fixed_betas,
-                                scenario_name = "ADAMS",
-                                path_to_results = 
-                                  paste0(path_to_box, "analyses/", 
-                                         "simulation_study/superpopulations/"))
-  # #---- ****mostly unimpaired ----
-  # generate_synthetic_continuous(HRS_analytic, sample_size = 1000000,
-  #                               dementia_prop = 0.20, mci_prop = 0.20,
-  #                               other_prop = 0.10, dist = dist_name,
-  #                               parameters = normal_parameter_list,
-  #                               selected_vars_estimates = fixed_betas,
-  #                               path_to_results =
-  #                                 paste0(path_to_box, "analyses/",
-  #                                        "simulation_study/superpopulations/"))
-  # #---- ****mostly dementia ----
-  # generate_synthetic_continuous(HRS_analytic, sample_size = 1000000,
-  #                               dementia_prop = 0.50, mci_prop = 0.20,
-  #                               other_prop = 0.10, dist = dist_name,
-  #                               parameters = normal_parameter_list,
-  #                               selected_vars_estimates = fixed_betas,
-  #                               path_to_results =
-  #                                 paste0(path_to_box, "analyses/",
-  #                                        "simulation_study/superpopulations/"))
-}
+
 end <- Sys.time() - start
+
+#---- **impairment classes ----
+
+#---- **QC superpop ----
+
 
 #---- synthetic HRS ----
 #---- **source functions ----
