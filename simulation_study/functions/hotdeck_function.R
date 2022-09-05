@@ -45,10 +45,17 @@ hotdeck <- function(dataset_to_impute, hotdeck_dataset, imputation_mat,
   return(dataset_to_impute)
 }
 
-# #test function
-# set.seed(20220904)
-# dataset_to_impute <- HCAP
-# hotdeck_dataset <- HCAP
-# imputation_mat <- hotdeck_vars_mat
-# binary_vars <- c("subj_cog_better", "subj_cog_worse", "bwc20", "scissor",
-#                  "cactus", "pres")
+#test function
+set.seed(20220904)
+dataset_to_impute <- HCAP
+hotdeck_dataset <- HCAP
+imputation_mat <- hotdeck_vars_mat
+binary_vars <- c("subj_cog_better", "subj_cog_worse", "bwc20", "scissor",
+                 "cactus", "pres")
+
+set.seed(20220905)
+dataset_to_impute <- superpop
+hotdeck_dataset <- HCAP
+imputation_mat <- hotdeck_vars_mat
+binary_vars <- NA
+
