@@ -46,8 +46,9 @@ hotdeck <- function(dataset_to_impute, hotdeck_dataset, imputation_mat,
 }
 
 # #test function
+# set.seed(20220904)
 # dataset_to_impute <- HCAP
 # hotdeck_dataset <- HCAP
 # imputation_mat <- hotdeck_vars_mat
-# binary_vars <- c("subj_cog_better", "subj_cog_worse", "bwc20", "scissor", 
+# binary_vars <- c("subj_cog_better", "subj_cog_worse", "bwc20", "scissor",
 #                  "cactus", "pres")
