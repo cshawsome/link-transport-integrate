@@ -11,12 +11,20 @@ options(scipen = 999)
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **HRS analytic dataset ----
-HRS_analytic <- 
-  read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
+HRS <- read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
+
+# #Sanity check: only imputed memory scores should have missingness
+# colMeans(is.na(HRS_analytic))[which(colMeans(is.na(HRS_analytic)) > 0)]
 
 #---- **HCAP analytic dataset ----
-HCAP_analytic <- 
+HCAP <- 
   read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv"))
+
+#---- **imputation matrix ----
+hotdeck_vars_mat <- 
+  read_csv(paste0(path_to_box, 
+                  "data/superpopulations/hotdeck_impute_mat.csv")) %>% 
+  column_to_rownames("var_names")
 
 # #---- **fixed betas ----
 # fixed_betas <- 
@@ -31,8 +39,21 @@ set.seed(20220905)
 
 #About XX hours for superpop
 start <- Sys.time()
+superpop_size <- 1000000
+superpop <- sample_n(HRS_analytic, size = superpop_size, replace = TRUE) %>% 
+  mutate("HHIDPN" = seq(1, superpop_size))
+
+#add columns for neuropsych
+superpop[, rownames(hotdeck_vars_mat)] <- NA
+
+superpop %<>% 
+  hotdeck(dataset_to_impute = ., hotdeck_dataset = HCAP, 
+          imputation_mat = hotdeck_vars_mat, binary_vars = NA)
 
 end <- Sys.time() - start
+
+#Sanity check
+colMeans(is.na(superpop))[which(colMeans(is.na(superpop)) > 0)]
 
 #---- **impairment classes ----
 
