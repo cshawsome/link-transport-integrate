@@ -76,3 +76,7 @@ HRS[which(HRS$memimp16_cat == "(1.03,2.1]"), "memimp16_cat"] <- "(1.03,2.02]"
 #   print(table(HCAP[, var]))
 #   print(table(HRS[, var]))
 # }
+
+#---- save dataset ----
+HRS %>% write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
+
