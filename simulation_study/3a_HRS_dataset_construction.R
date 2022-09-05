@@ -74,12 +74,21 @@ RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/",
 #Remove labeled data format
 val_labels(RAND) <- NULL
 
+#---- **HRS imputed memory scores ----
+mem_scores <- 
+  read_sas(paste0(path_to_box, "data/HRS/imputed_memory/", 
+                  "dpmemimp_oct2020.sas7bdat")) %>% 
+  dplyr::select(c("HHID", "PN", "memimp16")) %>% 
+  mutate_at(c("HHID"), as.numeric) %>% 
+  unite("HHIDPN", c("HHID", "PN"), sep = "")
+
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
 #---- join data ----
 HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>% 
-  left_join(., RAND, by = "HHIDPN")
+  left_join(., RAND, by = "HHIDPN") %>% 
+  left_join(., mem_scores, by = "HHIDPN")
 
 #---- clean data ----
 #---- **age ----
