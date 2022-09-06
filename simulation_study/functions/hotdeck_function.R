@@ -1,5 +1,6 @@
 hotdeck <- function(dataset_to_impute, hotdeck_dataset, imputation_mat, 
-                    binary_vars){
+                    binary_vars = NA, dataset_specific_vars = NA, 
+                    dataset_specific_label = NA){
   for(var in rownames(imputation_mat)){
     contingency_cell_vars <- 
       names(imputation_mat[var, which(imputation_mat[var, ] == 1), drop = FALSE])
@@ -33,6 +34,14 @@ hotdeck <- function(dataset_to_impute, hotdeck_dataset, imputation_mat,
           dataset_to_impute[indices, var] <- 
             sample_n(hot_deck_set[, var], 
                      size = length(indices), replace = TRUE)
+        } else if(var %in% dataset_specific_vars){
+          dataset_to_impute[indices, 
+                            c(var, paste0(var, "_", dataset_specific_label, 
+                                          "_cat"))] <- 
+            sample_n(hot_deck_set[, c(var, 
+                                      paste0(var, "_", dataset_specific_label, 
+                                             "_cat"))], 
+                     size = length(indices), replace = TRUE)
         } else{
           dataset_to_impute[indices, c(var, paste0(var, "_cat"))] <- 
             sample_n(hot_deck_set[, c(var, paste0(var, "_cat"))], 
@@ -45,17 +54,21 @@ hotdeck <- function(dataset_to_impute, hotdeck_dataset, imputation_mat,
   return(dataset_to_impute)
 }
 
-#test function
-set.seed(20220904)
-dataset_to_impute <- HCAP
-hotdeck_dataset <- HCAP
-imputation_mat <- hotdeck_vars_mat
-binary_vars <- c("subj_cog_better", "subj_cog_worse", "bwc20", "scissor",
-                 "cactus", "pres")
-
-set.seed(20220905)
-dataset_to_impute <- superpop
-hotdeck_dataset <- HCAP
-imputation_mat <- hotdeck_vars_mat
-binary_vars <- NA
+# #test function
+# set.seed(20220904)
+# dataset_to_impute <- HCAP
+# hotdeck_dataset <- HCAP
+# imputation_mat <- hotdeck_vars_mat
+# binary_vars <- c("subj_cog_better", "subj_cog_worse", "bwc20", "scissor",
+#                  "cactus", "pres")
+# dataset_specific_vars = c("hrs_cog")
+# dataset_specific_label = "HCAP"
+# 
+# set.seed(20220905)
+# dataset_to_impute <- superpop
+# hotdeck_dataset <- HCAP
+# imputation_mat <- hotdeck_vars_mat
+# binary_vars <- NA
+# dataset_specific_vars = c("hrs_cog")
+# dataset_specific_label = "superpop"
 
