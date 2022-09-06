@@ -52,7 +52,8 @@ HCAP %<>%
     "ser7_cat" = cut(ser7, breaks = c(0, 4, max(HCAP$ser7, na.rm = TRUE)), 
                      include.lowest = TRUE, right = TRUE), 
     #---- **hrs cognition ----
-    "hrs_cog_cat" = cut_number(hrs_cog, n = 5), 
+    "hrs_cog_HCAP_cat" = cut_number(hrs_cog, n = 5),
+    "hrs_cog_superpop_cat" = cut_number(hrs_cog, n = 4),
     #---- **mmse_norm ----
     "mmse_norm_cat" = cut_number(mmse_norm, n = 4),
     #---- **animal naming ----
@@ -82,15 +83,16 @@ HCAP %<>%
     #---- **imputed memory ----
     "memimp16_cat" = cut_number(memimp16, n = 4))
 
-#Sanity check bins
-check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "delrc_cat", "ser7_cat", 
-                "hrs_cog_cat", "mmse_norm_cat", "wrc_yes_cat", "wrc_no_cat", 
-                "animal_naming_cat", "imm_story_cat", "del_story_cat", 
-                "imm_cp_cat", "del_cp_cat", "trailsA_cat", "memimp16_cat")
-
-for(var in check_vars){
-  print(table(HCAP[, var]))
-}
+# #Sanity check bins
+# check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "delrc_cat", "ser7_cat", 
+#                 "hrs_cog_HCAP_cat", "hrs_cog_superpop_cat", "mmse_norm_cat", 
+#                 "wrc_yes_cat", "wrc_no_cat", "animal_naming_cat", 
+#                 "imm_story_cat", "del_story_cat", "imm_cp_cat", "del_cp_cat", 
+#                 "trailsA_cat", "memimp16_cat")
+# 
+# for(var in check_vars){
+#   print(table(HCAP[, var]))
+# }
 
 #---- impute: hotdecking ----
 set.seed(20220904)
@@ -98,7 +100,8 @@ HCAP %<>%
   hotdeck(dataset_to_impute = ., hotdeck_dataset = HCAP, 
           imputation_mat = hotdeck_vars_mat, 
           binary_vars = c("subj_cog_better", "subj_cog_worse", "bwc20", "scissor", 
-                          "cactus", "pres"))
+                          "cactus", "pres"), 
+          dataset_specific_vars = c("hrs_cog"), dataset_specific_label = "HCAP")
 
 #Sanity check
 colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
