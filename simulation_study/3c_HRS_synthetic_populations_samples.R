@@ -282,12 +282,6 @@ saveRDS(synthetic_HRS_list,
         file = paste0(path_to_box, "data/HRS/synthetic_HRS_list"))
 
 #---- synthetic HCAP ----
-#---- **read in synthetic HRS data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-
-synthetic_HRS_list <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/synthetic_HRS_list"))
-
 #---- **create one set of synthetic HCAP ----
 set.seed(20220507)
 
@@ -295,8 +289,7 @@ synthetic_HCAP_list <-
   lapply(synthetic_HRS_list, 
          function(x) 
            x %>% group_by(married_partnered) %>% slice_sample(prop = 0.5) %>% 
-           mutate("(Intercept)" = 1, 
-                  "calibration_50" = 0) %>% ungroup())
+           mutate("calibration_50" = 0) %>% ungroup())
 
 #---- **flag calibration subsample ----
 for(i in 1:length(synthetic_HCAP_list)){
@@ -307,28 +300,4 @@ for(i in 1:length(synthetic_HCAP_list)){
 
 #---- **save data ----
 saveRDS(synthetic_HCAP_list, 
-        file = paste0(path_to_box, 
-                      "analyses/simulation_study/synthetic_HCAP_list"))
-
-#---- summary stats ----
-#---- **read in synthetic HCAP data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-
-synthetic_HCAP_list <- 
-  readRDS(paste0(path_to_box, "analyses/simulation_study/synthetic_HCAP_list"))
-
-#---- **filter to normal list ----
-dataset_names <- 
-  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
-
-indices <- which(dataset_names %in% 
-                   paste0("normal_", c(500, 1000, 2000, 4000, 8000), "_ADAMS"))
-
-synthetic_HCAP_list <- synthetic_HCAP_list[indices]
-
-#---- **summarize race/ethnicity x dementia ---- 
-test <- synthetic_HCAP_list[[5]]
-
-table(test$White, test$black, test$hispanic, test$Dementia) %>% 
-  as.data.frame %>% filter(!Freq == 0) %>% 
-  set_colnames(c("White", "Black", "Hispanic", "Dementia", "Freq"))
+        file = paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
