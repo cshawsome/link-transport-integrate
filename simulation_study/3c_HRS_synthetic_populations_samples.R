@@ -66,7 +66,8 @@ standardize_vars <- str_remove(unique(selected_vars_mat$data_label)[
 
 Z_score <- function(data, vars){
   subset <- data %>% dplyr::select(all_of(vars)) %>% 
-    mutate_all(scale) %>% set_colnames(paste0(all_of(vars), "_Z"))
+    mutate_all(scale) %>% mutate_all(as.numeric) %>%
+    set_colnames(paste0(all_of(vars), "_Z"))
   
   data %<>% cbind(., subset)
   
@@ -87,7 +88,7 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
   beta <- unlist(filtered_vars_mat[, class])
   
   superpop[, paste0("p_", class)] <- 
-    expit(as.matrix(superpop[, preds]) %*% as.matrix(beta))
+    as.numeric(expit(as.matrix(superpop[, preds]) %*% as.matrix(beta)))
 }
 
 # #Sanity check
@@ -123,22 +124,22 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
 # #Sanity check
 # table(superpop$num_classes)
 
-#---- **draw dem class by using a weighted vector ----
-superpop[, "dem_class"] <- 
-  apply(superpop[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1, 
-        function(x) 
-          sample(c("Unimpaired", "MCI", "Dementia", "Other"), size = 1, 
-                 prob = x))
-
-superpop %<>% 
-  mutate("Unimpaired" = ifelse(dem_class == "Unimpaired", 1, 0), 
-         "MCI" = ifelse(dem_class == "MCI", 1, 0), 
-         "Dementia" = ifelse(dem_class == "Dementia", 1, 0), 
-         "Other" = ifelse(dem_class == "Other", 1, 0)) %>% 
-  mutate("num_classes" = Unimpaired + MCI + Dementia + Other)
-
-#Sanity check
-table(superpop$num_classes)
+# #---- **draw dem class by using a weighted vector ----
+# superpop[, "dem_class"] <- 
+#   apply(superpop[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1, 
+#         function(x) 
+#           sample(c("Unimpaired", "MCI", "Dementia", "Other"), size = 1, 
+#                  prob = x))
+# 
+# superpop %<>% 
+#   mutate("Unimpaired" = ifelse(dem_class == "Unimpaired", 1, 0), 
+#          "MCI" = ifelse(dem_class == "MCI", 1, 0), 
+#          "Dementia" = ifelse(dem_class == "Dementia", 1, 0), 
+#          "Other" = ifelse(dem_class == "Other", 1, 0)) %>% 
+#   mutate("num_classes" = Unimpaired + MCI + Dementia + Other)
+# 
+# # #Sanity check
+# # table(superpop$num_classes)
 
 #---- **draw impaired categories only using weighted vector ----
 superpop[, "dem_class"] <-
@@ -158,8 +159,8 @@ superpop %<>%
          "Other" = ifelse(dem_class == "Other", 1, 0)) %>% 
   mutate("num_classes" = Unimpaired + MCI + Dementia + Other)
 
-#Sanity check
-table(superpop$num_classes)
+# #Sanity check
+# table(superpop$num_classes)
 
 #---- **QC superpop ----
 #---- ****overall summaries ----
@@ -170,7 +171,7 @@ mean(superpop[superpop$female == 1, "Dementia"])
 mean(superpop[superpop$female == 0, "Dementia"])
 
 #More dementia among racial/ethnic minorities? Kind of? 
-# (w: 26.0%, b: 33.7%, h: 22.6%)
+# (w: 26.0%, b: 33.6%, h: 22.6%)
 mean(superpop[superpop$White == 1, "Dementia"])
 mean(superpop[superpop$black == 1, "Dementia"])
 mean(superpop[superpop$hispanic == 1, "Dementia"])
@@ -184,8 +185,12 @@ exp(coefficients(glm(Dementia ~ edyrs, data = superpop, family = "poisson")))
 #Stroke: increased risk for yes vs. no (RR = 1.69)
 exp(coefficients(glm(Dementia ~ stroke, data = superpop, family = "poisson")))
 
-#Diabetes: no increased risk for yes vs. no (RR = 1)
+#Diabetes: no increased risk for yes vs. no (RR = 1.00)
 exp(coefficients(glm(Dementia ~ diabe, data = superpop, family = "poisson")))
+
+#Diabetes: increased risk for any impairment yes vs. no (RR = 1.10)
+superpop %<>% mutate("any_impairment" = Dementia + MCI)
+exp(coefficients(glm(any_impairment ~ diabe, data = superpop, family = "poisson")))
 
 #---- ****age and sex-standardized estimates by race ----
 #---- ******create age strata ----
@@ -199,8 +204,8 @@ superpop %<>%
 #---- ******standardization tables ----
 agesex_totals <- 
   superpop %>% group_by(female, age_cat) %>% count() %>% arrange(female) %>% 
-  set_colnames(c("Female", "Age Strata", "Superpop Count")) %>% 
-  dplyr::select("Superpop Count", everything())
+  set_colnames(c("female", "age", "superpop_count")) %>% 
+  dplyr::select("superpop_count", everything())
 
 for(race in c("White", "black", "hispanic")){
   assign(paste0(tolower(race), "_dem_risk_table"), 
@@ -208,38 +213,57 @@ for(race in c("White", "black", "hispanic")){
            group_by(female, age_cat) %>% 
            summarise("dem_prop" = mean(Dementia)) %>% 
            arrange(female) %>% 
-           set_colnames(c("Female", "Age Strata", paste0(race, " Dem Risk"))))
+           set_colnames(c("female", "age", 
+                          paste0(tolower(race), "_dem_risk"))))
 }
 
 # #Sanity check
 # test_data <- superpop %>% filter(White == 1)
 # table(test_data$female, test_data$age_cat, test_data$Dementia)
 
+#merge tables
+agesex_standardized <- 
+  left_join(agesex_totals, white_dem_risk_table, by = c("female", "age")) %>% 
+  left_join(., black_dem_risk_table, by = c("female", "age")) %>% 
+  left_join(., hispanic_dem_risk_table, by = c("female", "age"))
+
+#expected counts
+for(race in c("white", "black", "hispanic")){
+  agesex_standardized %<>% 
+    mutate(!!paste0("expected_", race, "_dem_count") := 
+             !!sym(paste0(race, "_dem_risk"))*superpop_count)
+}
+
+# #Sanity check
+# agesex_standardized$white_dem_risk*agesex_standardized$superpop_count
+# agesex_standardized$hispanic_dem_risk*agesex_standardized$superpop_count
+
+#---- ******estimates ----
+white_risk <- 
+  sum(agesex_standardized$expected_white_dem_count)/nrow(superpop)
+black_risk <- 
+  sum(agesex_standardized$expected_black_dem_count)/nrow(superpop)
+hispanic_risk <- 
+  sum(agesex_standardized$expected_hispanic_dem_count)/nrow(superpop)
+
+#RR compared to white
+RR_black <- black_risk/white_risk
+RR_hispanic <- hispanic_risk/white_risk
 
 #---- **save superpop data ----
+write_csv(superpop, 
+          paste0(path_to_box, "data/superpopulations/superpop_1000000.csv"))
 
-#---- OLD ----
+#---- **save age and sex-standardized table ----
+write_csv(agesex_standardized, 
+          paste0(path_to_box, 
+                 "data/superpopulations/agesex_standardized_prevs.csv"))
+
 #---- synthetic HRS ----
-#---- **source functions ----
-source(here::here("functions", "read_results.R"))
-
-#---- **read in superpop data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-
-#---- **data paths ----
-superpop_data_paths <- 
-  list.files(path = paste0(path_to_box, 
-                           "analyses/simulation_study/superpopulations"), 
-             full.names = TRUE, pattern = "*.csv")
-
-superpop_data_list <- lapply(superpop_data_paths, read_results)
-
-#---- **create one set of synthetic HRS ----
+#create one set of synthetic HRS for tuning 
 create_HRS_datasets <- function(superpop, n){
   sample_n(superpop, size = n) %>% 
-    separate(dataset_name, sep = "_", into = c("dist", "size", "prior")) %>% 
-    mutate_at("size", as.numeric) %>% mutate(size = n) %>% 
-    unite("dataset_name", c("dist", "size", "prior"), sep = "_")
+    mutate("dataset_name" = paste0("HRS_", n))
 }
 
 set.seed(20220507)
