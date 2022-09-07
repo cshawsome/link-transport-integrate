@@ -53,11 +53,14 @@ superpop %<>%
 end <- Sys.time() - start
 
 #Sanity check
-colMeans(is.na(superpop))[which(colMeans(is.na(superpop)) > 0)]
+colMeans(is.na(superpop))[colMeans(is.na(superpop)) > 0]
 
 #---- **impairment classes ----
 
 #---- **QC superpop ----
+
+
+#---- **save superpop data ----
 
 
 #---- synthetic HRS ----
