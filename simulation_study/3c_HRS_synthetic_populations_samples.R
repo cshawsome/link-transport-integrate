@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "magrittr")
+p_load("here", "tidyverse", "magrittr", "vroom")
 
 options(scipen = 999)
 
@@ -31,6 +31,15 @@ selected_vars <-
   read_csv(paste0(path_to_box, 
                   "data/variable_selection/model_coefficients.csv")) %>% 
   dplyr::select("data_label") %>% unlist()
+
+#---- ****predictors ----
+for(group in c("unimpaired", "mci", "other")){
+  assign(paste0(group, "_betas"), 
+         vroom(paste0(path_to_data, "data/prior_data/latent_class_", 
+                      group, "_betas.csv"), delim = ","))
+  
+  assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
+}
 
 # #---- **fixed betas ----
 # fixed_betas <- 
@@ -61,22 +70,8 @@ end <- Sys.time() - start
 # #Sanity check
 # colMeans(is.na(superpop))[colMeans(is.na(superpop)) > 0]
 
-#---- **standardize continuous vars ----
-standardize_vars <- 
-  str_remove(selected_vars[str_detect(unique(selected_vars), "_Z")], "_Z")
-
-Z_score <- function(data, vars){
-  subset <- data %>% dplyr::select(all_of(vars)) %>% 
-    mutate_all(scale) %>% set_colnames(paste0(all_of(vars), "_Z"))
-  
-  data %<>% cbind(., subset)
-  
-  return(data)
-}
-
-superpop %<>% Z_score(., standardize_vars)
-
 #---- **impairment classes ----
+
 
 #---- **QC superpop ----
 
