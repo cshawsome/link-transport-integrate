@@ -26,6 +26,12 @@ hotdeck_vars_mat <-
                   "data/superpopulations/hotdeck_impute_mat.csv")) %>% 
   column_to_rownames("var_names")
 
+#---- **ADAMS variable selection results ----
+selected_vars <- 
+  read_csv(paste0(path_to_box, 
+                  "data/variable_selection/model_coefficients.csv")) %>% 
+  dplyr::select("data_label") %>% unlist()
+
 # #---- **fixed betas ----
 # fixed_betas <- 
 #   read_csv(paste0(path_to_box, "data/variable_selection/", 
@@ -52,8 +58,23 @@ superpop %<>%
 
 end <- Sys.time() - start
 
-#Sanity check
-colMeans(is.na(superpop))[colMeans(is.na(superpop)) > 0]
+# #Sanity check
+# colMeans(is.na(superpop))[colMeans(is.na(superpop)) > 0]
+
+#---- **standardize continuous vars ----
+standardize_vars <- 
+  str_remove(selected_vars[str_detect(unique(selected_vars), "_Z")], "_Z")
+
+Z_score <- function(data, vars){
+  subset <- data %>% dplyr::select(all_of(vars)) %>% 
+    mutate_all(scale) %>% set_colnames(paste0(all_of(vars), "_Z"))
+  
+  data %<>% cbind(., subset)
+  
+  return(data)
+}
+
+superpop %<>% Z_score(., standardize_vars)
 
 #---- **impairment classes ----
 
