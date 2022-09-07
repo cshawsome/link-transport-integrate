@@ -270,19 +270,16 @@ set.seed(20220507)
 
 for(n in c(500, 1000, 2000, 4000, 8000)){
   if(!exists("synthetic_HRS_list")){
-    synthetic_HRS_list <- 
-      lapply(superpop_data_list, function(x) create_HRS_datasets(x, n))
+    synthetic_HRS_list <- list(create_HRS_datasets(superpop, n))
   } else{
     synthetic_HRS_list <- 
-      append(synthetic_HRS_list, lapply(superpop_data_list, function(x) 
-        create_HRS_datasets(x, n)))
+      append(synthetic_HRS_list, list(create_HRS_datasets(superpop, n)))
   }
 }
 
 #---- **save data ----
 saveRDS(synthetic_HRS_list, 
-        file = paste0(path_to_box, 
-                      "analyses/simulation_study/synthetic_HRS_list"))
+        file = paste0(path_to_box, "data/HRS/synthetic_HRS_list"))
 
 #---- synthetic HCAP ----
 #---- **read in synthetic HRS data ----
