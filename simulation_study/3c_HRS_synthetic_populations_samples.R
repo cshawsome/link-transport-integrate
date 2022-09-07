@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "magrittr", "vroom")
+p_load("here", "tidyverse", "magrittr", "vroom", "locfit")
 
 options(scipen = 999)
 
@@ -27,19 +27,9 @@ hotdeck_vars_mat <-
   column_to_rownames("var_names")
 
 #---- **ADAMS variable selection results ----
-selected_vars <- 
+selected_vars_mat <- 
   read_csv(paste0(path_to_box, 
-                  "data/variable_selection/model_coefficients.csv")) %>% 
-  dplyr::select("data_label") %>% unlist()
-
-#---- ****predictors ----
-for(group in c("unimpaired", "mci", "other")){
-  assign(paste0(group, "_betas"), 
-         vroom(paste0(path_to_box, "data/prior_data/latent_class_", 
-                      group, "_betas.csv"), delim = ","))
-  
-  assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
-}
+                  "data/variable_selection/model_coefficients.csv"))
 
 # #---- **fixed betas ----
 # fixed_betas <- 
@@ -71,8 +61,8 @@ end <- Sys.time() - start
 # colMeans(is.na(superpop))[colMeans(is.na(superpop)) > 0]
 
 #---- **standardize continuous vars ----
-standardize_vars <- str_remove(unique(selected_vars)[
-  str_detect(unique(selected_vars), "_Z")], "_Z")
+standardize_vars <- str_remove(unique(selected_vars_mat$data_label)[
+  str_detect(unique(selected_vars_mat$data_label), "_Z")], "_Z")
 
 Z_score <- function(data, vars){
   subset <- data %>% dplyr::select(all_of(vars)) %>% 
@@ -86,64 +76,75 @@ Z_score <- function(data, vars){
 superpop %<>% Z_score(., standardize_vars)
 
 #---- **impairment classes ----
-#---- ****Read in ADAMS imputed data ----
-ADAMS_imputed_clean <- 
-  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/chunk_1/", 
-                 "MI_datasets_cleaned")) %>%
-  lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
+#---- ****predict values in superpop ----
+superpop %<>% mutate("Intercept" = 1)
 
-ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
-  mutate("weights" = 1/length(ADAMS_imputed_clean))
-
-variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
-
-#---- ****rename columns ----
-variable_labels <- 
-  variable_labels[which(variable_labels$ADAMS %in% 
-                          colnames(ADAMS_imputed_stacked)), ]
-
-ADAMS_imputed_stacked %<>% 
-  rename_at(vars(variable_labels$ADAMS), ~ variable_labels$data_label)
-
-#---- ****fit models in stacked ADAMS data ----
-for(model in c("unimpaired", "other", "mci")){
+for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+  filtered_vars_mat <- selected_vars_mat[, c("data_label", class)] %>% 
+    filter(!!sym(class) != 0)
   
-  if(model == "mci"){
-    class_name = "MCI"
-  } else{
-    class_name = str_to_sentence(model)
-  }
+  preds <- filtered_vars_mat$data_label
+  beta <- unlist(filtered_vars_mat[, class])
   
-  latent_class_model <- 
-    glm(formula(paste(class_name, " ~ ", 
-                      paste(get(paste0(model, "_preds"))[-1], 
-                            collapse = " + "), 
-                      collapse = "")), family = "binomial", 
-        data = ADAMS_imputed_stacked)
-  
-  superpop[, paste0(model, "_prob")] <- 
-    predict(latent_class_model, newdata = superpop, type = "response")
+  superpop[, paste0("p_", class)] <- 
+    expit(as.matrix(superpop[, preds]) %*% as.matrix(beta))
 }
 
+# #Sanity check
+# View(head(superpop[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")]))
+
 # #---- ****draw impairment class assignments ----
-# superpop %<>% 
-#   mutate("Unimpaired" = 
-#            rbernoulli(nrow(superpop), p = superpop$unimpaired_prob)*1, 
-#          "Other" = 
-#            ifelse(Unimpaired == 0, rbernoulli(n = 1, p = other_prob)*1, 0),
-#          "MCI" = ifelse(Unimpaired == 0 & Other == 0, 
-#                         rbernoulli(n = 1, p = mci_prob)*1 , 0),
-#          "Dementia" = ifelse(Unimpaired == 0 & Other == 0 & MCI == 0, 1, 0)) %>% 
+# superpop %<>%
+#   mutate("Unimpaired" =
+#            rbernoulli(nrow(superpop), p = superpop$p_Unimpaired)*1,
+#          "Other" =
+#            ifelse(Unimpaired == 0, rbernoulli(n = 1, p = p_Other)*1, 0),
+#          "MCI" = ifelse(Unimpaired == 0 & Other == 0,
+#                         rbernoulli(n = 1, p = p_MCI)*1 , 0),
+#          "Dementia" = ifelse(Unimpaired == 0 & Other == 0 & MCI == 0, 1, 0)) %>%
 #   mutate("num_classes" = Unimpaired + Other + MCI + Dementia)
 # 
 # #Sanity check
 # table(superpop$num_classes)
 
-#---- **assign impairment class ----
+# #---- **assign impairment class ----
+# superpop[, "dem_class"] <- 
+#   apply(superpop[, c("p_Unimpaired", "p_Other", "p_MCI", "p_Dementia")], 1, 
+#         function(x) str_remove(names(which.max(x)), "p_"))
+# 
+# superpop %<>% 
+#   mutate("Unimpaired" = ifelse(dem_class == "Unimpaired", 1, 0), 
+#          "MCI" = ifelse(dem_class == "MCI", 1, 0), 
+#          "Dementia" = ifelse(dem_class == "Dementia", 1, 0), 
+#          "Other" = ifelse(dem_class == "Other", 1, 0)) %>% 
+#   mutate("num_classes" = Unimpaired + MCI + Dementia + Other)
+# 
+# 
+# #Sanity check
+# table(superpop$num_classes)
 
+#---- **draw dem class by using a weighted vector ----
+superpop[, "dem_class"] <- 
+  apply(superpop[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1, 
+        function(x) 
+          sample(c("Unimpaired", "MCI", "Dementia", "Other"), size = 1, 
+                 prob = x))
 
+superpop %<>% 
+  mutate("Unimpaired" = ifelse(dem_class == "Unimpaired", 1, 0), 
+         "MCI" = ifelse(dem_class == "MCI", 1, 0), 
+         "Dementia" = ifelse(dem_class == "Dementia", 1, 0), 
+         "Other" = ifelse(dem_class == "Other", 1, 0)) %>% 
+  mutate("num_classes" = Unimpaired + MCI + Dementia + Other)
+
+#Sanity check
+table(superpop$num_classes)
+           
 #---- **QC superpop ----
+#---- ****proportions ----
 colMeans(superpop[, c("Unimpaired", "MCI", "Dementia", "Other")])
+
+#---- ****race-specific ----
 
 
 #---- **save superpop data ----
