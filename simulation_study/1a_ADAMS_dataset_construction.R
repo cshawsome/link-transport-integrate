@@ -26,7 +26,9 @@ ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
                 "AAGE", "ETHNIC", "EDYRS", "AACURRWK") %>%
   #N = 1170
   #filter to those who completed Wave A assessment (N = 856; dropped n = 314)
-  filter(AASSESS == 1)
+  filter(AASSESS == 1) %>% 
+  mutate_at("HHIDPN", as.numeric) %>% 
+  mutate_at("HHIDPN", as.character)
 
 #---- **neuropsych measures ----
 ADAMS_neuropsych_data_path <- 
@@ -48,7 +50,9 @@ ADAMS_neuropsych <-
                 "ANSCISOR", "ANCACTUS", "ANPRES", "ANAFTOT", "ANIMMCR1", 
                 "ANIMMCR2", "ANIMMCR3", "ANDELCOR", "ANRECYES", "ANRECNO", 
                 "ANWM1TOT", "ANWM2TOT", "ANCPTOT", "ANRCPTOT", "ANTMASEC", 
-                "ANSMEM2")
+                "ANSMEM2") %>% 
+  mutate_at("HHIDPN", as.numeric) %>% 
+  mutate_at("HHIDPN", as.character)
 
 #---- **dementia dx ----
 ADAMS_demdx_data_path <- 
@@ -58,7 +62,9 @@ ADAMS_demdx_dict_path <-
 
 ADAMS_demdx <- read_da_dct(ADAMS_demdx_data_path, ADAMS_demdx_dict_path,
                            HHIDPN = "TRUE") %>% 
-  dplyr::select("HHIDPN", "ADFDX1")
+  dplyr::select("HHIDPN", "ADFDX1") %>% 
+  mutate_at("HHIDPN", as.numeric) %>% 
+  mutate_at("HHIDPN", as.character)
 
 #---- **proxy measures ----
 ADAMS_proxy_data_path <- 
@@ -69,7 +75,9 @@ ADAMS_proxy_dict_path <-
 ADAMS_proxy <- read_da_dct(ADAMS_proxy_data_path, ADAMS_proxy_dict_path,
                            HHIDPN = "TRUE") %>% 
   #select variables: IQCODE items, proxy type
-  dplyr::select("HHIDPN", paste0("AGQ", c(seq(14, 29), 101)))
+  dplyr::select("HHIDPN", paste0("AGQ", c(seq(14, 29), 101))) %>% 
+  mutate_at("HHIDPN", as.numeric) %>% 
+  mutate_at("HHIDPN", as.character)
 
 #---- **RAND variables ----
 rand_waves <- seq(4, 7, by = 1) #Corresponding to ADAMS + imputation
@@ -104,11 +112,20 @@ RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/",
 #Remove labeled data format
 val_labels(RAND) <- NULL
 
+#---- **HRS imputed memory scores ----
+mem_scores <- 
+  read_sas(paste0(path_to_box, "data/HRS/imputed_memory/", 
+                  "dpmemimp_oct2020.sas7bdat")) %>% 
+  dplyr::select(c("HHID", "PN", "memimp00", "memimp02", "memimp04")) %>% 
+  mutate_at(c("HHID"), as.numeric) %>% 
+  unite("HHIDPN", c("HHID", "PN"), sep = "")
+
 #---- join data ----
 ADAMS <- left_join(ADAMS_tracker, ADAMS_neuropsych, by = "HHIDPN") %>% 
   left_join(., ADAMS_proxy, by = "HHIDPN") %>% 
   left_join(., ADAMS_demdx, by = "HHIDPN") %>% 
-  left_join(., RAND, by = "HHIDPN")
+  left_join(., RAND, by = "HHIDPN") %>% 
+  left_join(., mem_scores, by = "HHIDPN")
 
 #---- clean data ----
 #---- **sex/gender ----
@@ -458,7 +475,7 @@ ADAMS %<>%
 # table(ADAMS$num_cog_measures, useNA = "ifany")
 
 #---- **summarize missingness ----
-colMeans(is.na(ADAMS))
+colMeans(is.na(ADAMS))[colMeans(is.na(ADAMS)) > 0]
 
 #---- imputation-specific variables ----
 #---- **ADAMS proxy type ----
