@@ -139,17 +139,45 @@ superpop %<>%
 
 #Sanity check
 table(superpop$num_classes)
-           
+
+#---- **draw impaired categories only using weighted vector ----
+superpop[, "dem_class"] <-
+  apply(superpop[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1,
+        function(x) str_remove(names(which.max(x)), "p_"))
+
+superpop[superpop$dem_class != "Unimpaired", "dem_class"] <- 
+  apply(superpop[superpop$dem_class != "Unimpaired", 
+                 c("p_MCI", "p_Dementia", "p_Other")], 1, 
+        function(x) 
+          sample(c("MCI", "Dementia", "Other"), size = 1, prob = x))
+
+superpop %<>% 
+  mutate("Unimpaired" = ifelse(dem_class == "Unimpaired", 1, 0), 
+         "MCI" = ifelse(dem_class == "MCI", 1, 0), 
+         "Dementia" = ifelse(dem_class == "Dementia", 1, 0), 
+         "Other" = ifelse(dem_class == "Other", 1, 0)) %>% 
+  mutate("num_classes" = Unimpaired + MCI + Dementia + Other)
+
+#Sanity check
+table(superpop$num_classes)
+
 #---- **QC superpop ----
-#---- ****proportions ----
+#---- ****overall proportions ----
 colMeans(superpop[, c("Unimpaired", "MCI", "Dementia", "Other")])
 
-#---- ****race-specific ----
+#---- ****age and sex-standardized estimates by race ----
+#---- ******create age strata ----
+superpop %<>% mutate()
+
+agesex_totals <- superpop %>% group_by(agecat_h2, male) %>% 
+  summarise(n = sum(RAKEDW0))
+agesex_totals$prop_agesex<-agesex_totals$n/chis_total
+
 
 
 #---- **save superpop data ----
 
-
+#---- OLD ----
 #---- synthetic HRS ----
 #---- **source functions ----
 source(here::here("functions", "read_results.R"))
