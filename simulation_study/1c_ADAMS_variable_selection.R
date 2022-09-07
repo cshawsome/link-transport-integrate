@@ -66,7 +66,7 @@ best_lambda <- function(x, y, weights){
 lasso_reg <- function(data, var_list){
   #---- preallocate for results ----
   model_list <- list()
-  lambda_vec <- vector(length = 4) %>% 
+  lambda_vec <- vector(length = 4) %>%
     set_names(c("Unimpaired", "Other", "MCI", "Dementia"))
   
   for(class in c("Unimpaired", "Other", "MCI", "Dementia")){
@@ -91,7 +91,7 @@ lasso_reg <- function(data, var_list){
     
     #---- store results ----
     model_list[[class]] <- 
-      glmnet(x, y, alpha = 1, lambda = lambda, weights = weights, 
+      glmnet(x, y, alpha = 1, weights = weights, lambda = lambda, 
              family = "binomial")
     
     lambda_vec[class] <- lambda
