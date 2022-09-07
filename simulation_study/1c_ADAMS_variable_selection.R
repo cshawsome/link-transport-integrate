@@ -66,10 +66,10 @@ best_lambda <- function(x, y, weights){
 lasso_reg <- function(data, var_list){
   #---- preallocate for results ----
   model_list <- list()
-  lambda_vec <- vector(length = 3) %>% 
-    set_names(c("Unimpaired", "Other", "MCI"))
+  lambda_vec <- vector(length = 4) %>% 
+    set_names(c("Unimpaired", "Other", "MCI", "Dementia"))
   
-  for(class in c("Unimpaired", "Other", "MCI")){
+  for(class in c("Unimpaired", "Other", "MCI", "Dementia")){
     #Try unconditional models
     model_data <- data
     
@@ -99,26 +99,26 @@ lasso_reg <- function(data, var_list){
   return(list("models" = model_list, "lambdas" = lambda_vec))
 }
 
-#About 12 secs
+#About 20 secs
 start <- Sys.time()
 variable_selection <- lasso_reg(ADAMS_imputed_stacked, var_list)
 end <- Sys.time() - start
 
 #---- **list predictors ----
 selected_vars <- 
-  matrix(nrow = (length(var_list) + 1), ncol = (1 + 3)) %>% 
+  matrix(nrow = (length(var_list) + 1), ncol = (1 + 4)) %>% 
   as.data.frame() %>%
-  set_colnames(c("Variable", "Unimpaired", "Other", "MCI")) %>% 
+  set_colnames(c("Variable", "Unimpaired", "Other", "MCI", "Dementia")) %>% 
   mutate("Variable" = c("(Intercept)", var_list))
 
-for(model in c("Unimpaired", "Other", "MCI")){
+for(model in c("Unimpaired", "Other", "MCI", "Dementia")){
   selected_vars[, model] <- 
     as.vector(coef(variable_selection$models[[model]]))
 }  
 
 #---- **truncate decimals ----
 #truncate at 2 decimal places
-selected_vars[, 2:4] <- trunc(selected_vars[, 2:4]*10^2)/10^2
+selected_vars[, 2:5] <- trunc(selected_vars[, 2:5]*10^2)/10^2
 
 #remove variables that are never selected
 selected_vars %<>% mutate("times_selected" = rowSums(selected_vars[, -1])) %>% 
