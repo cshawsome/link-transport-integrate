@@ -70,13 +70,16 @@ lasso_reg <- function(data, var_list){
     set_names(c("Unimpaired", "Other", "MCI"))
   
   for(class in c("Unimpaired", "Other", "MCI")){
-    if(class == "Unimpaired"){
-      model_data <- data
-    } else if(class == "Other"){
-      model_data <- data %>% filter(Unimpaired == 0)
-    } else{
-      model_data <- data %>% filter(Unimpaired == 0 & Other == 0)
-    }
+    #Try unconditional models
+    model_data <- data
+    
+    # if(class == "Unimpaired"){
+    #   model_data <- data
+    # } else if(class == "Other"){
+    #   model_data <- data %>% filter(Unimpaired == 0)
+    # } else{
+    #   model_data <- data %>% filter(Unimpaired == 0 & Other == 0)
+    # }
     
     #---- define outcome and predictor variables ----
     y <- model_data[, class]
@@ -84,7 +87,7 @@ lasso_reg <- function(data, var_list){
     weights <- model_data[, "weights"]
     
     #---- choose best lambda ----
-    lambda <- median(replicate(1000, best_lambda(x, y, weights)))
+    lambda <- median(replicate(1, best_lambda(x, y, weights)))
     
     #---- store results ----
     model_list[[class]] <- 
@@ -96,7 +99,7 @@ lasso_reg <- function(data, var_list){
   return(list("models" = model_list, "lambdas" = lambda_vec))
 }
 
-#About 2.5 hours hours
+#About 12 secs
 start <- Sys.time()
 variable_selection <- lasso_reg(ADAMS_imputed_stacked, var_list)
 end <- Sys.time() - start
