@@ -14,7 +14,7 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 HRS <- read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
 
 # #Sanity check: only imputed memory scores should have missingness
-# colMeans(is.na(HRS_analytic))[which(colMeans(is.na(HRS_analytic)) > 0)]
+# colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
 
 #---- **HCAP analytic dataset ----
 HCAP <- 
@@ -40,7 +40,7 @@ set.seed(20220905)
 #About XX hours for superpop
 start <- Sys.time()
 superpop_size <- 1000000
-superpop <- sample_n(HRS_analytic, size = superpop_size, replace = TRUE) %>% 
+superpop <- sample_n(HRS, size = superpop_size, replace = TRUE) %>% 
   mutate("HHIDPN" = seq(1, superpop_size))
 
 #add columns for neuropsych
