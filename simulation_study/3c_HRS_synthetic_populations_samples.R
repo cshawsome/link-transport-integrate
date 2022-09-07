@@ -162,17 +162,58 @@ superpop %<>%
 table(superpop$num_classes)
 
 #---- **QC superpop ----
-#---- ****overall proportions ----
+#---- ****overall summaries ----
 colMeans(superpop[, c("Unimpaired", "MCI", "Dementia", "Other")])
+
+#More dementia among women? Yes (M: 25.5%, W: 27.6%)
+mean(superpop[superpop$female == 1, "Dementia"])
+mean(superpop[superpop$female == 0, "Dementia"])
+
+#More dementia among racial/ethnic minorities? Kind of? 
+# (w: 26.0%, b: 33.7%, h: 22.6%)
+mean(superpop[superpop$White == 1, "Dementia"])
+mean(superpop[superpop$black == 1, "Dementia"])
+mean(superpop[superpop$hispanic == 1, "Dementia"])
+
+#Age: increased risk by year (RR = 1.03)
+exp(coefficients(glm(Dementia ~ age, data = superpop, family = "poisson")))
+
+#Years of Education: decreased risk by higher education (RR = 0.98)
+exp(coefficients(glm(Dementia ~ edyrs, data = superpop, family = "poisson")))
+
+#Stroke: increased risk for yes vs. no (RR = 1.69)
+exp(coefficients(glm(Dementia ~ stroke, data = superpop, family = "poisson")))
+
+#Diabetes: no increased risk for yes vs. no (RR = 1)
+exp(coefficients(glm(Dementia ~ diabe, data = superpop, family = "poisson")))
 
 #---- ****age and sex-standardized estimates by race ----
 #---- ******create age strata ----
-superpop %<>% mutate()
+superpop %<>% 
+  mutate("age_cat" = cut(age, breaks = c(70, 75, 80, 85, 90, max(superpop$age)), 
+                         include.lowest = TRUE, right = FALSE))
 
-agesex_totals <- superpop %>% group_by(agecat_h2, male) %>% 
-  summarise(n = sum(RAKEDW0))
-agesex_totals$prop_agesex<-agesex_totals$n/chis_total
+# #Sanity check
+# table(superpop$age_cat, useNA = "ifany")
 
+#---- ******standardization tables ----
+agesex_totals <- 
+  superpop %>% group_by(female, age_cat) %>% count() %>% arrange(female) %>% 
+  set_colnames(c("Female", "Age Strata", "Superpop Count")) %>% 
+  dplyr::select("Superpop Count", everything())
+
+for(race in c("White", "black", "hispanic")){
+  assign(paste0(tolower(race), "_dem_risk_table"), 
+         superpop %>% filter(!!sym(race) == 1) %>% 
+           group_by(female, age_cat) %>% 
+           summarise("dem_prop" = mean(Dementia)) %>% 
+           arrange(female) %>% 
+           set_colnames(c("Female", "Age Strata", paste0(race, " Dem Risk"))))
+}
+
+# #Sanity check
+# test_data <- superpop %>% filter(White == 1)
+# table(test_data$female, test_data$age_cat, test_data$Dementia)
 
 
 #---- **save superpop data ----
