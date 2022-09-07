@@ -35,7 +35,7 @@ selected_vars <-
 #---- ****predictors ----
 for(group in c("unimpaired", "mci", "other")){
   assign(paste0(group, "_betas"), 
-         vroom(paste0(path_to_data, "data/prior_data/latent_class_", 
+         vroom(paste0(path_to_box, "data/prior_data/latent_class_", 
                       group, "_betas.csv"), delim = ","))
   
   assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
@@ -70,7 +70,35 @@ end <- Sys.time() - start
 # #Sanity check
 # colMeans(is.na(superpop))[colMeans(is.na(superpop)) > 0]
 
+#---- **standardize continuous vars ----
+standardize_vars <- str_remove(unique(selected_vars)[
+  str_detect(unique(selected_vars), "_Z")], "_Z")
+
+Z_score <- function(data, vars){
+  subset <- data %>% dplyr::select(all_of(vars)) %>% 
+    mutate_all(scale) %>% set_colnames(paste0(all_of(vars), "_Z"))
+  
+  data %<>% cbind(., subset)
+  
+  return(data)
+}
+
+superpop %<>% Z_score(., standardize_vars)
+
 #---- **impairment classes ----
+#---- ****Read in ADAMS imputed data ----
+ADAMS_imputed_clean <- 
+  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/chunk_1/", 
+                 "MI_datasets_cleaned")) %>%
+  lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
+
+ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
+  mutate("weights" = 1/length(ADAMS_imputed_clean))
+
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
+
+#Fit models in stacked ADAMS data
+
 
 
 #---- **QC superpop ----
