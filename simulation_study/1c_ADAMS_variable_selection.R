@@ -131,3 +131,7 @@ saveRDS(variable_selection, paste0(path_to_box, "data/variable_selection/",
 write_csv(selected_vars %>% 
             dplyr::select(c("data_label", "Unimpaired", "Other", "MCI")), 
           paste0(path_to_box, "data/variable_selection/model_coefficients.csv"))
+
+# #---- test ----
+# lasso_models <- readRDS(paste0(path_to_box, "data/variable_selection/", 
+#                                "ADAMS_lasso_models"))
