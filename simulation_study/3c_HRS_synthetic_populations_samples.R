@@ -97,11 +97,53 @@ ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>%
 
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 
-#Fit models in stacked ADAMS data
+#---- ****rename columns ----
+variable_labels <- 
+  variable_labels[which(variable_labels$ADAMS %in% 
+                          colnames(ADAMS_imputed_stacked)), ]
 
+ADAMS_imputed_stacked %<>% 
+  rename_at(vars(variable_labels$ADAMS), ~ variable_labels$data_label)
+
+#---- ****fit models in stacked ADAMS data ----
+for(model in c("unimpaired", "other", "mci")){
+  
+  if(model == "mci"){
+    class_name = "MCI"
+  } else{
+    class_name = str_to_sentence(model)
+  }
+  
+  latent_class_model <- 
+    glm(formula(paste(class_name, " ~ ", 
+                      paste(get(paste0(model, "_preds"))[-1], 
+                            collapse = " + "), 
+                      collapse = "")), family = "binomial", 
+        data = ADAMS_imputed_stacked)
+  
+  superpop[, paste0(model, "_prob")] <- 
+    predict(latent_class_model, newdata = superpop, type = "response")
+}
+
+# #---- ****draw impairment class assignments ----
+# superpop %<>% 
+#   mutate("Unimpaired" = 
+#            rbernoulli(nrow(superpop), p = superpop$unimpaired_prob)*1, 
+#          "Other" = 
+#            ifelse(Unimpaired == 0, rbernoulli(n = 1, p = other_prob)*1, 0),
+#          "MCI" = ifelse(Unimpaired == 0 & Other == 0, 
+#                         rbernoulli(n = 1, p = mci_prob)*1 , 0),
+#          "Dementia" = ifelse(Unimpaired == 0 & Other == 0 & MCI == 0, 1, 0)) %>% 
+#   mutate("num_classes" = Unimpaired + Other + MCI + Dementia)
+# 
+# #Sanity check
+# table(superpop$num_classes)
+
+#---- **assign impairment class ----
 
 
 #---- **QC superpop ----
+colMeans(superpop[, c("Unimpaired", "MCI", "Dementia", "Other")])
 
 
 #---- **save superpop data ----
