@@ -51,7 +51,7 @@ Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"),
 
 #---- generate datasets in serial ----
 #About 1.5 hours to generate data for all datasets in serial
-#---- **generate datasets no calibration ----
+#---- **generate datasets: no calibration ----
 #---- ****read in data ----
 synthetic_HCAP_list <- 
   readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
@@ -102,7 +102,7 @@ lapply(synthetic_HCAP_list[indices], function(x)
 
 end <- Sys.time() - start
 
-#---- **generate datasets HCAP_50 calibration ----
+#---- **generate datasets: HCAP_50 calibration ----
 #---- ****read in data ----
 synthetic_HCAP_list <- 
   readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
