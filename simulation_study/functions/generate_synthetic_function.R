@@ -137,6 +137,11 @@ generate_synthetic <-
       cross_class_label <- new_table
     }
     
+    #---- sampling counts ----
+    warm_up = warm_up
+    synthetic_sets = num_synthetic
+    B = warm_up + synthetic_sets
+    
     #---- chain storage ----
     model_gamma_chain <- 
       matrix(nrow = sum(length(unimpaired_preds), length(other_preds), 
@@ -194,11 +199,6 @@ generate_synthetic <-
     nu_0 <- 
       nu_0_mat[which(nu_0_mat$dataset_name == 
                        unlist(unique(dataset_to_copy[, "dataset_name"]))), ]  
-    
-    #---- sampling counts ----
-    warm_up = warm_up
-    synthetic_sets = num_synthetic
-    B = warm_up + synthetic_sets
     
     #---- start sampling ----
     for(b in 1:B){
@@ -554,7 +554,7 @@ generate_synthetic <-
           
           #---- ****replace synthetic data ----
           synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN),
-                          c(categorical_vars, continuous_vars)] <- 
+                           c(categorical_vars, continuous_vars)] <- 
             subset[, c(categorical_vars, continuous_vars)]
         }
       }
