@@ -36,7 +36,7 @@ cells <- A %>% as.data.frame() %>% unite("cells", -1, sep = "") %>%
   dplyr::select(-"Freq") %>% set_colnames("cells")
 
 #---- estimates ----
-estimate_cont_priors <- function(data, W, Z, A){
+estimate_cont_priors <- function(data, W, Z, A, cells){
   #---- **pre-allocate ----
   priors_V_inv <- 
     as.data.frame(matrix(nrow = (ncol(A)*4), ncol = ncol(A))) %>%
@@ -128,7 +128,7 @@ estimate_cont_priors <- function(data, W, Z, A){
 }
 
 #---- **estimate values ----
-all_priors <- lapply(prior_imputed_clean, estimate_cont_priors, W, Z, A)
+all_priors <- lapply(prior_imputed_clean, estimate_cont_priors, W, Z, A, cells)
 
 #---- format output ----
 for(est in c("V_inv", "beta", "Sigma")){
