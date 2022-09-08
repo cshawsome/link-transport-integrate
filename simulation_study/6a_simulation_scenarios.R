@@ -6,9 +6,7 @@ if (!require("pacman")){
 p_load("tidyverse", "magrittr")
 
 #---- all scenarios ----
-dists <- c("normal", "lognormal", "bathtub")
 samples_sizes <- c(500, 1000, 2000, 4000, 8000)
-prior_props <- c("ADAMS", "unimpaired", "dementia")
 calibration <- c("none", "HCAP_50")
 batch_size <- 20
 total_runs <- 1000
@@ -17,11 +15,9 @@ max_batch_count <- total_runs/batch_size
 seeds <- seq(1, max_batch_count*batch_size, by = batch_size)
 
 sim_scenarios <- 
-  as.data.frame(expand.grid(dists, samples_sizes, prior_props, calibration, 
-                            seeds)) %>% 
-  set_colnames(c("distribution", "sample_size", "prior_prop", "calibration", 
-                 "seed")) %>%
-  arrange(prior_prop, calibration, distribution, sample_size, seed) 
+  as.data.frame(expand.grid(samples_sizes, calibration, seeds)) %>% 
+  set_colnames(c("sample_size", "calibration", "seed")) %>%
+  arrange(calibration, sample_size, seed) 
 
 sim_scenarios %<>% mutate("job" = seq(1, nrow(sim_scenarios)))
 
