@@ -263,7 +263,8 @@ write_csv(agesex_standardized,
 #create one set of synthetic HRS for tuning 
 create_HRS_datasets <- function(superpop, n){
   sample_n(superpop, size = n) %>% 
-    mutate("dataset_name" = paste0("HRS_", n))
+    mutate("dataset_name" = paste0("HRS_", n), 
+           "(Intercept)" = 1)
 }
 
 set.seed(20220507)
