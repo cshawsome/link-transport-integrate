@@ -51,7 +51,8 @@ superpop <-
   read_results(paste0(path_to_data, "superpopulations/superpop_1000000.csv"))
 
 #---- **truth table ----
-truth <- read_csv(paste0(path_to_data, "truth.csv"))
+truth <- read_csv(paste0(path_to_data, 
+                         "superpopulations/agesex_standardized_prevs.csv"))
 
 #---- **variable labels ----
 variable_labels <- 
@@ -72,11 +73,10 @@ all_sim_scenarios <- read_csv(paste0(path_to_data, "sim_study_scenarios.csv"))
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
-Z <- colnames(superpop_data_list[[1]])[str_detect(
-  colnames(superpop_data_list[[1]]), "_Z")]
+Z <- colnames(superpop)[str_detect(colnames(superpop), "_Z")]
 
 #---- **contrasts matrix ----
-A = read_csv(paste0(path_to_data, "contrasts_matrix.csv")) %>% as.matrix()
+A <- read_csv(paste0(path_to_data, "contrasts_matrix.csv")) %>% as.matrix()
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
