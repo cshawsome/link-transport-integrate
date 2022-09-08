@@ -15,17 +15,6 @@ prior_imputed_clean <-
   readRDS(paste0(path_to_box, "data/prior_data/MI/MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
-#---- **variable labels ----
-variable_labels <- 
-  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
-  filter(ADAMS %in% colnames(prior_imputed_clean[[1]]))
-
-#---- relabel columns ----
-prior_imputed_clean <- 
-  lapply(prior_imputed_clean, 
-         function(x) rename_at(x, vars(variable_labels$ADAMS), ~ 
-                                 variable_labels$data_label)) 
-
 #---- categorical vars ----
 #---- **selected variables ----
 selected_vars <- 
