@@ -596,24 +596,24 @@ prior_predictive_checks <-
     }
   }
 
-#---- test function ----
-dataset_to_copy = synthetic_HCAP_list[[1]]
-calibration_sample = TRUE
-calibration_prop = 0.50
-calibration_sample_name = "HCAP_50"
-path_to_raw_prior_sample = paste0(path_to_box, "data/prior_data/MI/",
-                                  "MI_datasets_cleaned")
-path_to_data = path_to_box
-path_to_output_folder = paste0(path_to_box,"figures/simulation_study/HCAP_",
-                               unique(dataset_to_copy[, "dataset_name_stem"]),
-                               "/prior_predictive_checks/")
-continuous_check_test = TRUE
-continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
-categorical_vars = W
-continuous_vars = Z
-variable_labels = variable_labels
-color_palette = color_palette
-contrasts_matrix = A
-kappa_0_mat = kappa_0_mat
-nu_0_mat = nu_0_mat
-num_synthetic = 1000
+# #---- test function ----
+# dataset_to_copy = synthetic_HCAP_list[[1]]
+# calibration_sample = TRUE
+# calibration_prop = 0.50
+# calibration_sample_name = "HCAP_50"
+# path_to_raw_prior_sample = paste0(path_to_box, "data/prior_data/MI/",
+#                                   "MI_datasets_cleaned")
+# path_to_data = path_to_box
+# path_to_output_folder = paste0(path_to_box,"figures/simulation_study/HCAP_",
+#                                unique(dataset_to_copy[, "dataset_name_stem"]),
+#                                "/prior_predictive_checks/")
+# continuous_check_test = TRUE
+# continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+# categorical_vars = W
+# continuous_vars = Z
+# variable_labels = variable_labels
+# color_palette = color_palette
+# contrasts_matrix = A
+# kappa_0_mat = kappa_0_mat
+# nu_0_mat = nu_0_mat
+# num_synthetic = 1000
