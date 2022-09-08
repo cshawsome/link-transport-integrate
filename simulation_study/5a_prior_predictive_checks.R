@@ -25,10 +25,6 @@ variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 #---- **impairment class color palette ----
 color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv")) 
 
-#---- **synthetic HCAP ----
-synthetic_HCAP_list <- 
-  readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
-
 #---- define vars ----
 #---- **selected variables ----
 selected_vars <- 
@@ -54,7 +50,13 @@ nu_0_mat <- read_csv(paste0(path_to_box, "data/tuning/nu_0_matrix.csv"))
 #scaling for inverse wishart as variance of Beta
 kappa_0_mat <- read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix.csv"))
 
-#---- **rename datasets based on calibration scenario ----
+#---- run checks in serial ----
+#---- **run checks: no calibration ----
+#---- ****read in data ----
+synthetic_HCAP_list <- 
+  readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
+
+#---- ****rename datasets based on calibration scenario ----
 calibration_scenario = "no_calibration"
 
 synthetic_HCAP_list <- 
@@ -75,14 +77,64 @@ dataset_names <-
 indices <-
   which(dataset_names %in% paste0("HRS_", c(500), "_", calibration_scenario))
 
-#---- run checks in serial ----
 set.seed(20220329)
 start <- Sys.time()
-
-#---- **run checks: no calibration ----
 lapply(synthetic_HCAP_list[indices], function(x)
   prior_predictive_checks(dataset_to_copy = x, calibration_sample = FALSE, 
                           calibration_prop = NA, calibration_sample_name = NA,
+                          path_to_raw_prior_sample = 
+                            paste0(path_to_box, "data/prior_data/MI/", 
+                                   "MI_datasets_cleaned"), 
+                          path_to_data = path_to_box, 
+                          path_to_output_folder =
+                            paste0(path_to_box,
+                                   "figures/simulation_study/HCAP_",
+                                   unique(x[, "dataset_name_stem"]),
+                                   "/prior_predictive_checks/"), 
+                          continuous_check_test = TRUE,
+                          continuous_check = c("Unimpaired", "MCI", "Dementia", 
+                                               "Other"),
+                          categorical_vars = W, continuous_vars = Z,
+                          variable_labels = variable_labels, 
+                          color_palette = color_palette, contrasts_matrix = A,
+                          kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
+                          num_synthetic = 1000))
+end <- Sys.time() - start
+
+#---- **run checks: HCAP_50 calibration ----
+#---- ****read in data ----
+synthetic_HCAP_list <- 
+  readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
+
+#---- ****rename datasets based on calibration scenario ----
+calibration_scenario = "HCAP_50"
+
+synthetic_HCAP_list <- 
+  lapply(synthetic_HCAP_list, function(x)
+    x %<>% mutate("dataset_name_stem" = unlist(unique(x[, "dataset_name"]))))
+
+synthetic_HCAP_list <- 
+  lapply(synthetic_HCAP_list, function(x)
+    x %<>% mutate("dataset_name" = 
+                    paste0(unlist(unique(x[, "dataset_name_stem"])), "_", 
+                           calibration_scenario)))
+
+#---- **dataset names ----
+dataset_names <- 
+  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
+
+#---- **specify indices ----
+indices <-
+  which(dataset_names %in% paste0("HRS_", c(500), "_", calibration_scenario))
+
+set.seed(20220329)
+start <- Sys.time()
+lapply(synthetic_HCAP_list[indices], function(x)
+  prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
+                          calibration_prop = 
+                            as.numeric(str_remove(calibration_scenario, 
+                                                  "HCAP_"))/100, 
+                          calibration_sample_name = calibration_scenario,
                           path_to_raw_prior_sample = 
                             paste0(path_to_box, "data/prior_data/MI/", 
                                    "MI_datasets_cleaned"), 
