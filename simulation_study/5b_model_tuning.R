@@ -26,14 +26,6 @@ cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>%
 #---- **impairement class color palette ----
 color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv")) 
 
-#---- define vars ----
-#categorical vars (notation from Schafer 1997)
-W <- c("black", "hispanic", "stroke")
-
-#continuous vars (notation from Schafer 1997)
-Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"), 
-                   "data_label"] %>% unlist() %>% as.vector()
-
 #---- **contrasts matrix ----
 A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% 
   as.matrix()
@@ -44,6 +36,18 @@ nu_0_mat <- read_csv(paste0(path_to_box, "data/tuning/nu_0_matrix.csv"))
 #scaling for inverse wishart as variance of Beta
 kappa_0_mat <- 
   read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix.csv"))
+
+#---- define vars ----
+#---- **selected variables ----
+selected_vars <- 
+  read_csv(paste0(path_to_box, "data/variable_selection/", 
+                  "model_coefficients.csv"))
+#---- **categorical vars (notation from Schafer 1997) ----
+W <- c("black", "hispanic", "stroke")
+
+#---- **continuous vars (notation from Schafer 1997) ----
+Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"), 
+                   "data_label"] %>% unlist() %>% as.vector()
 
 #---- generate datasets in serial ----
 #About 1.5 hours to generate data for all datasets in serial
