@@ -69,30 +69,24 @@ simulation_function <-
         all_sim_scenarios[scenario, c("sample_size", "calibration")], 
         col = "name", sep = "_"))
     
-    superpop_index <- which(superpop_names == 
-                              paste0(all_sim_scenarios[scenario, "distribution"], 
-                                     "_1000000_", 
-                                     all_sim_scenarios[scenario, "prior_prop"]))
-    
-    superpop_name <- superpops_list[[superpop_index]]$dataset_name[1]
-    
     #---- start time ----
     start <- Sys.time()
     
     dataset_to_copy <- 
       #---- create synthetic HRS ----
-    superpops_list[[superpop_index]] %>% 
+    superpop %>% 
       slice_sample(n = unlist(all_sim_scenarios[scenario, "sample_size"]), 
                    replace = FALSE) %>%
       #---- create synthetic HCAP ----
     group_by(married_partnered) %>% 
       slice_sample(prop = 0.5, replace = FALSE) %>% 
       mutate("(Intercept)" = 1) %>% ungroup() %>% 
-      mutate("dataset_name" = scenario_name)
+      mutate("dataset_name" = paste0("HRS_", scenario_name))
     
     #---- **calibration status ----
     calibration_status <- 
-      ifelse(all_sim_scenarios[scenario, "calibration"] == "none", FALSE, TRUE)
+      ifelse(all_sim_scenarios[scenario, "calibration"] == "no_calibration", 
+             FALSE, TRUE)
     
     #---- **true impairment class counts ----
     if(calibration_status){
