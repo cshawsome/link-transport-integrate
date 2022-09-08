@@ -41,36 +41,32 @@ dementia_preds <- selected_vars %>%
   dplyr::select(data_label) %>% unlist()
 
 #---- models ----
-model_function <- function(data, unimpaired_pred, other_preds, mci_preds){
-  unimpaired_model <- 
-    glm(formula(paste("Unimpaired ~ ", 
-                      paste(unimpaired_preds, collapse = " + "), 
-                      collapse = "")), family = "binomial", data = data)
-  
-  other_model <- 
-    glm(formula(paste("Other ~ ", paste(other_preds, collapse = " + "), 
-                      collapse = "")), family = "binomial", data = data %>% 
-          filter(Unimpaired == 0))
-  
-  mci_model <- 
-    glm(formula(paste("MCI ~ ", paste(mci_preds, collapse = " + "), 
-                      collapse = "")), family = "binomial", data = data %>% 
-          filter(Unimpaired == 0 & Other == 0)) 
-  
-  return(list("unimpaired_betas" = coefficients(unimpaired_model),
-              "other_betas" = coefficients(other_model), 
-              "mci_betas" = coefficients(mci_model), 
-              "unimpaired_cov" = vcov(unimpaired_model), 
-              "other_cov" = vcov(other_model), 
-              "mci_cov" = vcov(mci_model)))
-}
+model_function <- 
+  function(data, unimpaired_preds, other_preds, mci_preds, dementia_preds){
+    for(group in c("Unimpaired", "Other", "MCI", "Dementia")){
+      assign(paste0(tolower(group), "_model"), 
+             glm(formula(paste(group, " ~ ", 
+                               paste(get(paste0(tolower(group), "_preds")), 
+                                     collapse = " + "), collapse = "")), 
+                 family = "binomial", data = data))
+    }
+    
+    return(list("unimpaired_betas" = coefficients(unimpaired_model),
+                "other_betas" = coefficients(other_model), 
+                "mci_betas" = coefficients(mci_model), 
+                "dementia_betas" = coefficients(dementia_model),
+                "unimpaired_cov" = vcov(unimpaired_model), 
+                "other_cov" = vcov(other_model), 
+                "mci_cov" = vcov(mci_model), 
+                "dementia_cov" = vcov(dementia_model)))
+  }
 
 estimates <- 
   lapply(prior_imputed_clean, model_function, unimpaired_preds, other_preds, 
-         mci_preds) 
+         mci_preds, dementia_preds) 
 
 # #---- check distributions ----
-# for(group in c("unimpaired", "other", "mci")){
+# for(group in c("unimpaired", "other", "mci", "dementia")){
 #   data <- lapply(estimates, "[[", paste0(group, "_betas")) %>%
 #     do.call(rbind, .) %>% t() %>% as.data.frame()
 # 
@@ -81,7 +77,7 @@ estimates <-
 
 #---- format output ----
 for(est in c("betas", "cov")){
-  for(group in c("unimpaired", "other", "mci")){
+  for(group in c("unimpaired", "other", "mci", "dementia")){
     data <- lapply(estimates, "[[", paste0(group, "_", est)) 
     
     if(est == "betas"){
