@@ -48,13 +48,13 @@ prior_predictive_checks <-
     #---- set prior data ----
     if(!calibration_sample){
       #---- **latent classes ----
-      for(group in c("unimpaired", "mci", "other")){
+      for(group in c("unimpaired", "mci", "other", "dementia")){
         assign(paste0(group, "_betas"), 
                vroom(paste0(path_to_data, "data/prior_data/latent_class_", 
                             group, "_betas.csv"), delim = ","))
-        assign(paste0(group, "_cov"), 
-               readRDS(paste0(path_to_data, "data/prior_data/latent_class_", 
-                              group, "_cov")))
+        # assign(paste0(group, "_cov"), 
+        #        readRDS(paste0(path_to_data, "data/prior_data/latent_class_", 
+        #                       group, "_cov")))
         
         assign(paste0(group, "_preds"), get(paste0(group, "_betas"))$preds)
       }
@@ -111,7 +111,8 @@ prior_predictive_checks <-
     synthetic_sample <- dataset_to_copy %>% 
       dplyr::select("HHIDPN", all_of(vars)) %>% 
       #pre-allocate columns
-      mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0)
+      mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, 
+             "p_dementia" = 0)
     
     if(calibration_sample){
       #---- **split sample ----
@@ -131,9 +132,9 @@ prior_predictive_checks <-
       random_draw <- sample(seq(1, max_index), size = 1)
       
       #---- latent class ----
-      group_num = 1
-      for(model in c("unimpaired", "other", "mci")){
-        subset_index <- which(synthetic_sample$group_num == 0)
+      #group_num = 1
+      for(model in c("unimpaired", "other", "mci", "dementia")){
+        #subset_index <- which(synthetic_sample$group_num == 0)
         
         if(calibration_sample){
           if(model == "mci"){
@@ -152,36 +153,55 @@ prior_predictive_checks <-
                              calibration_subset[, vars[-1]]))
           
           prior_betas <- coefficients(latent_class_model)
-          prior_cov <- vcov(latent_class_model)
+          #prior_cov <- vcov(latent_class_model)
           
         } else{
           prior_betas <- get(paste0(model, "_betas"))[, random_draw]
-          prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
+          #prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
         }
         
-        betas <- 
-          mvnfast::rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov)
+        # betas <- 
+        #   mvnfast::rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov)
         
-        synthetic_sample[subset_index, paste0("p_", model)] <- 
-          expit(as.matrix(synthetic_sample[subset_index, 
+        synthetic_sample[, paste0("p_", model)] <- 
+          expit(as.matrix(synthetic_sample[, 
                                            get(paste0(model, "_preds"))]) %*% 
-                  t(as.matrix(betas)))
+                  as.matrix(prior_betas))
         
-        synthetic_sample[subset_index, "group_num"] <- 
-          rbernoulli(n = length(subset_index), 
-                     p = synthetic_sample[subset_index, 
-                                          paste0("p_", model)])*group_num
-        
-        group_num = group_num + 1
+        # synthetic_sample[subset_index, "group_num"] <- 
+        #   rbernoulli(n = length(subset_index), 
+        #              p = synthetic_sample[subset_index, 
+        #                                   paste0("p_", model)])*group_num
+        # 
+        # group_num = group_num + 1
       }
       
-      synthetic_sample[which(synthetic_sample$group_num == 0), "group_num"] <- 4
+      #synthetic_sample[which(synthetic_sample$group_num == 0), "group_num"] <- 4
       
-      synthetic_sample[, "Group"] <- 
-        case_when(synthetic_sample$group_num == 1 ~ "Unimpaired", 
-                  synthetic_sample$group_num == 2 ~ "Other", 
-                  synthetic_sample$group_num == 3 ~ "MCI", 
-                  synthetic_sample$group_num == 4 ~ "Dementia")
+      #---- **assign class ----
+      #choose Unimpaired if that has the highest probability
+      synthetic_sample[, "Group"] <-
+        apply(synthetic_sample[, c("p_unimpaired", "p_mci", "p_dementia", 
+                                   "p_other")], 1,
+              function(x) str_remove(names(which.max(x)), "p_"))
+      
+      #randomly choose other classes based on predicted probabilities
+      synthetic_sample[synthetic_sample$Group != "unimpaired", "Group"] <- 
+        apply(synthetic_sample[synthetic_sample$Group != "unimpaired", 
+                               c("p_mci", "p_dementia", "p_other")], 1, 
+              function(x) 
+                sample(c("mci", "dementia", "other"), size = 1, prob = x))
+    
+      #reformat group labels
+      synthetic_sample %<>% 
+        mutate("Group" = case_when(Group == "mci" ~ str_to_upper(Group), 
+                                   TRUE ~ str_to_sentence(Group)))
+      
+      synthetic_sample %<>% 
+        mutate("Unimpaired" = ifelse(Group == "Unimpaired", 1, 0), 
+               "MCI" = ifelse(Group == "MCI", 1, 0), 
+               "Dementia" = ifelse(Group == "Dementia", 1, 0), 
+               "Other" = ifelse(Group == "Other", 1, 0)) 
       
       #pre-allocate: ncol = num impairement groups * num contingency cells
       # these are contingency-cell specific means for continuous variables by
@@ -200,7 +220,7 @@ prior_predictive_checks <-
       
       nu_0 <- 
         nu_0_mat[which(nu_0_mat$dataset_name == 
-                  unlist(unique(dataset_to_copy[, "dataset_name"]))), ]  
+                         unlist(unique(dataset_to_copy[, "dataset_name"]))), ]  
       
       
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
@@ -561,29 +581,24 @@ prior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# unimpaired_preds = unimpaired_preds
-# other_preds = other_preds
-# mci_preds = mci_preds
-# categorical_vars = W
-# continuous_vars = Z
-# variable_labels = variable_labels
-# color_palette = color_palette
-# dataset_to_copy = synthetic_HCAP_list[[7]]
-# num_synthetic = 1000
-# unimpaired_betas = unimpaired_betas
-# unimpaired_cov = unimpaired_cov
-# other_betas = other_betas
-# other_cov = other_cov
-# mci_betas = mci_betas
-# mci_cov = mci_cov
-# alpha_0_dist = alpha_0_dist
-# prior_Sigma = prior_Sigma
-# prior_V_inv = prior_V_inv
-# prior_beta = priors_beta
-# nu_0 = nu_0[, unique(synthetic_data_list[[1]]$dataset_name)]
-# kappa_0_mat = kappa_0_mat
-# contrasts_matrix = A
-# path_to_output_folder = paste0(path_to_box, "figures/simulation_study/HCAP_HRS_",
-#                         unique(synthetic_data_list[[1]][, "dataset_name"]),
-#                         "/prior_predictive_checks/")
+#---- test function ----
+dataset_to_copy = synthetic_HCAP_list[[1]]
+calibration_sample = FALSE
+calibration_prop = NA
+calibration_sample_name = NA
+path_to_raw_prior_sample = paste0(path_to_box, "data/prior_data/MI/", 
+                                  "MI_datasets_cleaned")
+path_to_data = path_to_box
+path_to_output_folder = paste0(path_to_box,"figures/simulation_study/HCAP_",
+                               unique(dataset_to_copy[, "dataset_name_stem"]),
+                               "/prior_predictive_checks/")
+continuous_check_test = TRUE
+continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+categorical_vars = W
+continuous_vars = Z
+variable_labels = variable_labels
+color_palette = color_palette
+contrasts_matrix = A
+kappa_0_mat = kappa_0_mat
+nu_0_mat = nu_0_mat
+num_synthetic = 1000
