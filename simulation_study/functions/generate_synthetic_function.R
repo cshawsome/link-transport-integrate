@@ -125,23 +125,6 @@ generate_synthetic <-
     vars <- unique(c(unimpaired_preds, other_preds, mci_preds, 
                      "Unimpaired", "MCI", "Dementia", "Other"))
     
-    synthetic_sample <- dataset_to_copy %>% 
-      dplyr::select("HHIDPN", all_of(vars)) %>% 
-      #pre-allocate columns
-      mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, 
-             "p_dementia" = 0)
-    
-    if(calibration_sample){
-      #---- **split sample ----
-      synthetic_sample <- 
-        anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
-    }
-    
-    #---- sampling counts ----
-    warm_up = warm_up
-    synthetic_sets = num_synthetic
-    B = warm_up + synthetic_sets
-    
     #---- count contingency cells ----
     cross_class_label <- dataset_to_copy[, categorical_vars] %>%
       unite("cell_ID", everything(), sep = "") %>% table() %>% 
@@ -212,8 +195,26 @@ generate_synthetic <-
       nu_0_mat[which(nu_0_mat$dataset_name == 
                        unlist(unique(dataset_to_copy[, "dataset_name"]))), ]  
     
+    #---- sampling counts ----
+    warm_up = warm_up
+    synthetic_sets = num_synthetic
+    B = warm_up + synthetic_sets
+    
     #---- start sampling ----
     for(b in 1:B){
+      #---- start over at each run with dataset we wish to copy ----
+      synthetic_sample <- dataset_to_copy %>% 
+        dplyr::select("HHIDPN", all_of(vars)) %>% 
+        #pre-allocate columns
+        mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, 
+               "p_dementia" = 0)
+      
+      if(calibration_sample){
+        #---- **split sample ----
+        synthetic_sample <- 
+          anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
+      }
+      
       #---- **random index for priors ----
       random_draw <- sample(seq(1, max_index), size = 1)
       
@@ -328,7 +329,7 @@ generate_synthetic <-
       }
       
       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-        subset <- dataset_to_copy %>% filter(Group == class) 
+        subset <- synthetic_sample %>% filter(Group == class) 
         if(nrow(subset) == 0){
           next
         } else{
@@ -552,14 +553,14 @@ generate_synthetic <-
           }
           
           #---- ****replace synthetic data ----
-          dataset_to_copy[which(dataset_to_copy$HHIDPN %in% subset$HHIDPN),
+          synthetic_sample[which(synthetic_sample$HHIDPN %in% subset$HHIDPN),
                           c(categorical_vars, continuous_vars)] <- 
             subset[, c(categorical_vars, continuous_vars)]
         }
       }
       
       #---- ****correct "White" column ----
-      dataset_to_copy %<>% 
+      synthetic_sample %<>% 
         mutate("White" = if_else(black == 0 & hispanic == 0, 1, 0))
       
       #---- ****save synthetic sample ----
@@ -567,7 +568,7 @@ generate_synthetic <-
         if(!exists("dataset_list")){
           dataset_list <- list()
         }
-        dataset_list[[b - warm_up]] <- dataset_to_copy
+        dataset_list[[b - warm_up]] <- synthetic_sample
       }
     }
     
