@@ -50,24 +50,24 @@ simulation_function <-
                  "Other_coverage"), "_black"),
         paste0(c("Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
                  "Other_coverage"), "_hispanic"),
-        "black_beta", "black_se", "black_LCI", "black_UCI",
-        "hispanic_beta", "hispanic_se", "hispanic_LCI", "hispanic_UCI",
-        "black_coverage", "hispanic_coverage", "time", "seed", "dataset_name")
+        "white_dem_prev", "white_dem_prev_LCI", "white_dem_prev_UCI",
+        "white_dem_prev_coverage",
+        "black_dem_prev", "black_dem_prev_LCI", "black_dem_prev_UCI",
+        "black_dem_prev_coverage",
+        "hispanic_dem_prev", "hispanic_dem_prev_LCI", "hispanic_dem_prev_UCI",
+        "hispanic_dem_prev_coverage",
+        "black_RR", "black_RR_LCI", "black_RR_UCI", "black_RR_coverage",
+        "hispanic_RR", "hispanic_RR_LCI", "hispanic_RR_UCI", "hispanic_RR_coverage",
+        "time", "seed", "dataset_name")
     
     results <- matrix(ncol = length(result_names), nrow = 1) %>% 
       set_colnames(all_of(result_names))
     
-    #---- superpop names ----
-    superpop_names <- 
-      unlist(lapply(superpops_list, function(x) unique(x[, "dataset_name"])))
-    
     #---- scenario name ----
     scenario_name <- 
-      as.character(
-        unite(all_sim_scenarios[scenario, 
-                                c("distribution", "sample_size", "prior_prop", 
-                                  "calibration")], 
-              col = "name", sep = "_"))
+      as.character(unite(
+        all_sim_scenarios[scenario, c("sample_size", "calibration")], 
+        col = "name", sep = "_"))
     
     superpop_index <- which(superpop_names == 
                               paste0(all_sim_scenarios[scenario, "distribution"], 
