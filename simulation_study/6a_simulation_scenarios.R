@@ -7,7 +7,7 @@ p_load("tidyverse", "magrittr")
 
 #---- all scenarios ----
 samples_sizes <- c(500, 1000, 2000, 4000, 8000)
-calibration <- c("none", "HCAP_50")
+calibration <- c("no_calibration", "HCAP_50")
 batch_size <- 20
 total_runs <- 1000
 
