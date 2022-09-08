@@ -102,6 +102,11 @@ prior_predictive_checks <-
                        filter(data_label != "Intercept" & MCI != 0) %>% 
                        dplyr::select(data_label) %>% unlist())
       
+      #dementia model predictors
+      dementia_preds <- c("(Intercept)", selected_vars %>% 
+                            filter(data_label != "Intercept" & Dementia != 0) %>% 
+                            dplyr::select(data_label) %>% unlist())
+      
       #---- cell ID key ----
       cell_ID_key <- read_csv(paste0(path_to_data, "data/cell_ID_key.csv"))
       
