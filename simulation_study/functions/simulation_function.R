@@ -332,9 +332,10 @@ source(paste0(path_to_RScripts, "simulation_function.R"))
 
 path_to_data <- paste0("/Users/crystalshaw/Library/CloudStorage/Box-Box/", 
                        "Dissertation/data/")
-
 superpop <- 
   read_results(paste0(path_to_data, "superpopulations/superpop_1000000.csv"))
+truth <- read_csv(paste0(path_to_data, 
+                         "superpopulations/agesex_standardized_prevs.csv"))
 
 warm_up = 100
 starting_props = rep(0.25, 4)
