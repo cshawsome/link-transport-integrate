@@ -16,7 +16,13 @@ source(here::here("simulation_study", "functions",
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **variable labels ----
-variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
+
+#---- **selected variables ----
+selected_vars <- 
+  read_csv(paste0(path_to_box, "data/variable_selection/", 
+                  "model_coefficients.csv"))
+
 
 #---- **cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
