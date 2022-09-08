@@ -184,7 +184,7 @@ simulation_function <-
     
     #---- **CI ----
     results[, paste0("LCI_", colnames(counts))] <- 
-      apply(counts, 2, function(x) quantile(x, 0.25))
+      apply(counts, 2, function(x) quantile(x, 0.025))
     
     results[, paste0("UCI_", colnames(counts))] <- 
       apply(counts, 2, function(x) quantile(x, 0.975))
@@ -217,7 +217,7 @@ simulation_function <-
       
       #---- **CI ----
       results[, paste0("LCI_", colnames(strat_counts), "_", tolower(race))] <- 
-        apply(strat_counts, 2, function(x) quantile(x, 0.25))
+        apply(strat_counts, 2, function(x) quantile(x, 0.025))
       
       results[, paste0("UCI_", colnames(strat_counts), "_", tolower(race))] <- 
         apply(counts, 2, function(x) quantile(x, 0.975))
