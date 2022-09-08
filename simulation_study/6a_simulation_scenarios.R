@@ -24,5 +24,6 @@ sim_scenarios %<>% mutate("job" = seq(1, nrow(sim_scenarios)))
 #---- **save output ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-write_csv(sim_scenarios, paste0(path_to_box, "data", "sim_study_scenarios.csv"))
+write_csv(sim_scenarios, 
+          paste0(path_to_box, "data/", "sim_study_scenarios.csv"))
 
