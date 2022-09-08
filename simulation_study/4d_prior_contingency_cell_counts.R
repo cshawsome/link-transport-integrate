@@ -16,11 +16,6 @@ prior_imputed_clean <-
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
 #---- categorical vars ----
-#---- **selected variables ----
-selected_vars <- 
-  read_csv(paste0(path_to_box, "data/variable_selection/model_coefficients.csv"))
-
-#---- **categorical ----
 W <- c("black", "hispanic", "stroke")
 
 #---- imputation props ----
@@ -40,41 +35,41 @@ get_props <- function(data, W){
 imputation_props <- lapply(prior_imputed_clean, get_props, W) %>%
   saveRDS(paste0(path_to_box, "data/prior_data/imputation_cell_props"))
 
-#---- NEEDS TO BE REFACTORED ----
-#---- plots ----
-#---- **read in data ----
-#---- ****cell ID key ----
-cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv"))
-
-#---- ****imputation props ----
-imputation_props <- 
-  readRDS(paste0(path_to_box, "data/prior_data/imputation_cell_props")) 
-
-#---- ****color palette ----
-color_palette <- read_csv(here("color_palette.csv"))
-
-#---- **join data ----
-imputation_props_plot_data <- left_join(imputation_props, cell_ID_key) %>% 
-  left_join(., color_palette, by = c("group" = "Group")) %>% 
-  pivot_longer(-c("group", "cell_ID", "cell_name", "Color", "cell_order")) %>% 
-  mutate_at("group", function(x) 
-    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
-  mutate_at("cell_name", function(x) 
-    factor(x, levels = c("White | No Stroke", "White | Stroke", 
-                         "Black | No Stroke", "Black | Stroke", 
-                         "Hispanic | No Stroke", "Hispanic | Stroke")))
-
-#---- **make plot ----
-colors <- color_palette$Color
-names(colors) <- color_palette$Group
-
-ggplot(data = imputation_props_plot_data , aes(x = value)) + 
-  geom_histogram(aes(fill = group, color = group)) + theme_bw() + 
-  xlab("Proportion") + 
-  facet_grid(rows = vars(cell_name), cols = vars(group), scales = "free") + 
-  scale_color_manual(values = colors) + scale_fill_manual(values = colors) + 
-  theme(legend.position = "none")
-
-ggsave(filename = "prior_cell_props.jpeg", plot = last_plot(), 
-       path = paste0(path_to_box, "figures/simulation_study/"), 
-       width = 8, height = 8, units = "in", device = "jpeg")
+# #---- NEEDS TO BE REFACTORED ----
+# #---- plots ----
+# #---- **read in data ----
+# #---- ****cell ID key ----
+# cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv"))
+# 
+# #---- ****imputation props ----
+# imputation_props <- 
+#   readRDS(paste0(path_to_box, "data/prior_data/imputation_cell_props")) 
+# 
+# #---- ****color palette ----
+# color_palette <- read_csv(here("color_palette.csv"))
+# 
+# #---- **join data ----
+# imputation_props_plot_data <- left_join(imputation_props, cell_ID_key) %>% 
+#   left_join(., color_palette, by = c("group" = "Group")) %>% 
+#   pivot_longer(-c("group", "cell_ID", "cell_name", "Color", "cell_order")) %>% 
+#   mutate_at("group", function(x) 
+#     factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
+#   mutate_at("cell_name", function(x) 
+#     factor(x, levels = c("White | No Stroke", "White | Stroke", 
+#                          "Black | No Stroke", "Black | Stroke", 
+#                          "Hispanic | No Stroke", "Hispanic | Stroke")))
+# 
+# #---- **make plot ----
+# colors <- color_palette$Color
+# names(colors) <- color_palette$Group
+# 
+# ggplot(data = imputation_props_plot_data , aes(x = value)) + 
+#   geom_histogram(aes(fill = group, color = group)) + theme_bw() + 
+#   xlab("Proportion") + 
+#   facet_grid(rows = vars(cell_name), cols = vars(group), scales = "free") + 
+#   scale_color_manual(values = colors) + scale_fill_manual(values = colors) + 
+#   theme(legend.position = "none")
+# 
+# ggsave(filename = "prior_cell_props.jpeg", plot = last_plot(), 
+#        path = paste0(path_to_box, "figures/simulation_study/"), 
+#        width = 8, height = 8, units = "in", device = "jpeg")
