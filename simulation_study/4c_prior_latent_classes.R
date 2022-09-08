@@ -35,6 +35,11 @@ mci_preds <- selected_vars %>%
   filter(data_label != "Intercept" & MCI != 0) %>% 
   dplyr::select(data_label) %>% unlist()
 
+#dementia model predictors
+dementia_preds <- selected_vars %>% 
+  filter(data_label != "Intercept" & Dementia != 0) %>% 
+  dplyr::select(data_label) %>% unlist()
+
 #---- models ----
 model_function <- function(data, unimpaired_pred, other_preds, mci_preds){
   unimpaired_model <- 
