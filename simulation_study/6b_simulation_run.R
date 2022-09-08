@@ -47,11 +47,8 @@ source(paste0(path_to_RScripts, "simulation_function.R"))
 path_to_data <- "/u/home/c/cshaw343/link_transport_integrate/data/"
 
 #---- **data paths ----
-superpop_data_paths <- 
-  list.files(path = paste0(path_to_data, "superpopulations"), 
-             full.names = TRUE, pattern = "*.csv")
-
-superpop_data_list <- lapply(superpop_data_paths, read_results)
+superpop <- 
+  read_results(paste0(path_to_data, "superpopulations/superpop_1000000.csv"))
 
 #---- **truth table ----
 truth <- read_csv(paste0(path_to_data, "truth.csv"))
