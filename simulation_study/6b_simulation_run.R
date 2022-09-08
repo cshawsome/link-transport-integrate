@@ -38,9 +38,6 @@ library("LaplacesDemon")
 
 #---- source functions ----
 path_to_RScripts <- "/u/home/c/cshaw343/link_transport_integrate/RScripts/"
-# #code testing
-# path_to_RScripts <- here::here("simulation_study", "functions", "/")
-# source(here::here("functions", "read_results.R"))
 
 source(paste0(path_to_RScripts, "read_results.R"))
 source(paste0(path_to_RScripts, "generate_synthetic_function.R"))
