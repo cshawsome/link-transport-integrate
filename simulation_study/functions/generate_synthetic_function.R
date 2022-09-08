@@ -125,16 +125,22 @@ generate_synthetic <-
     vars <- unique(c(unimpaired_preds, other_preds, mci_preds, 
                      "Unimpaired", "MCI", "Dementia", "Other"))
     
+    synthetic_sample <- dataset_to_copy %>% 
+      dplyr::select("HHIDPN", all_of(vars)) %>% 
+      #pre-allocate columns
+      mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, 
+             "p_dementia" = 0)
+    
+    if(calibration_sample){
+      #---- **split sample ----
+      synthetic_sample <- 
+        anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
+    }
+    
     #---- sampling counts ----
     warm_up = warm_up
     synthetic_sets = num_synthetic
     B = warm_up + synthetic_sets
-    
-    if(calibration_sample){
-      #---- **split sample ----
-      dataset_to_copy <- 
-        anti_join(dataset_to_copy, calibration_subset, by = "HHIDPN")
-    }
     
     #---- count contingency cells ----
     cross_class_label <- dataset_to_copy[, categorical_vars] %>%
@@ -151,11 +157,13 @@ generate_synthetic <-
     #---- chain storage ----
     model_gamma_chain <- 
       matrix(nrow = sum(length(unimpaired_preds), length(other_preds), 
-                        length(mci_preds)), ncol = B) %>% as.data.frame() %>%
+                        length(mci_preds), length(dementia_preds)), 
+             ncol = B) %>% as.data.frame() %>%
       mutate("model" = c(rep("unimpaired", length(unimpaired_preds)), 
                          rep("other", length(other_preds)), 
-                         rep("mci", length(mci_preds))), 
-             "pred" = c(unimpaired_preds, mci_preds, other_preds))
+                         rep("mci", length(mci_preds)), 
+                         rep("dementia", length(dementia_preds))), 
+             "pred" = c(unimpaired_preds, other_preds, mci_preds, dementia_preds))
     
     pi_chain <- matrix(nrow = nrow(cross_class_label), ncol = 4*B) %>% 
       set_colnames(gsub(" ", "", 
@@ -204,7 +212,6 @@ generate_synthetic <-
       nu_0_mat[which(nu_0_mat$dataset_name == 
                        unlist(unique(dataset_to_copy[, "dataset_name"]))), ]  
     
-    
     #---- start sampling ----
     for(b in 1:B){
       #---- **random index for priors ----
@@ -212,15 +219,16 @@ generate_synthetic <-
       
       if(b == 1){
         #---- **init group membership ----
-        dataset_to_copy[, "group_num"] <- 
-          sample(seq(1, 4), size = nrow(dataset_to_copy) , replace = TRUE, 
+        synthetic_sample[, "Group"] <- 
+          sample(c("Unimpaired", "MCI", "Dementia", "Other"), 
+                 size = nrow(dataset_to_copy) , replace = TRUE, 
                  prob = starting_props)
       } else{
         #---- **latent class gammas ----
-        for(model in c("unimpaired", "other", "mci")){
+        for(model in c("unimpaired", "other", "mci", "dementia")){
           if(!calibration_sample){
             prior_betas <- get(paste0(model, "_betas"))[, random_draw]
-            prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
+            #prior_cov <- get(paste0(model, "_cov"))[[random_draw]]
           } else{
             
             if(model == "mci"){
@@ -239,50 +247,79 @@ generate_synthetic <-
                                calibration_subset[, vars[-1]]))
             
             prior_betas <- coefficients(latent_class_model)
-            prior_cov <- vcov(latent_class_model)
+            #prior_cov <- vcov(latent_class_model)
           }
           
           model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
-            t(mvnfast::rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov))
+            prior_betas
         }
         
         #---- ****group membership ----
-        group_num = 1
-        dataset_to_copy[, "group_num"] <- 0
-        for(model in c("unimpaired", "other", "mci")){
-          subset_index <- which(dataset_to_copy$group_num == 0)
+        #group_num = 1
+        #dataset_to_copy[, "group_num"] <- 0
+        for(model in c("unimpaired", "other", "mci", "dementia")){
+          #subset_index <- which(dataset_to_copy$group_num == 0)
           
-          dataset_to_copy[subset_index, paste0("p_", model)] <- 
-            expit(as.matrix(dataset_to_copy[subset_index, 
-                                            get(paste0(model, "_preds"))]) %*% 
+          synthetic_sample[, paste0("p_", model)] <- 
+            expit(as.matrix(synthetic_sample[, 
+                                             get(paste0(model, "_preds"))]) %*% 
                     as.matrix(model_gamma_chain[which(model_gamma_chain$model == 
                                                         model), b]))
           
-          dataset_to_copy[subset_index, "group_num"] <- 
-            rbernoulli(n = length(subset_index), 
-                       p = dataset_to_copy[subset_index, 
-                                           paste0("p_", model)])*group_num
-          
-          group_num = group_num + 1
+          # dataset_to_copy[subset_index, "group_num"] <- 
+          #   rbernoulli(n = length(subset_index), 
+          #              p = dataset_to_copy[subset_index, 
+          #                                  paste0("p_", model)])*group_num
+          # 
+          # group_num = group_num + 1
         }
       }
       
-      dataset_to_copy[which(dataset_to_copy$group_num == 0), "group_num"] <- 4
+      #---- **assign class ----
+      #choose Unimpaired if that has the highest probability
+      synthetic_sample[, "Group"] <-
+        apply(synthetic_sample[, c("p_unimpaired", "p_mci", "p_dementia", 
+                                   "p_other")], 1,
+              function(x) str_remove(names(which.max(x)), "p_"))
       
-      dataset_to_copy[, "Group"] <- 
-        case_when(dataset_to_copy$group_num == 1 ~ "Unimpaired", 
-                  dataset_to_copy$group_num == 2 ~ "Other", 
-                  dataset_to_copy$group_num == 3 ~ "MCI", 
-                  dataset_to_copy$group_num == 4 ~ "Dementia")
+      #randomly choose other classes based on predicted probabilities
+      synthetic_sample[synthetic_sample$Group != "unimpaired", "Group"] <- 
+        apply(synthetic_sample[synthetic_sample$Group != "unimpaired", 
+                               c("p_mci", "p_dementia", "p_other")], 1, 
+              function(x) 
+                sample(c("mci", "dementia", "other"), size = 1, prob = x))
+      
+      #reformat group labels
+      synthetic_sample %<>% 
+        mutate("Group" = case_when(Group == "mci" ~ str_to_upper(Group), 
+                                   TRUE ~ str_to_sentence(Group)))
+      
+      synthetic_sample %<>% 
+        mutate("Unimpaired" = ifelse(Group == "Unimpaired", 1, 0), 
+               "MCI" = ifelse(Group == "MCI", 1, 0), 
+               "Dementia" = ifelse(Group == "Dementia", 1, 0), 
+               "Other" = ifelse(Group == "Other", 1, 0)) 
+      
+      #dataset_to_copy[which(dataset_to_copy$group_num == 0), "group_num"] <- 4
+      
+      # dataset_to_copy[, "Group"] <- 
+      #   case_when(dataset_to_copy$group_num == 1 ~ "Unimpaired", 
+      #             dataset_to_copy$group_num == 2 ~ "Other", 
+      #             dataset_to_copy$group_num == 3 ~ "MCI", 
+      #             dataset_to_copy$group_num == 4 ~ "Dementia")
       
       #---- ****group: summary ----
-      summary <- table(dataset_to_copy$group_num)/nrow(dataset_to_copy) 
+      summary <- table(synthetic_sample$Group)/nrow(synthetic_sample) 
       
       if(length(summary) < 4){
-        missing <- which(!seq(1, 4) %in% names(summary))
+        missing <- 
+          c("Unimpaired", "MCI", "Dementia", "Other")[
+            which(!c("Unimpaired", "MCI", "Dementia", "Other") %in% 
+                    names(summary))]
         new_summary <- vector(length = 4)
+        names(new_summary) <- c("Unimpaired", "MCI", "Dementia", "Other")
         new_summary[missing] <- 0
-        new_summary[-missing] <- summary
+        new_summary[names(summary)] <- summary
         summary <- new_summary
       } 
       
