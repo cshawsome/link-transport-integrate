@@ -328,7 +328,6 @@ library("LaplacesDemon")
 path_to_RScripts <- here::here("simulation_study", "functions", "/")
 source(here::here("functions", "read_results.R"))
 source(paste0(path_to_RScripts, "generate_synthetic_function.R"))
-source(paste0(path_to_RScripts, "simulation_function.R"))
 
 path_to_data <- paste0("/Users/crystalshaw/Library/CloudStorage/Box-Box/", 
                        "Dissertation/data/")
@@ -336,40 +335,31 @@ superpop <-
   read_results(paste0(path_to_data, "superpopulations/superpop_1000000.csv"))
 truth <- read_csv(paste0(path_to_data, 
                          "superpopulations/agesex_standardized_prevs.csv"))
+variable_labels <- 
+  read_csv(paste0(path_to_data, "variable_crosswalk.csv")) 
+cell_ID_key <- read_csv(paste0(path_to_data, "cell_ID_key.csv")) %>% 
+  mutate_all(as.character)
+color_palette <- read_csv(paste0(path_to_data, "color_palette.csv"))
+all_sim_scenarios <- read_csv(paste0(path_to_data, "sim_study_scenarios.csv"))
 
 warm_up = 100
 starting_props = rep(0.25, 4)
-categorical_vars = W
-continuous_vars = Z
+categorical_vars = c("black", "hispanic", "stroke")
+continuous_vars = colnames(superpop)[str_detect(colnames(superpop), "_Z")]
 id_var = "HHIDPN"
-variable_labels
-scenario = 801 #HCAP_50 calibration sample size 1000
+scenario = 1 #no calibration sample size 500
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-superpop_data_paths <-
-  list.files(path = paste0(path_to_box,
-                           "analyses/simulation_study/superpopulations"),
-             full.names = TRUE, pattern = "*.csv")
-
-superpops_list <- lapply(superpop_data_paths, read_results)
+superpopulation <- superpop
 all_scenarios_list = all_sim_scenarios
-cell_ID_key
-color_palette
+
 num_synthetic = 1000
-unimpaired_betas
-unimpaired_cov
-other_betas
-other_cov
-mci_betas
-mci_cov
-alpha_0_dist
-prior_Sigma
-prior_V_inv
-prior_beta
-nu_0_vec
-kappa_0
-contrasts_matrix = A
-truth
+nu_0_mat <- read_csv(paste0(path_to_data, "tuning/nu_0_matrix.csv"))
+kappa_0_mat <- read_csv(paste0(path_to_data, "tuning/kappa_0_matrix.csv"))
+contrasts_matrix = 
+  read_csv(paste0(path_to_data, "contrasts_matrix.csv")) %>% as.matrix()
 path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
+path_to_raw_prior_sample = 
+  paste0(path_to_data, "prior_data/MI/MI_datasets_cleaned") 
 
 set.seed(20220512)
 
