@@ -314,54 +314,72 @@ simulation_function <-
     }
   }
 
-# #---- testing ----
-# warm_up = 100
-# starting_props = rep(0.25, 4)
-# categorical_vars = W
-# continuous_vars = Z
-# id_var = "HHIDPN"
-# variable_labels
-# scenario = 801 #HCAP_50 calibration sample size 1000
-# path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-# superpop_data_paths <- 
-#   list.files(path = paste0(path_to_box, 
-#                            "analyses/simulation_study/superpopulations"), 
-#              full.names = TRUE, pattern = "*.csv")
-# 
-# superpops_list <- lapply(superpop_data_paths, read_results)
-# all_scenarios_list = all_sim_scenarios
-# cell_ID_key
-# color_palette
-# num_synthetic = 1000
-# unimpaired_betas
-# unimpaired_cov
-# other_betas
-# other_cov
-# mci_betas
-# mci_cov
-# alpha_0_dist
-# prior_Sigma
-# prior_V_inv
-# prior_beta
-# nu_0_vec
-# kappa_0
-# contrasts_matrix = A
-# truth
-# path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
-# 
-# set.seed(20220512)
-# 
-# replicate(2,
-#           simulation_function(warm_up, starting_props, unimpaired_preds,
-#                               other_preds, mci_preds, categorical_vars,
-#                               continuous_vars, id_var, variable_labels,
-#                               scenario = 1,
-#                               superpops_list = superpop_data_list,
-#                               all_sim_scenarios,
-#                               cell_ID_key, color_palette, num_synthetic,
-#                               unimpaired_betas, unimpaired_cov, other_betas,
-#                               other_cov, mci_betas, mci_cov, alpha_0_dist,
-#                               prior_Sigma, prior_V_inv, prior_beta, nu_0_vec,
-#                               kappa_0_mat, contrasts_matrix, truth,
-#                               path_to_results))
-# 
+#---- test function ----
+library("tidyverse") 
+library("DirichletReg")
+library("magrittr")
+library("MCMCpack") 
+library("locfit")
+library("vroom")
+library("mvnfast")
+library("mice")
+library("LaplacesDemon")
+
+path_to_RScripts <- here::here("simulation_study", "functions", "/")
+source(here::here("functions", "read_results.R"))
+source(paste0(path_to_RScripts, "generate_synthetic_function.R"))
+source(paste0(path_to_RScripts, "simulation_function.R"))
+
+path_to_data <- paste0("/Users/crystalshaw/Library/CloudStorage/Box-Box/", 
+                       "Dissertation/data/")
+
+warm_up = 100
+starting_props = rep(0.25, 4)
+categorical_vars = W
+continuous_vars = Z
+id_var = "HHIDPN"
+variable_labels
+scenario = 801 #HCAP_50 calibration sample size 1000
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+superpop_data_paths <-
+  list.files(path = paste0(path_to_box,
+                           "analyses/simulation_study/superpopulations"),
+             full.names = TRUE, pattern = "*.csv")
+
+superpops_list <- lapply(superpop_data_paths, read_results)
+all_scenarios_list = all_sim_scenarios
+cell_ID_key
+color_palette
+num_synthetic = 1000
+unimpaired_betas
+unimpaired_cov
+other_betas
+other_cov
+mci_betas
+mci_cov
+alpha_0_dist
+prior_Sigma
+prior_V_inv
+prior_beta
+nu_0_vec
+kappa_0
+contrasts_matrix = A
+truth
+path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
+
+set.seed(20220512)
+
+replicate(2,
+          simulation_function(warm_up, starting_props, unimpaired_preds,
+                              other_preds, mci_preds, categorical_vars,
+                              continuous_vars, id_var, variable_labels,
+                              scenario = 1,
+                              superpops_list = superpop_data_list,
+                              all_sim_scenarios,
+                              cell_ID_key, color_palette, num_synthetic,
+                              unimpaired_betas, unimpaired_cov, other_betas,
+                              other_cov, mci_betas, mci_cov, alpha_0_dist,
+                              prior_Sigma, prior_V_inv, prior_beta, nu_0_vec,
+                              kappa_0_mat, contrasts_matrix, truth,
+                              path_to_results))
+
