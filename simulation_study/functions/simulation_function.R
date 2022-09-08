@@ -72,13 +72,14 @@ simulation_function <-
     #---- start time ----
     start <- Sys.time()
     
-    dataset_to_copy <- 
-      #---- create synthetic HRS ----
-    superpop %>% 
+    #---- create synthetic HRS ----
+    synthetic_HRS <- superpop %>% 
       slice_sample(n = unlist(all_sim_scenarios[scenario, "sample_size"]), 
-                   replace = FALSE) %>%
-      #---- create synthetic HCAP ----
-    group_by(married_partnered) %>% 
+                   replace = FALSE)
+    
+    #---- create synthetic HCAP ----
+    dataset_to_copy <- synthetic_HRS %>%
+      group_by(married_partnered) %>% 
       slice_sample(prop = 0.5, replace = FALSE) %>% 
       mutate("(Intercept)" = 1) %>% ungroup() %>% 
       mutate("dataset_name" = paste0("HRS_", scenario_name))
@@ -237,57 +238,63 @@ simulation_function <-
       }
     }
     
-    #---- models ----
-    #---- **add weights ----
-    #the only variable that contributed to selection was marital status
-    # we selected half of married people and half of unmarried people, thus the 
-    # weight for every observation should be 2
-    
-    synthetic_HCAP %<>% lapply(function(x) x %<>% mutate("weight" = 2))
-    
-    #---- **predicted dementia status ----
-    synthetic_HCAP %<>% 
-      lapply(function(x) x %<>% 
-               mutate("predicted_Dementia" = ifelse(Group == "Dementia", 1, 0)))
-    
-    #---- models ----
-    models <- 
-      lapply(synthetic_HCAP, 
-             function(dataset) glm(predicted_Dementia ~ 
-                                     age_Z + female + black + hispanic, 
-                                   family = "poisson", data = dataset)) 
-    
-    #---- **pooled ----
-    pooled_model <- summary(mice::pool(models))
-    
-    #---- ****truth table ----
-    truth_table <- 
-      truth[which(truth$dataset_name == superpop_name), ] 
-    
-    for(race_eth in c("black", "hispanic")){
-      #---- ****estimates ----
-      results[, paste0(race_eth, "_beta")] <- 
-        pooled_model[which(pooled_model$term == race_eth), "estimate"]
+    #---- calculate dem prevalences ----
+    make_standardization_table <- function(data, standard){
       
-      results[, paste0(race_eth, "_se")] <- 
-        pooled_model[which(pooled_model$term == race_eth), "std.error"]
-      
-      results[, paste0(race_eth, "_LCI")] <- 
-        results[, paste0(race_eth, "_beta")] - 
-        1.96*results[, paste0(race_eth, "_se")]
-      
-      results[, paste0(race_eth, "_UCI")] <- 
-        results[, paste0(race_eth, "_beta")] + 
-        1.96*results[, paste0(race_eth, "_se")]
-      
-      #---- ****coverage ----
-      results[, paste0(race_eth, "_coverage")] <- 
-        (truth_table[which(truth_table$term == race_eth), "estimate"] >= 
-           results[, paste0(race_eth, "_LCI")])*
-        (truth_table[which(truth_table$term == race_eth), "estimate"] <= 
-           results[, paste0(race_eth, "_UCI")])
     }
     
+    
+    # #---- models ----
+    # #---- **add weights ----
+    # #the only variable that contributed to selection was marital status
+    # # we selected half of married people and half of unmarried people, thus the 
+    # # weight for every observation should be 2
+    # 
+    # synthetic_HCAP %<>% lapply(function(x) x %<>% mutate("weight" = 2))
+    # 
+    # #---- **predicted dementia status ----
+    # synthetic_HCAP %<>% 
+    #   lapply(function(x) x %<>% 
+    #            mutate("predicted_Dementia" = ifelse(Group == "Dementia", 1, 0)))
+    # 
+    # #---- **run models ----
+    # models <- 
+    #   lapply(synthetic_HCAP, 
+    #          function(dataset) glm(predicted_Dementia ~ 
+    #                                  age_Z + female + black + hispanic, 
+    #                                family = "poisson", data = dataset)) 
+    # 
+    # #---- **pooled ----
+    # pooled_model <- summary(mice::pool(models))
+    # 
+    # #---- ****truth table ----
+    # truth_table <- 
+    #   truth[which(truth$dataset_name == superpop_name), ] 
+    # 
+    # for(race_eth in c("black", "hispanic")){
+    #   #---- ****estimates ----
+    #   results[, paste0(race_eth, "_beta")] <- 
+    #     pooled_model[which(pooled_model$term == race_eth), "estimate"]
+    #   
+    #   results[, paste0(race_eth, "_se")] <- 
+    #     pooled_model[which(pooled_model$term == race_eth), "std.error"]
+    #   
+    #   results[, paste0(race_eth, "_LCI")] <- 
+    #     results[, paste0(race_eth, "_beta")] - 
+    #     1.96*results[, paste0(race_eth, "_se")]
+    #   
+    #   results[, paste0(race_eth, "_UCI")] <- 
+    #     results[, paste0(race_eth, "_beta")] + 
+    #     1.96*results[, paste0(race_eth, "_se")]
+    #   
+    #   #---- ****coverage ----
+    #   results[, paste0(race_eth, "_coverage")] <- 
+    #     (truth_table[which(truth_table$term == race_eth), "estimate"] >= 
+    #        results[, paste0(race_eth, "_LCI")])*
+    #     (truth_table[which(truth_table$term == race_eth), "estimate"] <= 
+    #        results[, paste0(race_eth, "_UCI")])
+    # }
+    # 
     #---- end time ----
     results[, "time"] <- as.numeric(difftime(Sys.time(), start, units = "mins"))
     
@@ -295,7 +302,7 @@ simulation_function <-
     results[, "seed"] <- seed
     
     #---- dataset name ----
-    results[, "dataset_name"] <- scenario_name
+    results[, "dataset_name"] <- paste0("HRS_", scenario_name)
     
     #---- write results ----
     file_path <- 
