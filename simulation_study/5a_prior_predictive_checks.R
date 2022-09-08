@@ -69,11 +69,11 @@ synthetic_HCAP_list <-
                     paste0(unlist(unique(x[, "dataset_name_stem"])), "_", 
                            calibration_scenario)))
 
-#---- **dataset names ----
+#---- ****dataset names ----
 dataset_names <- 
   unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
 
-#---- **specify indices ----
+#---- ****specify indices ----
 indices <-
   which(dataset_names %in% paste0("HRS_", c(500), "_", calibration_scenario))
 
@@ -119,11 +119,11 @@ synthetic_HCAP_list <-
                     paste0(unlist(unique(x[, "dataset_name_stem"])), "_", 
                            calibration_scenario)))
 
-#---- **dataset names ----
+#---- ****dataset names ----
 dataset_names <- 
   unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
 
-#---- **specify indices ----
+#---- ****specify indices ----
 indices <-
   which(dataset_names %in% paste0("HRS_", c(500), "_", calibration_scenario))
 
