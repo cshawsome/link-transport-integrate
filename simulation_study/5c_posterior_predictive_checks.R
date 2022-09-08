@@ -23,17 +23,12 @@ selected_vars <-
   read_csv(paste0(path_to_box, "data/variable_selection/", 
                   "model_coefficients.csv"))
 
-
 #---- **cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
   mutate_all(as.character)
 
 #---- **impairement class color palette ----
 color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv")) 
-
-#---- dataset names ----
-dataset_names <- 
-  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
 
 #---- define vars ----
 #---- **categorical vars (notation from Schafer 1997) ----
@@ -87,11 +82,11 @@ lapply(synthetic_HCAP_list[indices], function(x)
                               path_to_analyses_folder = 
                                 paste0(path_to_box, 
                                        "analyses/simulation_study/HCAP_", 
-                                       unique(x[, "dataset_name"]), "/"), 
+                                       unique(x[, "dataset_name_stem"]), "/"), 
                               path_to_figures_folder = 
                                 paste0(path_to_box,
                                        "figures/simulation_study/HCAP_", 
-                                       unique(x[, "dataset_name"]), "/")))
+                                       unique(x[, "dataset_name_stem"]), "/")))
 
 end <- Sys.time() - start
 
