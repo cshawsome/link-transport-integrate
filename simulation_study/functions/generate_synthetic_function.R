@@ -274,40 +274,40 @@ generate_synthetic <-
           # 
           # group_num = group_num + 1
         }
+        
+        #---- **assign class ----
+        #choose Unimpaired if that has the highest probability
+        synthetic_sample[, "Group"] <-
+          apply(synthetic_sample[, c("p_unimpaired", "p_mci", "p_dementia", 
+                                     "p_other")], 1,
+                function(x) str_remove(names(which.max(x)), "p_"))
+        
+        #randomly choose other classes based on predicted probabilities
+        synthetic_sample[synthetic_sample$Group != "unimpaired", "Group"] <- 
+          apply(synthetic_sample[synthetic_sample$Group != "unimpaired", 
+                                 c("p_mci", "p_dementia", "p_other")], 1, 
+                function(x) 
+                  sample(c("mci", "dementia", "other"), size = 1, prob = x))
+        
+        #reformat group labels
+        synthetic_sample %<>% 
+          mutate("Group" = case_when(Group == "mci" ~ str_to_upper(Group), 
+                                     TRUE ~ str_to_sentence(Group)))
+        
+        synthetic_sample %<>% 
+          mutate("Unimpaired" = ifelse(Group == "Unimpaired", 1, 0), 
+                 "MCI" = ifelse(Group == "MCI", 1, 0), 
+                 "Dementia" = ifelse(Group == "Dementia", 1, 0), 
+                 "Other" = ifelse(Group == "Other", 1, 0)) 
+        
+        #dataset_to_copy[which(dataset_to_copy$group_num == 0), "group_num"] <- 4
+        
+        # dataset_to_copy[, "Group"] <- 
+        #   case_when(dataset_to_copy$group_num == 1 ~ "Unimpaired", 
+        #             dataset_to_copy$group_num == 2 ~ "Other", 
+        #             dataset_to_copy$group_num == 3 ~ "MCI", 
+        #             dataset_to_copy$group_num == 4 ~ "Dementia")
       }
-      
-      #---- **assign class ----
-      #choose Unimpaired if that has the highest probability
-      synthetic_sample[, "Group"] <-
-        apply(synthetic_sample[, c("p_unimpaired", "p_mci", "p_dementia", 
-                                   "p_other")], 1,
-              function(x) str_remove(names(which.max(x)), "p_"))
-      
-      #randomly choose other classes based on predicted probabilities
-      synthetic_sample[synthetic_sample$Group != "unimpaired", "Group"] <- 
-        apply(synthetic_sample[synthetic_sample$Group != "unimpaired", 
-                               c("p_mci", "p_dementia", "p_other")], 1, 
-              function(x) 
-                sample(c("mci", "dementia", "other"), size = 1, prob = x))
-      
-      #reformat group labels
-      synthetic_sample %<>% 
-        mutate("Group" = case_when(Group == "mci" ~ str_to_upper(Group), 
-                                   TRUE ~ str_to_sentence(Group)))
-      
-      synthetic_sample %<>% 
-        mutate("Unimpaired" = ifelse(Group == "Unimpaired", 1, 0), 
-               "MCI" = ifelse(Group == "MCI", 1, 0), 
-               "Dementia" = ifelse(Group == "Dementia", 1, 0), 
-               "Other" = ifelse(Group == "Other", 1, 0)) 
-      
-      #dataset_to_copy[which(dataset_to_copy$group_num == 0), "group_num"] <- 4
-      
-      # dataset_to_copy[, "Group"] <- 
-      #   case_when(dataset_to_copy$group_num == 1 ~ "Unimpaired", 
-      #             dataset_to_copy$group_num == 2 ~ "Other", 
-      #             dataset_to_copy$group_num == 3 ~ "MCI", 
-      #             dataset_to_copy$group_num == 4 ~ "Dementia")
       
       #---- ****group: summary ----
       summary <- table(synthetic_sample$Group)/nrow(synthetic_sample) 
@@ -833,30 +833,31 @@ generate_synthetic <-
   }
 
 # #---- test function ----
+# set.seed(20220329)
 # warm_up = 100
-# run_number = 1 
+# run_number = 1
 # starting_props = c(0.25, 0.25, 0.25, 0.25)
-# dataset_to_copy = synthetic_HCAP_list[[1]] 
-# calibration_sample = FALSE 
+# dataset_to_copy = synthetic_HCAP_list[[1]]
+# calibration_sample = FALSE
 # calibration_prop = NA
-# calibration_sample_name = NA 
-# path_to_raw_prior_sample = 
+# calibration_sample_name = NA
+# path_to_raw_prior_sample =
 #   paste0(path_to_box, "data/prior_data/MI/MI_datasets_cleaned")
-# path_to_data = paste0(path_to_box,"data/") 
-# path_to_analyses_folder = 
-#   paste0(path_to_box, "analyses/simulation_study/HCAP_", 
+# path_to_data = paste0(path_to_box,"data/")
+# path_to_analyses_folder =
+#   paste0(path_to_box, "analyses/simulation_study/HCAP_",
 #          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
-# path_to_figures_folder = 
-#   paste0(path_to_box, "figures/simulation_study/HCAP_", 
-#          unique(dataset_to_copy[, "dataset_name_stem"]), "/") 
-# categorical_vars = W 
-# continuous_vars = Z 
+# path_to_figures_folder =
+#   paste0(path_to_box, "figures/simulation_study/HCAP_",
+#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+# categorical_vars = W
+# continuous_vars = Z
 # id_var = "HHIDPN"
-# variable_labels = variable_labels 
+# variable_labels = variable_labels
 # cell_ID_key = cell_ID_key
-# color_palette = color_palette 
+# color_palette = color_palette
 # contrasts_matrix = A
-# kappa_0_mat = kappa_0_mat 
+# kappa_0_mat = kappa_0_mat
 # nu_0_mat = nu_0_mat
-# num_synthetic = 1000 
+# num_synthetic = 1000
 # data_only = FALSE
