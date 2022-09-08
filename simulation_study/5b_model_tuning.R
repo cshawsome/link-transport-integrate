@@ -35,8 +35,8 @@ color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv"))
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
-all_vars <- colnames(synthetic_HCAP_list[[1]])
-Z <- all_vars[str_detect(all_vars, "_Z")]
+Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"), 
+                   "data_label"] %>% unlist() %>% as.vector()
 
 #---- **contrasts matrix ----
 A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% 
