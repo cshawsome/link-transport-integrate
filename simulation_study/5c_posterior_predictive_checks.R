@@ -34,12 +34,12 @@ dataset_names <-
   unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
 
 #---- define vars ----
-#categorical vars (notation from Schafer 1997)
+#---- **categorical vars (notation from Schafer 1997) ----
 W <- c("black", "hispanic", "stroke")
 
-#continuous vars (notation from Schafer 1997)
-all_vars <- colnames(synthetic_HCAP_list[[1]])
-Z <- all_vars[str_detect(all_vars, "_Z")]
+#---- **continuous vars (notation from Schafer 1997) ----
+Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"), 
+                   "data_label"] %>% unlist() %>% as.vector()
 
 #---- **contrasts matrix ----
 A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
