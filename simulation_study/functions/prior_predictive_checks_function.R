@@ -81,9 +81,10 @@ prior_predictive_checks <-
                         "model_coefficients.csv")) 
       
       #unimpaired model predictors
-      unimpaired_preds <- c("(Intercept)", selected_vars %>% 
-                              filter(data_label != "Intercept" & Unimpaired != 0) %>% 
-                              dplyr::select(data_label) %>% unlist())
+      unimpaired_preds <- 
+        c("(Intercept)", selected_vars %>% 
+            filter(data_label != "Intercept" & Unimpaired != 0) %>% 
+            dplyr::select(data_label) %>% unlist())
       
       #other model predictors
       other_preds <- c("(Intercept)", selected_vars %>% 
@@ -191,7 +192,7 @@ prior_predictive_checks <-
                                c("p_mci", "p_dementia", "p_other")], 1, 
               function(x) 
                 sample(c("mci", "dementia", "other"), size = 1, prob = x))
-    
+      
       #reformat group labels
       synthetic_sample %<>% 
         mutate("Group" = case_when(Group == "mci" ~ str_to_upper(Group), 
@@ -476,8 +477,8 @@ prior_predictive_checks <-
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
             color = color_palette[which(color_palette$Group == class), "Color"])
         
-        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", class, 
-                                 "_line_only.jpeg"), 
+        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", 
+                                 class, "_line_only.jpeg"), 
                height = 3, width = 5, units = "in")
       } else{
         #original data only
@@ -489,8 +490,8 @@ prior_predictive_checks <-
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
             color = unique(subset$Color))
         
-        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", class, 
-                                 "_line_only.jpeg"), 
+        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", 
+                                 class, "_line_only.jpeg"), 
                height = 3, width = 5, units = "in")
         
         #Prior predictive check
@@ -502,8 +503,8 @@ prior_predictive_checks <-
           geom_vline(xintercept = to_copy_dementia_plot_data[[
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2)
         
-        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", class, 
-                                 ".jpeg"), 
+        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", 
+                                 class, ".jpeg"), 
                height = 3, width = 5, units = "in")
       }
     }
@@ -547,11 +548,13 @@ prior_predictive_checks <-
             scale_fill_manual(values = rev(unique(data$Color)))
           
           if(continuous_check_test){
-            ggsave(filename = paste0(path_to_output_folder, "continuous_vars/test_set/", 
+            ggsave(filename = paste0(path_to_output_folder, 
+                                     "continuous_vars/test_set/", 
                                      tolower(class), "/", var, ".jpeg"), 
                    height = 3, width = 5, units = "in")
           } else{
-            ggsave(filename = paste0(path_to_output_folder, "continuous_vars/error_set/", 
+            ggsave(filename = paste0(path_to_output_folder, 
+                                     "continuous_vars/error_set/", 
                                      tolower(class), "/", var, ".jpeg"), 
                    height = 3, width = 5, units = "in")
           }
@@ -565,9 +568,10 @@ prior_predictive_checks <-
                                  "figure_label"]) + 
             scale_color_manual(values = rev(unique(data$Color))) + 
             scale_fill_manual(values = rev(unique(data$Color))) + 
-            transition_states(data$run, transition_length = 1, state_length = 1) +
-            labs(title = "Synthetic {round(frame_time)}") + transition_time(run) +
-            ease_aes('linear')
+            transition_states(data$run, transition_length = 1, 
+                              state_length = 1) +
+            labs(title = "Synthetic {round(frame_time)}") + 
+            transition_time(run) + ease_aes('linear')
           
           animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
                   res = 150, renderer = gifski_renderer())
@@ -581,24 +585,24 @@ prior_predictive_checks <-
     }
   }
 
-#---- test function ----
-dataset_to_copy = synthetic_HCAP_list[[1]]
-calibration_sample = FALSE
-calibration_prop = NA
-calibration_sample_name = NA
-path_to_raw_prior_sample = paste0(path_to_box, "data/prior_data/MI/", 
-                                  "MI_datasets_cleaned")
-path_to_data = path_to_box
-path_to_output_folder = paste0(path_to_box,"figures/simulation_study/HCAP_",
-                               unique(dataset_to_copy[, "dataset_name_stem"]),
-                               "/prior_predictive_checks/")
-continuous_check_test = TRUE
-continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
-categorical_vars = W
-continuous_vars = Z
-variable_labels = variable_labels
-color_palette = color_palette
-contrasts_matrix = A
-kappa_0_mat = kappa_0_mat
-nu_0_mat = nu_0_mat
-num_synthetic = 1000
+# #---- test function ----
+# dataset_to_copy = synthetic_HCAP_list[[1]]
+# calibration_sample = FALSE
+# calibration_prop = NA
+# calibration_sample_name = NA
+# path_to_raw_prior_sample = paste0(path_to_box, "data/prior_data/MI/", 
+#                                   "MI_datasets_cleaned")
+# path_to_data = path_to_box
+# path_to_output_folder = paste0(path_to_box,"figures/simulation_study/HCAP_",
+#                                unique(dataset_to_copy[, "dataset_name_stem"]),
+#                                "/prior_predictive_checks/")
+# continuous_check_test = TRUE
+# continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+# categorical_vars = W
+# continuous_vars = Z
+# variable_labels = variable_labels
+# color_palette = color_palette
+# contrasts_matrix = A
+# kappa_0_mat = kappa_0_mat
+# nu_0_mat = nu_0_mat
+# num_synthetic = 1000
