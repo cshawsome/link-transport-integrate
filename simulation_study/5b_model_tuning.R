@@ -49,6 +49,12 @@ W <- c("black", "hispanic", "stroke")
 Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"), 
                    "data_label"] %>% unlist() %>% as.vector()
 
+#---- **superpop means and variances ----
+means <- 
+  read_csv(paste0(path_to_box, "data/superpopulations/superpop_means.csv"))
+sds <- 
+  read_csv(paste0(path_to_box, "data/superpopulations/superpop_sds.csv"))
+
 #---- generate datasets in serial ----
 #About 1.5 hours to generate data for all datasets in serial
 #---- **generate datasets: no calibration ----
@@ -83,9 +89,9 @@ start <- Sys.time()
 lapply(synthetic_HCAP_list[indices], function(x)
   generate_synthetic(warm_up = 100, run_number = 1, 
                      starting_props = c(0.25, 0.25, 0.25, 0.25),
-                     dataset_to_copy = x, calibration_sample = FALSE, 
-                     calibration_prop = NA, calibration_sample_name = NA, 
-                     path_to_raw_prior_sample = NA,
+                     dataset_to_copy = x, orig_means = means, orig_sds = sds, 
+                     calibration_sample = FALSE, calibration_prop = NA, 
+                     calibration_sample_name = NA, path_to_raw_prior_sample = NA,
                      path_to_data = paste0(path_to_box,"data/"), 
                      path_to_analyses_folder = 
                        paste0(path_to_box, "analyses/simulation_study/HCAP_", 
@@ -134,7 +140,8 @@ start <- Sys.time()
 lapply(synthetic_HCAP_list[indices], function(x)
   generate_synthetic(warm_up = 100, run_number = 1, 
                      starting_props = c(0.25, 0.25, 0.25, 0.25),
-                     dataset_to_copy = x, calibration_sample = TRUE, 
+                     dataset_to_copy = x, orig_means = means, orig_sds = sds, 
+                       calibration_sample = TRUE, 
                      calibration_prop = 
                        as.numeric(str_remove(calibration_scenario, 
                                              "HCAP_"))/100,
