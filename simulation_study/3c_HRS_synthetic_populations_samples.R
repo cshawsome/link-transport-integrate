@@ -76,6 +76,29 @@ Z_score <- function(data, vars){
 
 superpop %<>% Z_score(., standardize_vars)
 
+#---- **store superpop means and variances ----
+orig_mean_sd <- superpop %>% 
+  summarize_at(standardize_vars, .funs = c("mean" = mean, "sd" = sd))
+
+means <- orig_mean_sd %>% dplyr::select(contains("mean")) %>% 
+  set_colnames(standardize_vars)
+
+sds <- orig_mean_sd %>% dplyr::select(contains("sd")) %>% 
+  set_colnames(standardize_vars)
+
+#Sanity check
+test_subset <- head(superpop[, paste0(standardize_vars, "_Z")])
+test_subset*
+  matrix(rep(as.numeric(sds), nrow(test_subset)), nrow = nrow(test_subset), 
+         byrow = TRUE) +
+  matrix(rep(as.numeric(means), nrow(test_subset)), nrow = nrow(test_subset), 
+         byrow = TRUE)
+View(head(superpop[, standardize_vars]))
+
+#save
+write_csv(means, paste0(path_to_box, "data/superpopulations/superpop_means.csv"))
+write_csv(sds, paste0(path_to_box, "data/superpopulations/superpop_sds.csv"))
+
 #---- **impairment classes ----
 #---- ****predict values in superpop ----
 superpop %<>% mutate("Intercept" = 1)
