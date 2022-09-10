@@ -187,14 +187,15 @@ superpop %<>%
 
 #---- **QC superpop ----
 #---- ****overall summaries ----
+#U: 37.0%, M: 16.1%, D: 26.4%, O: 20.4%
 colMeans(superpop[, c("Unimpaired", "MCI", "Dementia", "Other")])
 
-#More dementia among women? Yes (M: 25.5%, W: 27.6%)
+#More dementia among women? Yes (M: 25.2%, W: 27.2%)
 mean(superpop[superpop$female == 1, "Dementia"])
 mean(superpop[superpop$female == 0, "Dementia"])
 
 #More dementia among racial/ethnic minorities? Kind of? 
-# (w: 26.0%, b: 33.6%, h: 22.6%)
+# (w: 25.7%, b: 33.3%, h: 22.3%)
 mean(superpop[superpop$White == 1, "Dementia"])
 mean(superpop[superpop$black == 1, "Dementia"])
 mean(superpop[superpop$hispanic == 1, "Dementia"])
@@ -205,7 +206,7 @@ exp(coefficients(glm(Dementia ~ age, data = superpop, family = "poisson")))
 #Years of Education: decreased risk by higher education (RR = 0.98)
 exp(coefficients(glm(Dementia ~ edyrs, data = superpop, family = "poisson")))
 
-#Stroke: increased risk for yes vs. no (RR = 1.69)
+#Stroke: increased risk for yes vs. no (RR = 1.70)
 exp(coefficients(glm(Dementia ~ stroke, data = superpop, family = "poisson")))
 
 #Diabetes: no increased risk for yes vs. no (RR = 1.00)
