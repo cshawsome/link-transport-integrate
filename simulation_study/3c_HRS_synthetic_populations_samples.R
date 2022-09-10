@@ -86,14 +86,14 @@ means <- orig_mean_sd %>% dplyr::select(contains("mean")) %>%
 sds <- orig_mean_sd %>% dplyr::select(contains("sd")) %>% 
   set_colnames(standardize_vars)
 
-#Sanity check
-test_subset <- head(superpop[, paste0(standardize_vars, "_Z")])
-test_subset*
-  matrix(rep(as.numeric(sds), nrow(test_subset)), nrow = nrow(test_subset), 
-         byrow = TRUE) +
-  matrix(rep(as.numeric(means), nrow(test_subset)), nrow = nrow(test_subset), 
-         byrow = TRUE)
-View(head(superpop[, standardize_vars]))
+# #Sanity check
+# test_subset <- head(superpop[, paste0(standardize_vars, "_Z")])
+# test_subset*
+#   matrix(rep(as.numeric(sds), nrow(test_subset)), nrow = nrow(test_subset),
+#          byrow = TRUE) +
+#   matrix(rep(as.numeric(means), nrow(test_subset)), nrow = nrow(test_subset),
+#          byrow = TRUE)
+# View(head(superpop[, standardize_vars]))
 
 #save
 write_csv(means, paste0(path_to_box, "data/superpopulations/superpop_means.csv"))
