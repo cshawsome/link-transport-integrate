@@ -563,6 +563,44 @@ generate_synthetic <-
       synthetic_sample %<>% 
         mutate("White" = if_else(black == 0 & hispanic == 0, 1, 0))
       
+      #---- ****rescale continuous vars to original scale ----
+      synthetic_sample[, colnames(orig_means)] <- 
+        synthetic_sample[, continuous_vars]*
+        matrix(rep(as.numeric(orig_sds), nrow(synthetic_sample)), 
+               nrow = nrow(synthetic_sample), byrow = TRUE) +
+        matrix(rep(as.numeric(orig_means), nrow(synthetic_sample)), 
+               nrow = nrow(synthetic_sample), byrow = TRUE)
+      
+      #---- ****truncate values out of bounds ----
+      #lower bound is 0 for everything except age
+      synthetic_sample %<>% 
+        mutate_at(all_of(colnames(orig_means)), function(x) ifelse(x < 0, 0, x))
+      
+      #upper bounds for everything, lower bound for age
+      synthetic_sample %<>% 
+        mutate(age = ifelse(age < 70, 70, age), 
+               edyrs = ifelse(edyrs > 17, 17, edyrs), 
+               mmse_norm = ifelse(mmse_norm > 100, 100, mmse_norm), 
+               immrc = ifelse(immrc > 10, 10, immrc), 
+               delrc = ifelse(delrc > 10, 10, delrc), 
+               ser7 = ifelse(ser7 > 5, 5, ser7), 
+               wrc_yes = ifelse(wrc_yes > 10, 10, wrc_yes), 
+               wrc_no = ifelse(wrc_no > 10, 10, wrc_no), 
+               imm_story = ifelse(imm_story > 35, 35, imm_story), 
+               del_story = ifelse(del_story > 35, 35, del_story), 
+               imm_cp = ifelse(imm_cp > 11, 11, imm_cp), 
+               del_cp = ifelse(del_cp > 11, 11, del_cp), 
+               trailsA = ifelse(trailsA > 300, 300, trailsA), 
+               hrs_cog = ifelse(hrs_cog > 35, 35, hrs_cog), 
+               adl = ifelse(adl > 5, 5, adl), 
+               iadl = ifelse(iadl > 3, 3, iadl))
+      
+      # for(vars in colnames(orig_means)){
+      #   print(vars)
+      #   print(min(synthetic_sample[, vars]))
+      #   print(max(synthetic_sample[, vars]))
+      # }
+      
       #---- ****save synthetic sample ----
       if(b > warm_up){
         if(!exists("dataset_list")){
