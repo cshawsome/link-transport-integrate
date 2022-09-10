@@ -54,6 +54,13 @@ superpop <-
 truth <- read_csv(paste0(path_to_data, 
                          "superpopulations/agesex_standardized_prevs.csv"))
 
+#---- **superpop means and sds ----
+means <- 
+  read_csv(paste0(path_to_box, "data/superpopulations/superpop_means.csv"))
+
+sds <- 
+  read_csv(paste0(path_to_box, "data/superpopulations/superpop_sds.csv"))
+
 #---- **variable labels ----
 variable_labels <- 
   read_csv(paste0(path_to_data, "variable_crosswalk.csv")) 
@@ -96,7 +103,8 @@ replicate(num_replicates,
                               id_var = "HHIDPN", 
                               variable_labels = variable_labels, 
                               scenario = scenario_num,
-                              superpopulation = superpop,
+                              superpopulation = superpop, orig_means = means, 
+                              orig_sds = sds, 
                               all_scenarios_list = all_sim_scenarios, 
                               cell_ID_key = cell_ID_key, 
                               color_palette = color_palette, 
