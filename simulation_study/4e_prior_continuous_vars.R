@@ -17,7 +17,8 @@ prior_imputed_clean <-
 
 #---- **variable selection results ----
 selected_vars <- 
-  read_csv(paste0(path_to_box, "data/variable_selection/model_coefficients.csv")) %>% 
+  read_csv(paste0(path_to_box, 
+                  "data/variable_selection/model_coefficients.csv")) %>% 
   dplyr::select("data_label") %>% unlist()
 
 #---- ****classify vars ----
@@ -64,7 +65,7 @@ estimate_cont_priors <- function(data, W, Z, A, cells){
     
     if(nrow(contingency_table_temp) < 6){
       contingency_table <- data.frame("cells" = cells$cell) %>% 
-        left_join(., contingency_table_temp)
+        left_join(., contingency_table_temp, by = "cells")
       contingency_table[is.na(contingency_table)] <- 0
     } else{
       contingency_table <- contingency_table_temp
