@@ -240,73 +240,6 @@ simulation_function <-
     }
     
     #---- standardized dem prevalences ----
-    make_standardization_table <- 
-      function(synthetic_data, standard_data, dataset_to_copy){
-        #---- unstandardize age ----
-        orig_mean <- mean(dataset_to_copy$age)
-        orig_sd <- sd(dataset_to_copy$age)
-        
-        synthetic_data %<>% mutate(age = age_Z*orig_sd + orig_mean)
-        
-        #---- create age strata ----
-        synthetic_data %<>% 
-          mutate("age_cat" = 
-                   cut(age, 
-                       breaks = c(70, 75, 80, 85, 90, max(synthetic_data$age)), 
-                       include.lowest = TRUE, right = FALSE))
-        
-        # #Sanity check
-        # table(superpop$age_cat, useNA = "ifany")
-        
-        #---- ******standardization tables ----
-        agesex_totals <- 
-          superpop %>% group_by(female, age_cat) %>% count() %>% arrange(female) %>% 
-          set_colnames(c("female", "age", "superpop_count")) %>% 
-          dplyr::select("superpop_count", everything())
-        
-        for(race in c("White", "black", "hispanic")){
-          assign(paste0(tolower(race), "_dem_risk_table"), 
-                 superpop %>% filter(!!sym(race) == 1) %>% 
-                   group_by(female, age_cat) %>% 
-                   summarise("dem_prop" = mean(Dementia)) %>% 
-                   arrange(female) %>% 
-                   set_colnames(c("female", "age", 
-                                  paste0(tolower(race), "_dem_risk"))))
-        }
-        
-        # #Sanity check
-        # test_data <- superpop %>% filter(White == 1)
-        # table(test_data$female, test_data$age_cat, test_data$Dementia)
-        
-        #merge tables
-        agesex_standardized <- 
-          left_join(agesex_totals, white_dem_risk_table, by = c("female", "age")) %>% 
-          left_join(., black_dem_risk_table, by = c("female", "age")) %>% 
-          left_join(., hispanic_dem_risk_table, by = c("female", "age"))
-        
-        #expected counts
-        for(race in c("white", "black", "hispanic")){
-          agesex_standardized %<>% 
-            mutate(!!paste0("expected_", race, "_dem_count") := 
-                     !!sym(paste0(race, "_dem_risk"))*superpop_count)
-        }
-        
-        # #Sanity check
-        # agesex_standardized$white_dem_risk*agesex_standardized$superpop_count
-        # agesex_standardized$hispanic_dem_risk*agesex_standardized$superpop_count
-        
-        #---- ******estimates ----
-        white_risk <- 
-          sum(agesex_standardized$expected_white_dem_count)/nrow(superpop)
-        black_risk <- 
-          sum(agesex_standardized$expected_black_dem_count)/nrow(superpop)
-        hispanic_risk <- 
-          sum(agesex_standardized$expected_hispanic_dem_count)/nrow(superpop)
-        
-        #RR compared to white
-        RR_black <- black_risk/white_risk
-        RR_hispanic <- hispanic_risk/white_risk
-      }
     
     
     # #---- models ----
@@ -394,6 +327,7 @@ library("LaplacesDemon")
 path_to_RScripts <- here::here("simulation_study", "functions", "/")
 source(here::here("functions", "read_results.R"))
 source(paste0(path_to_RScripts, "generate_synthetic_function.R"))
+source(paste0(path_to_RScripts), "standardized_dem_estimates.R")
 
 path_to_data <- paste0("/Users/crystalshaw/Library/CloudStorage/Box-Box/", 
                        "Dissertation/data/")
