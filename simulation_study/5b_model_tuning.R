@@ -49,7 +49,7 @@ W <- c("black", "hispanic", "stroke")
 Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"), 
                    "data_label"] %>% unlist() %>% as.vector()
 
-#---- **superpop means and variances ----
+#---- **superpop means and sds ----
 means <- 
   read_csv(paste0(path_to_box, "data/superpopulations/superpop_means.csv"))
 sds <- 
