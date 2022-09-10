@@ -1,9 +1,9 @@
 simulation_function <- 
   function(warm_up, starting_props, categorical_vars, continuous_vars, id_var, 
-           variable_labels, scenario, superpops_list, all_scenarios_list, 
-           cell_ID_key, color_palette, num_synthetic, contrasts_matrix, 
-           kappa_0_mat, nu_0_mat, truth, seed, path_to_raw_prior_sample, 
-           path_to_data, path_to_results){
+           variable_labels, scenario, superpopulation, orig_means, orig_sds, 
+           all_scenarios_list, cell_ID_key, color_palette, num_synthetic, 
+           contrasts_matrix, kappa_0_mat, nu_0_mat, truth, seed, 
+           path_to_raw_prior_sample, path_to_data, path_to_results){
     
     #---- pre-allocated results ----
     result_names <- 
@@ -145,6 +145,7 @@ simulation_function <-
       generate_synthetic(warm_up, run_number = NA, 
                          starting_props = starting_props, 
                          dataset_to_copy = dataset_to_copy, 
+                         orig_means = orig_means, orig_sds = orig_sds,
                          calibration_sample = calibration_status, 
                          calibration_prop = calibration_prop, 
                          calibration_sample_name = calibration_sample_name,
@@ -238,10 +239,74 @@ simulation_function <-
       }
     }
     
-    #---- calculate dem prevalences ----
-    make_standardization_table <- function(data, standard){
-      
-    }
+    #---- standardized dem prevalences ----
+    make_standardization_table <- 
+      function(synthetic_data, standard_data, dataset_to_copy){
+        #---- unstandardize age ----
+        orig_mean <- mean(dataset_to_copy$age)
+        orig_sd <- sd(dataset_to_copy$age)
+        
+        synthetic_data %<>% mutate(age = age_Z*orig_sd + orig_mean)
+        
+        #---- create age strata ----
+        synthetic_data %<>% 
+          mutate("age_cat" = 
+                   cut(age, 
+                       breaks = c(70, 75, 80, 85, 90, max(synthetic_data$age)), 
+                       include.lowest = TRUE, right = FALSE))
+        
+        # #Sanity check
+        # table(superpop$age_cat, useNA = "ifany")
+        
+        #---- ******standardization tables ----
+        agesex_totals <- 
+          superpop %>% group_by(female, age_cat) %>% count() %>% arrange(female) %>% 
+          set_colnames(c("female", "age", "superpop_count")) %>% 
+          dplyr::select("superpop_count", everything())
+        
+        for(race in c("White", "black", "hispanic")){
+          assign(paste0(tolower(race), "_dem_risk_table"), 
+                 superpop %>% filter(!!sym(race) == 1) %>% 
+                   group_by(female, age_cat) %>% 
+                   summarise("dem_prop" = mean(Dementia)) %>% 
+                   arrange(female) %>% 
+                   set_colnames(c("female", "age", 
+                                  paste0(tolower(race), "_dem_risk"))))
+        }
+        
+        # #Sanity check
+        # test_data <- superpop %>% filter(White == 1)
+        # table(test_data$female, test_data$age_cat, test_data$Dementia)
+        
+        #merge tables
+        agesex_standardized <- 
+          left_join(agesex_totals, white_dem_risk_table, by = c("female", "age")) %>% 
+          left_join(., black_dem_risk_table, by = c("female", "age")) %>% 
+          left_join(., hispanic_dem_risk_table, by = c("female", "age"))
+        
+        #expected counts
+        for(race in c("white", "black", "hispanic")){
+          agesex_standardized %<>% 
+            mutate(!!paste0("expected_", race, "_dem_count") := 
+                     !!sym(paste0(race, "_dem_risk"))*superpop_count)
+        }
+        
+        # #Sanity check
+        # agesex_standardized$white_dem_risk*agesex_standardized$superpop_count
+        # agesex_standardized$hispanic_dem_risk*agesex_standardized$superpop_count
+        
+        #---- ******estimates ----
+        white_risk <- 
+          sum(agesex_standardized$expected_white_dem_count)/nrow(superpop)
+        black_risk <- 
+          sum(agesex_standardized$expected_black_dem_count)/nrow(superpop)
+        hispanic_risk <- 
+          sum(agesex_standardized$expected_hispanic_dem_count)/nrow(superpop)
+        
+        #RR compared to white
+        RR_black <- black_risk/white_risk
+        RR_hispanic <- hispanic_risk/white_risk
+      }
     
     
     # #---- models ----
@@ -351,6 +416,11 @@ id_var = "HHIDPN"
 scenario = 1 #no calibration sample size 500
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 superpopulation <- superpop
+orig_means <- 
+  read_csv(paste0(path_to_box, "data/superpopulations/superpop_means.csv"))
+orig_sds <- 
+  read_csv(paste0(path_to_box, "data/superpopulations/superpop_sds.csv"))
+
 all_scenarios_list = all_sim_scenarios
 
 num_synthetic = 1000
