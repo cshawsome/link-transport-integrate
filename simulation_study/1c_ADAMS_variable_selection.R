@@ -24,7 +24,7 @@ variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 # 
 # neuropsych_gen_cog: "ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", "ANSER7T_Z", 
 # "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", "ANWM2TOT_Z", 
-# "ANBWC20_Z", "ANCPTOT_Z", "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", 
+# "ANBWC20", "ANCPTOT_Z", "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", 
 # "ANSCISOR",  "ANPRES", "ANSMEM2_Better", "ANSMEM2_Worse"
 # 
 # functional: "Aadla_Z", "Aiadla_Z"
@@ -38,7 +38,7 @@ variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 var_list <- c("AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS_Z", "Not working", 
               "Retired", "Married/partnered", "ANMSETOT_norm_Z", "ANIMMCR_Z", 
               "ANDELCOR_Z", "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", 
-              "ANWM1TOT_Z","ANWM2TOT_Z", "ANBWC20_Z", "ANCPTOT_Z", "ANRCPTOT_Z", 
+              "ANWM1TOT_Z","ANWM2TOT_Z", "ANBWC20", "ANCPTOT_Z", "ANRCPTOT_Z", 
               "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR", "ANPRES", 
               "ANSMEM2_Better", "ANSMEM2_Worse", "Aadla_Z", "Aiadla_Z", 
               "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", 
