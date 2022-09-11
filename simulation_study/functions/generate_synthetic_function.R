@@ -111,9 +111,9 @@ generate_synthetic <-
                        dplyr::select(data_label) %>% unlist())
       
       #dementia model predictors
-      mci_preds <- c("(Intercept)", selected_vars %>% 
-                       filter(data_label != "Intercept" & Dementia != 0) %>% 
-                       dplyr::select(data_label) %>% unlist())
+      dementia_preds <- c("(Intercept)", selected_vars %>% 
+                            filter(data_label != "Intercept" & Dementia != 0) %>% 
+                            dplyr::select(data_label) %>% unlist())
       
       #---- calibration subset ----
       calibration_var <- paste0("calibration_", calibration_prop*100)
