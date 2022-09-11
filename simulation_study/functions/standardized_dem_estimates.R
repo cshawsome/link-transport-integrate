@@ -27,7 +27,7 @@ standardized_dem_estimates <- function(synthetic_data, standard_data){
     assign(paste0(tolower(race), "_dem_risk_table"), 
            synthetic_data %>% filter(!!sym(race) == 1) %>% 
              group_by(female, age_cat) %>% 
-             summarise("dem_prop" = mean(Dementia)) %>% 
+             summarise("dem_prop" = mean(Dementia), .groups = "keep") %>% 
              arrange(female) %>% 
              set_colnames(c("female", "age", 
                             paste0(tolower(race), "_dem_risk"))))
