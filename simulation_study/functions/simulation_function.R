@@ -50,14 +50,16 @@ simulation_function <-
                  "Other_coverage"), "_black"),
         paste0(c("Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
                  "Other_coverage"), "_hispanic"),
-        "white_dem_prev", "white_dem_prev_LCI", "white_dem_prev_UCI",
-        "white_dem_prev_coverage",
-        "black_dem_prev", "black_dem_prev_LCI", "black_dem_prev_UCI",
-        "black_dem_prev_coverage",
-        "hispanic_dem_prev", "hispanic_dem_prev_LCI", "hispanic_dem_prev_UCI",
-        "hispanic_dem_prev_coverage",
-        "black_RR", "black_RR_LCI", "black_RR_UCI", "black_RR_coverage",
-        "hispanic_RR", "hispanic_RR_LCI", "hispanic_RR_UCI", "hispanic_RR_coverage",
+        paste0("true_dem_prev_", c("white", "black", "hispanic")),
+        paste0("mean_dem_prev_", c("white", "black", "hispanic")),
+        paste0("LCI_dem_prev_", c("white", "black", "hispanic")),
+        paste0("UCI_dem_prev_", c("white", "black", "hispanic")),
+        paste0("dem_prev_coverage_", c("white", "black", "hispanic")),
+        paste0("true_RR_", c("black", "hispanic")),
+        paste0("mean_RR_", c("black", "hispanic")),
+        paste0("LCI_RR_", c("black", "hispanic")),
+        paste0("UCI_RR_", c("black", "hispanic")),
+        paste0("RR_coverage_", c("black", "hispanic")),
         "time", "seed", "dataset_name")
     
     results <- matrix(ncol = length(result_names), nrow = 1) %>% 
@@ -240,7 +242,63 @@ simulation_function <-
     }
     
     #---- standardized dem prevalences ----
+    dem_estimates <- lapply(synthetic_HCAP, standardized_dem_estimates, 
+                            standard_data = synthetic_HRS) %>% do.call(rbind, .)
     
+    #---- **true dem prevs ----
+    results[, paste0("true_dem_prev_", c("white", "black", "hispanic"))] <- 
+      colSums(truth[, paste0(c("expected_white", "expected_black", 
+                               "expected_hispanic"), "_dem_count")])/
+      nrow(superpop)
+    
+    #---- **mean dem prevs ----
+    results[, paste0("mean_dem_prev_", c("white", "black", "hispanic"))] <- 
+      colMeans(dem_estimates[, paste0(c("white", "black", "hispanic"), "_risk")])
+    
+    #---- **prev CI ----
+    results[, paste0("LCI_dem_prev_", c("white", "black", "hispanic"))] <- 
+      apply(dem_estimates[, paste0(c("white", "black", "hispanic"), "_risk")], 2, 
+            function(x) quantile(x, 0.025))
+    
+    results[, paste0("UCI_dem_prev_", c("white", "black", "hispanic"))] <- 
+      apply(dem_estimates[, paste0(c("white", "black", "hispanic"), "_risk")], 2, 
+            function(x) quantile(x, 0.975))
+    
+    #---- **prev coverage ----
+    for(race in c("white", "black", "hispanic")){
+      results[, paste0("dem_prev_coverage_", race)] <- 
+        (results[, paste0("true_dem_prev_", race)] >= 
+           results[, paste0("LCI_dem_prev_", race)])*
+        (results[, paste0("true_dem_prev_", race)] <= 
+           results[, paste0("UCI_dem_prev_", race)])
+    }
+    
+    #---- **true RR ----
+    results[, paste0("true_RR_", c("black", "hispanic"))] <- 
+      c(results[, "true_dem_prev_black"]/results[, "true_dem_prev_white"], 
+        results[, "true_dem_prev_hispanic"]/results[, "true_dem_prev_white"])
+    
+    #---- **mean RR ----
+    results[, paste0("mean_RR_", c("black", "hispanic"))] <- 
+      colMeans(dem_estimates[, paste0("RR_", c("black", "hispanic"))])
+    
+    #---- **RR CI ----
+    results[, paste0("LCI_RR_", c("black", "hispanic"))] <- 
+      apply(dem_estimates[, paste0("RR_", c("black", "hispanic"))], 2, 
+            function(x) quantile(x, 0.025))
+    
+    results[, paste0("UCI_RR_", c("black", "hispanic"))] <- 
+      apply(dem_estimates[, paste0("RR_", c("black", "hispanic"))], 2, 
+            function(x) quantile(x, 0.975))
+    
+    #---- **RR coverage ----
+    for(race in c("black", "hispanic")){
+      results[, paste0("RR_coverage_", race)] <- 
+        (results[, paste0("true_RR_", race)] >= 
+           results[, paste0("LCI_RR_", race)])*
+        (results[, paste0("true_RR_", race)] <= 
+           results[, paste0("UCI_RR_", race)])
+    }
     
     # #---- models ----
     # #---- **add weights ----
@@ -344,10 +402,10 @@ all_sim_scenarios <- read_csv(paste0(path_to_data, "sim_study_scenarios.csv"))
 
 warm_up = 100
 starting_props = rep(0.25, 4)
-categorical_vars = c("black", "hispanic", "stroke")
-continuous_vars = colnames(superpop)[str_detect(colnames(superpop), "_Z")]
+categorical_vars = W = c("black", "hispanic", "stroke")
+continuous_vars = Z = colnames(superpop)[str_detect(colnames(superpop), "_Z")]
 id_var = "HHIDPN"
-scenario = 1 #no calibration sample size 500
+scenario_num = 1 #no calibration sample size 500
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 superpopulation <- superpop
 orig_means <- 
@@ -369,16 +427,24 @@ path_to_raw_prior_sample =
 set.seed(20220512)
 
 replicate(2,
-          simulation_function(warm_up, starting_props, unimpaired_preds,
-                              other_preds, mci_preds, categorical_vars,
-                              continuous_vars, id_var, variable_labels,
-                              scenario = 1,
-                              superpops_list = superpop_data_list,
-                              all_sim_scenarios,
-                              cell_ID_key, color_palette, num_synthetic,
-                              unimpaired_betas, unimpaired_cov, other_betas,
-                              other_cov, mci_betas, mci_cov, alpha_0_dist,
-                              prior_Sigma, prior_V_inv, prior_beta, nu_0_vec,
-                              kappa_0_mat, contrasts_matrix, truth,
-                              path_to_results))
+          simulation_function(warm_up = 100, starting_props = rep(0.25, 4), 
+                              categorical_vars = W, continuous_vars = Z, 
+                              id_var = "HHIDPN", 
+                              variable_labels = variable_labels, 
+                              scenario = scenario_num,
+                              superpopulation = superpop, orig_means = means, 
+                              orig_sds = sds, 
+                              all_scenarios_list = all_sim_scenarios, 
+                              cell_ID_key = cell_ID_key, 
+                              color_palette = color_palette, 
+                              num_synthetic = 1000, contrasts_matrix = A,
+                              kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
+                              truth = truth, seed = seed, 
+                              path_to_raw_prior_sample = 
+                                paste0(path_to_data, 
+                                       "prior_data/MI/MI_datasets_cleaned"), 
+                              path_to_data = path_to_data, 
+                              path_to_results = 
+                                paste0(path_to_box, 
+                                       "analyses/simulation_study/results/")))
 
