@@ -122,7 +122,7 @@ generate_synthetic <-
     }
     
     #---- select variables ----
-    vars <- unique(c(unimpaired_preds, other_preds, mci_preds, 
+    vars <- unique(c(unimpaired_preds, other_preds, mci_preds, dementia_preds, 
                      "Unimpaired", "MCI", "Dementia", "Other"))
     
     #---- count contingency cells ----
