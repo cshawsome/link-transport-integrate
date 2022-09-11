@@ -263,15 +263,20 @@ for(race in c("white", "black", "hispanic")){
 # agesex_standardized$hispanic_dem_risk*agesex_standardized$superpop_count
 
 #---- ******estimates ----
+#0.254
 white_risk <- 
   sum(agesex_standardized$expected_white_dem_count)/nrow(superpop)
+#0.343
 black_risk <- 
   sum(agesex_standardized$expected_black_dem_count)/nrow(superpop)
+#0.225
 hispanic_risk <- 
   sum(agesex_standardized$expected_hispanic_dem_count)/nrow(superpop)
 
 #RR compared to white
+#1.35
 RR_black <- black_risk/white_risk
+#0.88
 RR_hispanic <- hispanic_risk/white_risk
 
 #---- **save superpop data ----
