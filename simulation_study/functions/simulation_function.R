@@ -385,7 +385,7 @@ library("LaplacesDemon")
 path_to_RScripts <- here::here("simulation_study", "functions", "/")
 source(here::here("functions", "read_results.R"))
 source(paste0(path_to_RScripts, "generate_synthetic_function.R"))
-source(paste0(path_to_RScripts), "standardized_dem_estimates.R")
+source(paste0(path_to_RScripts, "standardized_dem_estimates.R"))
 
 path_to_data <- paste0("/Users/crystalshaw/Library/CloudStorage/Box-Box/", 
                        "Dissertation/data/")
@@ -418,11 +418,12 @@ all_scenarios_list = all_sim_scenarios
 num_synthetic = 1000
 nu_0_mat <- read_csv(paste0(path_to_data, "tuning/nu_0_matrix.csv"))
 kappa_0_mat <- read_csv(paste0(path_to_data, "tuning/kappa_0_matrix.csv"))
-contrasts_matrix = 
+contrasts_matrix = A = 
   read_csv(paste0(path_to_data, "contrasts_matrix.csv")) %>% as.matrix()
 path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
 path_to_raw_prior_sample = 
   paste0(path_to_data, "prior_data/MI/MI_datasets_cleaned") 
+seed = 1
 
 set.seed(20220512)
 
