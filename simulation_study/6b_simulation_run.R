@@ -42,6 +42,7 @@ path_to_RScripts <- "/u/home/c/cshaw343/link_transport_integrate/RScripts/"
 source(paste0(path_to_RScripts, "read_results.R"))
 source(paste0(path_to_RScripts, "generate_synthetic_function.R"))
 source(paste0(path_to_RScripts, "simulation_function.R"))
+source(paste0(path_to_RScripts), "standardized_dem_estimates.R")
 
 #---- read in data ----
 path_to_data <- "/u/home/c/cshaw343/link_transport_integrate/data/"
