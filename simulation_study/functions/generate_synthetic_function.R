@@ -222,7 +222,7 @@ generate_synthetic <-
         #---- **init group membership ----
         synthetic_sample[, "Group"] <- 
           sample(c("Unimpaired", "MCI", "Dementia", "Other"), 
-                 size = nrow(dataset_to_copy) , replace = TRUE, 
+                 size = nrow(synthetic_sample) , replace = TRUE, 
                  prob = starting_props)
       } else{
         #---- **latent class gammas ----
