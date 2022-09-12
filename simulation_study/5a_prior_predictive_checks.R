@@ -126,7 +126,8 @@ dataset_names <-
 
 #---- ****specify indices ----
 indices <-
-  which(dataset_names %in% paste0("HRS_", c(500), "_", calibration_scenario))
+  which(dataset_names %in% paste0("HRS_", c(500, 1000, 2000, 4000, 8000), "_", 
+                                  calibration_scenario))
 
 set.seed(20220329)
 start <- Sys.time()
@@ -217,7 +218,7 @@ synthetic_HCAP_list <-
   readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
 
 #---- ****rename datasets based on calibration scenario ----
-calibration_scenario = "no_calibration"
+calibration_scenario = "HCAP_50"
 
 synthetic_HCAP_list <- 
   lapply(synthetic_HCAP_list, function(x)
