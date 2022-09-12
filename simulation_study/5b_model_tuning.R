@@ -153,10 +153,10 @@ lapply(synthetic_HCAP_list[indices], function(x)
                               "MI_datasets_cleaned"),
                      path_to_data = paste0(path_to_box,"data/"), 
                      path_to_analyses_folder = 
-                       paste0(path_to_box, "analyses/simulation_study/HCAP_HRS_", 
+                       paste0(path_to_box, "analyses/simulation_study/HCAP_", 
                               unique(x[, "dataset_name_stem"]), "/"), 
                      path_to_figures_folder = 
-                       paste0(path_to_box, "figures/simulation_study/HCAP_HRS_", 
+                       paste0(path_to_box, "figures/simulation_study/HCAP_", 
                               unique(x[, "dataset_name_stem"]), "/"), 
                      categorical_vars = W, continuous_vars = Z, 
                      id_var = "HHIDPN", variable_labels = variable_labels, 
