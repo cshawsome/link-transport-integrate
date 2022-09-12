@@ -81,7 +81,8 @@ dataset_names <-
 
 #---- ****specify indices ----
 indices <-
-  which(dataset_names %in% paste0("HRS_", c(500), "_", calibration_scenario))
+  which(dataset_names %in% paste0("HRS_", c(500, 1000, 2000, 4000, 8000), "_", 
+                                  calibration_scenario))
 
 set.seed(20220329)
 start <- Sys.time()
@@ -141,7 +142,7 @@ lapply(synthetic_HCAP_list[indices], function(x)
   generate_synthetic(warm_up = 100, run_number = 1, 
                      starting_props = c(0.25, 0.25, 0.25, 0.25),
                      dataset_to_copy = x, orig_means = means, orig_sds = sds, 
-                       calibration_sample = TRUE, 
+                     calibration_sample = TRUE, 
                      calibration_prop = 
                        as.numeric(str_remove(calibration_scenario, 
                                              "HCAP_"))/100,
