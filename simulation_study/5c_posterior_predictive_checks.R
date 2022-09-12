@@ -115,7 +115,8 @@ dataset_names <-
 
 #---- ****specify indices ----
 indices <-
-  which(dataset_names %in% paste0("HRS_", c(500), "_", calibration_scenario))
+  which(dataset_names %in% paste0("HRS_", c(500, 1000, 2000, 4000, 8000), "_", 
+                                  calibration_scenario))
 
 start <- Sys.time()
 
@@ -133,11 +134,11 @@ lapply(synthetic_HCAP_list[indices], function(x)
                               path_to_analyses_folder = 
                                 paste0(path_to_box, 
                                        "analyses/simulation_study/HCAP_", 
-                                       unique(x[, "dataset_name"]), "/"), 
+                                       unique(x[, "dataset_name_stem"]), "/"), 
                               path_to_figures_folder = 
                                 paste0(path_to_box,
                                        "figures/simulation_study/HCAP_", 
-                                       unique(x[, "dataset_name"]), "/")))
+                                       unique(x[, "dataset_name_stem"]), "/")))
 
 end <- Sys.time() - start
 
