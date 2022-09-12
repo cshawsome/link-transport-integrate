@@ -228,7 +228,7 @@ posterior_predictive_checks <-
         dplyr::select(all_of(categorical_covariates)) %>% 
         unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
         set_colnames(c("cell_ID", "Freq")) %>% 
-        left_join(cell_ID_key, .)
+        left_join(cell_ID_key, ., by = "cell_ID")
     }
     
     counts[which(is.na(counts$Freq)), "Freq"] <- 0
