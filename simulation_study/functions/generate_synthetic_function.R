@@ -200,20 +200,33 @@ generate_synthetic <-
       nu_0_mat[which(nu_0_mat$dataset_name == 
                        unlist(unique(dataset_to_copy[, "dataset_name"]))), ]  
     
+    #---- initiate synthetic sample ----
+    synthetic_sample <- dataset_to_copy %>%
+      dplyr::select("HHIDPN", all_of(vars)) %>%
+      #pre-allocate columns
+      mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
+             "p_dementia" = 0)
+
+    if(calibration_sample){
+      #---- **split sample ----
+      synthetic_sample <-
+        anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
+    }
+
     #---- start sampling ----
     for(b in 1:B){
-      #---- start over at each run with dataset we wish to copy ----
-      synthetic_sample <- dataset_to_copy %>% 
-        dplyr::select("HHIDPN", all_of(vars)) %>% 
-        #pre-allocate columns
-        mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, 
-               "p_dementia" = 0)
-      
-      if(calibration_sample){
-        #---- **split sample ----
-        synthetic_sample <- 
-          anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
-      }
+      # #---- start over at each run with dataset we wish to copy ----
+      # synthetic_sample <- dataset_to_copy %>%
+      #   dplyr::select("HHIDPN", all_of(vars)) %>%
+      #   #pre-allocate columns
+      #   mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
+      #          "p_dementia" = 0)
+      # 
+      # if(calibration_sample){
+      #   #---- **split sample ----
+      #   synthetic_sample <-
+      #     anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
+      # }
       
       #---- **random index for priors ----
       random_draw <- sample(seq(1, max_index), size = 1)
@@ -642,7 +655,8 @@ generate_synthetic <-
                    colour = figure_label)) + 
         geom_line(aes(group = figure_label)) + 
         facet_grid(rows = vars(factor(model, 
-                                      levels = c("unimpaired", "mci", "other"))), 
+                                      levels = c("unimpaired", "mci", "dementia",
+                                                 "other"))), 
                    scales = "free") + 
         geom_vline(xintercept = warm_up, size = 1) + theme_bw() + xlab("Run") + 
         scale_x_discrete(breaks = seq(0, B, by = 100)) + 
@@ -875,12 +889,12 @@ generate_synthetic <-
 # warm_up = 100
 # run_number = 1
 # starting_props = c(0.25, 0.25, 0.25, 0.25)
-# dataset_to_copy = synthetic_HCAP_list[[1]]
+# dataset_to_copy = synthetic_HCAP_list[[5]]
 # orig_means = means
 # orig_sds = sds
 # calibration_sample = TRUE
-# calibration_prop = 
-#   as.numeric(str_remove(calibration_scenario, 
+# calibration_prop =
+#   as.numeric(str_remove(calibration_scenario,
 #                         "HCAP_"))/100
 # calibration_sample_name = calibration_scenario
 # path_to_raw_prior_sample =
