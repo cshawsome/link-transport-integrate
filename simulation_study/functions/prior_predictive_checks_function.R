@@ -165,7 +165,10 @@ prior_predictive_checks <-
                              calibration_subset[, vars[-1]]))
           
           prior_betas <- coefficients(latent_class_model)
-          #prior_cov <- vcov(latent_class_model)
+          prior_cov <- vcov(latent_class_model)
+          
+          prior_betas <-
+            t(mvnfast::rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov))
           
         } else{
           prior_betas <- get(paste0(model, "_betas"))[, random_draw]
@@ -597,7 +600,7 @@ prior_predictive_checks <-
   }
 
 # #---- test function ----
-# dataset_to_copy = synthetic_HCAP_list[[1]]
+# dataset_to_copy = synthetic_HCAP_list[[5]]
 # calibration_sample = TRUE
 # calibration_prop = 0.50
 # calibration_sample_name = "HCAP_50"
