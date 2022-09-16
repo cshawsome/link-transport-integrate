@@ -200,33 +200,33 @@ generate_synthetic <-
       nu_0_mat[which(nu_0_mat$dataset_name == 
                        unlist(unique(dataset_to_copy[, "dataset_name"]))), ]  
     
-    #---- initiate synthetic sample ----
-    synthetic_sample <- dataset_to_copy %>%
-      dplyr::select("HHIDPN", all_of(vars)) %>%
-      #pre-allocate columns
-      mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
-             "p_dementia" = 0)
-
-    if(calibration_sample){
-      #---- **split sample ----
-      synthetic_sample <-
-        anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
-    }
+    # #---- initiate synthetic sample ----
+    # synthetic_sample <- dataset_to_copy %>%
+    #   dplyr::select("HHIDPN", all_of(vars)) %>%
+    #   #pre-allocate columns
+    #   mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
+    #          "p_dementia" = 0)
+    # 
+    # if(calibration_sample){
+    #   #---- **split sample ----
+    #   synthetic_sample <-
+    #     anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
+    # }
 
     #---- start sampling ----
     for(b in 1:B){
-      # #---- start over at each run with dataset we wish to copy ----
-      # synthetic_sample <- dataset_to_copy %>%
-      #   dplyr::select("HHIDPN", all_of(vars)) %>%
-      #   #pre-allocate columns
-      #   mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
-      #          "p_dementia" = 0)
-      # 
-      # if(calibration_sample){
-      #   #---- **split sample ----
-      #   synthetic_sample <-
-      #     anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
-      # }
+      #---- start over at each run with dataset we wish to copy ----
+      synthetic_sample <- dataset_to_copy %>%
+        dplyr::select("HHIDPN", all_of(vars)) %>%
+        #pre-allocate columns
+        mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
+               "p_dementia" = 0)
+
+      if(calibration_sample){
+        #---- **split sample ----
+        synthetic_sample <-
+          anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
+      }
       
       #---- **random index for priors ----
       random_draw <- sample(seq(1, max_index), size = 1)
