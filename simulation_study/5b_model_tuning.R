@@ -133,7 +133,7 @@ dataset_names <-
 
 #---- ****specify indices ----
 indices <-
-  which(dataset_names %in% paste0("HRS_", c(500, 1000, 2000, 4000, 8000), "_", 
+  which(dataset_names %in% paste0("HRS_", c(8000), "_", 
                                   calibration_scenario))
 
 set.seed(20220329)
