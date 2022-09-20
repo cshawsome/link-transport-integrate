@@ -38,7 +38,7 @@ read_results <- function(path, skip = 0){
         unite("calibration", c("calibration1", "calibration2")) %>%
         mutate_at(vars(-one_of("time", "dataset_name", "calibration", "text")), 
                   as.numeric)
-    }
+    #}
     
     return(data)
   }
