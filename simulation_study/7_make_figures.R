@@ -175,7 +175,11 @@ ggsave(filename = "synthetic_bathtub_mix_Z.jpeg", plot = last_plot(),
        path = paste0(path_to_box, "figures/simulation_study/"), 
        width = 8, height = 10, units = "in", device = "jpeg")
 
-#---- Figure X: 95% CI impairment classes ----
+#---- check number of simulation runs ----
+#Missing runs:
+# n = 2000: 1
+# n = 4000: 64
+# n = 8000: 274
 #---- **read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
@@ -185,14 +189,22 @@ results_paths <-
 
 results <- do.call(rbind, lapply(results_paths, read_results)) 
 
+table(results$dataset_name, useNA = "ifany")
+
+#---- Figure X: mean and 95% CI impairment class counts ----
 #---- **color palette ----
 color_palette <- read_csv(here("color_palette.csv"))
 
 group_colors <- color_palette$Color
 names(group_colors) <- color_palette$Group
 
-#---- **check number of runs ----
-table(results$dataset_name, useNA = "ifany")
+
+#---- Figure X: 95% CI impairment classes ----
+#---- **color palette ----
+color_palette <- read_csv(here("color_palette.csv"))
+
+group_colors <- color_palette$Color
+names(group_colors) <- color_palette$Group
 
 #---- **plot data ----
 plot_data <- results %>% 
