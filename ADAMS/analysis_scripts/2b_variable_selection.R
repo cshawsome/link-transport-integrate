@@ -180,7 +180,8 @@ tidy_other_model_25
 
 #---- var select: MCI vs. Dementia ----
 MCI_model_data <- ADAMS_subset %>% dplyr::select(all_of(vars)) %>% 
-  filter(AUnimpaired == 0 & AOther == 0) %>% dplyr::select(-c("AUnimpaired", "AOther")) 
+  filter(AUnimpaired == 0 & AOther == 0) %>% 
+  dplyr::select(-c("AUnimpaired", "AOther")) 
 
 # #Sanity check
 # table(ADAMS_subset$Adem_dx_cat)
@@ -252,7 +253,7 @@ sort(colSums(is.na(unimpaired_model_data) %>%
 #---- **model 25 ----
 unimpaired_model_25 <- glm(AUnimpaired ~ AAGE + ETHNIC_label + ANMSETOT + 
                              ANSER7T + ANIMMCR + ANRECYES + ANWM1TOT + proxy_cog, 
-                       family = "binomial", data = unimpaired_model_data)
+                           family = "binomial", data = unimpaired_model_data)
 
 summary(unimpaired_model_25)
 
@@ -261,7 +262,7 @@ p_val_unimpaired_model_25 <-
   1 - pchisq(unimpaired_model_25$deviance, unimpaired_model_25$df.residual)
 
 tidy_unimpaired_model_25 <- tidy(unimpaired_model_25, exponentiate = TRUE, 
-                             conf.int = TRUE, conf.level = 0.95) %>% 
+                                 conf.int = TRUE, conf.level = 0.95) %>% 
   mutate_if(is.numeric, round, 4) %>% as.data.frame()
 #show results
 tidy_unimpaired_model_25
