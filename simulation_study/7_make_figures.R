@@ -250,21 +250,27 @@ plot_data <- results %>%
     c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other", 
       "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other", 
       "UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other"), "_prop"),
-               names_to = c(".value", "Group"), names_pattern = "(.*?)_(.*)") %>% 
+    names_to = c(".value", "Group"), names_pattern = "(.*?)_(.*)") %>% 
   mutate_at("Group", function(x) str_remove(x, "_prop")) %>% 
-  mutate_at("sample_size", as.factor)
+  mutate_at("sample_size", as.factor) %>% 
+  mutate_at("Group", function(x) 
+            factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other")))
 
 #---- **plot ----
 ggplot(data = plot_data, aes(x = mean, y = sample_size)) +
   geom_vline(data = superpop_impairment_props, aes(xintercept = prop), 
              size = 1, color = color_palette$Color) +
-  geom_point(size = 2, shape = 15) + 
-  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.3) + theme_bw() + 
-  facet_grid(cols = vars(Group), scales = "free_x") + 
+  geom_point(size = 2) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.2) + theme_bw() + 
+  facet_grid(cols = vars(Group)) + 
+  scale_x_continuous(breaks = seq(0.10, 0.40, by = 0.05)) +
   xlab("Proportion") + ylab("HCAP sample size") + 
-  theme(text = element_text(size = 18))     
+  theme(text = element_text(size = 18))  
 
-#---- Figure X: 95% CI impairment classes ----
+ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+                         "mean_CI_impairement_class.jpeg"))
+
+#---- Figure X: 95% CI coverage impairment classes ----
 #---- **color palette ----
 color_palette <- read_csv(here("color_palette.csv"))
 
@@ -276,46 +282,34 @@ plot_data <- results %>%
   group_by(calibration, sample_size) %>% 
   summarise_at(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"), 
                mean) %>% 
-  mutate_at("sample_size", as.numeric) %>% 
-  mutate("sample_size" = 0.5*sample_size) %>%
   pivot_longer(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"),
-               names_to = c("class", "coverage"), names_sep = "_") 
+               names_to = c("class", "coverage"), names_sep = "_") %>% 
+  mutate_at("sample_size", as.factor)
 
 #---- **plot ----
 ggplot(data = plot_data, aes(x = sample_size, y = value, group = class)) + 
   geom_line(aes(color = class), size = 1) + 
-  geom_point(aes(color = class), size = 1.5) + 
+  geom_point(aes(color = class), size = 2) + 
   scale_color_manual(values = group_colors) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
-  theme_bw() + ylab("95% CI Coverage") + 
+  theme_bw() + ylab("95% CI Coverage") + xlab("HCAP Sample Size") +
   #facet_grid(rows = vars(calibration)) + 
   guides(color = guide_legend(title = "Group")) + 
-  scale_x_continuous(name = "HCAP Sample Size", 
-                     breaks = unique(plot_data$sample_size)) + 
   theme(text = element_text(size = 18))       
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
                          "impairement_class_coverage.jpeg"))
 
 #----- Figure X: bias impairment class counts ----
-#---- **read in data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-
-results_paths <- 
-  list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
-             full.names = TRUE, pattern = "*.csv")
-
-results <- do.call(rbind, lapply(results_paths, read_results))
-
-#---- ****% bias ----
-#---- ******overall ----
+#---- **% bias ----
+#---- ****overall ----
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
   results %<>% 
     mutate(!!paste0("percent_increase_", class) := 
              !!sym(paste0("bias_", class))/!!sym(paste0("true_", class))*100)
 }
 
-#---- ******by race ----
+#---- ****by race ----
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
   for(race in c("white", "black", "hispanic")){
     results %<>% 
