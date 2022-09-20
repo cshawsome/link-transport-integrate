@@ -12,36 +12,31 @@ read_results <- function(path, skip = 0){
     dataset_name <- str_split(path, pattern = "results/")[[1]][2]
     dataset_name <- str_remove(dataset_name, pattern = ".csv")
     
-    if(str_detect(dataset_name, "ADAMS_HCAP")){
-      data <- data.table::fread(path, fill = TRUE, skip = skip) %>% 
-        na.omit() %>% mutate("dataset_name" = dataset_name) %>% 
-        separate(dataset_name, into = c("name", "calibration"), 
-                 sep = "ADAMS_", remove = FALSE) %>%
-        separate(name, 
-                 into = c("Distribution", "sample_size", "prior_props"), 
-                 sep = "_", remove = FALSE) %>% 
-        mutate("prior_props" = "ADAMS") %>%
-        mutate_at("Distribution", str_to_title) %>% 
-        mutate("color" = case_when(Distribution == "Normal" ~ "#135467", 
-                                   Distribution == "Lognormal" ~ "#f0824f", 
-                                   Distribution == "Bathtub" ~ "b51661")) %>% 
-        dplyr::select(-one_of("name")) %>%
-        mutate_at(vars(-one_of("time", "dataset_name", "Distribution", 
-                               "prior_props", "calibration", "color")), 
-                  as.numeric) 
-    } else{
+    # if(str_detect(dataset_name, "ADAMS_HCAP")){
+    #   data <- data.table::fread(path, fill = TRUE, skip = skip) %>% 
+    #     na.omit() %>% mutate("dataset_name" = dataset_name) %>% 
+    #     separate(dataset_name, into = c("name", "calibration"), 
+    #              sep = "ADAMS_", remove = FALSE) %>%
+    #     separate(name, 
+    #              into = c("Distribution", "sample_size", "prior_props"), 
+    #              sep = "_", remove = FALSE) %>% 
+    #     mutate("prior_props" = "ADAMS") %>%
+    #     mutate_at("Distribution", str_to_title) %>% 
+    #     mutate("color" = case_when(Distribution == "Normal" ~ "#135467", 
+    #                                Distribution == "Lognormal" ~ "#f0824f", 
+    #                                Distribution == "Bathtub" ~ "b51661")) %>% 
+    #     dplyr::select(-one_of("name")) %>%
+    #     mutate_at(vars(-one_of("time", "dataset_name", "Distribution", 
+    #                            "prior_props", "calibration", "color")), 
+    #               as.numeric) 
+    # } else{
       data <- data.table::fread(path, fill = TRUE, skip = skip) %>% 
         na.omit() %>% mutate("dataset_name" = dataset_name) %>% 
         separate(dataset_name, 
-                 into = c("Distribution", "sample_size", "prior_props", 
-                          "calibration"), 
+                 into = c("text", "sample_size", "calibration1", "calibration2"), 
                  sep = "_", remove = FALSE) %>% 
-        mutate_at("Distribution", str_to_title) %>% 
-        mutate("color" = case_when(Distribution == "Normal" ~ "#135467", 
-                                   Distribution == "Lognormal" ~ "#f0824f", 
-                                   Distribution == "Bathtub" ~ "b51661")) %>% 
-        mutate_at(vars(-one_of("time", "dataset_name", "Distribution", 
-                               "prior_props", "calibration", "color")), 
+        unite("calibration", c("calibration1", "calibration2")) %>%
+        mutate_at(vars(-one_of("time", "dataset_name", "calibration", "text")), 
                   as.numeric)
     }
     
