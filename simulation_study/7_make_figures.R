@@ -192,12 +192,77 @@ results <- do.call(rbind, lapply(results_paths, read_results))
 table(results$dataset_name, useNA = "ifany")
 
 #---- Figure X: mean and 95% CI impairment class counts ----
+#---- **truth ----
+superpop_impairment_props <- 
+  read_csv(paste0(path_to_box, 
+                  "data/superpopulations/impairment_class_props.csv"))
+superpop_impairment_props$Group <- 
+  factor(superpop_impairment_props$Group, 
+         levels = c("Unimpaired", "MCI", "Dementia", "Other"))
+
 #---- **color palette ----
 color_palette <- read_csv(here("color_palette.csv"))
 
 group_colors <- color_palette$Color
 names(group_colors) <- color_palette$Group
 
+#---- **plot data ----
+#---- ****extra calcs: delete later ----
+results %<>% 
+  mutate(true_Unimpaired_prop = 
+           as.numeric(superpop_impairment_props[
+             superpop_impairment_props$Group == "Unimpaired", "prop"]), 
+         true_MCI_prop = 
+           as.numeric(superpop_impairment_props[
+             superpop_impairment_props$Group == "MCI", "prop"]), 
+         true_Dementia_prop = 
+           as.numeric(superpop_impairment_props[
+             superpop_impairment_props$Group == "Dementia", "prop"]), 
+         true_Other_prop = 
+           as.numeric(superpop_impairment_props[
+             superpop_impairment_props$Group == "Other", "prop"]))
+
+results %<>% mutate(sample_size = 0.5*sample_size)
+
+results %<>% 
+  mutate(mean_Unimpaired_prop = mean_Unimpaired/sample_size, 
+         mean_MCI_prop = mean_MCI/sample_size, 
+         mean_Dementia_prop = mean_Dementia/sample_size, 
+         mean_Other_prop = mean_Other/sample_size) %>% 
+  mutate(LCI_Unimpaired_prop = LCI_Unimpaired/sample_size, 
+         LCI_MCI_prop = LCI_MCI/sample_size, 
+         LCI_Dementia_prop = LCI_Dementia/sample_size, 
+         LCI_Other_prop = LCI_Other/sample_size) %>%
+  mutate(UCI_Unimpaired_prop = UCI_Unimpaired/sample_size, 
+         UCI_MCI_prop = UCI_MCI/sample_size, 
+         UCI_Dementia_prop = UCI_Dementia/sample_size, 
+         UCI_Other_prop = UCI_Other/sample_size)
+
+#---- ****end extra calcs: delete later ----
+plot_data <- results %>% 
+  group_by(calibration, sample_size) %>% 
+  summarise_at(paste0(
+    c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other", 
+      "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other", 
+      "UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other"), "_prop"), 
+    mean) %>% 
+  pivot_longer(paste0(
+    c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other", 
+      "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other", 
+      "UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other"), "_prop"),
+               names_to = c(".value", "Group"), names_pattern = "(.*?)_(.*)") %>% 
+  mutate_at("Group", function(x) str_remove(x, "_prop")) %>% 
+  mutate_at("sample_size", as.factor)
+
+#---- **plot ----
+ggplot(data = plot_data, aes(x = mean, y = sample_size)) +
+  geom_vline(data = superpop_impairment_props, aes(xintercept = prop), 
+             size = 1, color = color_palette$Color) +
+  geom_point(size = 2, shape = 15) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.3) + theme_bw() + 
+  facet_grid(cols = vars(Group), scales = "free_x") + 
+  xlab("Proportion") + ylab("HCAP sample size") + 
+  theme(text = element_text(size = 18))     
 
 #---- Figure X: 95% CI impairment classes ----
 #---- **color palette ----
@@ -384,7 +449,7 @@ results_summary$sample_size <-
 results_summary$Distribution <- 
   factor(truth$Distribution, levels = c("Normal", "Lognormal", "Bathtub"))
 
-#---- color palette ----
+#---- **color palette ----
 navy <- "#135467"
 
 #---- **plot ----
