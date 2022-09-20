@@ -1,12 +1,48 @@
-#Edit this in the future to just pull in the analytic datasets
 #---- Package Loading and Options ----
 if (!require("pacman")){
   install.packages("pacman", repos = 'http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "magrittr", "haven", "stringr", "NormPsy")
+p_load("here", "tidyverse", "gtsummary", "labelled", "magrittr")
 
 options(scipen = 999)
+
+#---- table 4.1: sample characteristics ----
+#---- **read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+#---- ****ADAMS ----
+ADAMS_analytic <- 
+  read_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_analytic.csv"))
+
+#---- ****variable labels ----
+variable_labels <- 
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
+  filter(ADAMS %in% colnames(ADAMS_analytic))
+
+#---- **relabel vars ----
+ADAMS_analytic %<>% 
+  rename_at(vars(variable_labels$ADAMS), ~ variable_labels$figure_label)
+
+#---- **select vars ----
+vars <- c("Female", "Age", "")
+
+#---- **make table ----
+tab1 <- ADAMS_analytic %>% dplyr::select(all_of(vars)) %>%
+  #set_value_labels(high_accult = c("High"=1, "Low"=0)) %>% 
+  #modify_if(is.labelled, to_factor) %>% 
+  tbl_summary(missing = "ifany", 
+              #by = study,
+              statistic = list(all_continuous() ~ "{mean} ({sd})")) %>%
+  #modify_header(label = "**Variable**") %>%
+  #add_overall() %>% 
+  add_stat_label(location = "row") %>%
+  #modify_spanning_header(c("stat_1","stat_2") ~ "**Acculturation Level**") %>%
+  #modify_spanning_header(starts_with("stat_") ~ "Table 1") %>% 
+  bold_labels() 
+
+
+#---- OLD ----
 
 #---- ADAMS ----
 #---- **read in data ----
