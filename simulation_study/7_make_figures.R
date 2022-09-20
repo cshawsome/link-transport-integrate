@@ -254,7 +254,7 @@ plot_data <- results %>%
   mutate_at("Group", function(x) str_remove(x, "_prop")) %>% 
   mutate_at("sample_size", as.factor) %>% 
   mutate_at("Group", function(x) 
-            factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other")))
+    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other")))
 
 #---- **plot ----
 ggplot(data = plot_data, aes(x = mean, y = sample_size)) +
@@ -295,7 +295,7 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, group = class)) +
   theme_bw() + ylab("95% CI Coverage") + xlab("HCAP Sample Size") +
   #facet_grid(rows = vars(calibration)) + 
   guides(color = guide_legend(title = "Group")) + 
-  theme(text = element_text(size = 18))       
+  theme(text = element_text(size = 18), legend.position = "bottom")      
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
                          "impairement_class_coverage.jpeg"))
@@ -330,16 +330,14 @@ plot_data <- results %>%
   dplyr::select("calibration", "sample_size", 
                 paste0("percent_increase_", 
                        c("Unimpaired", "MCI", "Dementia", "Other"))) %>%
-  mutate_at("sample_size", as.numeric) %>% 
-  mutate("sample_size" = 0.5*sample_size) %>% 
-  mutate_at("sample_size", as.factor) %>%
   pivot_longer(paste0("percent_increase_", 
                       c("Unimpaired", "MCI", "Dementia", "Other")),
                names_to = c("text", "class"), 
                names_sep = "_increase_") %>% 
   mutate_at("class", function(x) str_remove(x, pattern = "_prop")) %>%
   mutate_at("class", function(x) 
-    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other")))
+    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
+  mutate_at("sample_size", as.factor)
 
 #---- **plot: count ----
 ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) + 
@@ -351,7 +349,7 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) +
   guides(color = guide_legend(title = "Group")) + 
   scale_x_discrete(name = "HCAP Sample Size", 
                    breaks = unique(plot_data$sample_size)) + 
-  theme(text = element_text(size = 18))       
+  theme(text = element_text(size = 18), legend.position = "bottom")       
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
                          "impairement_class_percent_bias_counts.jpeg"))
@@ -365,8 +363,6 @@ cols_by_race <- expand_grid("percent_increase",
 plot_data <- results %>% 
   dplyr::select("calibration", "sample_size",  
                 all_of(cols_by_race)) %>%
-  mutate_at("sample_size", as.numeric) %>% 
-  mutate("sample_size" = 0.5*sample_size) %>% 
   mutate_at("sample_size", as.factor) %>%
   pivot_longer(all_of(cols_by_race), names_to = c("text", "class_race"), 
                names_sep = "_increase_") %>% 
@@ -386,83 +382,151 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) +
   guides(color = guide_legend(title = "Group")) + 
   scale_x_discrete(name = "HCAP Sample Size", 
                    breaks = unique(plot_data$sample_size)) + 
-  theme(text = element_text(size = 18))    
+  theme(text = element_text(size = 18), legend.position = "bottom")    
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
                          "impairement_class_percent_bias_count_by_race.jpeg"))
 
-#---- Figure X: HRS model results ----
-#---- **read in data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-
-results_paths <- 
-  list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
-             full.names = TRUE, pattern = "*.csv")
-
-results <- do.call(rbind, lapply(results_paths, read_results)) %>% 
-  #restrict results for now
-  filter(prior_props == "ADAMS")
-
-#---- **truth ----
-truth <- 
-  read_csv(paste0(path_to_box, "data/truth.csv")) %>% 
-  filter(term %in% c("black", "hispanic")) %>% 
-  dplyr::select("term", "estimate", "dataset_name") %>% 
-  separate(dataset_name, 
-           into = c("Distribution", "sample_size", "prior_props"), 
-           sep = "_") %>% 
-  mutate_at(c("term", "Distribution"), str_to_sentence) %>% 
-  rename_with(c("term", "estimate"), .fn = ~ c("race_eth", "beta")) %>% 
-  mutate_at("race_eth", function(x) paste0(x, " vs. White")) %>%
-  #restrict results for now
-  filter(prior_props == "ADAMS")
-
-truth$Distribution <- 
-  factor(truth$Distribution, levels = c("Normal", "Lognormal", "Bathtub"))
-
+#---- Figure X: dementia prevalence ----
 #---- **plot data ----
-results_summary <- results %>%
-  group_by(calibration, Distribution, sample_size) %>%
-  summarize_at(.vars = c("black_beta", "hispanic_beta", "black_se", 
-                         "hispanic_se", "black_LCI", "hispanic_LCI", 
-                         "black_UCI", "hispanic_UCI", "black_coverage", 
-                         "hispanic_coverage"), 
-               ~mean(., na.rm = TRUE)) %>% 
-  pivot_longer(cols = !c("calibration", "Distribution", "sample_size"), 
-               names_to = c("race_eth", ".value"),
-               names_sep = "_") %>% 
-  mutate_at("race_eth", str_to_sentence) %>% 
-  mutate_at("race_eth", function(x) paste0(x, " vs. White")) %>%
-  mutate_at("sample_size", as.numeric) %>% 
-  mutate("sample_size" = 0.5*sample_size) 
+truth <- data.frame("Race" = c("White", "Black", "Hispanic"), 
+                    "prev" = c(unique(results$true_dem_prev_white), 
+                               unique(results$true_dem_prev_black), 
+                               unique(results$true_dem_prev_hispanic))) %>% 
+  mutate_at("prev", function(x) round(x, 2)) %>% 
+  mutate_at("Race", 
+            function(x) factor(x, levels = c("White", "Black", "Hispanic")))
 
-results_summary$sample_size <- 
-  factor(results_summary$sample_size, 
-         levels = c("250", "500", "1000", "2000", "4000"))
-
-results_summary$Distribution <- 
-  factor(truth$Distribution, levels = c("Normal", "Lognormal", "Bathtub"))
-
-#---- **color palette ----
-navy <- "#135467"
+plot_data <- results %>% 
+  group_by(calibration, sample_size) %>% 
+  summarise_at(
+    c("mean_dem_prev_white", "mean_dem_prev_black", "mean_dem_prev_hispanic", 
+      "LCI_dem_prev_white", "LCI_dem_prev_black", "LCI_dem_prev_hispanic", 
+      "UCI_dem_prev_white", "UCI_dem_prev_black", "UCI_dem_prev_hispanic"), 
+    mean) %>% 
+  pivot_longer(
+    c("mean_dem_prev_white", "mean_dem_prev_black", "mean_dem_prev_hispanic", 
+      "LCI_dem_prev_white", "LCI_dem_prev_black", "LCI_dem_prev_hispanic", 
+      "UCI_dem_prev_white", "UCI_dem_prev_black", "UCI_dem_prev_hispanic"),
+    names_to = c(".value", "Race"), names_pattern = "(.*?)_(.*)") %>% 
+  mutate_at("Race", function(x) str_remove(x, "dem_prev_")) %>% 
+  mutate_at("Race", str_to_sentence) %>%
+  mutate("sample_size" = 2*sample_size) %>%
+  mutate_at("sample_size", as.factor) %>% 
+  mutate_at("Race", function(x) 
+    factor(x, levels = c("White", "Black", "Hispanic")))
 
 #---- **plot ----
-ggplot(results_summary, 
-       #%>% filter(!sample_size %in% c("500", "1000")), 
-       aes(x = beta, y = sample_size)) +
-  geom_point(size = 4, position = position_dodge(-0.8), color = navy) + 
-  # geom_errorbar(aes(xmin = LCI, xmax = UCI), width = .3,
-  #               position = position_dodge(-0.8), color = navy) +
-  theme_bw() + xlab("Beta (log RR)") + ylab("\"HCAP\" Sample Size") +
-  theme(legend.position = "bottom", legend.direction = "horizontal") + 
-  geom_vline(xintercept = 0, color = "dark gray", linetype = "dashed", size = 1) + 
-  geom_vline(data = truth %>% filter(Distribution == "Normal"), 
-             aes(xintercept = beta), size = 1) +
-  facet_grid(cols = vars(race_eth), rows = vars(calibration)) + 
-  theme(text = element_text(size = 18))   
-
+ggplot(data = plot_data, aes(x = mean, y = sample_size)) + 
+  geom_vline(aes(xintercept = prev), data = truth, color = "#ff0000", size = 1) +
+  geom_point(size = 2) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.2) +
+  facet_grid(cols = vars(Race)) + theme_bw() + 
+  xlab("Dementia prevalence") + ylab("HRS sample size") + 
+  scale_x_continuous(breaks = seq(0.0, 0.5, by = 0.10)) + 
+  theme(text = element_text(size = 18))  
 
 ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
-                         "HRS_model_results.jpeg"), 
-       height = 6, width = 15, units = "in")
+                         "mean_CI_dem_prev.jpeg"))
 
+#---- Figure X: 95% CI coverage dementia prevalence ----
+#---- **plot data ----
+plot_data <- results %>% 
+  group_by(calibration, sample_size) %>% 
+  summarise_at(paste0("dem_prev_coverage_", c("white", "black", "hispanic")), 
+               mean) %>% 
+  pivot_longer(paste0("dem_prev_coverage_", c("white", "black", "hispanic")),
+               names_to = c(".value", "Race"), 
+               names_pattern = "(.*?)_(.*)") %>%
+  mutate_at("Race", function(x) str_remove(x, "prev_coverage_")) %>% 
+  mutate_at("Race", str_to_sentence) %>%
+  mutate_at("Race", function(x) 
+    factor(x, levels = c("White", "Black", "Hispanic"))) %>%
+  mutate("sample_size" = 2*sample_size) %>%
+  mutate_at("sample_size", as.factor)
+
+#---- **plot ----
+ggplot(data = plot_data, aes(x = sample_size, y = dem, group = Race)) + 
+  geom_line(aes(color = Race), size = 1) + 
+  geom_point(aes(color = Race), size = 2) + 
+  scale_color_manual(values = c("#006d9e", "#e09a3b", "#9ddfdf")) +
+  geom_hline(yintercept = 0.95, lty = "dashed") +
+  theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
+  #facet_grid(rows = vars(calibration)) + 
+  guides(color = guide_legend(title = "Race/Ethnicity")) + 
+  theme(text = element_text(size = 18), legend.position = "bottom")      
+
+ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+                         "dem_prev_coverage.jpeg")) 
+
+#---- Figure X: RR dementia ----
+#---- **plot data ----
+truth <- data.frame("Comparison" = c("Black vs. White", "Hispanic vs. White"), 
+                    "RR" = c(unique(results$true_dem_prev_black)/
+                               unique(results$true_dem_prev_white), 
+                             unique(results$true_dem_prev_hispanic)/
+                               unique(results$true_dem_prev_white))) %>% 
+  mutate_at("RR", function(x) round(x, 2)) %>% 
+  mutate_at("Comparison", 
+            function(x) 
+              factor(x, levels = c("Black vs. White", "Hispanic vs. White")))
+
+plot_data <- results %>% 
+  group_by(calibration, sample_size) %>% 
+  summarise_at(
+    c("mean_RR_black", "mean_RR_hispanic", "LCI_RR_black", "LCI_RR_hispanic", 
+      "UCI_RR_black", "UCI_RR_hispanic"), mean) %>% 
+  pivot_longer(
+    c("mean_RR_black", "mean_RR_hispanic", "LCI_RR_black", "LCI_RR_hispanic", 
+      "UCI_RR_black", "UCI_RR_hispanic"),
+    names_to = c(".value", "Race"), names_pattern = "(.*?)_(.*)") %>% 
+  mutate_at("Race", function(x) str_remove(x, "RR_")) %>% 
+  mutate("Comparison" = case_when(Race == "black" ~ "Black vs. White", 
+                                  Race == "hispanic" ~ "Hispanic vs. White")) %>%
+  mutate("sample_size" = 2*sample_size) %>%
+  mutate_at("sample_size", as.factor) %>% 
+  mutate_at("Race", function(x) 
+    factor(x, levels = c("Black vs. White", "Hispanic vs. White")))
+
+#---- **plot ----
+ggplot(data = plot_data, aes(x = mean, y = sample_size)) + 
+  geom_vline(aes(xintercept = RR), data = truth, color = "#ff0000", size = 1) +
+  geom_vline(aes(xintercept = 1), color = "black", lty = "dashed") +
+  geom_point(size = 2) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.2) +
+  facet_grid(cols = vars(Comparison)) + theme_bw() + 
+  xlab("RR") + ylab("HRS sample size") + 
+  theme(text = element_text(size = 18))  
+
+ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+                         "mean_CI_RR.jpeg"))
+
+#---- Figure X: 95% CI coverage RR ----
+#---- **plot data ----
+plot_data <- results %>% 
+  group_by(calibration, sample_size) %>% 
+  summarise_at(paste0("RR_coverage_", c("black", "hispanic")), mean) %>% 
+  pivot_longer(paste0("RR_coverage_", c("black", "hispanic")),
+               names_to = c(".value", "Race"), 
+               names_pattern = "(.*?)_(.*)") %>%
+  mutate_at("Race", function(x) str_remove(x, "coverage_")) %>% 
+  mutate("Comparison" = case_when(Race == "black" ~ "Black vs. White", 
+                                  Race == "hispanic" ~ "Hispanic vs. White")) %>%
+  mutate_at("Comparison", function(x) 
+    factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
+  mutate("sample_size" = 2*sample_size) %>%
+  mutate_at("sample_size", as.factor)
+
+#---- **plot ----
+ggplot(data = plot_data, aes(x = sample_size, y = RR, group = Comparison)) + 
+  geom_line(aes(color = Comparison), size = 1) + 
+  geom_point(aes(color = Comparison), size = 2) + 
+  scale_color_manual(values = c("#e09a3b", "#9ddfdf")) +
+  geom_hline(yintercept = 0.95, lty = "dashed") +
+  theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
+  #facet_grid(rows = vars(calibration)) + 
+  guides(color = guide_legend(title = "Comparison")) + 
+  theme(text = element_text(size = 18), legend.position = "bottom")      
+
+ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+                         "RR_coverage.jpeg"))
