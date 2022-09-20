@@ -42,32 +42,32 @@ path_to_RScripts <- "/u/home/c/cshaw343/link_transport_integrate/RScripts/"
 source(paste0(path_to_RScripts, "read_results.R"))
 source(paste0(path_to_RScripts, "generate_synthetic_function.R"))
 source(paste0(path_to_RScripts, "simulation_function.R"))
-source(paste0(path_to_RScripts), "standardized_dem_estimates.R")
+source(paste0(path_to_RScripts, "standardized_dem_estimates.R"))
 
 #---- read in data ----
 path_to_data <- "/u/home/c/cshaw343/link_transport_integrate/data/"
 
 #---- **data paths ----
-superpop <- 
+superpop <-
   read_results(paste0(path_to_data, "superpopulations/superpop_1000000.csv"))
 
 #---- **truth table ----
-truth <- read_csv(paste0(path_to_data, 
+truth <- read_csv(paste0(path_to_data,
                          "superpopulations/agesex_standardized_prevs.csv"))
 
 #---- **superpop means and sds ----
-means <- 
-  read_csv(paste0(path_to_box, "data/superpopulations/superpop_means.csv"))
+means <-
+  read_csv(paste0(path_to_data, "superpopulations/superpop_means.csv"))
 
-sds <- 
-  read_csv(paste0(path_to_box, "data/superpopulations/superpop_sds.csv"))
+sds <-
+  read_csv(paste0(path_to_data, "superpopulations/superpop_sds.csv"))
 
 #---- **variable labels ----
-variable_labels <- 
-  read_csv(paste0(path_to_data, "variable_crosswalk.csv")) 
+variable_labels <-
+  read_csv(paste0(path_to_data, "variable_crosswalk.csv"))
 
 #---- **cell ID key ----
-cell_ID_key <- read_csv(paste0(path_to_data, "cell_ID_key.csv")) %>% 
+cell_ID_key <- read_csv(paste0(path_to_data, "cell_ID_key.csv")) %>%
   mutate_all(as.character)
 
 #---- **impairement class color palette ----
@@ -99,23 +99,23 @@ set.seed(seed)
 
 #---- run sim ----
 replicate(num_replicates,
-          simulation_function(warm_up = 100, starting_props = rep(0.25, 4), 
-                              categorical_vars = W, continuous_vars = Z, 
-                              id_var = "HHIDPN", 
-                              variable_labels = variable_labels, 
+          simulation_function(warm_up = 100, starting_props = rep(0.25, 4),
+                              categorical_vars = W, continuous_vars = Z,
+                              id_var = "HHIDPN",
+                              variable_labels = variable_labels,
                               scenario = scenario_num,
-                              superpopulation = superpop, orig_means = means, 
-                              orig_sds = sds, 
-                              all_scenarios_list = all_sim_scenarios, 
-                              cell_ID_key = cell_ID_key, 
-                              color_palette = color_palette, 
+                              superpopulation = superpop, orig_means = means,
+                              orig_sds = sds,
+                              all_scenarios_list = all_sim_scenarios,
+                              cell_ID_key = cell_ID_key,
+                              color_palette = color_palette,
                               num_synthetic = 1000, contrasts_matrix = A,
                               kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
-                              truth = truth, seed = seed, 
-                              path_to_raw_prior_sample = 
-                                paste0(path_to_data, 
-                                       "prior_data/MI/MI_datasets_cleaned"), 
-                              path_to_data = path_to_data, 
-                              path_to_results = 
-                                paste0("/u/home/c/cshaw343/", 
+                              truth = truth, seed = seed,
+                              path_to_raw_prior_sample =
+                                paste0(path_to_data,
+                                       "prior_data/MI/MI_datasets_cleaned"),
+                              path_to_data = path_to_data,
+                              path_to_results =
+                                paste0("/u/home/c/cshaw343/",
                                        "link_transport_integrate/results/")))
