@@ -283,6 +283,11 @@ RR_hispanic <- hispanic_risk/white_risk
 write_csv(superpop, 
           paste0(path_to_box, "data/superpopulations/superpop_1000000.csv"))
 
+#---- **save impairment class props ----
+write_csv(colMeans(superpop[, c("Unimpaired", "MCI", "Dementia", "Other")]), 
+          paste0(path_to_box, 
+                 "data/superpopulations/impairment_class_props.csv"))
+
 #---- **save age and sex-standardized table ----
 write_csv(agesex_standardized, 
           paste0(path_to_box, 
