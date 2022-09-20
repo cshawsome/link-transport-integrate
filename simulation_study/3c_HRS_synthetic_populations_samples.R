@@ -284,7 +284,9 @@ write_csv(superpop,
           paste0(path_to_box, "data/superpopulations/superpop_1000000.csv"))
 
 #---- **save impairment class props ----
-write_csv(colMeans(superpop[, c("Unimpaired", "MCI", "Dementia", "Other")]), 
+write_csv(colMeans(superpop[, c("Unimpaired", "MCI", "Dementia", "Other")]) %>% 
+            as.matrix() %>% as.data.frame() %>% set_colnames("prop") %>% 
+            rownames_to_column("Group"), 
           paste0(path_to_box, 
                  "data/superpopulations/impairment_class_props.csv"))
 
