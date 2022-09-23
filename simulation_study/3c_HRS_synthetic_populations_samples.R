@@ -42,7 +42,6 @@ source(here("simulation_study", "functions", "hotdeck_function.R"))
 #---- synthetic superpopulation ----
 set.seed(20220905)
 
-#About XX hours for superpop
 start <- Sys.time()
 superpop_size <- 1000000
 superpop <- sample_n(HRS, size = superpop_size, replace = TRUE) %>% 
@@ -200,19 +199,19 @@ mean(superpop[superpop$White == 1, "Dementia"])
 mean(superpop[superpop$black == 1, "Dementia"])
 mean(superpop[superpop$hispanic == 1, "Dementia"])
 
-#Age: increased risk by year (RR = 1.03)
+#Age: increased risk by year (PR = 1.03)
 exp(coefficients(glm(Dementia ~ age, data = superpop, family = "poisson")))
 
-#Years of Education: decreased risk by higher education (RR = 0.98)
+#Years of Education: decreased risk by higher education (PR = 0.98)
 exp(coefficients(glm(Dementia ~ edyrs, data = superpop, family = "poisson")))
 
-#Stroke: increased risk for yes vs. no (RR = 1.70)
+#Stroke: increased risk for yes vs. no (PR = 1.70)
 exp(coefficients(glm(Dementia ~ stroke, data = superpop, family = "poisson")))
 
-#Diabetes: no increased risk for yes vs. no (RR = 1.00)
+#Diabetes: no increased risk for yes vs. no (PR = 1.00)
 exp(coefficients(glm(Dementia ~ diabe, data = superpop, family = "poisson")))
 
-#Diabetes: increased risk for any impairment yes vs. no (RR = 1.10)
+#Diabetes: increased risk for any impairment yes vs. no (PR = 1.10)
 superpop %<>% mutate("any_impairment" = Dementia + MCI)
 exp(coefficients(glm(any_impairment ~ diabe, data = superpop, family = "poisson")))
 
@@ -273,11 +272,11 @@ black_risk <-
 hispanic_risk <- 
   sum(agesex_standardized$expected_hispanic_dem_count)/nrow(superpop)
 
-#RR compared to white
+#PR compared to white
 #1.35
-RR_black <- black_risk/white_risk
+PR_black <- black_risk/white_risk
 #0.88
-RR_hispanic <- hispanic_risk/white_risk
+PR_hispanic <- hispanic_risk/white_risk
 
 #---- **save superpop data ----
 write_csv(superpop, 
@@ -305,7 +304,7 @@ create_HRS_datasets <- function(superpop, n){
 
 set.seed(20220507)
 
-for(n in c(500, 1000, 2000, 4000, 8000)){
+for(n in c(2000, 4000, 8000)){
   if(!exists("synthetic_HRS_list")){
     synthetic_HRS_list <- list(create_HRS_datasets(superpop, n))
   } else{
@@ -322,19 +321,34 @@ saveRDS(synthetic_HRS_list,
 #---- **create one set of synthetic HCAP ----
 set.seed(20220507)
 
-synthetic_HCAP_list <- 
+synthetic_HCAP_list_25 <- 
   lapply(synthetic_HRS_list, 
          function(x) 
-           x %>% group_by(married_partnered) %>% slice_sample(prop = 0.5) %>% 
+           x %>% group_by(married_partnered) %>% slice_sample(prop = 0.25) %>% 
+           mutate("calibration_50" = 0) %>% ungroup())
+
+synthetic_HCAP_list_50 <- 
+  lapply(synthetic_HRS_list, 
+         function(x) 
+           x %>% group_by(married_partnered) %>% slice_sample(prop = 0.50) %>% 
            mutate("calibration_50" = 0) %>% ungroup())
 
 #---- **flag calibration subsample ----
-for(i in 1:length(synthetic_HCAP_list)){
-  synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
-                                  size = 0.5*nrow(synthetic_HCAP_list[[i]]), 
-                                  replace = FALSE), "calibration_50"] <- 1
+for(i in 1:length(synthetic_HCAP_list_25)){
+  synthetic_HCAP_list_25[[i]][sample(seq(1, nrow(synthetic_HCAP_list_25[[i]])), 
+                                     size = 0.50*nrow(synthetic_HCAP_list_25[[i]]), 
+                                     replace = FALSE), "calibration_50"] <- 1
+}
+
+for(i in 1:length(synthetic_HCAP_list_50)){
+  synthetic_HCAP_list_50[[i]][sample(seq(1, nrow(synthetic_HCAP_list_50[[i]])), 
+                                     size = 0.50*nrow(synthetic_HCAP_list_50[[i]]), 
+                                     replace = FALSE), "calibration_50"] <- 1
 }
 
 #---- **save data ----
-saveRDS(synthetic_HCAP_list, 
-        file = paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
+saveRDS(synthetic_HCAP_list_25, 
+        file = paste0(path_to_box, "data/HCAP/synthetic_HCAP_list_25"))
+
+saveRDS(synthetic_HCAP_list_50, 
+        file = paste0(path_to_box, "data/HCAP/synthetic_HCAP_list_50"))
