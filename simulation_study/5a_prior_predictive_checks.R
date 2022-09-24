@@ -54,7 +54,7 @@ kappa_0_mat <- read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix.csv"))
 calibration_scenario = "no_calibration" 
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.25
+HCAP_sample_prop = 0.50
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
@@ -98,7 +98,7 @@ lapply(synthetic_HCAP_list[indices], function(x)
                           path_to_data = path_to_box, 
                           path_to_output_folder =
                             paste0(path_to_box,
-                                   "figures/simulation_study/HCAP_",
+                                   "figures/chapter_4/simulation_study/HCAP_",
                                    unique(x[, "dataset_name_stem"]),
                                    "/prior_predictive_checks/"), 
                           continuous_check_test = TRUE,
@@ -128,7 +128,7 @@ future_lapply(synthetic_HCAP_list[indices], function(x)
                           path_to_data = path_to_box, 
                           path_to_output_folder =
                             paste0(path_to_box,
-                                   "figures/simulation_study/HCAP_",
+                                   "figures/chapter_4/simulation_study/HCAP_",
                                    unique(x[, "dataset_name_stem"]),
                                    "/prior_predictive_checks/"), 
                           continuous_check_test = TRUE,
