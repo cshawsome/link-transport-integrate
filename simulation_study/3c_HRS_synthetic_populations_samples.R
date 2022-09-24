@@ -321,34 +321,45 @@ saveRDS(synthetic_HRS_list,
 #---- **create one set of synthetic HCAP ----
 set.seed(20220507)
 
-synthetic_HCAP_list_25 <- 
-  lapply(synthetic_HRS_list, 
-         function(x) 
-           x %>% group_by(married_partnered) %>% slice_sample(prop = 0.25) %>% 
-           mutate("calibration_50" = 0) %>% ungroup())
+sample_props <- c(0.25, 0.50)
 
-synthetic_HCAP_list_50 <- 
-  lapply(synthetic_HRS_list, 
-         function(x) 
-           x %>% group_by(married_partnered) %>% slice_sample(prop = 0.50) %>% 
-           mutate("calibration_50" = 0) %>% ungroup())
-
-#---- **flag calibration subsample ----
-for(i in 1:length(synthetic_HCAP_list_25)){
-  synthetic_HCAP_list_25[[i]][sample(seq(1, nrow(synthetic_HCAP_list_25[[i]])), 
-                                     size = 0.50*nrow(synthetic_HCAP_list_25[[i]]), 
-                                     replace = FALSE), "calibration_50"] <- 1
+for(sample_prop in sample_props){
+  if(exists("synthetic_HCAP_list")){
+    synthetic_HCAP_list <- 
+      append(synthetic_HCAP_list, 
+             lapply(synthetic_HRS_list, 
+                    function(x) 
+                      x %>% group_by(married_partnered) %>% 
+                      slice_sample(prop = sample_prop) %>% 
+                      mutate("calibration_25" = 0, 
+                             "calibration_50" = 0) %>% ungroup() %>% 
+                      mutate("dataset_name" = 
+                               paste0(dataset_name, "_sample_", 
+                                      sample_prop*100))))
+  } else{
+    synthetic_HCAP_list <- 
+      lapply(synthetic_HRS_list, 
+             function(x) 
+               x %>% group_by(married_partnered) %>% 
+               slice_sample(prop = sample_prop) %>% 
+               mutate("calibration_25" = 0, 
+                      "calibration_50" = 0) %>% ungroup() %>% 
+               mutate("dataset_name" = 
+                        paste0(dataset_name, "_sample_", sample_prop*100)))
+  }
 }
 
-for(i in 1:length(synthetic_HCAP_list_50)){
-  synthetic_HCAP_list_50[[i]][sample(seq(1, nrow(synthetic_HCAP_list_50[[i]])), 
-                                     size = 0.50*nrow(synthetic_HCAP_list_50[[i]]), 
-                                     replace = FALSE), "calibration_50"] <- 1
+#---- **flag calibration subsamples ----
+for(i in 1:length(synthetic_HCAP_list)){
+  synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
+                                  size = 0.25*nrow(synthetic_HCAP_list[[i]]), 
+                                  replace = FALSE), "calibration_25"] <- 1
+  
+  synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
+                                  size = 0.50*nrow(synthetic_HCAP_list[[i]]), 
+                                  replace = FALSE), "calibration_50"] <- 1
 }
 
 #---- **save data ----
-saveRDS(synthetic_HCAP_list_25, 
-        file = paste0(path_to_box, "data/HCAP/synthetic_HCAP_list_25"))
-
-saveRDS(synthetic_HCAP_list_50, 
-        file = paste0(path_to_box, "data/HCAP/synthetic_HCAP_list_50"))
+saveRDS(synthetic_HCAP_list, 
+        file = paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
