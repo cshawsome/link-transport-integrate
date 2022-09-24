@@ -7,8 +7,8 @@ p_load("tidyverse", "DirichletReg", "magrittr", "here", "MASS", "MCMCpack",
        "locfit", "wesanderson", "RColorBrewer", "devtools", "gifski", 
        "transformr", "moments", "qdapRegex", "future.apply", "mvnfast", 
        "LaplacesDemon", "vroom")
-# install_github("thomasp85/gganimate")
-library(gganimate)
+install_github("thomasp85/gganimate")
+#library(gganimate)
 
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
@@ -28,8 +28,7 @@ color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv"))
 #---- define vars ----
 #---- **selected variables ----
 selected_vars <- 
-  read_csv(paste0(path_to_box, "data/variable_selection/", 
-                  "model_coefficients.csv"))
+  read_csv(paste0(path_to_box, "data/variable_selection/model_coefficients.csv"))
 
 #---- **categorical ----
 #notation from Schafer 1997
@@ -40,8 +39,7 @@ Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"),
                    "data_label"] %>% unlist() %>% as.vector()
 
 #---- **contrasts matrix ----
-A = read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% 
-  as.matrix()
+A = read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
 
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
@@ -50,15 +48,19 @@ nu_0_mat <- read_csv(paste0(path_to_box, "data/tuning/nu_0_matrix.csv"))
 #scaling for inverse wishart as variance of Beta
 kappa_0_mat <- read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix.csv"))
 
-#---- run checks in serial ----
-#---- **run checks: no calibration ----
-#---- ****read in data ----
+#---- data formatting ----
+#---- **user input ----
+#calibration scenario options: "no_calibration", "HCAP_50", "HCAP_100"
+calibration_scenario = "no_calibration" 
+
+#HCAP sample prop options: 0.25, 0.50
+HCAP_sample_prop = 0.25
+
+#---- **read in data ----
 synthetic_HCAP_list <- 
   readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
 
-#---- ****rename datasets based on calibration scenario ----
-calibration_scenario = "no_calibration"
-
+#---- **rename datasets based on calibration scenario ----
 synthetic_HCAP_list <- 
   lapply(synthetic_HCAP_list, function(x)
     x %<>% mutate("dataset_name_stem" = unlist(unique(x[, "dataset_name"]))))
@@ -69,73 +71,26 @@ synthetic_HCAP_list <-
                     paste0(unlist(unique(x[, "dataset_name_stem"])), "_", 
                            calibration_scenario)))
 
-#---- ****dataset names ----
+#---- **dataset names ----
 dataset_names <- 
   unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
 
-#---- ****specify indices ----
+#---- **specify indices ----
 indices <-
-  which(dataset_names %in% paste0("HRS_", c(1000, 2000, 4000, 8000), "_", 
-                                  calibration_scenario))
+  which(dataset_names %in% 
+          paste0("HRS_", c(2000, 4000, 8000), "_sample_", HCAP_sample_prop*100, 
+                 "_", calibration_scenario))
 
+#---- serial checks ----
 set.seed(20220329)
 start <- Sys.time()
 lapply(synthetic_HCAP_list[indices], function(x)
-  prior_predictive_checks(dataset_to_copy = x, calibration_sample = FALSE, 
-                          calibration_prop = NA, calibration_sample_name = NA,
-                          path_to_raw_prior_sample = 
-                            paste0(path_to_box, "data/prior_data/MI/", 
-                                   "MI_datasets_cleaned"), 
-                          path_to_data = path_to_box, 
-                          path_to_output_folder =
-                            paste0(path_to_box,
-                                   "figures/simulation_study/HCAP_",
-                                   unique(x[, "dataset_name_stem"]),
-                                   "/prior_predictive_checks/"), 
-                          continuous_check_test = TRUE,
-                          continuous_check = c("Unimpaired", "MCI", "Dementia", 
-                                               "Other"),
-                          categorical_vars = W, continuous_vars = Z,
-                          variable_labels = variable_labels, 
-                          color_palette = color_palette, contrasts_matrix = A,
-                          kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
-                          num_synthetic = 1000))
-end <- Sys.time() - start
-
-#---- **run checks: HCAP_50 calibration ----
-#---- ****read in data ----
-synthetic_HCAP_list <- 
-  readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
-
-#---- ****rename datasets based on calibration scenario ----
-calibration_scenario = "HCAP_50"
-
-synthetic_HCAP_list <- 
-  lapply(synthetic_HCAP_list, function(x)
-    x %<>% mutate("dataset_name_stem" = unlist(unique(x[, "dataset_name"]))))
-
-synthetic_HCAP_list <- 
-  lapply(synthetic_HCAP_list, function(x)
-    x %<>% mutate("dataset_name" = 
-                    paste0(unlist(unique(x[, "dataset_name_stem"])), "_", 
-                           calibration_scenario)))
-
-#---- ****dataset names ----
-dataset_names <- 
-  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
-
-#---- ****specify indices ----
-indices <-
-  which(dataset_names %in% paste0("HRS_", c(8000), "_", 
-                                  calibration_scenario))
-
-set.seed(20220329)
-start <- Sys.time()
-lapply(synthetic_HCAP_list[indices], function(x)
-  prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
+  prior_predictive_checks(dataset_to_copy = x, calibration_sample = 
+                            !(calibration_scenario == "no_calibration"), 
                           calibration_prop = 
-                            as.numeric(str_remove(calibration_scenario, 
-                                                  "HCAP_"))/100, 
+                            suppressWarnings(
+                              as.numeric(str_remove(calibration_scenario, 
+                                                    "HCAP_"))/100), 
                           calibration_sample_name = calibration_scenario,
                           path_to_raw_prior_sample = 
                             paste0(path_to_box, "data/prior_data/MI/", 
@@ -156,99 +111,16 @@ lapply(synthetic_HCAP_list[indices], function(x)
                           num_synthetic = 1000))
 end <- Sys.time() - start
 
-#---- run checks parallel ----
-#---- **run checks: no calibration ----
-#---- ****read in data ----
-synthetic_HCAP_list <- 
-  readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
-
-#---- ****rename datasets based on calibration scenario ----
-calibration_scenario = "no_calibration"
-
-synthetic_HCAP_list <- 
-  lapply(synthetic_HCAP_list, function(x)
-    x %<>% mutate("dataset_name_stem" = unlist(unique(x[, "dataset_name"]))))
-
-synthetic_HCAP_list <- 
-  lapply(synthetic_HCAP_list, function(x)
-    x %<>% mutate("dataset_name" = 
-                    paste0(unlist(unique(x[, "dataset_name_stem"])), "_", 
-                           calibration_scenario)))
-
-#---- ****dataset names ----
-dataset_names <- 
-  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
-
-#---- ****specify indices ----
-indices <-
-  which(dataset_names %in% paste0("HRS_", c(1000, 2000, 4000, 8000), "_", 
-                                  calibration_scenario))
-#1.7 days for all checks to run in serial
-#1.3 hours for 5 runs in parallel
+#---- parallel checks ----
 set.seed(20220329)
 start <- Sys.time()
-plan(multisession, workers = (availableCores() - 2))
-
 future_lapply(synthetic_HCAP_list[indices], function(x)
-  prior_predictive_checks(dataset_to_copy = x, calibration_sample = FALSE, 
-                          calibration_prop = NA, calibration_sample_name = NA,
-                          path_to_raw_prior_sample = 
-                            paste0(path_to_box, "data/prior_data/MI/", 
-                                   "MI_datasets_cleaned"), 
-                          path_to_data = path_to_box, 
-                          path_to_output_folder =
-                            paste0(path_to_box,
-                                   "figures/simulation_study/HCAP_",
-                                   unique(x[, "dataset_name_stem"]),
-                                   "/prior_predictive_checks/"), 
-                          continuous_check_test = TRUE,
-                          continuous_check = c("Unimpaired", "MCI", "Dementia", 
-                                               "Other"),
-                          categorical_vars = W, continuous_vars = Z,
-                          variable_labels = variable_labels, 
-                          color_palette = color_palette, contrasts_matrix = A,
-                          kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
-                          num_synthetic = 1000), future.seed = TRUE)
-end <- Sys.time() - start
-plan(sequential)
-
-#---- **run checks: HCAP_50 calibration ----
-#---- ****read in data ----
-synthetic_HCAP_list <- 
-  readRDS(paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
-
-#---- ****rename datasets based on calibration scenario ----
-calibration_scenario = "HCAP_50"
-
-synthetic_HCAP_list <- 
-  lapply(synthetic_HCAP_list, function(x)
-    x %<>% mutate("dataset_name_stem" = unlist(unique(x[, "dataset_name"]))))
-
-synthetic_HCAP_list <- 
-  lapply(synthetic_HCAP_list, function(x)
-    x %<>% mutate("dataset_name" = 
-                    paste0(unlist(unique(x[, "dataset_name_stem"])), "_", 
-                           calibration_scenario)))
-
-#---- ****dataset names ----
-dataset_names <- 
-  unlist(lapply(synthetic_HCAP_list, function(x) unique(x$dataset_name)))
-
-#---- ****specify indices ----
-indices <-
-  which(dataset_names %in% paste0("HRS_", c(1000, 2000, 4000, 8000), "_", 
-                                  calibration_scenario))
-#1.7 days for all checks to run in serial
-#1.3 hours for 5 runs in parallel
-set.seed(20220329)
-start <- Sys.time()
-plan(multisession, workers = (availableCores() - 2))
-
-future_lapply(synthetic_HCAP_list[indices], function(x)
-  prior_predictive_checks(dataset_to_copy = x, calibration_sample = TRUE, 
+  prior_predictive_checks(dataset_to_copy = x, calibration_sample = 
+                            !(calibration_scenario == "no_calibration"), 
                           calibration_prop = 
-                            as.numeric(str_remove(calibration_scenario, 
-                                                  "HCAP_"))/100, 
+                            suppressWarnings(
+                              as.numeric(str_remove(calibration_scenario, 
+                                                    "HCAP_"))/100), 
                           calibration_sample_name = calibration_scenario,
                           path_to_raw_prior_sample = 
                             paste0(path_to_box, "data/prior_data/MI/", 
