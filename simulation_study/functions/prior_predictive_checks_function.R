@@ -600,14 +600,16 @@ prior_predictive_checks <-
   }
 
 # #---- test function ----
-# dataset_to_copy = synthetic_HCAP_list[[5]]
-# calibration_sample = TRUE
-# calibration_prop = 0.50
-# calibration_sample_name = "HCAP_50"
+# dataset_to_copy = synthetic_HCAP_list[[1]]
+# calibration_sample = !(calibration_scenario == "no_calibration")
+# calibration_prop = 
+#   suppressWarnings(as.numeric(str_remove(calibration_scenario, "HCAP_"))/100)
+# calibration_sample_name = calibration_scenario
 # path_to_raw_prior_sample = paste0(path_to_box, "data/prior_data/MI/",
 #                                   "MI_datasets_cleaned")
 # path_to_data = path_to_box
-# path_to_output_folder = paste0(path_to_box,"figures/simulation_study/HCAP_",
+# path_to_output_folder = paste0(path_to_box,
+#                                "figures/chapter_4/simulation_study/HCAP_",
 #                                unique(dataset_to_copy[, "dataset_name_stem"]),
 #                                "/prior_predictive_checks/")
 # continuous_check_test = TRUE
