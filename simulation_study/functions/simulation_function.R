@@ -55,11 +55,11 @@ simulation_function <-
         paste0("LCI_dem_prev_", c("white", "black", "hispanic")),
         paste0("UCI_dem_prev_", c("white", "black", "hispanic")),
         paste0("dem_prev_coverage_", c("white", "black", "hispanic")),
-        paste0("true_RR_", c("black", "hispanic")),
-        paste0("mean_RR_", c("black", "hispanic")),
-        paste0("LCI_RR_", c("black", "hispanic")),
-        paste0("UCI_RR_", c("black", "hispanic")),
-        paste0("RR_coverage_", c("black", "hispanic")),
+        paste0("true_PR_", c("black", "hispanic")),
+        paste0("mean_PR_", c("black", "hispanic")),
+        paste0("LCI_PR_", c("black", "hispanic")),
+        paste0("UCI_PR_", c("black", "hispanic")),
+        paste0("PR_coverage_", c("black", "hispanic")),
         "time", "seed", "dataset_name")
     
     results <- matrix(ncol = length(result_names), nrow = 1) %>% 
@@ -277,31 +277,31 @@ simulation_function <-
            results[, paste0("UCI_dem_prev_", race)])
     }
     
-    #---- **true RR ----
-    results[, paste0("true_RR_", c("black", "hispanic"))] <- 
+    #---- **true PR ----
+    results[, paste0("true_PR_", c("black", "hispanic"))] <- 
       c(results[, "true_dem_prev_black"]/results[, "true_dem_prev_white"], 
         results[, "true_dem_prev_hispanic"]/results[, "true_dem_prev_white"])
     
-    #---- **mean RR ----
-    results[, paste0("mean_RR_", c("black", "hispanic"))] <- 
-      colMeans(dem_estimates[, paste0("RR_", c("black", "hispanic"))])
+    #---- **mean PR ----
+    results[, paste0("mean_PR_", c("black", "hispanic"))] <- 
+      colMeans(dem_estimates[, paste0("PR_", c("black", "hispanic"))])
     
     #---- **RR CI ----
-    results[, paste0("LCI_RR_", c("black", "hispanic"))] <- 
-      apply(dem_estimates[, paste0("RR_", c("black", "hispanic"))], 2, 
+    results[, paste0("LCI_PR_", c("black", "hispanic"))] <- 
+      apply(dem_estimates[, paste0("PR_", c("black", "hispanic"))], 2, 
             function(x) quantile(x, 0.025))
     
-    results[, paste0("UCI_RR_", c("black", "hispanic"))] <- 
-      apply(dem_estimates[, paste0("RR_", c("black", "hispanic"))], 2, 
+    results[, paste0("UCI_PR_", c("black", "hispanic"))] <- 
+      apply(dem_estimates[, paste0("PR_", c("black", "hispanic"))], 2, 
             function(x) quantile(x, 0.975))
     
-    #---- **RR coverage ----
+    #---- **PR coverage ----
     for(race in c("black", "hispanic")){
-      results[, paste0("RR_coverage_", race)] <- 
-        (results[, paste0("true_RR_", race)] >= 
-           results[, paste0("LCI_RR_", race)])*
-        (results[, paste0("true_RR_", race)] <= 
-           results[, paste0("UCI_RR_", race)])
+      results[, paste0("PR_coverage_", race)] <- 
+        (results[, paste0("true_PR_", race)] >= 
+           results[, paste0("LCI_PR_", race)])*
+        (results[, paste0("true_PR_", race)] <= 
+           results[, paste0("UCI_PR_", race)])
     }
     
     # #---- models ----
@@ -375,81 +375,81 @@ simulation_function <-
     }
   }
 
-#---- test function ----
-library("tidyverse")
-library("DirichletReg")
-library("magrittr")
-library("MCMCpack")
-library("locfit")
-library("vroom")
-library("mvnfast")
-library("mice")
-library("LaplacesDemon")
-
-path_to_RScripts <- here::here("simulation_study", "functions", "/")
-source(here::here("functions", "read_results.R"))
-source(paste0(path_to_RScripts, "generate_synthetic_function.R"))
-source(paste0(path_to_RScripts, "standardized_dem_estimates.R"))
-
-path_to_data <- paste0("/Users/crystalshaw/Library/CloudStorage/Box-Box/",
-                       "Dissertation/data/")
-superpop <-
-  read_results(paste0(path_to_data, "superpopulations/superpop_1000000.csv"))
-truth <- read_csv(paste0(path_to_data,
-                         "superpopulations/agesex_standardized_prevs.csv"))
-variable_labels <-
-  read_csv(paste0(path_to_data, "variable_crosswalk.csv"))
-cell_ID_key <- read_csv(paste0(path_to_data, "cell_ID_key.csv")) %>%
-  mutate_all(as.character)
-color_palette <- read_csv(paste0(path_to_data, "color_palette.csv"))
-all_sim_scenarios <- read_csv(paste0(path_to_data, "sim_study_scenarios.csv"))
-
-warm_up = 100
-starting_props = rep(0.25, 4)
-categorical_vars = W = c("black", "hispanic", "stroke")
-continuous_vars = Z = colnames(superpop)[str_detect(colnames(superpop), "_Z")]
-id_var = "HHIDPN"
-scenario = scenario_num = 1 #no calibration sample size 2500, HCAP prop 25
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-superpopulation <- superpop
-orig_means = means <-
-  read_csv(paste0(path_to_box, "data/superpopulations/superpop_means.csv"))
-orig_sds = sds <-
-  read_csv(paste0(path_to_box, "data/superpopulations/superpop_sds.csv"))
-
-all_scenarios_list = all_sim_scenarios
-
-num_synthetic = 1000
-nu_0_mat <- read_csv(paste0(path_to_data, "tuning/nu_0_matrix.csv"))
-kappa_0_mat <- read_csv(paste0(path_to_data, "tuning/kappa_0_matrix.csv"))
-contrasts_matrix = A =
-  read_csv(paste0(path_to_data, "contrasts_matrix.csv")) %>% as.matrix()
-path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
-path_to_raw_prior_sample =
-  paste0(path_to_data, "prior_data/MI/MI_datasets_cleaned")
-seed = 1
-
-set.seed(20220512)
-
-replicate(2,
-          simulation_function(warm_up = 100, starting_props = rep(0.25, 4),
-                              categorical_vars = W, continuous_vars = Z,
-                              id_var = "HHIDPN",
-                              variable_labels = variable_labels,
-                              scenario = scenario_num,
-                              superpopulation = superpop, orig_means = means,
-                              orig_sds = sds,
-                              all_scenarios_list = all_sim_scenarios,
-                              cell_ID_key = cell_ID_key,
-                              color_palette = color_palette,
-                              num_synthetic = 1000, contrasts_matrix = A,
-                              kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
-                              truth = truth, seed = seed,
-                              path_to_raw_prior_sample =
-                                paste0(path_to_data,
-                                       "prior_data/MI/MI_datasets_cleaned"),
-                              path_to_data = path_to_data,
-                              path_to_results =
-                                paste0(path_to_box,
-                                       "analyses/simulation_study/results/")))
-
+# #---- test function ----
+# library("tidyverse")
+# library("DirichletReg")
+# library("magrittr")
+# library("MCMCpack")
+# library("locfit")
+# library("vroom")
+# library("mvnfast")
+# library("mice")
+# library("LaplacesDemon")
+# 
+# path_to_RScripts <- here::here("simulation_study", "functions", "/")
+# source(here::here("functions", "read_results.R"))
+# source(paste0(path_to_RScripts, "generate_synthetic_function.R"))
+# source(paste0(path_to_RScripts, "standardized_dem_estimates.R"))
+# 
+# path_to_data <- paste0("/Users/crystalshaw/Library/CloudStorage/Box-Box/",
+#                        "Dissertation/data/")
+# superpop <-
+#   read_results(paste0(path_to_data, "superpopulations/superpop_1000000.csv"))
+# truth <- read_csv(paste0(path_to_data,
+#                          "superpopulations/agesex_standardized_prevs.csv"))
+# variable_labels <-
+#   read_csv(paste0(path_to_data, "variable_crosswalk.csv"))
+# cell_ID_key <- read_csv(paste0(path_to_data, "cell_ID_key.csv")) %>%
+#   mutate_all(as.character)
+# color_palette <- read_csv(paste0(path_to_data, "color_palette.csv"))
+# all_sim_scenarios <- read_csv(paste0(path_to_data, "sim_study_scenarios.csv"))
+# 
+# warm_up = 100
+# starting_props = rep(0.25, 4)
+# categorical_vars = W = c("black", "hispanic", "stroke")
+# continuous_vars = Z = colnames(superpop)[str_detect(colnames(superpop), "_Z")]
+# id_var = "HHIDPN"
+# scenario = scenario_num = 1 #no calibration sample size 2500, HCAP prop 25
+# path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+# superpopulation <- superpop
+# orig_means = means <-
+#   read_csv(paste0(path_to_box, "data/superpopulations/superpop_means.csv"))
+# orig_sds = sds <-
+#   read_csv(paste0(path_to_box, "data/superpopulations/superpop_sds.csv"))
+# 
+# all_scenarios_list = all_sim_scenarios
+# 
+# num_synthetic = 1000
+# nu_0_mat <- read_csv(paste0(path_to_data, "tuning/nu_0_matrix.csv"))
+# kappa_0_mat <- read_csv(paste0(path_to_data, "tuning/kappa_0_matrix.csv"))
+# contrasts_matrix = A =
+#   read_csv(paste0(path_to_data, "contrasts_matrix.csv")) %>% as.matrix()
+# path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
+# path_to_raw_prior_sample =
+#   paste0(path_to_data, "prior_data/MI/MI_datasets_cleaned")
+# seed = 1
+# 
+# set.seed(20220512)
+# 
+# replicate(2,
+#           simulation_function(warm_up = 100, starting_props = rep(0.25, 4),
+#                               categorical_vars = W, continuous_vars = Z,
+#                               id_var = "HHIDPN",
+#                               variable_labels = variable_labels,
+#                               scenario = scenario_num,
+#                               superpopulation = superpop, orig_means = means,
+#                               orig_sds = sds,
+#                               all_scenarios_list = all_sim_scenarios,
+#                               cell_ID_key = cell_ID_key,
+#                               color_palette = color_palette,
+#                               num_synthetic = 1000, contrasts_matrix = A,
+#                               kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
+#                               truth = truth, seed = seed,
+#                               path_to_raw_prior_sample =
+#                                 paste0(path_to_data,
+#                                        "prior_data/MI/MI_datasets_cleaned"),
+#                               path_to_data = path_to_data,
+#                               path_to_results =
+#                                 paste0(path_to_box,
+#                                        "analyses/simulation_study/results/")))
+# 
