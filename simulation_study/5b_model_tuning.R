@@ -60,7 +60,7 @@ sds <-
 calibration_scenario = "no_calibration" 
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.50
+HCAP_sample_prop = 0.25
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
@@ -88,7 +88,7 @@ indices <-
                  "_", calibration_scenario))
 
 #---- generate datasets in serial ----
-set.seed(20220329)
+set.seed(20220925)
 start <- Sys.time()
 
 lapply(synthetic_HCAP_list[indices], function(x)
@@ -122,7 +122,7 @@ lapply(synthetic_HCAP_list[indices], function(x)
 end <- Sys.time() - start
 
 #---- generate datasets in parallel ----
-set.seed(20220329)
+set.seed(20220925)
 start <- Sys.time()
 
 future_lapply(synthetic_HCAP_list[indices], function(x)

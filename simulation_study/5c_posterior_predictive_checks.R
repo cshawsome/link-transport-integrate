@@ -47,7 +47,7 @@ A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
 calibration_scenario = "no_calibration" 
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.50
+HCAP_sample_prop = 0.25
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
