@@ -58,12 +58,12 @@ standardized_dem_estimates <- function(synthetic_data, standard_data){
     sum(agesex_standardized$expected_hispanic_dem_count, na.rm = TRUE)/
     nrow(standard_data)
   
-  #RR compared to white
-  RR_black <- black_risk/white_risk
-  RR_hispanic <- hispanic_risk/white_risk
+  #PR compared to white
+  PR_black <- black_risk/white_risk
+  PR_hispanic <- hispanic_risk/white_risk
   
   #---- return values ----
   return(c("white_risk" = white_risk, "black_risk" = black_risk, 
-           "hispanic_risk" = hispanic_risk, "RR_black" = RR_black, 
-           "RR_hispanic" = RR_hispanic))
+           "hispanic_risk" = hispanic_risk, "PR_black" = PR_black, 
+           "PR_hispanic" = PR_hispanic))
 }
