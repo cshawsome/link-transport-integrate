@@ -31,12 +31,14 @@ read_results <- function(path, skip = 0){
     #               as.numeric) 
     # } else{
       data <- data.table::fread(path, fill = TRUE, skip = skip) %>% 
-        na.omit() %>% mutate("dataset_name" = dataset_name) %>% 
+        na.omit() %>% 
         separate(dataset_name, 
-                 into = c("text", "sample_size", "calibration1", "calibration2"), 
+                 into = c("text", "sample_size", "sample1", "HCAP_prop", 
+                          "calibration1", "calibration2"), 
                  sep = "_", remove = FALSE) %>% 
+        dplyr::select(-one_of("sample1", "text")) %>%
         unite("calibration", c("calibration1", "calibration2")) %>%
-        mutate_at(vars(-one_of("time", "dataset_name", "calibration", "text")), 
+        mutate_at(vars(-one_of("time", "dataset_name", "calibration")), 
                   as.numeric)
     #}
     
