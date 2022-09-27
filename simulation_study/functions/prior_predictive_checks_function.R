@@ -165,12 +165,12 @@ prior_predictive_checks <-
           }
           
           latent_class_model <- 
-            suppressWarnings(glm(formula(paste(class_name, " ~ ", 
-                                               paste(get(paste0(model, "_preds"))[-1], 
-                                                     collapse = " + "), 
-                                               collapse = "")), family = "binomial", 
-                                 #don't select (Intercept) variable
-                                 data = calibration_subset[, vars[-1]]))
+            suppressWarnings(glm(formula(
+              paste(class_name, " ~ ", 
+                    paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+                    collapse = "")), family = "binomial", 
+              #don't select (Intercept) variable
+              data = calibration_subset[, vars[-1]]))
           
           prior_betas <- coefficients(latent_class_model)
           prior_cov <- vcov(latent_class_model)
