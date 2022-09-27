@@ -1,11 +1,10 @@
 generate_synthetic <- 
   function(warm_up, run_number, starting_props, dataset_to_copy, orig_means,
            orig_sds, calibration_sample = FALSE, calibration_prop = NA, 
-           calibration_sample_name = NA, path_to_raw_prior_sample, path_to_data, 
-           path_to_analyses_folder, path_to_figures_folder, categorical_vars, 
-           continuous_vars, id_var, variable_labels, cell_ID_key, color_palette, 
-           contrasts_matrix, kappa_0_mat, nu_0_mat, num_synthetic, 
-           data_only = FALSE){
+           calibration_sample_name = NA, path_to_data, path_to_analyses_folder, 
+           path_to_figures_folder, categorical_vars, continuous_vars, id_var, 
+           variable_labels, cell_ID_key, color_palette, contrasts_matrix, 
+           kappa_0_mat, nu_0_mat, num_synthetic, data_only = FALSE){
     
     #---- check subfolders for results ----
     if(!calibration_sample){
@@ -85,13 +84,9 @@ generate_synthetic <-
       prior_Sigma <- 
         readRDS(paste0(path_to_data, "prior_data/priors_Sigma")) 
     } else{
-      #---- read in raw prior sample ----
-      prior_imputed_clean <- readRDS(path_to_raw_prior_sample) %>%
-        lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
-      
       #---- selected vars ----
       selected_vars <- 
-        read_csv(paste0(path_to_data, "variable_selection/", 
+        read_csv(paste0(path_to_data, "variable_selection/",
                         "model_coefficients.csv")) 
       
       #unimpaired model predictors
@@ -117,8 +112,13 @@ generate_synthetic <-
       
       #---- calibration subset ----
       calibration_var <- paste0("calibration_", calibration_prop*100)
-      calibration_subset <- 
-        dataset_to_copy %>% filter(!!sym(calibration_var) == 1)
+      
+      if(calibration_var == "calibration_100"){
+        calibration_subset <- dataset_to_copy
+      } else{
+        calibration_subset <- 
+          dataset_to_copy %>% filter(!!sym(calibration_var) == 1)
+      }
     }
     
     #---- select variables ----
@@ -185,9 +185,7 @@ generate_synthetic <-
     }
     
     #---- max index ----
-    if(calibration_sample){
-      max_index <- length(prior_imputed_clean)
-    } else{
+    if(!calibration_sample){
       max_index <- length(priors_beta)  
     }
     
@@ -212,7 +210,7 @@ generate_synthetic <-
     #   synthetic_sample <-
     #     anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
     # }
-
+    
     #---- start sampling ----
     for(b in 1:B){
       #---- start over at each run with dataset we wish to copy ----
@@ -221,15 +219,17 @@ generate_synthetic <-
         #pre-allocate columns
         mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
                "p_dementia" = 0)
-
-      if(calibration_sample){
-        #---- **split sample ----
-        synthetic_sample <-
-          anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
+      
+      #---- **split sample ----
+      if(!calibration_var == "calibration_100"){
+        synthetic_sample <- 
+          anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")  
       }
-
-      #---- **random index for priors ----
-      random_draw <- sample(seq(1, max_index), size = 1)
+      
+      if(!calibration_sample){
+        #---- **index for random draws ----
+        random_draw <- sample(seq(1, max_index), size = 1)  
+      }
       
       if(b == 1){
         #---- **init group membership ----
@@ -252,16 +252,18 @@ generate_synthetic <-
             }
             
             latent_class_model <- 
-              glm(formula(paste(class_name, " ~ ", 
-                                paste(get(paste0(model, "_preds"))[-1], 
-                                      collapse = " + "), 
-                                collapse = "")), family = "binomial", 
-                  #don't select (Intercept) variable
-                  data = rbind(prior_imputed_clean[[random_draw]][, vars[-1]], 
-                               calibration_subset[, vars[-1]]))
+              suppressWarnings(glm(formula(
+                paste(class_name, " ~ ", 
+                      paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+                      collapse = "")), family = "binomial", 
+                #don't select (Intercept) variable
+                data = calibration_subset[, vars[-1]]))
             
             prior_betas <- coefficients(latent_class_model)
-            #prior_cov <- vcov(latent_class_model)
+            prior_cov <- vcov(latent_class_model)
+            
+            prior_betas <-
+              t(mvnfast::rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov))
           }
           
           model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
@@ -363,9 +365,7 @@ generate_synthetic <-
             prior_count <- 
               alpha_0_dist[[random_draw]][[class]][, "props"]*nrow(subset)  
           } else{
-            prior_count <- 
-              rbind(prior_imputed_clean[[random_draw]][, c(categorical_vars, class)], 
-                    calibration_subset[, c(categorical_vars, class)]) %>% 
+            prior_count <- calibration_subset[, c(categorical_vars, class)] %>% 
               filter(!!sym(class) == 1) %>% 
               unite("cell_ID", all_of(categorical_vars), sep = "") %>% 
               dplyr::select("cell_ID") %>% table() %>% as.data.frame() %>% 
@@ -463,8 +463,7 @@ generate_synthetic <-
             }
             
             prior_continuous_covariates <- 
-              rbind(prior_imputed_clean[[random_draw]][, c(continuous_vars, class)], 
-                    calibration_subset[, c(continuous_vars, class)]) %>% 
+              calibration_subset[, c(continuous_vars, class)] %>% 
               filter(!!sym(class) == 1) %>% 
               dplyr::select(all_of(continuous_vars)) %>% as.matrix()
             
@@ -884,35 +883,35 @@ generate_synthetic <-
     }
   }
 
-#---- test function ----
-set.seed(20220329)
-warm_up = 100
-run_number = 1
-starting_props = c(0.25, 0.25, 0.25, 0.25)
-dataset_to_copy = synthetic_HCAP_list[[1]]
-orig_means = means
-orig_sds = sds
-calibration_sample = !(calibration_scenario == "no_calibration")
-calibration_prop =
-  as.numeric(str_remove(calibration_scenario,
-                        "HCAP_"))/100
-calibration_sample_name = calibration_scenario
-path_to_data = paste0(path_to_box,"data/")
-path_to_analyses_folder =
-  paste0(path_to_box, "analyses/simulation_study/HCAP_",
-         unique(dataset_to_copy[, "dataset_name_stem"]), "/")
-path_to_figures_folder =
-  paste0(path_to_box, "figures/figure_4/simulation_study/HCAP_",
-         unique(dataset_to_copy[, "dataset_name_stem"]), "/")
-categorical_vars = W
-continuous_vars = Z
-id_var = "HHIDPN"
-variable_labels = variable_labels
-cell_ID_key = cell_ID_key
-color_palette = color_palette
-contrasts_matrix = A
-kappa_0_mat = kappa_0_mat
-nu_0_mat = nu_0_mat
-num_synthetic = 1000
-data_only = FALSE
-
+# #---- test function ----
+# set.seed(20220329)
+# warm_up = 100
+# run_number = 1
+# starting_props = c(0.25, 0.25, 0.25, 0.25)
+# dataset_to_copy = synthetic_HCAP_list[[1]]
+# orig_means = means
+# orig_sds = sds
+# calibration_sample = !(calibration_scenario == "no_calibration")
+# calibration_prop =
+#   as.numeric(str_remove(calibration_scenario,
+#                         "HCAP_"))/100
+# calibration_sample_name = calibration_scenario
+# path_to_data = paste0(path_to_box,"data/")
+# path_to_analyses_folder =
+#   paste0(path_to_box, "analyses/simulation_study/HCAP_",
+#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+# path_to_figures_folder =
+#   paste0(path_to_box, "figures/figure_4/simulation_study/HCAP_",
+#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+# categorical_vars = W
+# continuous_vars = Z
+# id_var = "HHIDPN"
+# variable_labels = variable_labels
+# cell_ID_key = cell_ID_key
+# color_palette = color_palette
+# contrasts_matrix = A
+# kappa_0_mat = kappa_0_mat
+# nu_0_mat = nu_0_mat
+# num_synthetic = 1000
+# data_only = FALSE
+# 
