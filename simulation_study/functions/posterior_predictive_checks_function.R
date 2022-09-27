@@ -436,7 +436,7 @@ posterior_predictive_checks <-
       } else{
         synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
           median(unlist(dataset_to_copy[which(
-            dataset_to_copy[, paste0("calibration_", 100*calibration_prop)] == 0), 
+            dataset_to_copy[, calibration_sample_name] == 0), 
             var]))  
       }
     }
@@ -598,7 +598,7 @@ posterior_predictive_checks <-
       } else{
         synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
           skewness(unlist(dataset_to_copy[which(
-            dataset_to_copy[, paste0("calibration_", 100*calibration_prop)] == 0), 
+            dataset_to_copy[, calibration_sample_name] == 0), 
             var]))
       }
     }
@@ -732,7 +732,7 @@ posterior_predictive_checks <-
     } else{
       dementia_plot_data <- 
         colSums(dataset_to_copy[which(
-          dataset_to_copy[, paste0("calibration_", 100*calibration_prop)] == 0), 
+          dataset_to_copy[, calibration_sample_name] == 0), 
           c("Unimpaired", "MCI", "Dementia", "Other")]) %>%
         as.data.frame() %>% set_colnames("truth") %>% 
         rownames_to_column("Group")
