@@ -6,17 +6,19 @@ if (!require("pacman")){
 p_load("tidyverse", "magrittr")
 
 #---- all scenarios ----
-samples_sizes <- c(2000, 4000, 8000)
-HCAP_prop <- c(25, 50)
-calibration <- c("no_calibration", "HCAP_50", "HCAP_100")
-batch_size <- 20
+HRS_samples_sizes <- c(2000, 4000, 8000)
+HCAP_sampling_prop <- c(25, 50)
+calibration_scenario <- c("no_calibration", "calibration_50_SRS", 
+                          "calibration_50_design")
+batch_size <- 15
 total_runs <- 1000
 
 max_batch_count <- total_runs/batch_size
 seeds <- seq(1, max_batch_count*batch_size, by = batch_size)
 
 sim_scenarios <- 
-  as.data.frame(expand.grid(samples_sizes, HCAP_prop, calibration, seeds)) %>% 
+  as.data.frame(expand.grid(HRS_samples_sizes, HCAP_sampling_prop, 
+                            calibration_scenario, seeds)) %>% 
   set_colnames(c("sample_size", "HCAP_prop", "calibration", "seed")) %>%
   arrange(calibration, sample_size, seed) 
 
