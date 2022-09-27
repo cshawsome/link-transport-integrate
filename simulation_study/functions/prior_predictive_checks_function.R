@@ -1,7 +1,7 @@
 prior_predictive_checks <- 
   function(dataset_to_copy, calibration_sample = FALSE, calibration_prop = NA, 
-           calibration_sample_name = NA, path_to_raw_prior_sample, path_to_data, 
-           path_to_output_folder, continuous_check_test = FALSE, 
+           calibration_sample_name = NA, path_to_data, path_to_output_folder, 
+           continuous_check_test = FALSE, 
            continuous_check = c("Unimpaired", "MCI", "Dementia", "Other"), 
            categorical_vars, continuous_vars, variable_labels, color_palette,
            contrasts_matrix, kappa_0_mat, nu_0_mat, num_synthetic){
@@ -77,9 +77,9 @@ prior_predictive_checks <-
       prior_Sigma <- 
         readRDS(paste0(path_to_data, "data/prior_data/priors_Sigma")) 
     } else{
-      #---- read in raw prior sample ----
-      prior_imputed_clean <- readRDS(path_to_raw_prior_sample) %>%
-        lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
+      # #---- read in raw prior sample ----
+      # prior_imputed_clean <- readRDS(path_to_raw_prior_sample) %>%
+      #   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
       
       #---- selected vars ----
       selected_vars <- 
@@ -112,8 +112,13 @@ prior_predictive_checks <-
       
       #---- calibration subset ----
       calibration_var <- paste0("calibration_", calibration_prop*100)
-      calibration_subset <- 
-        dataset_to_copy %>% filter(!!sym(calibration_var) == 1)
+      
+      if(calibration_var == "calibration_100"){
+        calibration_subset <- dataset_to_copy
+      } else{
+        calibration_subset <- 
+          dataset_to_copy %>% filter(!!sym(calibration_var) == 1)
+      }
     }
     
     #---- select variables ----
@@ -128,20 +133,24 @@ prior_predictive_checks <-
     
     if(calibration_sample){
       #---- **split sample ----
-      synthetic_sample <- 
-        anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
+      if(calibration_var == "calibration_100"){
+        synthetic_sample <- dataset_to_copy
+      } else{
+        synthetic_sample <- 
+          anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")  
+      }
     }
     
     #---- max index ----
-    if(calibration_sample){
-      max_index <- length(prior_imputed_clean)
-    } else{
+    if(!calibration_sample){
       max_index <- length(priors_beta)  
     }
     
     generate_data <- function(color_palette){
-      #---- index for random draws ----
-      random_draw <- sample(seq(1, max_index), size = 1)
+      if(!calibration_sample){
+        #---- index for random draws ----
+        random_draw <- sample(seq(1, max_index), size = 1)  
+      }
       
       #---- latent class ----
       #group_num = 1
@@ -156,13 +165,12 @@ prior_predictive_checks <-
           }
           
           latent_class_model <- 
-            glm(formula(paste(class_name, " ~ ", 
-                              paste(get(paste0(model, "_preds"))[-1], 
-                                    collapse = " + "), 
-                              collapse = "")), family = "binomial", 
-                #don't select (Intercept) variable
-                data = rbind(prior_imputed_clean[[random_draw]][, vars[-1]], 
-                             calibration_subset[, vars[-1]]))
+            suppressWarnings(glm(formula(paste(class_name, " ~ ", 
+                                               paste(get(paste0(model, "_preds"))[-1], 
+                                                     collapse = " + "), 
+                                               collapse = "")), family = "binomial", 
+                                 #don't select (Intercept) variable
+                                 data = calibration_subset[, vars[-1]]))
           
           prior_betas <- coefficients(latent_class_model)
           prior_cov <- vcov(latent_class_model)
@@ -250,9 +258,7 @@ prior_predictive_checks <-
         }
         
         if(calibration_sample){
-          prior_counts <- 
-            rbind(prior_imputed_clean[[random_draw]][, c(categorical_vars, class)], 
-                  calibration_subset[, c(categorical_vars, class)]) %>% 
+          prior_counts <- calibration_subset[, c(categorical_vars, class)] %>% 
             filter(!!sym(class) == 1) %>% 
             unite("cell_ID", all_of(categorical_vars), sep = "") %>% 
             dplyr::select("cell_ID") %>% table() %>% as.data.frame() %>% 
@@ -350,8 +356,7 @@ prior_predictive_checks <-
           }
           
           continuous_covariates <- 
-            rbind(prior_imputed_clean[[random_draw]][, c(continuous_vars, class)], 
-                  calibration_subset[, c(continuous_vars, class)]) %>% 
+            calibration_subset[, c(continuous_vars, class)] %>% 
             filter(!!sym(class) == 1) %>% 
             dplyr::select(all_of(continuous_vars)) %>% as.matrix()
           
@@ -457,7 +462,7 @@ prior_predictive_checks <-
     
     #---- plots ----
     #---- **dem class ----
-    if(!calibration_sample){
+    if(!calibration_sample | calibration_var == "calibration_100"){
       to_copy_dementia_plot_data <- 
         as.data.frame(table(
           dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
@@ -525,7 +530,7 @@ prior_predictive_checks <-
     
     #---- **class-specific continuous ----
     for(class in continuous_check){
-      if(!calibration_sample){
+      if(!calibration_sample | calibration_var == "calibration_100"){
         true_data <- dataset_to_copy %>% 
           dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
           filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
@@ -602,11 +607,9 @@ prior_predictive_checks <-
 # #---- test function ----
 # dataset_to_copy = synthetic_HCAP_list[[1]]
 # calibration_sample = !(calibration_scenario == "no_calibration")
-# calibration_prop = 
+# calibration_prop =
 #   suppressWarnings(as.numeric(str_remove(calibration_scenario, "HCAP_"))/100)
 # calibration_sample_name = calibration_scenario
-# path_to_raw_prior_sample = paste0(path_to_box, "data/prior_data/MI/",
-#                                   "MI_datasets_cleaned")
 # path_to_data = path_to_box
 # path_to_output_folder = paste0(path_to_box,
 #                                "figures/chapter_4/simulation_study/HCAP_",
