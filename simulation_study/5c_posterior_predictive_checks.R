@@ -47,7 +47,7 @@ A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
 calibration_scenario = "HCAP_100" 
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.25
+HCAP_sample_prop = 0.50
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
@@ -81,9 +81,9 @@ lapply(synthetic_HCAP_list[indices], function(x)
   posterior_predictive_checks(dataset_to_copy = x, 
                               calibration_sample = 
                                 !(calibration_scenario == "no_calibration"),
-                              calibration_prop = suppressWarnings(
-                                as.numeric(str_remove(calibration_scenario, 
-                                                      "HCAP_"))/100), 
+                              calibration_prop = 
+                                suppressWarnings(
+                                  parse_number(calibration_scenario)/100),  
                               calibration_sample_name = calibration_scenario,
                               categorical_covariates = W, 
                               continuous_covariates = Z, contrasts_matrix = A,
@@ -108,9 +108,9 @@ future_lapply(synthetic_HCAP_list[indices], function(x)
   posterior_predictive_checks(dataset_to_copy = x, 
                               calibration_sample = 
                                 !(calibration_scenario == "no_calibration"),
-                              calibration_prop = suppressWarnings(
-                                as.numeric(str_remove(calibration_scenario, 
-                                                      "HCAP_"))/100), 
+                              calibration_prop = 
+                                suppressWarnings(
+                                  parse_number(calibration_scenario)/100), 
                               calibration_sample_name = calibration_scenario,
                               categorical_covariates = W, 
                               continuous_covariates = Z, contrasts_matrix = A,

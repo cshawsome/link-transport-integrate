@@ -98,9 +98,7 @@ lapply(synthetic_HCAP_list[indices], function(x)
                      calibration_sample = 
                        !(calibration_scenario == "no_calibration"), 
                      calibration_prop = 
-                       suppressWarnings(
-                         as.numeric(str_remove(calibration_scenario, 
-                                               "HCAP_"))/100), 
+                       suppressWarnings(parse_number(calibration_scenario)/100), 
                      calibration_sample_name = calibration_scenario,
                      path_to_data = paste0(path_to_box,"data/"), 
                      path_to_analyses_folder = 
@@ -129,9 +127,7 @@ future_lapply(synthetic_HCAP_list[indices], function(x)
                      calibration_sample = 
                        !(calibration_scenario == "no_calibration"), 
                      calibration_prop = 
-                       suppressWarnings(
-                         as.numeric(str_remove(calibration_scenario, 
-                                               "HCAP_"))/100), 
+                       suppressWarnings(parse_number(calibration_scenario)/100),
                      calibration_sample_name = calibration_scenario, 
                      path_to_data = paste0(path_to_box,"data/"), 
                      path_to_analyses_folder = 
