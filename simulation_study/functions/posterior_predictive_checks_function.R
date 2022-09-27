@@ -216,7 +216,7 @@ posterior_predictive_checks <-
     synthetic_count_plot_data <- synthetic_counts %>% mutate("truth" = 0) 
     
     #true counts
-    if(!calibration_sample){
+    if(!calibration_sample | calibration_prop == 1){
       counts <- dataset_to_copy %>% 
         dplyr::select(all_of(categorical_covariates)) %>% 
         unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
@@ -322,7 +322,7 @@ posterior_predictive_checks <-
     synthetic_count_plot_data <- synthetic_counts %>% mutate("truth" = 0) 
     
     #true counts
-    if(!calibration_sample){
+    if(!calibration_sample | calibration_prop == 1){
       for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
         counts <- dataset_to_copy %>% filter(!!as.symbol(group) == 1) %>% 
           dplyr::select(all_of(categorical_covariates)) %>% 
@@ -430,7 +430,7 @@ posterior_predictive_checks <-
                  "figure_label"]), num_chains))
     
     for(var in continuous_covariates){
-      if(!calibration_sample){
+      if(!calibration_sample | calibration_prop == 1){
         synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
           median(unlist(dataset_to_copy[, var]))  
       } else{
@@ -510,7 +510,7 @@ posterior_predictive_checks <-
       left_join(color_palette, by = c("group" = "Group"))
     
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      if(!calibration_sample){
+      if(!calibration_sample | calibration_prop == 1){
         subsample <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
       } else{
         subsample <- dataset_to_copy %>% 
@@ -593,7 +593,7 @@ posterior_predictive_checks <-
                "figure_label"]), num_chains))
     
     for(var in continuous_covariates){
-      if(!calibration_sample){
+      if(!calibration_sample | calibration_prop == 1){
         synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
           skewness(unlist(dataset_to_copy[, var]))  
       } else{
@@ -673,7 +673,7 @@ posterior_predictive_checks <-
       left_join(color_palette, by = c("group" = "Group"))
     
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      if(!calibration_sample){
+      if(!calibration_sample | calibration_prop == 1){
         subsample <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
       } else{
         subsample <- dataset_to_copy %>% 
@@ -727,7 +727,7 @@ posterior_predictive_checks <-
     
     #---- impairment classification ----
     #truth
-    if(!calibration_sample){
+    if(!calibration_sample | calibration_prop == 1){
       dementia_plot_data <- 
         colSums(dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")]) %>%
         as.data.frame() %>% set_colnames("truth") %>% rownames_to_column("Group")
