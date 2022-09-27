@@ -177,9 +177,9 @@ ggsave(filename = "synthetic_bathtub_mix_Z.jpeg", plot = last_plot(),
 
 #---- check number of simulation runs ----
 #Missing runs:
-# n = 2000: 1
-# n = 4000: 64
-# n = 8000: 274
+# n = 2000, sample = 50: 1
+# n = 4000, sample = 25: 1
+
 #---- **read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
@@ -222,7 +222,7 @@ results %<>%
            as.numeric(superpop_impairment_props[
              superpop_impairment_props$Group == "Other", "prop"]))
 
-results %<>% mutate(sample_size = 0.5*sample_size)
+results %<>% mutate(sample_size = HCAP_prop/100*sample_size)
 
 results %<>% 
   mutate(mean_Unimpaired_prop = mean_Unimpaired/sample_size, 
@@ -240,7 +240,7 @@ results %<>%
 
 #---- ****end extra calcs: delete later ----
 plot_data <- results %>% 
-  group_by(calibration, sample_size) %>% 
+  group_by(calibration, HCAP_prop, sample_size) %>% 
   summarise_at(paste0(
     c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other", 
       "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other", 
@@ -254,20 +254,22 @@ plot_data <- results %>%
   mutate_at("Group", function(x) str_remove(x, "_prop")) %>% 
   mutate_at("sample_size", as.factor) %>% 
   mutate_at("Group", function(x) 
-    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other")))
+    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
+  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ "25% of HRS", 
+                                 HCAP_prop == 50 ~ "50% of HRS"))
 
 #---- **plot ----
 ggplot(data = plot_data, aes(x = mean, y = sample_size)) +
   geom_vline(data = superpop_impairment_props, aes(xintercept = prop), 
-             size = 1, color = color_palette$Color) +
+             size = 1, color = rep(color_palette$Color, 2)) +
   geom_point(size = 2) + 
   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.2) + theme_bw() + 
-  facet_grid(cols = vars(Group)) + 
+  facet_grid(cols = vars(Group), rows = vars(HCAP_prop), scales = "free_y") + 
   scale_x_continuous(breaks = seq(0.10, 0.40, by = 0.05)) +
   xlab("Proportion") + ylab("HCAP sample size") + 
   theme(text = element_text(size = 18))  
 
-ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
                          "mean_CI_impairement_class.jpeg"))
 
 #---- Figure X: 95% CI coverage impairment classes ----
@@ -279,12 +281,14 @@ names(group_colors) <- color_palette$Group
 
 #---- **plot data ----
 plot_data <- results %>% 
-  group_by(calibration, sample_size) %>% 
+  group_by(calibration, HCAP_prop, sample_size) %>% 
   summarise_at(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"), 
                mean) %>% 
   pivot_longer(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"),
                names_to = c("class", "coverage"), names_sep = "_") %>% 
-  mutate_at("sample_size", as.factor)
+  mutate_at("sample_size", as.factor) %>% 
+  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ "25% of HRS", 
+                                 HCAP_prop == 50 ~ "50% of HRS"))
 
 #---- **plot ----
 ggplot(data = plot_data, aes(x = sample_size, y = value, group = class)) + 
@@ -293,11 +297,11 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, group = class)) +
   scale_color_manual(values = group_colors) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
   theme_bw() + ylab("95% CI Coverage") + xlab("HCAP Sample Size") +
-  #facet_grid(rows = vars(calibration)) + 
+  facet_grid(cols = vars(HCAP_prop), scales = "free_x") + 
   guides(color = guide_legend(title = "Group")) + 
   theme(text = element_text(size = 18), legend.position = "bottom")      
 
-ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
                          "impairement_class_coverage.jpeg"))
 
 #----- Figure X: bias impairment class counts ----
@@ -327,7 +331,7 @@ names(group_colors) <- color_palette$Group
 
 #---- **plot data: counts ----
 plot_data <- results %>% 
-  dplyr::select("calibration", "sample_size", 
+  dplyr::select("calibration", "HCAP_prop", "sample_size", 
                 paste0("percent_increase_", 
                        c("Unimpaired", "MCI", "Dementia", "Other"))) %>%
   pivot_longer(paste0("percent_increase_", 
@@ -337,7 +341,9 @@ plot_data <- results %>%
   mutate_at("class", function(x) str_remove(x, pattern = "_prop")) %>%
   mutate_at("class", function(x) 
     factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
-  mutate_at("sample_size", as.factor)
+  mutate_at("sample_size", as.factor) %>% 
+  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ "25% of HRS", 
+                                 HCAP_prop == 50 ~ "50% of HRS"))
 
 #---- **plot: count ----
 ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) + 
@@ -345,13 +351,13 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) +
   scale_color_manual(values = group_colors) + 
   geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
   ylab("Percent Bias") + 
-  #facet_grid(rows = vars(calibration)) + 
+  facet_grid(cols = vars(HCAP_prop), scales = "free_x") + 
   guides(color = guide_legend(title = "Group")) + 
   scale_x_discrete(name = "HCAP Sample Size", 
                    breaks = unique(plot_data$sample_size)) + 
   theme(text = element_text(size = 18), legend.position = "bottom")       
 
-ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
                          "impairement_class_percent_bias_counts.jpeg"))
 
 #---- **plot data: counts x race ----
@@ -361,7 +367,7 @@ cols_by_race <- expand_grid("percent_increase",
   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
 
 plot_data <- results %>% 
-  dplyr::select("calibration", "sample_size",  
+  dplyr::select("calibration", "HCAP_prop", "sample_size",  
                 all_of(cols_by_race)) %>%
   mutate_at("sample_size", as.factor) %>%
   pivot_longer(all_of(cols_by_race), names_to = c("text", "class_race"), 
@@ -371,20 +377,22 @@ plot_data <- results %>%
   mutate_at("class", function(x) 
     factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
   mutate_at("race", function(x) 
-    factor(x, levels = c("White", "Black", "Hispanic")))
+    factor(x, levels = c("White", "Black", "Hispanic"))) %>% 
+  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ "25% of HRS", 
+                                 HCAP_prop == 50 ~ "50% of HRS"))
 
 ggplot(data = plot_data, aes(x = sample_size, y = value, color = class)) + 
   geom_boxplot(size = 0.60) +
   scale_color_manual(values = group_colors) + 
   geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
   ylab("Percent Bias") + 
-  facet_grid(cols = vars(race), scales = "free_y") + 
+  facet_grid(rows = vars(race), cols = vars(HCAP_prop), scales = "free") + 
   guides(color = guide_legend(title = "Group")) + 
   scale_x_discrete(name = "HCAP Sample Size", 
                    breaks = unique(plot_data$sample_size)) + 
   theme(text = element_text(size = 18), legend.position = "bottom")    
 
-ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
                          "impairement_class_percent_bias_count_by_race.jpeg"))
 
 #---- Figure X: dementia prevalence ----
@@ -398,7 +406,7 @@ truth <- data.frame("Race" = c("White", "Black", "Hispanic"),
             function(x) factor(x, levels = c("White", "Black", "Hispanic")))
 
 plot_data <- results %>% 
-  group_by(calibration, sample_size) %>% 
+  group_by(calibration, HCAP_prop, sample_size) %>% 
   summarise_at(
     c("mean_dem_prev_white", "mean_dem_prev_black", "mean_dem_prev_hispanic", 
       "LCI_dem_prev_white", "LCI_dem_prev_black", "LCI_dem_prev_hispanic", 
@@ -411,28 +419,30 @@ plot_data <- results %>%
     names_to = c(".value", "Race"), names_pattern = "(.*?)_(.*)") %>% 
   mutate_at("Race", function(x) str_remove(x, "dem_prev_")) %>% 
   mutate_at("Race", str_to_sentence) %>%
-  mutate("sample_size" = 2*sample_size) %>%
+  mutate("sample_size" = 1/(HCAP_prop/100)*sample_size) %>%
   mutate_at("sample_size", as.factor) %>% 
   mutate_at("Race", function(x) 
-    factor(x, levels = c("White", "Black", "Hispanic")))
-
+    factor(x, levels = c("White", "Black", "Hispanic"))) %>% 
+  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ "25% of HRS", 
+                                 HCAP_prop == 50 ~ "50% of HRS"))
+  
 #---- **plot ----
 ggplot(data = plot_data, aes(x = mean, y = sample_size)) + 
   geom_vline(aes(xintercept = prev), data = truth, color = "#ff0000", size = 1) +
   geom_point(size = 2) + 
   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.2) +
-  facet_grid(cols = vars(Race)) + theme_bw() + 
+  facet_grid(cols = vars(Race), rows = vars(HCAP_prop)) + theme_bw() + 
   xlab("Dementia prevalence") + ylab("HRS sample size") + 
   scale_x_continuous(breaks = seq(0.0, 0.5, by = 0.10)) + 
   theme(text = element_text(size = 18))  
 
-ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
                          "mean_CI_dem_prev.jpeg"))
 
 #---- Figure X: 95% CI coverage dementia prevalence ----
 #---- **plot data ----
 plot_data <- results %>% 
-  group_by(calibration, sample_size) %>% 
+  group_by(calibration, HCAP_prop, sample_size) %>% 
   summarise_at(paste0("dem_prev_coverage_", c("white", "black", "hispanic")), 
                mean) %>% 
   pivot_longer(paste0("dem_prev_coverage_", c("white", "black", "hispanic")),
@@ -442,8 +452,10 @@ plot_data <- results %>%
   mutate_at("Race", str_to_sentence) %>%
   mutate_at("Race", function(x) 
     factor(x, levels = c("White", "Black", "Hispanic"))) %>%
-  mutate("sample_size" = 2*sample_size) %>%
-  mutate_at("sample_size", as.factor)
+  mutate("sample_size" = 1/(HCAP_prop/100)*sample_size) %>%
+  mutate_at("sample_size", as.factor) %>% 
+  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ "25% of HRS", 
+                                 HCAP_prop == 50 ~ "50% of HRS"))
 
 #---- **plot ----
 ggplot(data = plot_data, aes(x = sample_size, y = dem, group = Race)) + 
@@ -452,61 +464,63 @@ ggplot(data = plot_data, aes(x = sample_size, y = dem, group = Race)) +
   scale_color_manual(values = c("#006d9e", "#e09a3b", "#9ddfdf")) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
   theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
-  #facet_grid(rows = vars(calibration)) + 
+  facet_grid(cols = vars(HCAP_prop)) + 
   guides(color = guide_legend(title = "Race/Ethnicity")) + 
   theme(text = element_text(size = 18), legend.position = "bottom")      
 
-ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
+ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
                          "dem_prev_coverage.jpeg")) 
 
 #---- Figure X: RR dementia ----
 #---- **plot data ----
 truth <- data.frame("Comparison" = c("Black vs. White", "Hispanic vs. White"), 
-                    "RR" = c(unique(results$true_dem_prev_black)/
+                    "PR" = c(unique(results$true_dem_prev_black)/
                                unique(results$true_dem_prev_white), 
                              unique(results$true_dem_prev_hispanic)/
                                unique(results$true_dem_prev_white))) %>% 
-  mutate_at("RR", function(x) round(x, 2)) %>% 
+  mutate_at("PR", function(x) round(x, 2)) %>% 
   mutate_at("Comparison", 
             function(x) 
               factor(x, levels = c("Black vs. White", "Hispanic vs. White")))
 
 plot_data <- results %>% 
-  group_by(calibration, sample_size) %>% 
+  group_by(calibration, HCAP_prop, sample_size) %>% 
   summarise_at(
-    c("mean_RR_black", "mean_RR_hispanic", "LCI_RR_black", "LCI_RR_hispanic", 
-      "UCI_RR_black", "UCI_RR_hispanic"), mean) %>% 
+    c("mean_PR_black", "mean_PR_hispanic", "LCI_PR_black", "LCI_PR_hispanic", 
+      "UCI_PR_black", "UCI_PR_hispanic"), mean) %>% 
   pivot_longer(
-    c("mean_RR_black", "mean_RR_hispanic", "LCI_RR_black", "LCI_RR_hispanic", 
-      "UCI_RR_black", "UCI_RR_hispanic"),
+    c("mean_PR_black", "mean_PR_hispanic", "LCI_PR_black", "LCI_PR_hispanic", 
+      "UCI_PR_black", "UCI_PR_hispanic"),
     names_to = c(".value", "Race"), names_pattern = "(.*?)_(.*)") %>% 
-  mutate_at("Race", function(x) str_remove(x, "RR_")) %>% 
+  mutate_at("Race", function(x) str_remove(x, "PR_")) %>% 
   mutate("Comparison" = case_when(Race == "black" ~ "Black vs. White", 
                                   Race == "hispanic" ~ "Hispanic vs. White")) %>%
-  mutate("sample_size" = 2*sample_size) %>%
+  mutate("sample_size" = 1/(HCAP_prop/100)*sample_size) %>%
   mutate_at("sample_size", as.factor) %>% 
   mutate_at("Race", function(x) 
-    factor(x, levels = c("Black vs. White", "Hispanic vs. White")))
+    factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>% 
+  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ "25% of HRS", 
+                                 HCAP_prop == 50 ~ "50% of HRS"))
 
 #---- **plot ----
 ggplot(data = plot_data, aes(x = mean, y = sample_size)) + 
-  geom_vline(aes(xintercept = RR), data = truth, color = "#ff0000", size = 1) +
+  geom_vline(aes(xintercept = PR), data = truth, color = "#ff0000", size = 1) +
   geom_vline(aes(xintercept = 1), color = "black", lty = "dashed") +
   geom_point(size = 2) + 
   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.2) +
-  facet_grid(cols = vars(Comparison)) + theme_bw() + 
-  xlab("RR") + ylab("HRS sample size") + 
+  facet_grid(cols = vars(Comparison), rows = vars(HCAP_prop)) + theme_bw() + 
+  xlab("PR") + ylab("HRS sample size") + 
   theme(text = element_text(size = 18))  
 
-ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
-                         "mean_CI_RR.jpeg"))
+ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
+                         "mean_CI_PR.jpeg"))
 
 #---- Figure X: 95% CI coverage RR ----
 #---- **plot data ----
 plot_data <- results %>% 
-  group_by(calibration, sample_size) %>% 
-  summarise_at(paste0("RR_coverage_", c("black", "hispanic")), mean) %>% 
-  pivot_longer(paste0("RR_coverage_", c("black", "hispanic")),
+  group_by(calibration, HCAP_prop, sample_size) %>% 
+  summarise_at(paste0("PR_coverage_", c("black", "hispanic")), mean) %>% 
+  pivot_longer(paste0("PR_coverage_", c("black", "hispanic")),
                names_to = c(".value", "Race"), 
                names_pattern = "(.*?)_(.*)") %>%
   mutate_at("Race", function(x) str_remove(x, "coverage_")) %>% 
@@ -514,19 +528,21 @@ plot_data <- results %>%
                                   Race == "hispanic" ~ "Hispanic vs. White")) %>%
   mutate_at("Comparison", function(x) 
     factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
-  mutate("sample_size" = 2*sample_size) %>%
-  mutate_at("sample_size", as.factor)
+  mutate("sample_size" = 1/(HCAP_prop/100)*sample_size) %>%
+  mutate_at("sample_size", as.factor) %>% 
+  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ "25% of HRS", 
+                                 HCAP_prop == 50 ~ "50% of HRS"))
 
 #---- **plot ----
-ggplot(data = plot_data, aes(x = sample_size, y = RR, group = Comparison)) + 
+ggplot(data = plot_data, aes(x = sample_size, y = PR, group = Comparison)) + 
   geom_line(aes(color = Comparison), size = 1) + 
   geom_point(aes(color = Comparison), size = 2) + 
   scale_color_manual(values = c("#e09a3b", "#9ddfdf")) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
   theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
-  #facet_grid(rows = vars(calibration)) + 
+  facet_grid(cols = vars(HCAP_prop)) + 
   guides(color = guide_legend(title = "Comparison")) + 
   theme(text = element_text(size = 18), legend.position = "bottom")      
 
-ggsave(filename = paste0(path_to_box, "figures/simulation_study/", 
-                         "RR_coverage.jpeg"))
+ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
+                         "PR_coverage.jpeg"))
