@@ -57,7 +57,7 @@ sds <-
 #---- data formatting ----
 #---- **user input ----
 #calibration scenario options: "no_calibration", "HCAP_50", "HCAP_100"
-calibration_scenario = "no_calibration" 
+calibration_scenario = "HCAP_100" 
 
 #HCAP sample prop options: 0.25, 0.50
 HCAP_sample_prop = 0.25
@@ -101,10 +101,7 @@ lapply(synthetic_HCAP_list[indices], function(x)
                        suppressWarnings(
                          as.numeric(str_remove(calibration_scenario, 
                                                "HCAP_"))/100), 
-                     calibration_sample_name = calibration_scenario, 
-                     path_to_raw_prior_sample = 
-                       paste0(path_to_box, "data/prior_data/MI/", 
-                              "MI_datasets_cleaned"),
+                     calibration_sample_name = calibration_scenario,
                      path_to_data = paste0(path_to_box,"data/"), 
                      path_to_analyses_folder = 
                        paste0(path_to_box, "analyses/simulation_study/HCAP_", 

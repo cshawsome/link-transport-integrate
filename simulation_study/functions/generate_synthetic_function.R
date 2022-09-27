@@ -884,37 +884,35 @@ generate_synthetic <-
     }
   }
 
-# #---- test function ----
-# set.seed(20220329)
-# warm_up = 100
-# run_number = 1
-# starting_props = c(0.25, 0.25, 0.25, 0.25)
-# dataset_to_copy = synthetic_HCAP_list[[5]]
-# orig_means = means
-# orig_sds = sds
-# calibration_sample = TRUE
-# calibration_prop =
-#   as.numeric(str_remove(calibration_scenario,
-#                         "HCAP_"))/100
-# calibration_sample_name = calibration_scenario
-# path_to_raw_prior_sample =
-#   paste0(path_to_box, "data/prior_data/MI/MI_datasets_cleaned")
-# path_to_data = paste0(path_to_box,"data/")
-# path_to_analyses_folder =
-#   paste0(path_to_box, "analyses/simulation_study/HCAP_",
-#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
-# path_to_figures_folder =
-#   paste0(path_to_box, "figures/simulation_study/HCAP_",
-#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
-# categorical_vars = W
-# continuous_vars = Z
-# id_var = "HHIDPN"
-# variable_labels = variable_labels
-# cell_ID_key = cell_ID_key
-# color_palette = color_palette
-# contrasts_matrix = A
-# kappa_0_mat = kappa_0_mat
-# nu_0_mat = nu_0_mat
-# num_synthetic = 1000
-# data_only = FALSE
-# 
+#---- test function ----
+set.seed(20220329)
+warm_up = 100
+run_number = 1
+starting_props = c(0.25, 0.25, 0.25, 0.25)
+dataset_to_copy = synthetic_HCAP_list[[1]]
+orig_means = means
+orig_sds = sds
+calibration_sample = !(calibration_scenario == "no_calibration")
+calibration_prop =
+  as.numeric(str_remove(calibration_scenario,
+                        "HCAP_"))/100
+calibration_sample_name = calibration_scenario
+path_to_data = paste0(path_to_box,"data/")
+path_to_analyses_folder =
+  paste0(path_to_box, "analyses/simulation_study/HCAP_",
+         unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+path_to_figures_folder =
+  paste0(path_to_box, "figures/figure_4/simulation_study/HCAP_",
+         unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+categorical_vars = W
+continuous_vars = Z
+id_var = "HHIDPN"
+variable_labels = variable_labels
+cell_ID_key = cell_ID_key
+color_palette = color_palette
+contrasts_matrix = A
+kappa_0_mat = kappa_0_mat
+nu_0_mat = nu_0_mat
+num_synthetic = 1000
+data_only = FALSE
+
