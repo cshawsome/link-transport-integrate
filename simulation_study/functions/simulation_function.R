@@ -105,16 +105,12 @@ simulation_function <-
       
       dataset_to_copy[sample(seq(1, nrow(dataset_to_copy)), 
                              size = calibration_prop*nrow(dataset_to_copy), 
-                             replace = FALSE), 
-                      paste0("calibration_", calibration_prop*100)] <- 1
+                             replace = FALSE), calibration_sample_name] <- 1
       
       #set unselected to 0
-      not_selected <- 
-        which(is.na(
-          dataset_to_copy[, paste0("calibration_", calibration_prop*100)]))
+      not_selected <- which(is.na(dataset_to_copy[, calibration_sample_name]))
       
-      dataset_to_copy[not_selected, 
-                      paste0("calibration_", calibration_prop*100)] <- 0
+      dataset_to_copy[not_selected, calibration_sample_name] <- 0
       
       results[, 
               c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other")] <- 
@@ -124,25 +120,22 @@ simulation_function <-
       #---- ****stratified ----
       for(race in c("White", "black", "hispanic")){
         subset <- dataset_to_copy %>% 
-          filter(!!sym(race) == 1 & 
-                   !!sym(paste0("calibration_", calibration_prop*100)) == 0)
+          filter(!!sym(race) == 1 & !!sym(calibration_sample_name) == 0)
         
         results[, paste0(c("true_Unimpaired", "true_MCI", "true_Dementia", 
                            "true_Other"), "_", tolower(race))] <- 
           colSums(subset[, c("Unimpaired", "MCI", "Dementia", "Other")])
       }
     } else{
-      results[, 
-              c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other")] <- 
+      results[, c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other")] <- 
         colSums(dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])
       
       #---- ****stratified ----
       for(race in c("White", "black", "hispanic")){
         results[, paste0(c("true_Unimpaired", "true_MCI", "true_Dementia", 
                            "true_Other"), "_", tolower(race))] <- 
-          colSums(dataset_to_copy[which(
-            dataset_to_copy[, race] == 1), 
-            c("Unimpaired", "MCI", "Dementia", "Other")])
+          colSums(dataset_to_copy[which(dataset_to_copy[, race] == 1), 
+                                  c("Unimpaired", "MCI", "Dementia", "Other")])
       }
     }
     
@@ -155,7 +148,6 @@ simulation_function <-
                          calibration_sample = calibration_status, 
                          calibration_prop = calibration_prop, 
                          calibration_sample_name = calibration_sample_name,
-                         path_to_raw_prior_sample = path_to_raw_prior_sample, 
                          path_to_data = path_to_data, 
                          path_to_analyses_folder = NA, 
                          path_to_figures_folder = NA, 
@@ -286,7 +278,7 @@ simulation_function <-
     results[, paste0("mean_PR_", c("black", "hispanic"))] <- 
       colMeans(dem_estimates[, paste0("PR_", c("black", "hispanic"))])
     
-    #---- **RR CI ----
+    #---- **PR CI ----
     results[, paste0("LCI_PR_", c("black", "hispanic"))] <- 
       apply(dem_estimates[, paste0("PR_", c("black", "hispanic"))], 2, 
             function(x) quantile(x, 0.025))
