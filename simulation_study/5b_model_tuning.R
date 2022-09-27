@@ -133,9 +133,6 @@ future_lapply(synthetic_HCAP_list[indices], function(x)
                          as.numeric(str_remove(calibration_scenario, 
                                                "HCAP_"))/100), 
                      calibration_sample_name = calibration_scenario, 
-                     path_to_raw_prior_sample = 
-                       paste0(path_to_box, "data/prior_data/MI/", 
-                              "MI_datasets_cleaned"),
                      path_to_data = paste0(path_to_box,"data/"), 
                      path_to_analyses_folder = 
                        paste0(path_to_box, "analyses/simulation_study/HCAP_", 
