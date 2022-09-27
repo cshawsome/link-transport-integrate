@@ -33,26 +33,26 @@ generate_synthetic <-
     } else{
       if(!data_only){
         if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/", 
-                              "calibration_", calibration_sample_name, "/run_", 
+                              calibration_sample_name, "/run_", 
                               run_number))){
           dir.create(paste0(path_to_analyses_folder, "synthetic_data/", 
-                            "calibration_", calibration_sample_name, "/run_", 
+                            calibration_sample_name, "/run_", 
                             run_number), recursive = TRUE)
         }
         
         if(!dir.exists(paste0(path_to_figures_folder, "diagnostics/", 
-                              "calibration_", calibration_sample_name, "/run_", 
+                              calibration_sample_name, "/run_", 
                               run_number))){
           dir.create(paste0(path_to_figures_folder, "diagnostics/", 
-                            "calibration_", calibration_sample_name, "/run_", 
+                            calibration_sample_name, "/run_", 
                             run_number), recursive = TRUE)
         }
         
         if(!dir.exists(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                              "calibration_", calibration_sample_name, "/run_", 
+                              calibration_sample_name, "/run_", 
                               run_number))){
           dir.create(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                            "calibration_", calibration_sample_name, "/run_", 
+                            calibration_sample_name, "/run_", 
                             run_number), recursive = TRUE)
         }
       } 
@@ -111,13 +111,11 @@ generate_synthetic <-
                             dplyr::select(data_label) %>% unlist())
       
       #---- calibration subset ----
-      calibration_var <- paste0("calibration_", calibration_prop*100)
-      
-      if(calibration_var == "calibration_100"){
+      if(calibration_sample_name == "calibration_100"){
         calibration_subset <- dataset_to_copy
       } else{
         calibration_subset <- 
-          dataset_to_copy %>% filter(!!sym(calibration_var) == 1)
+          dataset_to_copy %>% filter(!!sym(calibration_sample_name) == 1)
       }
     }
     
@@ -221,7 +219,7 @@ generate_synthetic <-
                "p_dementia" = 0)
       
       #---- **split sample ----
-      if(!calibration_var == "calibration_100"){
+      if(!calibration_sample_name == "calibration_100"){
         synthetic_sample <- 
           anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")  
       }
@@ -633,7 +631,7 @@ generate_synthetic <-
       } else{
         saveRDS(dataset_list,
                 file = paste0(path_to_analyses_folder, "synthetic_data/", 
-                              "calibration_", calibration_sample_name, "/run_", 
+                              calibration_sample_name, "/run_", 
                               run_number, "/synthetic_dataset_list"))
       }
       
@@ -673,7 +671,7 @@ generate_synthetic <-
       } else{
         ggsave(filename = "gamma_chain.jpeg", plot = gamma_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
-                             "calibration_", calibration_sample_name, "/run_", 
+                             calibration_sample_name, "/run_", 
                              run_number), height = 7, width = 12, units = "in", 
                device = "jpeg")
       }
@@ -708,7 +706,7 @@ generate_synthetic <-
         ggsave(filename = "latent_class_chain.jpeg", 
                plot = latent_class_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
-                             "calibration_", calibration_sample_name, "/run_", 
+                             calibration_sample_name, "/run_", 
                              run_number), height = 7, width = 10, units = "in", 
                device = "jpeg")
       }
@@ -748,7 +746,7 @@ generate_synthetic <-
       } else{
         ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
-                             "calibration_", calibration_sample_name, "/run_", 
+                             calibration_sample_name, "/run_", 
                              run_number), height = 7, width = 10, units = "in", 
                device = "jpeg")
       }
@@ -784,7 +782,7 @@ generate_synthetic <-
       } else{
         ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
-                             "calibration_", calibration_sample_name, "/run_", 
+                             calibration_sample_name, "/run_", 
                              run_number), height = 7, width = 12, units = "in", 
                device = "jpeg")
       }
@@ -823,7 +821,7 @@ generate_synthetic <-
       } else{
         ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
-                             "calibration_", calibration_sample_name, "/run_", 
+                             calibration_sample_name, "/run_", 
                              run_number), height = 15, width = 12, units = "in", 
                device = "jpeg")
       }
@@ -857,27 +855,27 @@ generate_synthetic <-
       } else{
         write_csv(gamma_plot_data, 
                   file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "calibration_", calibration_sample_name, "/run_", 
+                                calibration_sample_name, "/run_", 
                                 run_number, "/gamma_plot_data.csv"))
         
         write_csv(latent_class_data, 
                   file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "calibration_", calibration_sample_name, "/run_", 
+                                calibration_sample_name, "/run_", 
                                 run_number, "/latent_class_data.csv"))
         
         write_csv(pi_chain_data, 
                   file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "calibration_", calibration_sample_name, "/run_", 
+                                calibration_sample_name, "/run_", 
                                 run_number, "/pi_chain_data.csv"))
         
         write_csv(Sigma_chain_data, 
                   file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "calibration_", calibration_sample_name, "/run_", 
+                                calibration_sample_name, "/run_", 
                                 run_number, "/Sigma_chain_data.csv"))
         
         write_csv(mu_chain_data, 
                   file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "calibration_", calibration_sample_name, "/run_", 
+                                calibration_sample_name, "/run_", 
                                 run_number, "/mu_chain_data.csv"))
       }
     }
@@ -892,9 +890,7 @@ generate_synthetic <-
 # orig_means = means
 # orig_sds = sds
 # calibration_sample = !(calibration_scenario == "no_calibration")
-# calibration_prop =
-#   as.numeric(str_remove(calibration_scenario,
-#                         "HCAP_"))/100
+# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100) 
 # calibration_sample_name = calibration_scenario
 # path_to_data = paste0(path_to_box,"data/")
 # path_to_analyses_folder =

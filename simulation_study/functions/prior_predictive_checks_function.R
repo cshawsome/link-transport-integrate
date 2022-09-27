@@ -18,8 +18,7 @@ prior_predictive_checks <-
         paste0(path_to_output_folder, "no_calibration_sample/")
     } else{
       path_to_output_folder <- 
-        paste0(path_to_output_folder, "calibration_", calibration_sample_name, 
-               "/")
+        paste0(path_to_output_folder, calibration_sample_name, "/")
     }
     
     #---- create folders for results ----
@@ -111,13 +110,11 @@ prior_predictive_checks <-
       cell_ID_key <- read_csv(paste0(path_to_data, "data/cell_ID_key.csv"))
       
       #---- calibration subset ----
-      calibration_var <- paste0("calibration_", calibration_prop*100)
-      
-      if(calibration_var == "calibration_100"){
+      if(calibration_scenario == "calibration_100"){
         calibration_subset <- dataset_to_copy
       } else{
         calibration_subset <- 
-          dataset_to_copy %>% filter(!!sym(calibration_var) == 1)
+          dataset_to_copy %>% filter(!!sym(calibration_scenario) == 1)
       }
     }
     
@@ -133,7 +130,7 @@ prior_predictive_checks <-
     
     if(calibration_sample){
       #---- **split sample ----
-      if(calibration_var == "calibration_100"){
+      if(calibration_scenario == "calibration_100"){
         synthetic_sample <- dataset_to_copy
       } else{
         synthetic_sample <- 
@@ -462,7 +459,7 @@ prior_predictive_checks <-
     
     #---- plots ----
     #---- **dem class ----
-    if(!calibration_sample | calibration_var == "calibration_100"){
+    if(!calibration_sample | calibration_scenario == "calibration_100"){
       to_copy_dementia_plot_data <- 
         as.data.frame(table(
           dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
@@ -470,7 +467,7 @@ prior_predictive_checks <-
     } else{
       to_copy_dementia_plot_data <- 
         as.data.frame(table(
-          dataset_to_copy %>% filter(!!sym(calibration_var) == 0) %>% 
+          dataset_to_copy %>% filter(!!sym(calibration_scenario) == 0) %>% 
             dplyr::select(c("Unimpaired", "MCI", "Dementia", "Other")))) %>% 
         pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
     }
@@ -530,12 +527,12 @@ prior_predictive_checks <-
     
     #---- **class-specific continuous ----
     for(class in continuous_check){
-      if(!calibration_sample | calibration_var == "calibration_100"){
+      if(!calibration_sample | calibration_scenario == "calibration_100"){
         true_data <- dataset_to_copy %>% 
           dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
           filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
       } else{
-        true_data <- dataset_to_copy %>% filter(!!sym(calibration_var) == 0) %>%
+        true_data <- dataset_to_copy %>% filter(!!sym(calibration_scenario) == 0) %>%
           dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
           filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
       }
@@ -604,23 +601,23 @@ prior_predictive_checks <-
     }
   }
 
-#---- test function ----
-dataset_to_copy = synthetic_HCAP_list[[1]]
-calibration_sample = !(calibration_scenario == "no_calibration")
-calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
-calibration_sample_name = calibration_scenario
-path_to_data = path_to_box
-path_to_output_folder = paste0(path_to_box,
-                               "figures/chapter_4/simulation_study/HCAP_",
-                               unique(dataset_to_copy[, "dataset_name_stem"]),
-                               "/prior_predictive_checks/")
-continuous_check_test = TRUE
-continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
-categorical_vars = W
-continuous_vars = Z
-variable_labels = variable_labels
-color_palette = color_palette
-contrasts_matrix = A
-kappa_0_mat = kappa_0_mat
-nu_0_mat = nu_0_mat
-num_synthetic = 1000
+# #---- test function ----
+# dataset_to_copy = synthetic_HCAP_list[[1]]
+# calibration_sample = !(calibration_scenario == "no_calibration")
+# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
+# calibration_sample_name = calibration_scenario
+# path_to_data = path_to_box
+# path_to_output_folder = paste0(path_to_box,
+#                                "figures/chapter_4/simulation_study/HCAP_",
+#                                unique(dataset_to_copy[, "dataset_name_stem"]),
+#                                "/prior_predictive_checks/")
+# continuous_check_test = TRUE
+# continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+# categorical_vars = W
+# continuous_vars = Z
+# variable_labels = variable_labels
+# color_palette = color_palette
+# contrasts_matrix = A
+# kappa_0_mat = kappa_0_mat
+# nu_0_mat = nu_0_mat
+# num_synthetic = 1000
