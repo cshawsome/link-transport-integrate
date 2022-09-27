@@ -331,8 +331,8 @@ for(sample_prop in sample_props){
                     function(x) 
                       x %>% group_by(married_partnered) %>% 
                       slice_sample(prop = sample_prop) %>% 
-                      mutate("calibration_25" = 0, 
-                             "calibration_50" = 0) %>% ungroup() %>% 
+                      mutate("calibration_25_SRS" = 0, 
+                             "calibration_50_SRS" = 0) %>% ungroup() %>% 
                       mutate("dataset_name" = 
                                paste0(dataset_name, "_sample_", 
                                       sample_prop*100))))
@@ -342,8 +342,8 @@ for(sample_prop in sample_props){
              function(x) 
                x %>% group_by(married_partnered) %>% 
                slice_sample(prop = sample_prop) %>% 
-               mutate("calibration_25" = 0, 
-                      "calibration_50" = 0) %>% ungroup() %>% 
+               mutate("calibration_25_SRS" = 0, 
+                      "calibration_50_SRS" = 0) %>% ungroup() %>% 
                mutate("dataset_name" = 
                         paste0(dataset_name, "_sample_", sample_prop*100)))
   }
@@ -353,11 +353,11 @@ for(sample_prop in sample_props){
 for(i in 1:length(synthetic_HCAP_list)){
   synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
                                   size = 0.25*nrow(synthetic_HCAP_list[[i]]), 
-                                  replace = FALSE), "calibration_25"] <- 1
+                                  replace = FALSE), "calibration_25_SRS"] <- 1
   
   synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
                                   size = 0.50*nrow(synthetic_HCAP_list[[i]]), 
-                                  replace = FALSE), "calibration_50"] <- 1
+                                  replace = FALSE), "calibration_50_SRS"] <- 1
 }
 
 #---- **save data ----
