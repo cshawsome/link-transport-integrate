@@ -224,7 +224,7 @@ posterior_predictive_checks <-
         left_join(cell_ID_key, ., by = "cell_ID")  
     } else{
       counts <- dataset_to_copy %>% 
-        filter(!!sym(paste0("calibration_", 100*calibration_prop)) == 0) %>%
+        filter(!!sym(calibration_sample_name) == 0) %>%
         dplyr::select(all_of(categorical_covariates)) %>% 
         unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
         set_colnames(c("cell_ID", "Freq")) %>% 
@@ -341,7 +341,7 @@ posterior_predictive_checks <-
       for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
         counts <- dataset_to_copy %>% 
           filter(!!as.symbol(group) == 1 & 
-                   !!sym(paste0("calibration_", 100*calibration_prop)) == 0) %>% 
+                   !!sym(calibration_sample_name) == 0) %>% 
           dplyr::select(all_of(categorical_covariates)) %>% 
           unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
           set_colnames(c("cell_ID", "Freq")) %>% 
@@ -514,8 +514,7 @@ posterior_predictive_checks <-
         subsample <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
       } else{
         subsample <- dataset_to_copy %>% 
-          filter(!!as.symbol(group) == 1 & 
-                   !!sym(paste0("calibration_", 100*calibration_prop)) == 0)
+          filter(!!as.symbol(group) == 1 & !!sym(calibration_sample_name) == 0)
       }
       
       for(var in continuous_covariates){
@@ -677,8 +676,7 @@ posterior_predictive_checks <-
         subsample <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
       } else{
         subsample <- dataset_to_copy %>% 
-          filter(!!as.symbol(group) == 1 & 
-                   !!sym(paste0("calibration_", 100*calibration_prop)) == 0)
+          filter(!!as.symbol(group) == 1 & !!sym(calibration_sample_name) == 0)
       }
       
       for(var in continuous_covariates){
