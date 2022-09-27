@@ -443,9 +443,6 @@ replicate(2,
                               num_synthetic = 1000, contrasts_matrix = A,
                               kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
                               truth = truth, seed = seed,
-                              path_to_raw_prior_sample =
-                                paste0(path_to_data,
-                                       "prior_data/MI/MI_datasets_cleaned"),
                               path_to_data = path_to_data,
                               path_to_results =
                                 paste0(path_to_box,
