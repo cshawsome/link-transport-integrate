@@ -901,7 +901,7 @@ generate_synthetic <-
 #   paste0(path_to_box, "analyses/simulation_study/HCAP_",
 #          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
 # path_to_figures_folder =
-#   paste0(path_to_box, "figures/figure_4/simulation_study/HCAP_",
+#   paste0(path_to_box, "figures/chapter_4/simulation_study/HCAP_",
 #          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
 # categorical_vars = W
 # continuous_vars = Z
