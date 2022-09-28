@@ -343,13 +343,16 @@ for(sample_prop in sample_props){
                x %>% group_by(married_partnered) %>% 
                slice_sample(prop = sample_prop) %>% 
                mutate("calibration_25_SRS" = 0, 
-                      "calibration_50_SRS" = 0) %>% ungroup() %>% 
+                      "calibration_50_SRS" = 0, 
+                      "calibration_25_design" = 0, 
+                      "calibration_50_design" = 0) %>% ungroup() %>% 
                mutate("dataset_name" = 
                         paste0(dataset_name, "_sample_", sample_prop*100)))
   }
 }
 
 #---- **flag calibration subsamples ----
+#---- ****SRS calibration ----
 for(i in 1:length(synthetic_HCAP_list)){
   synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
                                   size = 0.25*nrow(synthetic_HCAP_list[[i]]), 
@@ -360,6 +363,40 @@ for(i in 1:length(synthetic_HCAP_list)){
                                   replace = FALSE), "calibration_50_SRS"] <- 1
 }
 
+#---- ****design calibration ----
+filtered_vars_mat <- selected_vars_mat[, c("data_label", "Dementia")] %>% 
+  filter(Dementia != 0)
+
+preds <- filtered_vars_mat$data_label
+beta <- unlist(filtered_vars_mat[, "Dementia"])
+
+for(i in 1:length(synthetic_HCAP_list)){
+  synthetic_HCAP_list[[i]][, "p_dementia"] <- 
+    as.numeric(expit(as.matrix(synthetic_HCAP_list[[i]][, preds]) %*% 
+                       as.matrix(beta)))
+  
+  for(calibration_prop in c(0.25, 0.50)){
+    #sample 20% group within each race/ethnicity based on p(dementia)
+    impaired_sample_IDs <- synthetic_HCAP_list[[i]] %>% 
+      dplyr::select("HHIDPN", "White", "black", "hispanic", "p_dementia") %>% 
+      unite("race_eth_code", c("White", "black", "hispanic")) %>% 
+      group_by(race_eth_code) %>% arrange(desc(p_dementia)) %>%
+      slice_head(n = 0.20*calibration_prop*nrow(synthetic_HCAP_list[[i]])/3) %>% 
+      ungroup() %>% dplyr::select("HHIDPN") %>% unlist()
+    
+    #sample 80% randomly
+    random_sample_IDs <- synthetic_HCAP_list[[i]] %>% 
+      filter(!HHIDPN %in% impaired_sample_IDs) %>% 
+      sample_n(size = 0.80*calibration_prop*nrow(synthetic_HCAP_list[[i]])) %>% 
+      dplyr::select("HHIDPN") %>% unlist()
+    
+    synthetic_HCAP_list[[i]][
+      synthetic_HCAP_list[[i]]$HHIDPN %in% 
+        c(impaired_sample_IDs, random_sample_IDs), 
+      paste0("calibration_", calibration_prop*100, "_design")] <- 1
+  }
+}
+  
 #---- **save data ----
 saveRDS(synthetic_HCAP_list, 
         file = paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
