@@ -9,8 +9,8 @@ read_results <- function(path, skip = 0){
   
   #---- simulation study results ----
   if(str_detect(path, "simulation_study/results")){
-    dataset_name <- str_split(path, pattern = "results/")[[1]][2]
-    dataset_name <- str_remove(dataset_name, pattern = ".csv")
+    # dataset_name <- str_split(path, pattern = "results/")[[1]][2]
+    # dataset_name <- str_remove(dataset_name, pattern = ".csv")
     
     # if(str_detect(dataset_name, "ADAMS_HCAP")){
     #   data <- data.table::fread(path, fill = TRUE, skip = skip) %>% 
@@ -30,16 +30,23 @@ read_results <- function(path, skip = 0){
     #                            "prior_props", "calibration", "color")), 
     #               as.numeric) 
     # } else{
-      data <- data.table::fread(path, fill = TRUE, skip = skip) %>% 
-        na.omit() %>% 
-        separate(dataset_name, 
-                 into = c("text", "sample_size", "sample1", "HCAP_prop", 
-                          "calibration1", "calibration2"), 
-                 sep = "_", remove = FALSE) %>% 
-        dplyr::select(-one_of("sample1", "text")) %>%
-        unite("calibration", c("calibration1", "calibration2")) %>%
-        mutate_at(vars(-one_of("time", "dataset_name", "calibration")), 
-                  as.numeric)
+    
+    data <- data.table::fread(path, fill = TRUE, skip = skip) %>% 
+      na.omit() 
+    
+    if(str_detect(unique(data$dataset_name), "no_calibration")){
+      data %<>% mutate("dataset_name" = paste0(dataset_name, "_NA"))
+    }
+    
+    data %<>% 
+      separate(dataset_name, 
+               into = c("HRS_text", "sample_size", "sample_text", "HCAP_prop", 
+                        "calibration1", "calibration2", "calibration_sampling"), 
+               sep = "_", remove = FALSE) %>% 
+      dplyr::select(-one_of("HRS_text", "sample_text")) %>%
+      unite("calibration", c("calibration1", "calibration2")) %>%
+      mutate_at(vars(-one_of("time", "dataset_name", "calibration", 
+                             "calibration_sampling")), as.numeric)
     #}
     
     return(data)
