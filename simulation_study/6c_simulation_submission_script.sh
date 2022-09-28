@@ -11,9 +11,9 @@
 #$ -m bea #sends you an email (b) when the job begins (e) when job ends (a) when job is aborted (error)
 # submit array job:
 # SINGLE BATCH RUNS:
-#$ -t 1-3:1
+#$ -t 403-804:1
 # FOR THE FULL RUN USE INSTEAD:
-##$ -t 1-500:1
+##$ -t 1-1206:1
 ## 
 
 # load the job environment:
@@ -25,13 +25,14 @@ export OMP_NUM_THREADS=1 #uses max 1 thread (needs to match -pe shared)
 
 #The jobs are combinations of
 #
-#sample_size = c(500, 1000, 2000, 4000, 8000)
-#calibration = c("none", "HCAP_50")
+#sample_size = c(2000, 4000, 8000)
+#sample_prop = c(0.25, 0.50)
+#calibration = c("no_calibration", "calibration_50_SRS")
 #
 #the task ID indicates the row of the simulation scenario .csv file 
 
 echo "======"
 echo SGE_TASK_ID=$SGE_TASK_ID      
-R CMD BATCH --no-save --no-restore "--args scenario_num=$SGE_TASK_ID num_replicates=20"  /u/home/c/cshaw343/link_transport_integrate/RScripts/simulation_run.R /u/home/c/cshaw343/link_transport_integrate/output/output.$JOB_ID.$SGE_TASK_ID
-echo R CMD BATCH --no-save --no-restore \'--args scenario_num=$SGE_TASK_ID num_replicates=20 \'  /u/home/c/cshaw343/link_transport_integrate/RScripts/simulation_run.R /u/home/c/cshaw343/link_transport_integrate/output/output.$JOB_ID.$SGE_TASK_ID
+R CMD BATCH --no-save --no-restore "--args scenario_num=$SGE_TASK_ID num_replicates=15"  /u/home/c/cshaw343/link_transport_integrate/RScripts/simulation_run.R /u/home/c/cshaw343/link_transport_integrate/output/output.$JOB_ID.$SGE_TASK_ID
+echo R CMD BATCH --no-save --no-restore \'--args scenario_num=$SGE_TASK_ID num_replicates=15 \'  /u/home/c/cshaw343/link_transport_integrate/RScripts/simulation_run.R /u/home/c/cshaw343/link_transport_integrate/output/output.$JOB_ID.$SGE_TASK_ID
 
