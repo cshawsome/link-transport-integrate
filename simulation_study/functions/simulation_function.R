@@ -2,8 +2,8 @@ simulation_function <-
   function(warm_up, starting_props, categorical_vars, continuous_vars, id_var, 
            variable_labels, scenario, superpopulation, orig_means, orig_sds, 
            all_scenarios_list, cell_ID_key, color_palette, num_synthetic, 
-           contrasts_matrix, kappa_0_mat, nu_0_mat, truth, seed, 
-           path_to_raw_prior_sample, path_to_data, path_to_results){
+           contrasts_matrix, kappa_0_mat, nu_0_mat, truth, seed, path_to_data, 
+           path_to_results){
     
     #---- pre-allocated results ----
     result_names <- 
