@@ -19,10 +19,11 @@ HRS_tracker_dict_path <-
 
 HRS_tracker <- read_da_dct(HRS_tracker_data_path, HRS_tracker_dict_path,
                            HHIDPN = "TRUE") %>% 
-  #select variables: ID, 2016 Wave participation, 2016 married/partnered status, 
-  # sex/gender, age, race, ethnicity, years of education
-  dplyr::select("HHIDPN", "PIWTYPE", "PCOUPLE", "GENDER", "PAGE", "RACE", 
-                "HISPANIC", "SCHLYRS") %>%
+  #select variables: ID, 2016 Wave participation, HCAP selection, 
+  # 2016 married/partnered status, sex/gender, age, race, ethnicity, 
+  # years of education
+  dplyr::select("HHIDPN", "PIWTYPE", "HCAP_SELECT", "PCOUPLE", "GENDER", "PAGE", 
+                "RACE", "HISPANIC", "SCHLYRS") %>%
   #N = 43398
   #filter to those who completed 2016 Wave interview (N = 20911; dropped n = 22487)
   filter(PIWTYPE == 1) %>% 
@@ -91,6 +92,12 @@ HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>%
   left_join(., mem_scores, by = "HHIDPN")
 
 #---- clean data ----
+#---- **HCAP selection ----
+# table(HRS$HCAP_SELECT, useNA = "ifany")
+
+#change 2 = no to 0 = no
+HRS %<>% mutate_at(.vars = "HCAP_SELECT", function(x) ifelse(x == 2, 0, 1))
+
 #---- **age ----
 # table(HRS$PAGE, useNA = "ifany")
 
