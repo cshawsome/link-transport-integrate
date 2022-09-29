@@ -219,7 +219,7 @@ generate_synthetic <-
                "p_dementia" = 0)
       
       #---- **split sample ----
-      if(!calibration_sample_name == "calibration_100"){
+      if(calibration_sample & !calibration_sample_name == "calibration_100"){
         synthetic_sample <- 
           anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")  
       }
@@ -323,7 +323,13 @@ generate_synthetic <-
       }
       
       #---- ****group: summary ----
-      summary <- table(synthetic_sample$Group)/nrow(synthetic_sample) 
+      summary <- table(c(synthetic_sample$Group, 
+                         calibration_subset %>% 
+                           dplyr::select(
+                             c("Unimpaired", "MCI", "Dementia", "Other")) %>% 
+                           pivot_longer(everything()) %>% filter(value == 1) %>% 
+                           dplyr::select("name") %>% unlist() %>% 
+                           unname()))/nrow(dataset_to_copy) 
       
       if(length(summary) < 4){
         missing <- 
@@ -613,10 +619,16 @@ generate_synthetic <-
       
       #---- ****save synthetic sample ----
       if(b > warm_up){
+        synthetic_sample %<>% 
+          dplyr::select(-one_of(c("group_num", "p_unimpaired", "p_other", 
+                                  "p_mci", "Group")))
+        
         if(!exists("dataset_list")){
           dataset_list <- list()
         }
-        dataset_list[[b - warm_up]] <- synthetic_sample
+        dataset_list[[b - warm_up]] <- 
+          rbind(synthetic_sample, 
+                calibration_subset[, colnames(synthetic_sample)])
       }
     }
     
@@ -890,7 +902,7 @@ generate_synthetic <-
 # orig_means = means
 # orig_sds = sds
 # calibration_sample = !(calibration_scenario == "no_calibration")
-# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100) 
+# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
 # calibration_sample_name = calibration_scenario
 # path_to_data = paste0(path_to_box,"data/")
 # path_to_analyses_folder =
@@ -910,4 +922,4 @@ generate_synthetic <-
 # nu_0_mat = nu_0_mat
 # num_synthetic = 1000
 # data_only = FALSE
-# 
+
