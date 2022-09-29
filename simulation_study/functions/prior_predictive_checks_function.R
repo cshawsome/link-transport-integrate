@@ -464,18 +464,10 @@ prior_predictive_checks <-
     
     #---- plots ----
     #---- **dem class ----
-    if(!calibration_sample | calibration_scenario == "calibration_100"){
-      to_copy_dementia_plot_data <- 
-        as.data.frame(table(
-          dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
-        pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
-    } else{
-      to_copy_dementia_plot_data <- 
-        as.data.frame(table(
-          dataset_to_copy %>% filter(!!sym(calibration_scenario) == 0) %>% 
-            dplyr::select(c("Unimpaired", "MCI", "Dementia", "Other")))) %>% 
-        pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
-    }
+    to_copy_dementia_plot_data <- 
+      as.data.frame(table(
+        dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")])) %>% 
+      pivot_longer(-"Freq") %>% filter(value == 1 & Freq != 0)
     
     dem_sub <- lapply(synthetic, "[[", "Group") %>% do.call(cbind, .) %>% 
       set_colnames(seq(1, runs)) %>% as.data.frame() %>%
@@ -532,15 +524,10 @@ prior_predictive_checks <-
     
     #---- **class-specific continuous ----
     for(class in continuous_check){
-      if(!calibration_sample | calibration_scenario == "calibration_100"){
-        true_data <- dataset_to_copy %>% 
-          dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
-          filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
-      } else{
-        true_data <- dataset_to_copy %>% filter(!!sym(calibration_scenario) == 0) %>%
-          dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
-          filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
-      }
+      
+      true_data <- dataset_to_copy %>% 
+        dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
+        filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
       
       continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
       
@@ -606,23 +593,23 @@ prior_predictive_checks <-
     }
   }
 
-#---- test function ----
-dataset_to_copy = synthetic_HCAP_list[[1]]
-calibration_sample = !(calibration_scenario == "no_calibration")
-calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
-calibration_sample_name = calibration_scenario
-path_to_data = path_to_box
-path_to_output_folder = paste0(path_to_box,
-                               "figures/chapter_4/simulation_study/HCAP_",
-                               unique(dataset_to_copy[, "dataset_name_stem"]),
-                               "/prior_predictive_checks/")
-continuous_check_test = TRUE
-continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
-categorical_vars = W
-continuous_vars = Z
-variable_labels = variable_labels
-color_palette = color_palette
-contrasts_matrix = A
-kappa_0_mat = kappa_0_mat
-nu_0_mat = nu_0_mat
-num_synthetic = 1000
+# #---- test function ----
+# dataset_to_copy = synthetic_HCAP_list[[1]]
+# calibration_sample = !(calibration_scenario == "no_calibration")
+# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
+# calibration_sample_name = calibration_scenario
+# path_to_data = path_to_box
+# path_to_output_folder = paste0(path_to_box,
+#                                "figures/chapter_4/simulation_study/HCAP_",
+#                                unique(dataset_to_copy[, "dataset_name_stem"]),
+#                                "/prior_predictive_checks/")
+# continuous_check_test = TRUE
+# continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+# categorical_vars = W
+# continuous_vars = Z
+# variable_labels = variable_labels
+# color_palette = color_palette
+# contrasts_matrix = A
+# kappa_0_mat = kappa_0_mat
+# nu_0_mat = nu_0_mat
+# num_synthetic = 1000
