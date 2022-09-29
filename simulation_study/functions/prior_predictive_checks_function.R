@@ -28,6 +28,11 @@ prior_predictive_checks <-
     }
     
     for(class in c("unimpaired", "mci", "dementia", "other")){
+      if(!dir.exists(paste0(path_to_output_folder, "cell_counts"))){
+        dir.create(paste0(path_to_output_folder, "cell_counts"), 
+                   recursive = TRUE)
+      }
+      
       if(!dir.exists(paste0(path_to_output_folder, "continuous_vars/", 
                             tolower(class)))){
         dir.create(paste0(path_to_output_folder, "continuous_vars/", 
@@ -429,6 +434,13 @@ prior_predictive_checks <-
                       mu = mu[, paste0(class, ":", j)], Sigma = sig_Y)
           }
         }
+        #---- **save categorical ----
+        assign(paste0("W_", class), rbind(
+          subset[, all_of(categorical_vars)], 
+          calibration_subset[calibration_subset[, class] == 1, 
+                             all_of(categorical_vars)]))
+        
+        #---- **save continuous ----
         assign(paste0("Z_", class), rbind(
           subset[, all_of(continuous_vars)], 
           calibration_subset[calibration_subset[, class] == 1, 
@@ -442,7 +454,17 @@ prior_predictive_checks <-
                         dplyr::select(
                           c("Unimpaired", "MCI", "Dementia", "Other")) %>% 
                         pivot_longer(everything()) %>% filter(value == 1) %>% 
-                        dplyr::select("name") %>% unlist() %>% unname()), 
+                        dplyr::select("name") %>% unlist() %>% unname()),
+                  
+                  "W_unimpaired" = W_Unimpaired %>% 
+                    mutate("Group" = "Unimpaired"),
+                  "W_other" = W_Other %>% 
+                    mutate("Group" = "Other"), 
+                  "W_mci" = W_MCI %>% 
+                    mutate("Group" = "MCI"), 
+                  "W_dementia" = W_Dementia %>% 
+                    mutate("Group" = "Dementia"),
+                  
                   "Z_unimpaired" = Z_Unimpaired %>% 
                     mutate("Group" = "Unimpaired") %>% 
                     left_join(color_palette, by = "Group"), 
@@ -522,72 +544,156 @@ prior_predictive_checks <-
       }
     }
     
-    #---- **class-specific continuous ----
-    for(class in continuous_check){
+    #---- **categorical ----
+    #pre-allocate results matrix
+    synthetic_counts <- 
+      matrix(0, nrow = nrow(contrasts_matrix)*4, 
+             ncol = (num_synthetic + 2)) %>% as.data.frame() %>% 
+      set_colnames(c(seq(1, num_synthetic), "group", "cell"))
+    
+    synthetic_counts[, "group"] <- 
+      rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
+          each = nrow(contrasts_matrix))
+    
+    cells <- contrasts_matrix[, -1] %>% as.data.frame() %>% 
+      unite("cell_ID", sep = "") %>% left_join(cell_ID_key, by = "cell_ID")
+    
+    synthetic_counts[, "cell"] <- rep(cells$cell_name, 4)
+    
+    
+    #counts from synthetic datasets
+    for(num in 1:num_synthetic){
+      for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+        counts <- synthetic[[num]][[paste0("W_", tolower(group))]] 
+        
+        if(nrow(counts) == 0){
+          synthetic_counts[which(synthetic_counts$group == group), num] <- 0
+        } else{
+          counts %<>% dplyr::select(-one_of("Group")) %>%
+            unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+            set_colnames(c("cell_ID", "Freq")) %>% 
+            left_join(cell_ID_key, ., by = "cell_ID")
+          
+          counts[which(is.na(counts$Freq)), "Freq"] <- 0
+          
+          synthetic_counts[
+            which(synthetic_counts$group == group & 
+                    synthetic_counts$cell %in% counts$cell_name), num] <- 
+            counts$Freq
+        }
+      }
+    }
+    
+    synthetic_count_plot_data <- synthetic_counts %>% mutate("truth" = 0) 
+    
+    #true counts
+    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+      counts <- dataset_to_copy %>% filter(!!as.symbol(group) == 1) %>% 
+        dplyr::select(all_of(categorical_vars)) %>% 
+        unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+        set_colnames(c("cell_ID", "Freq")) %>% 
+        left_join(cell_ID_key, ., by = "cell_ID")
       
-      true_data <- dataset_to_copy %>% 
-        dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
-        filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
+      counts[which(is.na(counts$Freq)), "Freq"] <- 0
       
-      continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
+      synthetic_count_plot_data[
+        which(synthetic_count_plot_data$group == group & 
+                synthetic_count_plot_data$cell %in% counts$cell_name), 
+        "truth"] <- counts$Freq
+    }
+    
+    synthetic_count_plot_data %<>% 
+      pivot_longer(-c("group", "cell", "truth")) %>% 
+      left_join(color_palette, by = c("group" = "Group"))
+    
+    for(dem_group in unique(synthetic_count_plot_data$group)){
+      subset <- synthetic_count_plot_data %>% filter(group == dem_group)
+      ggplot(data = subset , aes(x = value)) + 
+        geom_histogram(fill = "black", color = "black") + theme_bw() + 
+        xlab("Contingency Cell Count") + ylab("") + 
+        facet_wrap(facets = vars(cell), ncol = 2, scales = "free") +
+        geom_vline(aes(xintercept = truth), color = unique(subset$Color),
+                   size = 1) +
+        theme(text = element_text(size = 6), 
+              strip.text = element_text(size = 6))  
       
-      for(i in 1:length(continuous_list)){
-        continuous_list[[i]] <- continuous_list[[i]] %>% 
-          dplyr::select(-c("Group")) %>%
-          mutate("run" = i, "Type" = "Synthetic") %>% 
-          rbind(., true_data %>% 
-                  dplyr::select(-!!as.symbol(class)) %>% 
-                  mutate("run" = i, "Type" = "Observed"))
+      if(!calibration_sample){
+        ggsave(filename = paste0(path_to_output_folder, "cell_counts/", 
+                                 tolower(dem_group), "_count.jpeg"), 
+               width = 3, height = 4, units = "in")
+      } else{
+        ggsave(filename = paste0(path_to_output_folder, "cell_counts/", 
+                                 tolower(dem_group), "_count.jpeg"), 
+               width = 3, height = 4, units = "in")
       }
       
-      continuous_list %<>% do.call(rbind, .) %>% as.data.frame() 
-      
-      for(var in continuous_vars){
-        data <- continuous_list[, c(var, "run", "Type", "Color")] 
+      #---- **continuous ----
+      for(class in continuous_check){
         
-        if(is.na(sum(data[, var])) | continuous_check_test){
-          continuous_plot <- 
-            ggplot(data = data, aes(color = Type, fill = Type)) + 
-            geom_density(aes(x = data[, 1]), alpha = 0.5) + 
-            theme_minimal() + 
-            xlab(variable_labels[variable_labels$data_label == var, 
-                                 "figure_label"]) + 
-            scale_color_manual(values = rev(unique(data$Color))) + 
-            scale_fill_manual(values = rev(unique(data$Color)))
+        true_data <- dataset_to_copy %>% 
+          dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
+          filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
+        
+        continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
+        
+        for(i in 1:length(continuous_list)){
+          continuous_list[[i]] <- continuous_list[[i]] %>% 
+            dplyr::select(-c("Group")) %>%
+            mutate("run" = i, "Type" = "Synthetic") %>% 
+            rbind(., true_data %>% 
+                    dplyr::select(-!!as.symbol(class)) %>% 
+                    mutate("run" = i, "Type" = "Observed"))
+        }
+        
+        continuous_list %<>% do.call(rbind, .) %>% as.data.frame() 
+        
+        for(var in continuous_vars){
+          data <- continuous_list[, c(var, "run", "Type", "Color")] 
           
-          if(continuous_check_test){
-            ggsave(filename = paste0(path_to_output_folder, 
-                                     "continuous_vars/test_set/", 
-                                     tolower(class), "/", var, ".jpeg"), 
-                   height = 3, width = 5, units = "in")
+          if(is.na(sum(data[, var])) | continuous_check_test){
+            continuous_plot <- 
+              ggplot(data = data, aes(color = Type, fill = Type)) + 
+              geom_density(aes(x = data[, 1]), alpha = 0.5) + 
+              theme_minimal() + 
+              xlab(variable_labels[variable_labels$data_label == var, 
+                                   "figure_label"]) + 
+              scale_color_manual(values = rev(unique(data$Color))) + 
+              scale_fill_manual(values = rev(unique(data$Color)))
+            
+            if(continuous_check_test){
+              ggsave(filename = paste0(path_to_output_folder, 
+                                       "continuous_vars/test_set/", 
+                                       tolower(class), "/", var, ".jpeg"), 
+                     height = 3, width = 5, units = "in")
+            } else{
+              ggsave(filename = paste0(path_to_output_folder, 
+                                       "continuous_vars/error_set/", 
+                                       tolower(class), "/", var, ".jpeg"), 
+                     height = 3, width = 5, units = "in")
+            }
+            
           } else{
-            ggsave(filename = paste0(path_to_output_folder, 
-                                     "continuous_vars/error_set/", 
-                                     tolower(class), "/", var, ".jpeg"), 
-                   height = 3, width = 5, units = "in")
+            continuous_plot <- 
+              ggplot(data = data, aes(color = Type, fill = Type)) + 
+              geom_density(aes(x = data[, 1]), alpha = 0.5) + 
+              theme_minimal() + 
+              xlab(variable_labels[variable_labels$data_label == var, 
+                                   "figure_label"]) + 
+              scale_color_manual(values = rev(unique(data$Color))) + 
+              scale_fill_manual(values = rev(unique(data$Color))) + 
+              transition_states(data$run, transition_length = 1, 
+                                state_length = 1) +
+              labs(title = "Synthetic {round(frame_time)}") + 
+              transition_time(run) + ease_aes('linear')
+            
+            animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
+                    res = 150, renderer = gifski_renderer())
+            
+            anim_save(filename = paste0(path_to_output_folder, "continuous_vars/", 
+                                        tolower(class), "/", var, ".gif"),
+                      animation = last_animation(),
+                      renderer = gifski_renderer())
           }
-          
-        } else{
-          continuous_plot <- 
-            ggplot(data = data, aes(color = Type, fill = Type)) + 
-            geom_density(aes(x = data[, 1]), alpha = 0.5) + 
-            theme_minimal() + 
-            xlab(variable_labels[variable_labels$data_label == var, 
-                                 "figure_label"]) + 
-            scale_color_manual(values = rev(unique(data$Color))) + 
-            scale_fill_manual(values = rev(unique(data$Color))) + 
-            transition_states(data$run, transition_length = 1, 
-                              state_length = 1) +
-            labs(title = "Synthetic {round(frame_time)}") + 
-            transition_time(run) + ease_aes('linear')
-          
-          animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
-                  res = 150, renderer = gifski_renderer())
-          
-          anim_save(filename = paste0(path_to_output_folder, "continuous_vars/", 
-                                      tolower(class), "/", var, ".gif"),
-                    animation = last_animation(),
-                    renderer = gifski_renderer())
         }
       }
     }
