@@ -128,14 +128,10 @@ prior_predictive_checks <-
       mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, 
              "p_dementia" = 0)
     
-    if(calibration_sample){
+    if(calibration_sample & !calibration_scenario == "calibration_100"){
       #---- **split sample ----
-      if(calibration_scenario == "calibration_100"){
-        synthetic_sample <- dataset_to_copy
-      } else{
-        synthetic_sample <- 
-          anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")  
-      }
+      synthetic_sample <-
+        anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
     }
     
     #---- max index ----
@@ -433,11 +429,20 @@ prior_predictive_checks <-
                       mu = mu[, paste0(class, ":", j)], Sigma = sig_Y)
           }
         }
-        assign(paste0("Z_", class), subset[, all_of(continuous_vars)])
+        assign(paste0("Z_", class), rbind(
+          subset[, all_of(continuous_vars)], 
+          calibration_subset[calibration_subset[, class] == 1, 
+                             all_of(continuous_vars)]))
       }
       
       #---- **return ----
-      return(list("Group" = synthetic_sample$Group, 
+      return(list("Group" = 
+                    c(synthetic_sample$Group, 
+                      calibration_subset %>% 
+                        dplyr::select(
+                          c("Unimpaired", "MCI", "Dementia", "Other")) %>% 
+                        pivot_longer(everything()) %>% filter(value == 1) %>% 
+                        dplyr::select("name") %>% unlist() %>% unname()), 
                   "Z_unimpaired" = Z_Unimpaired %>% 
                     mutate("Group" = "Unimpaired") %>% 
                     left_join(color_palette, by = "Group"), 
@@ -601,23 +606,23 @@ prior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# dataset_to_copy = synthetic_HCAP_list[[1]]
-# calibration_sample = !(calibration_scenario == "no_calibration")
-# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
-# calibration_sample_name = calibration_scenario
-# path_to_data = path_to_box
-# path_to_output_folder = paste0(path_to_box,
-#                                "figures/chapter_4/simulation_study/HCAP_",
-#                                unique(dataset_to_copy[, "dataset_name_stem"]),
-#                                "/prior_predictive_checks/")
-# continuous_check_test = TRUE
-# continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
-# categorical_vars = W
-# continuous_vars = Z
-# variable_labels = variable_labels
-# color_palette = color_palette
-# contrasts_matrix = A
-# kappa_0_mat = kappa_0_mat
-# nu_0_mat = nu_0_mat
-# num_synthetic = 1000
+#---- test function ----
+dataset_to_copy = synthetic_HCAP_list[[1]]
+calibration_sample = !(calibration_scenario == "no_calibration")
+calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
+calibration_sample_name = calibration_scenario
+path_to_data = path_to_box
+path_to_output_folder = paste0(path_to_box,
+                               "figures/chapter_4/simulation_study/HCAP_",
+                               unique(dataset_to_copy[, "dataset_name_stem"]),
+                               "/prior_predictive_checks/")
+continuous_check_test = TRUE
+continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+categorical_vars = W
+continuous_vars = Z
+variable_labels = variable_labels
+color_palette = color_palette
+contrasts_matrix = A
+kappa_0_mat = kappa_0_mat
+nu_0_mat = nu_0_mat
+num_synthetic = 1000
