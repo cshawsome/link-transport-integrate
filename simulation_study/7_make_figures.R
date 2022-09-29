@@ -177,8 +177,14 @@ ggsave(filename = "synthetic_bathtub_mix_Z.jpeg", plot = last_plot(),
 
 #---- check number of simulation runs ----
 #Missing runs:
-# n = 2000, sample = 50: 1
-# n = 4000, sample = 25: 1
+# n = 2000, sample = 50, no calibration: 1
+# n = 4000, sample = 25, no calibration: 1
+# n = 2000, sample = 25, calibration 50 SRS: 627
+# n = 2000, sample = 50, calibration 50 SRS: 42
+# n = 4000, sample = 25, calibration 50 SRS: 9
+# n = 4000, sample = 50, calibration 50 SRS: 31
+# n = 8000, sample = 25, calibration 50 SRS: 9
+# n = 8000, sample = 50, calibration 50 SRS: 33
 
 #---- **read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -207,7 +213,7 @@ group_colors <- color_palette$Color
 names(group_colors) <- color_palette$Group
 
 #---- **plot data ----
-#---- ****extra calcs: delete later ----
+#---- ****extra calcs ----
 results %<>% 
   mutate(true_Unimpaired_prop = 
            as.numeric(superpop_impairment_props[
@@ -222,7 +228,12 @@ results %<>%
            as.numeric(superpop_impairment_props[
              superpop_impairment_props$Group == "Other", "prop"]))
 
-results %<>% mutate(sample_size = HCAP_prop/100*sample_size)
+results %<>% 
+  mutate(HCAP_sample_size = HCAP_prop/100*sample_size, 
+         sample_size = case_when(calibration == "no_calibration" ~ 
+                                   HCAP_sample_size, 
+                                 calibration == "calibration_50" ~ 
+                                   0.50*HCAP_sample_size))
 
 results %<>% 
   mutate(mean_Unimpaired_prop = mean_Unimpaired/sample_size, 
@@ -238,9 +249,9 @@ results %<>%
          UCI_Dementia_prop = UCI_Dementia/sample_size, 
          UCI_Other_prop = UCI_Other/sample_size)
 
-#---- ****end extra calcs: delete later ----
 plot_data <- results %>% 
-  group_by(calibration, HCAP_prop, sample_size) %>% 
+  group_by(calibration, calibration_sampling, HCAP_prop, HCAP_sample_size, 
+           sample_size) %>% 
   summarise_at(paste0(
     c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other", 
       "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other", 
@@ -252,14 +263,20 @@ plot_data <- results %>%
       "UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other"), "_prop"),
     names_to = c(".value", "Group"), names_pattern = "(.*?)_(.*)") %>% 
   mutate_at("Group", function(x) str_remove(x, "_prop")) %>% 
-  mutate_at("sample_size", as.factor) %>% 
+  mutate_at(c("HCAP_sample_size", "sample_size"), as.factor) %>% 
   mutate_at("Group", function(x) 
     factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
   mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ "25% of HRS", 
-                                 HCAP_prop == 50 ~ "50% of HRS"))
+                                 HCAP_prop == 50 ~ "50% of HRS")) %>% 
+  mutate("calibration_sampling" = 
+           case_when(calibration_sampling == "NA" ~ "ADAMS", 
+                     calibration_sampling == "SRS" & 
+                       calibration == "calibration_50" ~ 
+                       "HCAP 50% SRS Adjudication"))
 
-#---- **plot ----
-ggplot(data = plot_data, aes(x = mean, y = sample_size)) +
+#---- **plot v1: no HCAP calibration ----
+ggplot(data = plot_data %>% filter(calibration == "no_calibration"), 
+       aes(x = mean, y = HCAP_sample_size)) +
   geom_vline(data = superpop_impairment_props, aes(xintercept = prop), 
              size = 1, color = rep(color_palette$Color, 2)) +
   geom_point(size = 2) + 
@@ -270,7 +287,25 @@ ggplot(data = plot_data, aes(x = mean, y = sample_size)) +
   theme(text = element_text(size = 18))  
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "mean_CI_impairement_class.jpeg"))
+                         "mean_CI_impairement_class_no_HCAP_adjudication.jpeg"))
+
+#---- **plot v2: HCAP calibration ----
+ggplot(data = plot_data, 
+       aes(x = mean, y = HCAP_sample_size, shape = calibration_sampling)) +
+  geom_vline(data = superpop_impairment_props, aes(xintercept = prop), 
+             size = 1, color = rep(color_palette$Color, 2)) +
+  geom_point(size = 2, position = position_dodge(-0.4)) + 
+  scale_shape_manual(values = c(1, 19)) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.2, 
+                position = position_dodge(-0.4)) + theme_bw() + 
+  facet_grid(cols = vars(Group), rows = vars(HCAP_prop), scales = "free_y") + 
+  scale_x_continuous(breaks = seq(0.00, 0.70, by = 0.10)) +
+  xlab("Proportion") + ylab("HCAP sample size") + 
+  theme(text = element_text(size = 18), legend.position = "bottom") + 
+  guides(shape = guide_legend(title = "Adjudicated Prior Sample"))
+
+ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
+                         "mean_CI_impairement_class_HCAP_adjudication.jpeg"))
 
 #---- Figure X: 95% CI coverage impairment classes ----
 #---- **color palette ----
