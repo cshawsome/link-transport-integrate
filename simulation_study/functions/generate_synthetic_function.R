@@ -623,7 +623,7 @@ generate_synthetic <-
       if(b > warm_up){
         synthetic_sample %<>% 
           dplyr::select(-one_of(c("group_num", "p_unimpaired", "p_other", 
-                                  "p_mci", "Group")))
+                                  "p_mci", "p_dementia", "Group")))
         
         if(!exists("dataset_list")){
           dataset_list <- list()
