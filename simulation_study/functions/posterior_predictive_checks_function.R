@@ -209,27 +209,17 @@ posterior_predictive_checks <-
           which(synthetic_counts$chain == chain_num & 
                   synthetic_counts$cell %in% counts$cell_name), num] <- 
           counts$Freq
-        
       }
     }
     
     synthetic_count_plot_data <- synthetic_counts %>% mutate("truth" = 0) 
     
     #true counts
-    if(!calibration_sample | calibration_prop == 1){
-      counts <- dataset_to_copy %>% 
-        dplyr::select(all_of(categorical_covariates)) %>% 
-        unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-        set_colnames(c("cell_ID", "Freq")) %>% 
-        left_join(cell_ID_key, ., by = "cell_ID")  
-    } else{
-      counts <- dataset_to_copy %>% 
-        filter(!!sym(calibration_sample_name) == 0) %>%
-        dplyr::select(all_of(categorical_covariates)) %>% 
-        unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-        set_colnames(c("cell_ID", "Freq")) %>% 
-        left_join(cell_ID_key, ., by = "cell_ID")
-    }
+    counts <- dataset_to_copy %>% 
+      dplyr::select(all_of(categorical_covariates)) %>% 
+      unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+      set_colnames(c("cell_ID", "Freq")) %>% 
+      left_join(cell_ID_key, ., by = "cell_ID")  
     
     counts[which(is.na(counts$Freq)), "Freq"] <- 0
     
@@ -293,7 +283,7 @@ posterior_predictive_checks <-
           filter(chain == chain_num & sample == num) 
         
         for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-          counts <- subsample %>% filter(Group == group)
+          counts <- subsample %>% filter(!!sym(group) == 1)
           
           if(nrow(counts) == 0){
             synthetic_counts[
@@ -301,7 +291,7 @@ posterior_predictive_checks <-
                       synthetic_counts$chain == chain_num & 
                       synthetic_counts$cell %in% counts$cell_name), num] <- 0
           } else{
-            counts <- subsample %>% filter(Group == group) %>% 
+            counts %<>%
               dplyr::select(all_of(categorical_covariates)) %>% 
               unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
               set_colnames(c("cell_ID", "Freq")) %>% 
@@ -322,38 +312,19 @@ posterior_predictive_checks <-
     synthetic_count_plot_data <- synthetic_counts %>% mutate("truth" = 0) 
     
     #true counts
-    if(!calibration_sample | calibration_prop == 1){
-      for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-        counts <- dataset_to_copy %>% filter(!!as.symbol(group) == 1) %>% 
-          dplyr::select(all_of(categorical_covariates)) %>% 
-          unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-          set_colnames(c("cell_ID", "Freq")) %>% 
-          left_join(cell_ID_key, ., by = "cell_ID")
-        
-        counts[which(is.na(counts$Freq)), "Freq"] <- 0
-        
-        synthetic_count_plot_data[
-          which(synthetic_count_plot_data$group == group & 
-                  synthetic_count_plot_data$cell %in% counts$cell_name), 
-          "truth"] <- counts$Freq
-      }
-    } else{
-      for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-        counts <- dataset_to_copy %>% 
-          filter(!!as.symbol(group) == 1 & 
-                   !!sym(calibration_sample_name) == 0) %>% 
-          dplyr::select(all_of(categorical_covariates)) %>% 
-          unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-          set_colnames(c("cell_ID", "Freq")) %>% 
-          left_join(cell_ID_key, ., by = "cell_ID")
-        
-        counts[which(is.na(counts$Freq)), "Freq"] <- 0
-        
-        synthetic_count_plot_data[
-          which(synthetic_count_plot_data$group == group & 
-                  synthetic_count_plot_data$cell %in% counts$cell_name), 
-          "truth"] <- counts$Freq
-      }
+    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+      counts <- dataset_to_copy %>% filter(!!as.symbol(group) == 1) %>% 
+        dplyr::select(all_of(categorical_covariates)) %>% 
+        unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+        set_colnames(c("cell_ID", "Freq")) %>% 
+        left_join(cell_ID_key, ., by = "cell_ID")
+      
+      counts[which(is.na(counts$Freq)), "Freq"] <- 0
+      
+      synthetic_count_plot_data[
+        which(synthetic_count_plot_data$group == group & 
+                synthetic_count_plot_data$cell %in% counts$cell_name), 
+        "truth"] <- counts$Freq
     }
     
     synthetic_count_plot_data %<>% 
@@ -389,7 +360,6 @@ posterior_predictive_checks <-
                                    "_count.jpeg"), 
                  width = 3, height = 4, units = "in")
         }
-        
       }
     }
     
@@ -430,15 +400,8 @@ posterior_predictive_checks <-
                  "figure_label"]), num_chains))
     
     for(var in continuous_covariates){
-      if(!calibration_sample | calibration_prop == 1){
-        synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
-          median(unlist(dataset_to_copy[, var]))  
-      } else{
-        synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
-          median(unlist(dataset_to_copy[which(
-            dataset_to_copy[, calibration_sample_name] == 0), 
-            var]))  
-      }
+      synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
+        median(unlist(dataset_to_copy[, var]))  
     }
     
     synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
@@ -483,7 +446,7 @@ posterior_predictive_checks <-
     
     #medians from synthetic datasets
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      subsample <- synthetic_sample %>% filter(Group == group)
+      subsample <- synthetic_sample %>% filter(!!sym(group) == 1)
       
       for(var in continuous_covariates){
         subset <- subsample %>% 
@@ -510,13 +473,7 @@ posterior_predictive_checks <-
       left_join(color_palette, by = c("group" = "Group"))
     
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      if(!calibration_sample | calibration_prop == 1){
-        subsample <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
-      } else{
-        subsample <- dataset_to_copy %>% 
-          filter(!!as.symbol(group) == 1 & !!sym(calibration_sample_name) == 0)
-      }
-      
+      subsample <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
       for(var in continuous_covariates){
         synthetic_continuous[which(synthetic_continuous$group == group & 
                                      synthetic_continuous$var == var), 
@@ -592,15 +549,8 @@ posterior_predictive_checks <-
                "figure_label"]), num_chains))
     
     for(var in continuous_covariates){
-      if(!calibration_sample | calibration_prop == 1){
-        synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
-          skewness(unlist(dataset_to_copy[, var]))  
-      } else{
-        synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
-          skewness(unlist(dataset_to_copy[which(
-            dataset_to_copy[, calibration_sample_name] == 0), 
-            var]))
-      }
+      synthetic_continuous[which(synthetic_continuous$var == var), "truth"] <- 
+        skewness(unlist(dataset_to_copy[, var]))  
     }
     
     synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
@@ -645,7 +595,7 @@ posterior_predictive_checks <-
     
     #skewness from synthetic datasets
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      subsample <- synthetic_sample %>% filter(Group == group)  
+      subsample <- synthetic_sample %>% filter(!!sym(group) == 1)  
       
       for(var in continuous_covariates){
         subset <- subsample %>% 
@@ -672,12 +622,7 @@ posterior_predictive_checks <-
       left_join(color_palette, by = c("group" = "Group"))
     
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      if(!calibration_sample | calibration_prop == 1){
-        subsample <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
-      } else{
-        subsample <- dataset_to_copy %>% 
-          filter(!!as.symbol(group) == 1 & !!sym(calibration_sample_name) == 0)
-      }
+      subsample <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
       
       for(var in continuous_covariates){
         synthetic_continuous[which(synthetic_continuous$group == group & 
@@ -719,29 +664,22 @@ posterior_predictive_checks <-
                                    tolower(dem_group), ".jpeg"), 
                  width = 8, height = 10, units = "in")
         }
-        
       }
     }
     
     #---- impairment classification ----
     #truth
-    if(!calibration_sample | calibration_prop == 1){
-      dementia_plot_data <- 
-        colSums(dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")]) %>%
-        as.data.frame() %>% set_colnames("truth") %>% rownames_to_column("Group")
-    } else{
-      dementia_plot_data <- 
-        colSums(dataset_to_copy[which(
-          dataset_to_copy[, calibration_sample_name] == 0), 
-          c("Unimpaired", "MCI", "Dementia", "Other")]) %>%
-        as.data.frame() %>% set_colnames("truth") %>% 
-        rownames_to_column("Group")
-    }
+    dementia_plot_data <- 
+      colSums(dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")]) %>%
+      as.data.frame() %>% set_colnames("truth") %>% rownames_to_column("Group")
     
     #synthetic
     synthetic_dementia_plot_data <- 
-      synthetic_sample[, c("Group", "sample", "chain")]  %>% 
-      dplyr::count(chain, sample, Group) %>%
+      synthetic_sample[, c("Unimpaired", "MCI", "Dementia", "Other", 
+                           "sample", "chain")]  %>% 
+      dplyr::count(chain, sample, Unimpaired, MCI, Dementia, Other) %>% 
+      pivot_longer(c("Unimpaired", "MCI", "Dementia", "Other"), 
+                   names_to = "Group") %>% filter(value == 1) %>%
       group_by(chain, sample) %>%
       mutate_at("sample", as.numeric) 
     
@@ -822,25 +760,24 @@ posterior_predictive_checks <-
                                  "/impairment_classes.jpeg"), 
                height = 4, width = 5.5, units = "in")
       }
-      
     }
   }
 
-# #---- test function ----
-# dataset_to_copy = synthetic_HCAP_list[[1]]
-# calibration_sample = TRUE
-# calibration_prop =
-#   as.numeric(str_remove(calibration_scenario, "HCAP_"))/100
-# calibration_sample_name = calibration_scenario
-# categorical_covariates = W
-# continuous_covariates = Z
-# contrasts_matrix = A
-# cell_ID_key = cell_ID_key
-# variable_labels = variable_labels
-# color_palette = color_palette
-# path_to_analyses_folder =
-#   paste0(path_to_box, "analyses/simulation_study/HCAP_",
-#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
-# path_to_figures_folder =
-#   paste0(path_to_box,"figures/simulation_study/HCAP_",
-#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+#---- test function ----
+dataset_to_copy = synthetic_HCAP_list[[1]]
+calibration_sample = TRUE
+calibration_prop =
+  as.numeric(str_remove(calibration_scenario, "HCAP_"))/100
+calibration_sample_name = calibration_scenario
+categorical_covariates = W
+continuous_covariates = Z
+contrasts_matrix = A
+cell_ID_key = cell_ID_key
+variable_labels = variable_labels
+color_palette = color_palette
+path_to_analyses_folder =
+  paste0(path_to_box, "analyses/simulation_study/HCAP_",
+         unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+path_to_figures_folder =
+  paste0(path_to_box,"figures/simulation_study/HCAP_",
+         unique(dataset_to_copy[, "dataset_name_stem"]), "/")
