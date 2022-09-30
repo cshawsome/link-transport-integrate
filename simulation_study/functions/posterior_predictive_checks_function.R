@@ -763,21 +763,21 @@ posterior_predictive_checks <-
     }
   }
 
-#---- test function ----
-dataset_to_copy = synthetic_HCAP_list[[1]]
-calibration_sample = TRUE
-calibration_prop =
-  as.numeric(str_remove(calibration_scenario, "HCAP_"))/100
-calibration_sample_name = calibration_scenario
-categorical_covariates = W
-continuous_covariates = Z
-contrasts_matrix = A
-cell_ID_key = cell_ID_key
-variable_labels = variable_labels
-color_palette = color_palette
-path_to_analyses_folder =
-  paste0(path_to_box, "analyses/simulation_study/HCAP_",
-         unique(dataset_to_copy[, "dataset_name_stem"]), "/")
-path_to_figures_folder =
-  paste0(path_to_box,"figures/simulation_study/HCAP_",
-         unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+# #---- test function ----
+# dataset_to_copy = synthetic_HCAP_list[[1]]
+# calibration_sample = TRUE
+# calibration_prop =
+#   as.numeric(str_remove(calibration_scenario, "HCAP_"))/100
+# calibration_sample_name = calibration_scenario
+# categorical_covariates = W
+# continuous_covariates = Z
+# contrasts_matrix = A
+# cell_ID_key = cell_ID_key
+# variable_labels = variable_labels
+# color_palette = color_palette
+# path_to_analyses_folder =
+#   paste0(path_to_box, "analyses/simulation_study/HCAP_",
+#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+# path_to_figures_folder =
+#   paste0(path_to_box,"figures/simulation_study/HCAP_",
+#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
