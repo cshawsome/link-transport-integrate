@@ -255,13 +255,15 @@ generate_synthetic <-
                       paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
                       collapse = "")), family = "binomial", 
                 #don't select (Intercept) variable
-                data = calibration_subset[, vars[-1]]))
+                data = slice_sample(calibration_subset[, vars[-1]], 
+                                    n = nrow(calibration_subset), 
+                                    replace = TRUE)))
             
             prior_betas <- coefficients(latent_class_model)
-            prior_cov <- vcov(latent_class_model)
-            
-            prior_betas <-
-              t(mvnfast::rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov))
+            # prior_cov <- vcov(latent_class_model)
+            # 
+            # prior_betas <-
+            #   t(mvnfast::rmvn(n = 1, mu = unlist(prior_betas), sigma = prior_cov))
           }
           
           model_gamma_chain[which(model_gamma_chain$model == model), b] <- 
