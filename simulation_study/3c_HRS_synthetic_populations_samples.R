@@ -332,7 +332,9 @@ for(sample_prop in sample_props){
                       x %>% group_by(married_partnered) %>% 
                       slice_sample(prop = sample_prop) %>% 
                       mutate("calibration_25_SRS" = 0, 
-                             "calibration_50_SRS" = 0) %>% ungroup() %>% 
+                             "calibration_50_SRS" = 0, 
+                             "calibration_25_design" = 0, 
+                             "calibration_50_design" = 0) %>% ungroup() %>% 
                       mutate("dataset_name" = 
                                paste0(dataset_name, "_sample_", 
                                       sample_prop*100))))
@@ -384,11 +386,64 @@ for(i in 1:length(synthetic_HCAP_list)){
       slice_head(n = 0.20*calibration_prop*nrow(synthetic_HCAP_list[[i]])/3) %>% 
       ungroup() %>% dplyr::select("HHIDPN") %>% unlist()
     
-    #sample 80% randomly
-    random_sample_IDs <- synthetic_HCAP_list[[i]] %>% 
-      filter(!HHIDPN %in% impaired_sample_IDs) %>% 
-      sample_n(size = 0.80*calibration_prop*nrow(synthetic_HCAP_list[[i]])) %>% 
-      dplyr::select("HHIDPN") %>% unlist()
+    #sample 80% randomly within each race/ethnicity
+    random_sample_IDs <- 
+      tryCatch(synthetic_HCAP_list[[i]] %>% 
+                 filter(!HHIDPN %in% impaired_sample_IDs) %>% 
+                 dplyr::select("HHIDPN", "White", "black", "hispanic") %>% 
+                 unite("race_eth_code", c("White", "black", "hispanic")) %>% 
+                 group_by(race_eth_code) %>%
+                 slice_sample(n = 0.80*calibration_prop*
+                                nrow(synthetic_HCAP_list[[i]])/3) %>% 
+                 ungroup() %>% dplyr::select("HHIDPN") %>% unlist(), 
+               error = function(e) {
+                 #how to handle lack of people in race/ethnic category
+                 subset <- synthetic_HCAP_list[[i]] %>% 
+                   filter(!HHIDPN %in% impaired_sample_IDs) %>% 
+                   dplyr::select("HHIDPN", "White", "black", "hispanic") %>% 
+                   unite("race_eth_code", c("White", "black", "hispanic"))
+                 
+                 counts <- subset %>% group_by(race_eth_code) %>% 
+                   count(race_eth_code)
+                 
+                 #how many do we need to sample
+                 num_to_sample <- 
+                   0.80*calibration_prop*nrow(synthetic_HCAP_list[[i]])/3
+                 
+                 counts %<>% mutate("missing" = num_to_sample - n)
+                 
+                 #take everyone from groups that have fewer than the number we 
+                 #  need
+                 for(code in counts$race_eth_code){
+                   if(counts[which(counts$race_eth_code == code), "missing"] > 0){
+                     selected <- subset %>% filter(race_eth_code == code) %>% 
+                       dplyr::select("HHIDPN") %>% unlist() %>% unname()
+                   } else{
+                     selected <- subset %>% filter(race_eth_code == code) %>% 
+                       slice_sample(n = num_to_sample) %>% dplyr::select("HHIDPN") %>% 
+                       unlist() %>% unname()
+                   }
+                   
+                   if(exists("ids_vec")){
+                     ids_vec <- c(ids_vec, selected)
+                   } else{
+                     ids_vec <- selected
+                   }
+                 }
+                 
+                 #fill in the rest with random sample from the unsampled observations
+                 missing_obs <- num_to_sample*3 - length(ids_vec)
+                 
+                 if(missing_obs > 0){
+                   #still unselected
+                   subset %<>% filter(!HHIDPN %in% ids_vec)  
+                   ids_vec <- 
+                     c(ids_vec, subset %>% 
+                         slice_sample(n = missing_obs) %>% 
+                         dplyr::select("HHIDPN") %>% unlist() %>% unname())
+                 }
+                 return(ids_vec)
+               })
     
     synthetic_HCAP_list[[i]][
       synthetic_HCAP_list[[i]]$HHIDPN %in% 
@@ -396,7 +451,7 @@ for(i in 1:length(synthetic_HCAP_list)){
       paste0("calibration_", calibration_prop*100, "_design")] <- 1
   }
 }
-  
+
 #---- **save data ----
 saveRDS(synthetic_HCAP_list, 
         file = paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
