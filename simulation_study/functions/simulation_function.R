@@ -70,7 +70,8 @@ simulation_function <-
     
     scenario_name <- 
       as.character(unite(
-        all_sim_scenarios[scenario, c("sample_size", "sample_text", "HCAP_prop", 
+        all_sim_scenarios[all_sim_scenarios$job == scenario_num, 
+                          c("sample_size", "sample_text", "HCAP_prop", 
                                       "calibration")], 
         col = "name", sep = "_"))
     
