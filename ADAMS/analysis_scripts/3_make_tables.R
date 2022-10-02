@@ -96,3 +96,9 @@ ADAMS_Dementia <- ADAMS %>% left_join(ADAMS_demdx, by = "HHIDPN") %>%
 #15: Alcoholic dementia (0.6%)
 
 table(ADAMS_Dementia$ADFDX1, useNA = "ifany")/nrow(ADAMS_Dementia)
+
+#---- **training sample contingency cell counts ----
+contingency_cell_counts <- 
+  ADAMS_train %>% unite("cell", c("Black", "Hispanic", "Astroke"), sep = "")
+
+table(contingency_cell_counts$cell, contingency_cell_counts$Adem_dx_cat)
