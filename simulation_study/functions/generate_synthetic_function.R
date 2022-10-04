@@ -260,6 +260,20 @@ generate_synthetic <-
                                     replace = TRUE)))
             
             prior_betas <- coefficients(latent_class_model)
+            
+            while(sum(is.na(prior_betas)) > 0){
+              latent_class_model <- 
+                suppressWarnings(glm(formula(
+                  paste(class_name, " ~ ", 
+                        paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+                        collapse = "")), family = "binomial", 
+                  #don't select (Intercept) variable
+                  data = slice_sample(calibration_subset[, vars[-1]], 
+                                      n = nrow(calibration_subset), 
+                                      replace = TRUE)))
+              
+              prior_betas <- coefficients(latent_class_model)
+            }
             # prior_cov <- vcov(latent_class_model)
             # 
             # prior_betas <-
