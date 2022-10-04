@@ -144,6 +144,8 @@ prior_predictive_checks <-
       max_index <- length(priors_beta)  
     }
     
+    # #---- DEBUG ----
+    # for(run in 1:1000){
     generate_data <- function(color_palette){
       if(!calibration_sample){
         #---- index for random draws ----
@@ -173,6 +175,21 @@ prior_predictive_checks <-
                                   replace = TRUE)))
           
           prior_betas <- coefficients(latent_class_model)
+          
+          while(sum(is.na(prior_betas)) > 0){
+            latent_class_model <- 
+              suppressWarnings(glm(formula(
+                paste(class_name, " ~ ", 
+                      paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+                      collapse = "")), family = "binomial", 
+                #don't select (Intercept) variable
+                data = slice_sample(calibration_subset[, vars[-1]], 
+                                    n = nrow(calibration_subset), 
+                                    replace = TRUE)))
+            
+            prior_betas <- coefficients(latent_class_model)
+          }
+          
           # prior_cov <- vcov(latent_class_model)
           # 
           # prior_betas <-
@@ -448,6 +465,8 @@ prior_predictive_checks <-
           calibration_subset[calibration_subset[, class] == 1, 
                              all_of(continuous_vars)]))
       }
+    # }
+    #   #---- END DEBUG ----
       
       #---- **return ----
       return(list("Group" = 
@@ -484,7 +503,7 @@ prior_predictive_checks <-
     #---- multiruns ----
     runs = num_synthetic
     synthetic <- replicate(num_synthetic, generate_data(color_palette), 
-                           simplify = FALSE) 
+                           simplify = FALSE)
     
     #---- plots ----
     #---- **dem class ----
