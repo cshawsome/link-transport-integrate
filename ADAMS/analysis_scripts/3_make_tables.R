@@ -11,7 +11,8 @@ options(scipen = 999)
 #---- source scripts ----
 source(paste0(here::here("functions", "read_da_dct.R")))
 
-#---- read in data ----
+#---- Table 3.2 ----
+#---- **read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 ADAMS_train <- 
@@ -24,14 +25,14 @@ ADAMS_test <-
 
 ADAMS <- rbind(ADAMS_train, ADAMS_test)
 
-#---- select/order vars ----
+#---- **select/order vars ----
 #remove these variables
-ADAMS %<>% dplyr::select(-one_of(c("HHIDPN", "(Intercept)")))
+ADAMS %<>% dplyr::select(c("AAGE", "ETHNIC_label", "Abmi", "Aiadla", "Astroke",
+                           "ANSER7T", "ANIMMCR", "ANDELCOR", "ANMSETOT_norm",  
+                           "ANRECYES", "ANWM1TOT", "proxy_cog", "Adem_dx_cat", 
+                           "dataset"))
 
-#variable order
-
-
-#---- make table ----
+#---- **make table ----
 tab1 <- ADAMS %>% 
   tbl_summary(by = dataset, 
               statistic = list(all_continuous() ~ "{mean} ({sd})"))
