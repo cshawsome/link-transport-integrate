@@ -475,9 +475,9 @@ for(i in 1:length(synthetic_HCAP_list)){
         set_colnames(c("cell_ID", "selected", "possible"))
       
       cell_ID_key[which(cell_ID_key$cell_ID %in% selected_counts$cell_ID), 
-        paste0(unique(synthetic_HCAP_list[[i]]$dataset_name), "_", 
-                      "calibration_", calibration_prop*100, "_design_IPW_", 
-               group)] <-
+                  paste0(unique(synthetic_HCAP_list[[i]]$dataset_name), "_", 
+                         "calibration_", calibration_prop*100, "_design_IPW_", 
+                         group)] <-
         selected_counts$possible/selected_counts$selected
     }
   }
@@ -488,4 +488,5 @@ saveRDS(synthetic_HCAP_list,
         file = paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
 
 #---- **save updated cell ID key ----
+cell_ID_key[is.na(cell_ID_key)] <- 0
 write_csv(cell_ID_key, paste0(path_to_box, "data/cell_ID_key.csv")) 
