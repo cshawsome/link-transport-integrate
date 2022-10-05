@@ -660,8 +660,8 @@ prior_predictive_checks <-
         facet_wrap(facets = vars(cell), ncol = 2, scales = "free") +
         geom_vline(aes(xintercept = truth), color = unique(subset$Color),
                    size = 1) +
-        theme(text = element_text(size = 6), 
-              strip.text = element_text(size = 6))  
+        theme(text = element_text(size = 8), 
+              strip.text = element_text(size = 8))  
       
       if(!calibration_sample){
         ggsave(filename = paste0(path_to_output_folder, "cell_counts/", 
@@ -704,7 +704,8 @@ prior_predictive_checks <-
               xlab(variable_labels[variable_labels$data_label == var, 
                                    "figure_label"]) + 
               scale_color_manual(values = rev(unique(data$Color))) + 
-              scale_fill_manual(values = rev(unique(data$Color)))
+              scale_fill_manual(values = rev(unique(data$Color))) + 
+              theme(text = element_text(size = 12))
             
             if(continuous_check_test){
               ggsave(filename = paste0(path_to_output_folder, 
@@ -730,7 +731,8 @@ prior_predictive_checks <-
               transition_states(data$run, transition_length = 1, 
                                 state_length = 1) +
               labs(title = "Synthetic {round(frame_time)}") + 
-              transition_time(run) + ease_aes('linear')
+              transition_time(run) + ease_aes('linear') + 
+              theme(text = element_text(size = 12))
             
             animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
                     res = 150, renderer = gifski_renderer())
@@ -745,25 +747,25 @@ prior_predictive_checks <-
     }
   }
 
-#---- test function ----
-set.seed(20220329)
-dataset_to_copy = synthetic_HCAP_list[[1]]
-calibration_sample = !(calibration_scenario == "no_calibration")
-calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
-calibration_sample_name = calibration_scenario
-path_to_data = path_to_box
-path_to_output_folder = paste0(path_to_box,
-                               "figures/chapter_4/simulation_study/HCAP_",
-                               unique(dataset_to_copy[, "dataset_name_stem"]),
-                               "/prior_predictive_checks/")
-continuous_check_test = TRUE
-continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
-categorical_vars = W
-continuous_vars = Z
-variable_labels = variable_labels
-color_palette = color_palette
-contrasts_matrix = A
-weights_matrix = cell_ID_key
-kappa_0_mat = kappa_0_mat
-nu_0_mat = nu_0_mat
-num_synthetic = 10
+# #---- test function ----
+# set.seed(20220329)
+# dataset_to_copy = synthetic_HCAP_list[[1]]
+# calibration_sample = !(calibration_scenario == "no_calibration")
+# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
+# calibration_sample_name = calibration_scenario
+# path_to_data = path_to_box
+# path_to_output_folder = paste0(path_to_box,
+#                                "figures/chapter_4/simulation_study/HCAP_",
+#                                unique(dataset_to_copy[, "dataset_name_stem"]),
+#                                "/prior_predictive_checks/")
+# continuous_check_test = TRUE
+# continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+# categorical_vars = W
+# continuous_vars = Z
+# variable_labels = variable_labels
+# color_palette = color_palette
+# contrasts_matrix = A
+# weights_matrix = cell_ID_key
+# kappa_0_mat = kappa_0_mat
+# nu_0_mat = nu_0_mat
+# num_synthetic = 10
