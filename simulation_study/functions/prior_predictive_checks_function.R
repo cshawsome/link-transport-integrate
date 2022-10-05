@@ -295,8 +295,8 @@ prior_predictive_checks <-
             #Full observed count
             prior_counts$Freq_total <- 
               unlist(prior_counts$Freq*
-              cell_ID_key[, paste0(unique(calibration_subset$dataset_name), 
-                                   "_IPW_", class)])
+                       cell_ID_key[, paste0(unique(calibration_subset$dataset_name), 
+                                            "_IPW_", class)])
             
             #Need to correct count to be compatible with sampling
             SRS_sampling_weight <- prior_counts
@@ -494,13 +494,14 @@ prior_predictive_checks <-
       
       #---- **return ----
       return(list("Group" = 
-                    c(synthetic_sample$Group, 
-                      calibration_subset %>% 
-                        dplyr::select(
-                          c("Unimpaired", "MCI", "Dementia", "Other")) %>% 
-                        pivot_longer(everything()) %>% filter(value == 1) %>% 
-                        dplyr::select("name") %>% unlist() %>% unname()),
-                  
+                    ifelse(calibration_sample, 
+                           c(synthetic_sample$Group, 
+                             calibration_subset %>% 
+                               dplyr::select(
+                                 c("Unimpaired", "MCI", "Dementia", "Other")) %>% 
+                               pivot_longer(everything()) %>% filter(value == 1) %>% 
+                               dplyr::select("name") %>% unlist() %>% unname()), 
+                           synthetic_sample$Group),
                   "W_unimpaired" = W_Unimpaired %>% 
                     mutate("Group" = "Unimpaired"),
                   "W_other" = W_Other %>% 
@@ -569,10 +570,10 @@ prior_predictive_checks <-
           geom_vline(xintercept = to_copy_dementia_plot_data[[
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
             color = unique(subset$Color)) + 
-        
-        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", 
-                                 class, "_line_only.jpeg"), 
-               height = 3, width = 5, units = "in")
+          
+          ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", 
+                                   class, "_line_only.jpeg"), 
+                 height = 3, width = 5, units = "in")
         
         #Prior predictive check
         ggplot(data = subset) + 
