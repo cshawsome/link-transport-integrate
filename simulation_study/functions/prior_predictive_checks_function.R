@@ -292,10 +292,17 @@ prior_predictive_checks <-
           }
           
           if(str_detect(calibration_sample_name, "design")){
-            prior_counts$Freq <- 
+            #Full observed count
+            prior_counts$Freq_total <- 
               unlist(prior_counts$Freq*
               cell_ID_key[, paste0(unique(calibration_subset$dataset_name), 
                                    "_IPW_", class)])
+            
+            #Need to correct count to be compatible with sampling
+            SRS_sampling_weight <- prior_counts
+            
+            
+            
           }
           
           prior_counts %<>% mutate("prop" = Freq/sum(Freq))
@@ -463,16 +470,24 @@ prior_predictive_checks <-
           }
         }
         #---- **save categorical ----
-        assign(paste0("W_", class), rbind(
-          subset[, all_of(categorical_vars)], 
-          calibration_subset[calibration_subset[, class] == 1, 
-                             all_of(categorical_vars)]))
+        if(calibration_sample){
+          assign(paste0("W_", class), rbind(
+            subset[, all_of(categorical_vars)], 
+            calibration_subset[calibration_subset[, class] == 1, 
+                               all_of(categorical_vars)]))
+        } else{
+          assign(paste0("W_", class), subset[, all_of(categorical_vars)])
+        }
         
         #---- **save continuous ----
-        assign(paste0("Z_", class), rbind(
-          subset[, all_of(continuous_vars)], 
-          calibration_subset[calibration_subset[, class] == 1, 
-                             all_of(continuous_vars)]))
+        if(calibration_sample){
+          assign(paste0("Z_", class), rbind(
+            subset[, all_of(continuous_vars)], 
+            calibration_subset[calibration_subset[, class] == 1, 
+                               all_of(continuous_vars)]))
+        } else{
+          assign(paste0("Z_", class), subset[, all_of(continuous_vars)])
+        }
       }
       # }
       #   #---- END DEBUG ----
@@ -553,7 +568,7 @@ prior_predictive_checks <-
           theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
           geom_vline(xintercept = to_copy_dementia_plot_data[[
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
-            color = unique(subset$Color))
+            color = unique(subset$Color)) + 
         
         ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", 
                                  class, "_line_only.jpeg"), 
@@ -729,25 +744,25 @@ prior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# set.seed(20220329)
-# dataset_to_copy = synthetic_HCAP_list[[1]]
-# calibration_sample = !(calibration_scenario == "no_calibration")
-# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
-# calibration_sample_name = calibration_scenario
-# path_to_data = path_to_box
-# path_to_output_folder = paste0(path_to_box,
-#                                "figures/chapter_4/simulation_study/HCAP_",
-#                                unique(dataset_to_copy[, "dataset_name_stem"]),
-#                                "/prior_predictive_checks/")
-# continuous_check_test = TRUE
-# continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
-# categorical_vars = W
-# continuous_vars = Z
-# variable_labels = variable_labels
-# color_palette = color_palette
-# contrasts_matrix = A
-# weights_matrix = cell_ID_key
-# kappa_0_mat = kappa_0_mat
-# nu_0_mat = nu_0_mat
-# num_synthetic = 1000
+#---- test function ----
+set.seed(20220329)
+dataset_to_copy = synthetic_HCAP_list[[1]]
+calibration_sample = !(calibration_scenario == "no_calibration")
+calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
+calibration_sample_name = calibration_scenario
+path_to_data = path_to_box
+path_to_output_folder = paste0(path_to_box,
+                               "figures/chapter_4/simulation_study/HCAP_",
+                               unique(dataset_to_copy[, "dataset_name_stem"]),
+                               "/prior_predictive_checks/")
+continuous_check_test = TRUE
+continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+categorical_vars = W
+continuous_vars = Z
+variable_labels = variable_labels
+color_palette = color_palette
+contrasts_matrix = A
+weights_matrix = cell_ID_key
+kappa_0_mat = kappa_0_mat
+nu_0_mat = nu_0_mat
+num_synthetic = 10
