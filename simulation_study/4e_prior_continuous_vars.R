@@ -26,7 +26,7 @@ selected_vars <-
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
-Z <- selected_vars[str_detect(selected_vars, "Z")]
+Z <- selected_vars[str_detect(selected_vars, "Z")] %>% unname()
 
 #---- **contrasts matrix ----
 #categorical vars contrasts matrix
@@ -99,12 +99,13 @@ estimate_cont_priors <- function(data, W, Z, A, cells){
     # }
     
     #---- **beta hat ----
-    continuous_covariates <- subset %>% dplyr::select(all_of(Z)) %>% as.matrix()
+    continuous_covariates <- subset %>% dplyr::select(all_of(W), all_of(Z)) %>% 
+      arrange(black, hispanic, stroke) %>% dplyr::select(all_of(Z)) %>% 
+      as.matrix()
     
     V_inv <- t(A) %*% UtU %*% A
     V <- solve(V_inv)
-    priors_V_inv[which(priors_V_inv$group == class), 
-                 seq(1, ncol(V_inv))] <- V_inv
+    priors_V_inv[which(priors_V_inv$group == class), seq(1, ncol(V_inv))] <- V_inv
     
     beta_hat <- V %*% t(A) %*% t(U) %*% continuous_covariates
     priors_beta[which(priors_beta$group == class), seq(1, ncol(beta_hat))] <- 
