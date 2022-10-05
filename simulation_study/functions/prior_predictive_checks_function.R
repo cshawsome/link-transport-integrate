@@ -569,7 +569,7 @@ prior_predictive_checks <-
           theme_minimal() + ggtitle(class) + xlab("Count") + ylab("Frequency") +
           geom_vline(xintercept = to_copy_dementia_plot_data[[
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
-            color = unique(subset$Color)) + 
+            color = unique(subset$Color))  
           
           ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", 
                                    class, "_line_only.jpeg"), 
@@ -728,11 +728,11 @@ prior_predictive_checks <-
                                    "figure_label"]) + 
               scale_color_manual(values = rev(unique(data$Color))) + 
               scale_fill_manual(values = rev(unique(data$Color))) + 
+              theme(text = element_text(size = 12))
               transition_states(data$run, transition_length = 1, 
                                 state_length = 1) +
               labs(title = "Synthetic {round(frame_time)}") + 
-              transition_time(run) + ease_aes('linear') + 
-              theme(text = element_text(size = 12))
+              transition_time(run) + ease_aes('linear') 
             
             animate(continuous_plot, fps = 2, height = 4, width = 5, units = "in", 
                     res = 150, renderer = gifski_renderer())
