@@ -4,7 +4,8 @@ prior_predictive_checks <-
            continuous_check_test = FALSE, 
            continuous_check = c("Unimpaired", "MCI", "Dementia", "Other"), 
            categorical_vars, continuous_vars, variable_labels, color_palette,
-           contrasts_matrix, kappa_0_mat, nu_0_mat, num_synthetic){
+           contrasts_matrix, weights_matrix, kappa_0_mat, nu_0_mat, 
+           num_synthetic){
     
     #---- check calibration parameter ----
     if(calibration_sample){
@@ -281,12 +282,20 @@ prior_predictive_checks <-
             dplyr::select("cell_ID") %>% table() %>% as.data.frame() %>% 
             set_colnames(c("cell_ID", "Freq"))
           
+          
           if(nrow(prior_counts) < nrow(cell_ID_key)){
             prior_counts <- 
               left_join(cell_ID_key, prior_counts, by = "cell_ID") %>% 
               dplyr::select(c("cell_ID", "Freq")) 
             
             prior_counts[which(is.na(prior_counts$Freq)), "Freq"] <- 0
+          }
+          
+          if(str_detect(calibration_sample_name, "design")){
+            prior_counts$Freq <- 
+              unlist(prior_counts$Freq*
+              cell_ID_key[, paste0(unique(calibration_subset$dataset_name), 
+                                   "_IPW_", class)])
           }
           
           prior_counts %<>% mutate("prop" = Freq/sum(Freq))
@@ -465,8 +474,8 @@ prior_predictive_checks <-
           calibration_subset[calibration_subset[, class] == 1, 
                              all_of(continuous_vars)]))
       }
-    # }
-    #   #---- END DEBUG ----
+      # }
+      #   #---- END DEBUG ----
       
       #---- **return ----
       return(list("Group" = 
@@ -738,6 +747,7 @@ prior_predictive_checks <-
 # variable_labels = variable_labels
 # color_palette = color_palette
 # contrasts_matrix = A
+# weights_matrix = cell_ID_key
 # kappa_0_mat = kappa_0_mat
 # nu_0_mat = nu_0_mat
 # num_synthetic = 1000

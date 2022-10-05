@@ -41,6 +41,10 @@ Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"),
 #---- **contrasts matrix ----
 A = read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
 
+#---- **cell ID key ----
+cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
+  mutate_at("cell_ID", as.character)
+
 #---- **hyperparameters (tune these) ----
 #DOF for inverse wishart
 nu_0_mat <- read_csv(paste0(path_to_box, "data/tuning/nu_0_matrix.csv"))
@@ -55,7 +59,7 @@ kappa_0_mat <- read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix.csv"))
 calibration_scenario = "calibration_50_design" 
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.50
+HCAP_sample_prop = 0.25
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
@@ -104,6 +108,7 @@ lapply(synthetic_HCAP_list[indices], function(x)
                           categorical_vars = W, continuous_vars = Z,
                           variable_labels = variable_labels, 
                           color_palette = color_palette, contrasts_matrix = A,
+                          weights_matrix = cell_ID_key, 
                           kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
                           num_synthetic = 1000))
 end <- Sys.time() - start
@@ -130,6 +135,7 @@ future_lapply(synthetic_HCAP_list[indices], function(x)
                           categorical_vars = W, continuous_vars = Z,
                           variable_labels = variable_labels, 
                           color_palette = color_palette, contrasts_matrix = A,
+                          weights_matrix = cell_ID_key, 
                           kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
                           num_synthetic = 1000), future.seed = TRUE)
 end <- Sys.time() - start
