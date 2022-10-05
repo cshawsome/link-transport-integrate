@@ -459,8 +459,8 @@ for(i in 1:length(synthetic_HCAP_list)){
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
       possible_counts <- 
         synthetic_HCAP_list[[i]] %>% filter(!!sym(group) == 1) %>% 
-        dplyr::select("White", "black", "hispanic") %>% 
-        unite("race_eth_code", c("White", "black", "hispanic"), sep = "") %>% 
+        dplyr::select("black", "hispanic", "stroke") %>% 
+        unite("cell_code", c("black", "hispanic", "stroke"), sep = "") %>% 
         table() %>% as.data.frame() %>% set_colnames(c("cell_ID", "Freq"))
       
       selected_counts <- 
@@ -468,15 +468,17 @@ for(i in 1:length(synthetic_HCAP_list)){
         filter(!!sym(group) == 1 &
                  !!sym(paste0("calibration_", calibration_prop*100, 
                               "_design")) == 1) %>% 
-        dplyr::select("White", "black", "hispanic") %>% 
-        unite("race_eth_code", c("White", "black", "hispanic"), sep = "") %>% 
-        table() %>% as.data.frame() %>% set_colnames(c("cell_ID", "Freq"))
+        dplyr::select("black", "hispanic", "stroke") %>% 
+        unite("cell_code", c("black", "hispanic", "stroke"), sep = "") %>% 
+        table() %>% as.data.frame() %>% set_colnames(c("cell_ID", "Freq")) %>% 
+        left_join(possible_counts, by = "cell_ID") %>% 
+        set_colnames(c("cell_ID", "selected", "possible"))
       
       cell_ID_key[which(cell_ID_key$cell_ID %in% selected_counts$cell_ID), 
         paste0(unique(synthetic_HCAP_list[[i]]$dataset_name), "_", 
                       "calibration_", calibration_prop*100, "_design_IPW_", 
                group)] <-
-        possible_counts$Freq/selected_counts$Freq
+        selected_counts$possible/selected_counts$selected
     }
   }
 }
