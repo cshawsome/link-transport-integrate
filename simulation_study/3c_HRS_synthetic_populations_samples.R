@@ -10,6 +10,10 @@ options(scipen = 999)
 #---- read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
+#---- **cell ID key ----
+cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
+  mutate_all(as.character)
+
 #---- **HRS analytic dataset ----
 HRS <- read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
 
@@ -431,7 +435,8 @@ for(i in 1:length(synthetic_HCAP_list)){
                    }
                  }
                  
-                 #fill in the rest with random sample from the unsampled observations
+                 #fill in the rest with random sample from the unsampled 
+                 #  observations
                  missing_obs <- num_to_sample*3 - length(ids_vec)
                  
                  if(missing_obs > 0){
@@ -449,9 +454,36 @@ for(i in 1:length(synthetic_HCAP_list)){
       synthetic_HCAP_list[[i]]$HHIDPN %in% 
         c(impaired_sample_IDs, random_sample_IDs), 
       paste0("calibration_", calibration_prop*100, "_design")] <- 1
+    
+    #---- ****calculate sampling weight ----
+    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+      possible_counts <- 
+        synthetic_HCAP_list[[i]] %>% filter(!!sym(group) == 1) %>% 
+        dplyr::select("White", "black", "hispanic") %>% 
+        unite("race_eth_code", c("White", "black", "hispanic"), sep = "") %>% 
+        table() %>% as.data.frame() %>% set_colnames(c("cell_ID", "Freq"))
+      
+      selected_counts <- 
+        synthetic_HCAP_list[[i]] %>% 
+        filter(!!sym(group) == 1 &
+                 !!sym(paste0("calibration_", calibration_prop*100, 
+                              "_design")) == 1) %>% 
+        dplyr::select("White", "black", "hispanic") %>% 
+        unite("race_eth_code", c("White", "black", "hispanic"), sep = "") %>% 
+        table() %>% as.data.frame() %>% set_colnames(c("cell_ID", "Freq"))
+      
+      cell_ID_key[which(cell_ID_key$cell_ID %in% selected_counts$cell_ID), 
+        paste0(unique(synthetic_HCAP_list[[i]]$dataset_name), "_", 
+                      "calibration_", calibration_prop*100, "_design_IPW_", 
+               group)] <-
+        possible_counts$Freq/selected_counts$Freq
+    }
   }
 }
 
 #---- **save data ----
 saveRDS(synthetic_HCAP_list, 
         file = paste0(path_to_box, "data/HCAP/synthetic_HCAP_list"))
+
+#---- **save updated cell ID key ----
+write_csv(cell_ID_key, paste0(path_to_box, "data/cell_ID_key.csv")) 
