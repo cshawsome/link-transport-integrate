@@ -58,10 +58,10 @@ sds <-
 #---- **user input ----
 #calibration scenario options: "no_calibration", "calibration_50_SRS", 
 # "calibration_50_design", "calibration_100"
-calibration_scenario = "calibration_50_design" 
+calibration_scenario = "no_calibration" 
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.50
+HCAP_sample_prop = 0.25
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
