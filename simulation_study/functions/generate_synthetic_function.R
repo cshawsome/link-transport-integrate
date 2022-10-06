@@ -196,33 +196,33 @@ generate_synthetic <-
       nu_0_mat[which(nu_0_mat$dataset_name == 
                        unlist(unique(dataset_to_copy[, "dataset_name"]))), ]  
     
-    # #---- initiate synthetic sample ----
-    # synthetic_sample <- dataset_to_copy %>%
-    #   dplyr::select("HHIDPN", all_of(vars)) %>%
-    #   #pre-allocate columns
-    #   mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
-    #          "p_dementia" = 0)
-    # 
-    # if(calibration_sample){
-    #   #---- **split sample ----
-    #   synthetic_sample <-
-    #     anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
-    # }
+    #---- initiate synthetic sample ----
+    synthetic_sample <- dataset_to_copy %>%
+      dplyr::select("HHIDPN", all_of(vars)) %>%
+      #pre-allocate columns
+      mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
+             "p_dementia" = 0)
+
+    if(calibration_sample){
+      #---- **split sample ----
+      synthetic_sample <-
+        anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")
+    }
     
     #---- start sampling ----
     for(b in 1:B){
-      #---- start over at each run with dataset we wish to copy ----
-      synthetic_sample <- dataset_to_copy %>%
-        dplyr::select("HHIDPN", all_of(vars)) %>%
-        #pre-allocate columns
-        mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
-               "p_dementia" = 0)
-      
-      #---- **split sample ----
-      if(calibration_sample & !calibration_sample_name == "calibration_100"){
-        synthetic_sample <- 
-          anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")  
-      }
+      # #---- start over at each run with dataset we wish to copy ----
+      # synthetic_sample <- dataset_to_copy %>%
+      #   dplyr::select("HHIDPN", all_of(vars)) %>%
+      #   #pre-allocate columns
+      #   mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
+      #          "p_dementia" = 0)
+      # 
+      # #---- **split sample ----
+      # if(calibration_sample & !calibration_sample_name == "calibration_100"){
+      #   synthetic_sample <- 
+      #     anti_join(synthetic_sample, calibration_subset, by = "HHIDPN")  
+      # }
       
       if(!calibration_sample){
         #---- **index for random draws ----
@@ -339,13 +339,17 @@ generate_synthetic <-
       }
       
       #---- ****group: summary ----
-      summary <- table(c(synthetic_sample$Group, 
-                         calibration_subset %>% 
-                           dplyr::select(
-                             c("Unimpaired", "MCI", "Dementia", "Other")) %>% 
-                           pivot_longer(everything()) %>% filter(value == 1) %>% 
-                           dplyr::select("name") %>% unlist() %>% 
-                           unname()))/nrow(dataset_to_copy) 
+      if(calibration_sample){
+        summary <- table(c(synthetic_sample$Group, 
+                           calibration_subset %>% 
+                             dplyr::select(
+                               c("Unimpaired", "MCI", "Dementia", "Other")) %>% 
+                             pivot_longer(everything()) %>% filter(value == 1) %>% 
+                             dplyr::select("name") %>% unlist() %>% 
+                             unname()))/nrow(dataset_to_copy) 
+      } else{
+        summary <- table(synthetic_sample$Group)/nrow(dataset_to_copy) 
+      }
       
       if(length(summary) < 4){
         missing <- 
@@ -441,23 +445,27 @@ generate_synthetic <-
           #   UtU <- diag(contingency_table[, 1])
           # }
           
-          #---- ****make U matrix ----
-          U <- matrix(0, nrow = nrow(subset), ncol = nrow(contingency_table))
+          #---- ****make observed U matrix ----
+          U <- matrix(0, nrow = nrow(subset), ncol = length(observed_count))
           
-          for(j in 1:nrow(contingency_table)){
-            if(contingency_table[j, ] == 0){next}
+          for(j in 1:length(observed_count)){
+            if(observed_count[j] == 0){next}
             if(j == 1){
               index = 1
             } else{
-              index = sum(contingency_table[1:(j - 1), ]) + 1
+              index = sum(observed_count[1:(j - 1)]) + 1
             }
-            U[index:(index - 1 + contingency_table[j, ]), j] <- 1
+            U[index:(index - 1 + observed_count[j]), j] <- 1
           }
           
           #---- **Mm ----
-          continuous_covariates <- subset[, continuous_vars] %>% as.matrix
+          continuous_covariates <- 
+            subset[, c(categorical_vars, continuous_vars)] %>% 
+            arrange(black, hispanic, stroke) %>% 
+            dplyr::select(all_of(continuous_vars)) %>% as.matrix()
           
-          V_inv <- t(contrasts_matrix) %*% UtU %*% contrasts_matrix 
+          V_inv <- t(contrasts_matrix) %*% diag(observed_count) %*% 
+            contrasts_matrix 
           
           if(!calibration_sample){
             V_0_inv <- 
