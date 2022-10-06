@@ -491,17 +491,19 @@ prior_predictive_checks <-
       }
       # }
       #   #---- END DEBUG ----
+      if(calibration_sample){
+        group <- c(synthetic_sample$Group, 
+                   calibration_subset %>% 
+                     dplyr::select(
+                       c("Unimpaired", "MCI", "Dementia", "Other")) %>% 
+                     pivot_longer(everything()) %>% filter(value == 1) %>% 
+                     dplyr::select("name") %>% unlist() %>% unname())
+      } else{
+        group <- synthetic_sample$Group
+      }
       
       #---- **return ----
-      return(list("Group" = 
-                    ifelse(calibration_sample, 
-                           c(synthetic_sample$Group, 
-                             calibration_subset %>% 
-                               dplyr::select(
-                                 c("Unimpaired", "MCI", "Dementia", "Other")) %>% 
-                               pivot_longer(everything()) %>% filter(value == 1) %>% 
-                               dplyr::select("name") %>% unlist() %>% unname()), 
-                           synthetic_sample$Group),
+      return(list("Group" = group,
                   "W_unimpaired" = W_Unimpaired %>% 
                     mutate("Group" = "Unimpaired"),
                   "W_other" = W_Other %>% 
