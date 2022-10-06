@@ -200,8 +200,7 @@ generate_synthetic <-
     synthetic_sample <- dataset_to_copy %>%
       dplyr::select("HHIDPN", all_of(vars)) %>%
       #pre-allocate columns
-      mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
-             "p_dementia" = 0)
+      mutate("p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, "p_dementia" = 0)
     
     if(calibration_sample){
       #---- **split sample ----
@@ -215,8 +214,8 @@ generate_synthetic <-
       # synthetic_sample <- dataset_to_copy %>%
       #   dplyr::select("HHIDPN", all_of(vars)) %>%
       #   #pre-allocate columns
-      #   mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
-      #          "p_dementia" = 0)
+      #   mutate("p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, 
+      #   "p_dementia" = 0)
       # 
       # #---- **split sample ----
       # if(calibration_sample & !calibration_sample_name == "calibration_100"){
@@ -285,23 +284,13 @@ generate_synthetic <-
         }
         
         #---- ****group membership ----
-        #group_num = 1
-        #dataset_to_copy[, "group_num"] <- 0
         for(model in c("unimpaired", "other", "mci", "dementia")){
-          #subset_index <- which(dataset_to_copy$group_num == 0)
           
           synthetic_sample[, paste0("p_", model)] <- 
             expit(as.matrix(synthetic_sample[, 
                                              get(paste0(model, "_preds"))]) %*% 
                     as.matrix(model_gamma_chain[which(model_gamma_chain$model == 
                                                         model), b]))
-          
-          # dataset_to_copy[subset_index, "group_num"] <- 
-          #   rbernoulli(n = length(subset_index), 
-          #              p = dataset_to_copy[subset_index, 
-          #                                  paste0("p_", model)])*group_num
-          # 
-          # group_num = group_num + 1
         }
         
         #---- **assign class ----
@@ -328,14 +317,6 @@ generate_synthetic <-
                  "MCI" = ifelse(Group == "MCI", 1, 0), 
                  "Dementia" = ifelse(Group == "Dementia", 1, 0), 
                  "Other" = ifelse(Group == "Other", 1, 0)) 
-        
-        #dataset_to_copy[which(dataset_to_copy$group_num == 0), "group_num"] <- 4
-        
-        # dataset_to_copy[, "Group"] <- 
-        #   case_when(dataset_to_copy$group_num == 1 ~ "Unimpaired", 
-        #             dataset_to_copy$group_num == 2 ~ "Other", 
-        #             dataset_to_copy$group_num == 3 ~ "MCI", 
-        #             dataset_to_copy$group_num == 4 ~ "Dementia")
       }
       
       #---- ****group: summary ----
@@ -644,8 +625,8 @@ generate_synthetic <-
       #---- ****save synthetic sample ----
       if(b > warm_up){
         synthetic_sample %<>% 
-          dplyr::select(-one_of(c("group_num", "p_unimpaired", "p_other", 
-                                  "p_mci", "p_dementia", "Group")))
+          dplyr::select(-one_of(c("p_unimpaired", "p_other", "p_mci", 
+                                  "p_dementia", "Group")))
         
         if(!exists("dataset_list")){
           dataset_list <- list()
