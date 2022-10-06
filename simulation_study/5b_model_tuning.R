@@ -61,7 +61,7 @@ sds <-
 calibration_scenario = "no_calibration" 
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.25
+HCAP_sample_prop = 0.50
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
