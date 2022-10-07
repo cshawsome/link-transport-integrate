@@ -131,8 +131,7 @@ prior_predictive_checks <-
     synthetic_sample <- dataset_to_copy %>% 
       dplyr::select("HHIDPN", all_of(vars)) %>% 
       #pre-allocate columns
-      mutate("group_num" = 0, "p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, 
-             "p_dementia" = 0)
+      mutate("p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, "p_dementia" = 0)
     
     if(calibration_sample & !calibration_scenario == "calibration_100"){
       #---- **split sample ----
@@ -154,9 +153,7 @@ prior_predictive_checks <-
       }
       
       #---- latent class ----
-      #group_num = 1
       for(model in c("unimpaired", "other", "mci", "dementia")){
-        #subset_index <- which(synthetic_sample$group_num == 0)
         
         if(calibration_sample){
           if(model == "mci"){
@@ -208,16 +205,7 @@ prior_predictive_checks <-
           expit(as.matrix(synthetic_sample[, 
                                            get(paste0(model, "_preds"))]) %*% 
                   as.matrix(prior_betas))
-        
-        # synthetic_sample[subset_index, "group_num"] <- 
-        #   rbernoulli(n = length(subset_index), 
-        #              p = synthetic_sample[subset_index, 
-        #                                   paste0("p_", model)])*group_num
-        # 
-        # group_num = group_num + 1
       }
-      
-      #synthetic_sample[which(synthetic_sample$group_num == 0), "group_num"] <- 4
       
       #---- **assign class ----
       #choose Unimpaired if that has the highest probability
@@ -749,25 +737,25 @@ prior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# set.seed(20220329)
-# dataset_to_copy = synthetic_HCAP_list[[1]]
-# calibration_sample = !(calibration_scenario == "no_calibration")
-# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
-# calibration_sample_name = calibration_scenario
-# path_to_data = path_to_box
-# path_to_output_folder = paste0(path_to_box,
-#                                "figures/chapter_4/simulation_study/HCAP_",
-#                                unique(dataset_to_copy[, "dataset_name_stem"]),
-#                                "/prior_predictive_checks/")
-# continuous_check_test = TRUE
-# continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
-# categorical_vars = W
-# continuous_vars = Z
-# variable_labels = variable_labels
-# color_palette = color_palette
-# contrasts_matrix = A
-# weights_matrix = cell_ID_key
-# kappa_0_mat = kappa_0_mat
-# nu_0_mat = nu_0_mat
-# num_synthetic = 10
+#---- test function ----
+set.seed(20220329)
+dataset_to_copy = synthetic_HCAP_list[[1]]
+calibration_sample = !(calibration_scenario == "no_calibration")
+calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
+calibration_sample_name = calibration_scenario
+path_to_data = path_to_box
+path_to_output_folder = paste0(path_to_box,
+                               "figures/chapter_4/simulation_study/HCAP_",
+                               unique(dataset_to_copy[, "dataset_name_stem"]),
+                               "/prior_predictive_checks/")
+continuous_check_test = TRUE
+continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+categorical_vars = W
+continuous_vars = Z
+variable_labels = variable_labels
+color_palette = color_palette
+contrasts_matrix = A
+weights_matrix = cell_ID_key
+kappa_0_mat = kappa_0_mat
+nu_0_mat = nu_0_mat
+num_synthetic = 10
