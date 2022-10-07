@@ -68,7 +68,7 @@ variable_labels <-
 
 #---- **cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_data, "cell_ID_key.csv")) %>%
-  mutate_all(as.character)
+  mutate_at("cell_ID", as.character)
 
 #---- **impairement class color palette ----
 color_palette <- read_csv(paste0(path_to_data, "color_palette.csv"))
