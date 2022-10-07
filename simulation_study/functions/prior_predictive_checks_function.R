@@ -279,26 +279,25 @@ prior_predictive_checks <-
             prior_counts[which(is.na(prior_counts$Freq)), "Freq"] <- 0
           }
           
-          # if(str_detect(calibration_sample_name, "design")){
-          #   #Full observed count
-          #   prior_counts$Freq_total <- 
-          #     unlist(prior_counts$Freq*
-          #              cell_ID_key[, paste0(unique(calibration_subset$dataset_name), 
-          #                                   "_IPW_", class)])
-          #   
-          #   #Need to correct count to be compatible with sampling
-          #   SRS_sampling_weight <- prior_counts
-          #   
-          #   
-          #   
-          # }
-          # 
+          if(str_detect(calibration_sample_name, "design")){
+            #Make column for observed sampled counts
+            prior_counts$Observed <- prior_counts$Freq
+            
+            #Full observed count
+            prior_counts$Freq <-
+              unlist(prior_counts$Freq*
+                       cell_ID_key[, paste0(unique(calibration_subset$dataset_name),
+                                            "_IPW_", class)])
+            
+            prior_UtU <- diag(prior_counts$Observed)
+          } else{
+            prior_UtU <- diag(prior_counts$Freq)
+          }
+          
           prior_counts %<>% mutate("prop" = Freq/sum(Freq))
-          prior_UtU <- diag(prior_counts$Freq)
           
           #update counts for this particular subset
           prior_counts <- prior_counts$prop*nrow(subset)
-          
           
         } else{
           prior_counts <- 
@@ -560,10 +559,10 @@ prior_predictive_checks <-
           geom_vline(xintercept = to_copy_dementia_plot_data[[
             which(to_copy_dementia_plot_data$name == class), "Freq"]], size = 2, 
             color = unique(subset$Color))  
-          
-          ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", 
-                                   class, "_line_only.jpeg"), 
-                 height = 3, width = 5, units = "in")
+        
+        ggsave(filename = paste0(path_to_output_folder, "impairment_classes/", 
+                                 class, "_line_only.jpeg"), 
+               height = 3, width = 5, units = "in")
         
         #Prior predictive check
         ggplot(data = subset) + 
@@ -719,8 +718,8 @@ prior_predictive_checks <-
               scale_color_manual(values = rev(unique(data$Color))) + 
               scale_fill_manual(values = rev(unique(data$Color))) + 
               theme(text = element_text(size = 12))
-              transition_states(data$run, transition_length = 1, 
-                                state_length = 1) +
+            transition_states(data$run, transition_length = 1, 
+                              state_length = 1) +
               labs(title = "Synthetic {round(frame_time)}") + 
               transition_time(run) + ease_aes('linear') 
             
