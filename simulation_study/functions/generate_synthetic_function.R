@@ -214,8 +214,7 @@ generate_synthetic <-
       synthetic_sample <- dataset_to_copy %>%
         dplyr::select("HHIDPN", all_of(vars)) %>%
         #pre-allocate columns
-        mutate("p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0,
-        "p_dementia" = 0)
+        mutate("p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, "p_dementia" = 0)
 
       #---- **split sample ----
       if(calibration_sample & !calibration_sample_name == "calibration_100"){
@@ -472,8 +471,8 @@ generate_synthetic <-
             }
             
             prior_continuous_covariates <- 
-              calibration_subset[, c(continuous_vars, class)] %>% 
-              filter(!!sym(class) == 1) %>% 
+              calibration_subset[, c(categorical_vars, continuous_vars, class)] %>% 
+              filter(!!sym(class) == 1) %>% arrange(black, hispanic, stroke) %>% 
               dplyr::select(all_of(continuous_vars)) %>% as.matrix()
             
             V_0_inv <- t(contrasts_matrix) %*% prior_UtU %*% contrasts_matrix
@@ -902,33 +901,33 @@ generate_synthetic <-
     }
   }
 
-# #---- test function ----
-# set.seed(20220329)
-# warm_up = 100
-# run_number = 1
-# starting_props = c(0.25, 0.25, 0.25, 0.25)
-# dataset_to_copy = synthetic_HCAP_list[[1]]
-# orig_means = means
-# orig_sds = sds
-# calibration_sample = !(calibration_scenario == "no_calibration")
-# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
-# calibration_sample_name = calibration_scenario
-# path_to_data = paste0(path_to_box,"data/")
-# path_to_analyses_folder =
-#   paste0(path_to_box, "analyses/simulation_study/HCAP_",
-#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
-# path_to_figures_folder =
-#   paste0(path_to_box, "figures/chapter_4/simulation_study/HCAP_",
-#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
-# categorical_vars = W
-# continuous_vars = Z
-# id_var = "HHIDPN"
-# variable_labels = variable_labels
-# cell_ID_key = cell_ID_key
-# color_palette = color_palette
-# contrasts_matrix = A
-# kappa_0_mat = kappa_0_mat
-# nu_0_mat = nu_0_mat
-# num_synthetic = 1000
-# data_only = FALSE
+#---- test function ----
+set.seed(20220329)
+warm_up = 100
+run_number = 1
+starting_props = c(0.25, 0.25, 0.25, 0.25)
+dataset_to_copy = synthetic_HCAP_list[[1]]
+orig_means = means
+orig_sds = sds
+calibration_sample = !(calibration_scenario == "no_calibration")
+calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
+calibration_sample_name = calibration_scenario
+path_to_data = paste0(path_to_box,"data/")
+path_to_analyses_folder =
+  paste0(path_to_box, "analyses/simulation_study/HCAP_",
+         unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+path_to_figures_folder =
+  paste0(path_to_box, "figures/chapter_4/simulation_study/HCAP_",
+         unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+categorical_vars = W
+continuous_vars = Z
+id_var = "HHIDPN"
+variable_labels = variable_labels
+cell_ID_key = cell_ID_key
+color_palette = color_palette
+contrasts_matrix = A
+kappa_0_mat = kappa_0_mat
+nu_0_mat = nu_0_mat
+num_synthetic = 1000
+data_only = FALSE
 
