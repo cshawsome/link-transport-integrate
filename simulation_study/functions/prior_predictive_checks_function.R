@@ -279,20 +279,20 @@ prior_predictive_checks <-
             prior_counts[which(is.na(prior_counts$Freq)), "Freq"] <- 0
           }
           
-          if(str_detect(calibration_sample_name, "design")){
-            #Full observed count
-            prior_counts$Freq_total <- 
-              unlist(prior_counts$Freq*
-                       cell_ID_key[, paste0(unique(calibration_subset$dataset_name), 
-                                            "_IPW_", class)])
-            
-            #Need to correct count to be compatible with sampling
-            SRS_sampling_weight <- prior_counts
-            
-            
-            
-          }
-          
+          # if(str_detect(calibration_sample_name, "design")){
+          #   #Full observed count
+          #   prior_counts$Freq_total <- 
+          #     unlist(prior_counts$Freq*
+          #              cell_ID_key[, paste0(unique(calibration_subset$dataset_name), 
+          #                                   "_IPW_", class)])
+          #   
+          #   #Need to correct count to be compatible with sampling
+          #   SRS_sampling_weight <- prior_counts
+          #   
+          #   
+          #   
+          # }
+          # 
           prior_counts %<>% mutate("prop" = Freq/sum(Freq))
           prior_UtU <- diag(prior_counts$Freq)
           
@@ -377,8 +377,8 @@ prior_predictive_checks <-
           }
           
           continuous_covariates <- 
-            calibration_subset[, c(continuous_vars, class)] %>% 
-            filter(!!sym(class) == 1) %>% 
+            calibration_subset[, c(categorical_vars, continuous_vars, class)] %>% 
+            filter(!!sym(class) == 1) %>% arrange(black, hispanic, stroke) %>%
             dplyr::select(all_of(continuous_vars)) %>% as.matrix()
           
           V_0_inv <- t(A) %*% prior_UtU %*% A
