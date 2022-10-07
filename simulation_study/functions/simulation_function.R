@@ -112,6 +112,8 @@ simulation_function <-
       not_selected <- which(is.na(dataset_to_copy[, calibration_sample_name]))
       
       dataset_to_copy[not_selected, calibration_sample_name] <- 0
+    } else{
+      calibration_sample_name <- "no_calibration"
     }
     
     #---- **true impairment class counts ----
@@ -397,7 +399,7 @@ simulation_function <-
 # variable_labels <-
 #   read_csv(paste0(path_to_data, "variable_crosswalk.csv"))
 # cell_ID_key <- read_csv(paste0(path_to_data, "cell_ID_key.csv")) %>%
-#   mutate_all(as.character)
+#   mutate_at("cell_ID", as.character)
 # color_palette <- read_csv(paste0(path_to_data, "color_palette.csv"))
 # all_sim_scenarios <- read_csv(paste0(path_to_data, "sim_study_scenarios.csv"))
 # 
@@ -406,7 +408,7 @@ simulation_function <-
 # categorical_vars = W = c("black", "hispanic", "stroke")
 # continuous_vars = Z = colnames(superpop)[str_detect(colnames(superpop), "_Z")]
 # id_var = "HHIDPN"
-# scenario = scenario_num = 404 #calibration 50 SRS sample size 2000, HCAP prop 25
+# scenario = scenario_num = 1 #no calibration sample size 2000, HCAP prop 25
 # path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 # superpopulation <- superpop
 # orig_means = means <-
@@ -444,4 +446,3 @@ simulation_function <-
 #                               path_to_results =
 #                                 paste0(path_to_box,
 #                                        "analyses/simulation_study/results/")))
-# 
