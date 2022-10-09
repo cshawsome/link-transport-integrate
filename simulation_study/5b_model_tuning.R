@@ -21,7 +21,7 @@ variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 
 #---- **cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
-  mutate_at("cell_ID", as.character)
+  mutate_at(c("cell_order", "cell_ID"), as.character)
 
 #---- **impairement class color palette ----
 color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv")) 
