@@ -738,7 +738,7 @@ prior_predictive_checks <-
 
 # #---- test function ----
 # set.seed(20220329)
-# dataset_to_copy = synthetic_HCAP_list[[1]]
+# dataset_to_copy = synthetic_HCAP_list[[4]]
 # calibration_sample = !(calibration_scenario == "no_calibration")
 # calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
 # calibration_sample_name = calibration_scenario
