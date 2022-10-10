@@ -12,7 +12,7 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
-  mutate_all(as.character)
+  mutate_at("cell_ID", as.character)
 
 #---- **HRS analytic dataset ----
 HRS <- read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
@@ -382,7 +382,7 @@ for(i in 1:length(synthetic_HCAP_list)){
                        as.matrix(beta)))
   
   for(calibration_prop in c(0.25, 0.50)){
-    #sample 20% group within each race/ethnicity based on p(dementia)
+    #sample 20% within each race/ethnicity based on p(dementia)
     impaired_sample_IDs <- synthetic_HCAP_list[[i]] %>% 
       dplyr::select("HHIDPN", "White", "black", "hispanic", "p_dementia") %>% 
       unite("race_eth_code", c("White", "black", "hispanic")) %>% 
