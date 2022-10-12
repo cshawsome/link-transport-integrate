@@ -177,14 +177,9 @@ ggsave(filename = "synthetic_bathtub_mix_Z.jpeg", plot = last_plot(),
 
 #---- check number of simulation runs ----
 #Missing runs:
-# n = 2000, sample = 50, no calibration: 1
-# n = 4000, sample = 25, no calibration: 1
-# n = 2000, sample = 25, calibration 50 SRS: 627
-# n = 2000, sample = 50, calibration 50 SRS: 42
-# n = 4000, sample = 25, calibration 50 SRS: 9
-# n = 4000, sample = 50, calibration 50 SRS: 31
-# n = 8000, sample = 25, calibration 50 SRS: 9
-# n = 8000, sample = 50, calibration 50 SRS: 33
+# n = 2000, sample = 25, calibration_50_SRS: 556
+# n = 2000, sample = 50, calibration_50_SRS: 27
+# n = 4000, sample = 25, calibration 50 SRS: 19
 
 #---- **read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -193,7 +188,8 @@ results_paths <-
   list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
              full.names = TRUE, pattern = "*.csv")
 
-results <- do.call(rbind, lapply(results_paths, read_results)) 
+results <- do.call(rbind, lapply(results_paths, read_results)) %>% 
+  group_by(dataset_name) %>% slice_head(n = 1000)
 
 table(results$dataset_name, useNA = "ifany")
 
@@ -278,13 +274,13 @@ plot_data <- results %>%
 ggplot(data = plot_data %>% filter(calibration == "no_calibration"), 
        aes(x = mean, y = HCAP_sample_size)) +
   geom_vline(data = superpop_impairment_props, aes(xintercept = prop), 
-             size = 1, color = rep(color_palette$Color, 2)) +
-  geom_point(size = 2) + 
-  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.2) + theme_bw() + 
+             size = 2, color = rep(color_palette$Color, 2)) +
+  geom_point(size = 3) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.3, size = 1) + theme_bw() + 
   facet_grid(cols = vars(Group), rows = vars(HCAP_prop), scales = "free_y") + 
   scale_x_continuous(breaks = seq(0.10, 0.40, by = 0.05)) +
-  xlab("Proportion") + ylab("HCAP sample size") + 
-  theme(text = element_text(size = 18))  
+  xlab("Proportion in superpopulation") + ylab("HCAP sample size") + 
+  theme(text = element_text(size = 24))  
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
                          "mean_CI_impairement_class_no_HCAP_adjudication.jpeg"))
