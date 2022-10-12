@@ -314,10 +314,10 @@ ggplot(data = plot_data,
        aes(x = mean, y = sample_size, shape = calibration_sampling)) +
   geom_vline(data = superpop_impairment_props, aes(xintercept = prop), 
              size = 2, color = rep(color_palette$Color, 2)) +
-  geom_point(size = 3, position = position_dodge(-0.5)) + 
+  geom_point(size = 4, position = position_dodge(-0.6)) + 
   scale_shape_manual(values = c(18, 1, 19)) + 
   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
-                position = position_dodge(-0.5)) + theme_bw() + 
+                position = position_dodge(-0.6)) + theme_bw() + 
   facet_grid(cols = vars(Group), rows = vars(HCAP_prop), scales = "free_y") + 
   scale_x_continuous(breaks = seq(0.00, 0.70, by = 0.10)) +
   xlab("Impairment class proportion") + ylab("HCAP sample size") + 
