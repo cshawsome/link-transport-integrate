@@ -337,25 +337,48 @@ names(group_colors) <- color_palette$Group
 
 #---- **plot data ----
 plot_data <- results %>% 
-  group_by(calibration, HCAP_prop, sample_size) %>% 
+  group_by(calibration, calibration_sampling, HCAP_prop, sample_size) %>%
   summarise_at(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"), 
                mean) %>% 
   pivot_longer(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"),
                names_to = c("class", "coverage"), names_sep = "_") %>% 
   mutate_at("sample_size", as.factor) %>% 
-  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ "25% of HRS", 
-                                 HCAP_prop == 50 ~ "50% of HRS"))
+  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ 
+                                   "Sample Proportion\n25% of HRS", 
+                                 HCAP_prop == 50 ~ 
+                                   "Sample Proportion\n50% of HRS")) %>% 
+  mutate("calibration_sampling" = 
+           case_when(calibration_sampling == "NA" ~ "ADAMS", 
+                     calibration_sampling == "SRS" & 
+                       calibration == "calibration_50" ~ 
+                       "HCAP 50% SRS Adjudication"))
 
-#---- **plot ----
-ggplot(data = plot_data, aes(x = sample_size, y = value, group = class)) + 
-  geom_line(aes(color = class), size = 1) + 
-  geom_point(aes(color = class), size = 2) + 
+#---- **plot v1: no HCAP calibration ----
+ggplot(data = plot_data %>% filter(calibration == "no_calibration"), 
+       aes(x = sample_size, y = value, group = class)) + 
+  geom_line(aes(color = class), size = 1.5) + 
+  geom_point(aes(color = class), size = 3) + 
   scale_color_manual(values = group_colors) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
   theme_bw() + ylab("95% CI Coverage") + xlab("HCAP Sample Size") +
   facet_grid(cols = vars(HCAP_prop), scales = "free_x") + 
   guides(color = guide_legend(title = "Group")) + 
-  theme(text = element_text(size = 18), legend.position = "bottom")      
+  theme(text = element_text(size = 24), legend.position = "bottom")      
+
+ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
+                         "impairement_class_coverage.jpeg"))
+
+#---- **plot v2: HCAP calibration ----
+ggplot(data = plot_data, aes(x = sample_size, y = value, group = class)) + 
+  geom_line(aes(color = class), size = 1.5) + 
+  geom_point(aes(color = class), size = 3) + 
+  scale_color_manual(values = group_colors) +
+  geom_hline(yintercept = 0.95, lty = "dashed") +
+  theme_bw() + ylab("95% CI Coverage") + xlab("HCAP Sample Size") +
+  facet_grid(cols = vars(HCAP_prop), rows = vars(calibration), 
+             scales = "free_x") + 
+  guides(color = guide_legend(title = "Group")) + 
+  theme(text = element_text(size = 24), legend.position = "bottom")      
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
                          "impairement_class_coverage.jpeg"))
