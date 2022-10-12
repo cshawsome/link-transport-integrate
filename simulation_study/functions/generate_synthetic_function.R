@@ -388,7 +388,7 @@ generate_synthetic <-
               prior_count$Observed <- prior_count$Freq
               
               #Full observed count
-              prior_count$Freq <-
+              fully_observed <-
                 unlist(prior_count$Freq*
                          cell_ID_key[, paste0(unique(
                            calibration_subset$dataset_name), "_IPW_", class)])
@@ -404,7 +404,11 @@ generate_synthetic <-
             prior_count <- prior_count$prop*nrow(subset)
           }
           
-          posterior_count <- prior_count + observed_count
+          if(str_detect(calibration_sample_name, "design")){
+            posterior_count <- fully_observed
+          } else{
+            posterior_count <- prior_count + observed_count
+          }
           
           #---- **p(contingency table cell) ----
           pi_chain[, paste0(class, ":", b)] <- 
@@ -920,7 +924,7 @@ generate_synthetic <-
 # warm_up = 100
 # run_number = 1
 # starting_props = c(0.25, 0.25, 0.25, 0.25)
-# dataset_to_copy = synthetic_HCAP_list[[1]]
+# dataset_to_copy = synthetic_HCAP_list[[4]]
 # orig_means = means
 # orig_sds = sds
 # calibration_sample = !(calibration_scenario == "no_calibration")
