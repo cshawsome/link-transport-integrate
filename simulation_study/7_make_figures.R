@@ -351,7 +351,7 @@ plot_data <- results %>%
            case_when(calibration_sampling == "NA" ~ "ADAMS", 
                      calibration_sampling == "SRS" & 
                        calibration == "calibration_50" ~ 
-                       "HCAP 50% SRS Adjudication"))
+                       "HCAP 50% SRS\nAdjudication"))
 
 #---- **plot v1: no HCAP calibration ----
 ggplot(data = plot_data %>% filter(calibration == "no_calibration"), 
@@ -361,12 +361,13 @@ ggplot(data = plot_data %>% filter(calibration == "no_calibration"),
   scale_color_manual(values = group_colors) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
   theme_bw() + ylab("95% CI Coverage") + xlab("HCAP Sample Size") +
-  facet_grid(cols = vars(HCAP_prop), scales = "free_x") + 
+  facet_grid(rows = vars(HCAP_prop), scales = "free_x") + 
   guides(color = guide_legend(title = "Group")) + 
   theme(text = element_text(size = 24), legend.position = "bottom")      
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "impairement_class_coverage.jpeg"))
+                         "impairement_class_coverage_no_HCAP_adjudication.jpeg"), 
+       dpi = 300, width = 13.5, height = 6.25, units = "in")
 
 #---- **plot v2: HCAP calibration ----
 ggplot(data = plot_data, aes(x = sample_size, y = value, group = class)) + 
@@ -375,13 +376,13 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, group = class)) +
   scale_color_manual(values = group_colors) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
   theme_bw() + ylab("95% CI Coverage") + xlab("HCAP Sample Size") +
-  facet_grid(cols = vars(HCAP_prop), rows = vars(calibration), 
-             scales = "free_x") + 
+  facet_grid(rows = vars(HCAP_prop), cols = vars(calibration_sampling)) + 
   guides(color = guide_legend(title = "Group")) + 
   theme(text = element_text(size = 24), legend.position = "bottom")      
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "impairement_class_coverage.jpeg"))
+                         "impairement_class_coverage_HCAP_adjudication.jpeg"), 
+       dpi = 300, height = 7.25, width = 14, units = "in")
 
 #----- Figure X: bias impairment class counts ----
 #---- **% bias ----
