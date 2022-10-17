@@ -384,12 +384,12 @@ for(i in 1:length(synthetic_HCAP_list)){
   #   mutate("prop" = Freq/sum(Freq))
   
   for(calibration_prop in c(0.25, 0.50)){
-    num_impaired <- round(0.70*calibration_prop*nrow(synthetic_HCAP_list[[i]]))
+    num_impaired <- round(0.60*calibration_prop*nrow(synthetic_HCAP_list[[i]]))
     num_unimpaired <- 
       round(calibration_prop*nrow(synthetic_HCAP_list[[i]]) - num_impaired)
     
-    #sample 70% within each race/ethnicity x stroke cell
-    prop_bh <- 0.7
+    #sample 60% within each race/ethnicity x stroke cell
+    prop_bh <- 0.60
     
     bh_sample_IDs <- 
       synthetic_HCAP_list[[i]] %>% filter(White == 0) %>% 
@@ -421,15 +421,17 @@ for(i in 1:length(synthetic_HCAP_list)){
       paste0("calibration_", calibration_prop*100, "_design")] <- 1
     
     # #Sanity check props
-    # synthetic_HCAP_list[[i]] %>% 
-    #   unite("race_cells", c(impaired, black, hispanic), sep = "") %>% 
+    # synthetic_HCAP_list[[i]] %>%
+    #   unite("race_cells", c(impaired, black, hispanic), sep = "") %>%
     #   dplyr::select("race_cells") %>% table()/nrow(synthetic_HCAP_list[[i]])
     # 
-    # synthetic_HCAP_list[[i]] %>% filter(calibration_50_design == 1) %>%
-    #   unite("race_cells", c(impaired, black, hispanic), sep = "") %>% 
-    #   dplyr::select("race_cells") %>% 
-    #   table()/sum(synthetic_HCAP_list[[i]]$calibration_50_design)
-    
+    # synthetic_HCAP_list[[i]] %>% 
+    #   filter(!!sym(paste0("calibration_", calibration_prop*100, "_design")) == 1) %>%
+    #   unite("race_cells", c(impaired, black, hispanic), sep = "") %>%
+    #   dplyr::select("race_cells") %>%
+    #   table()/sum(synthetic_HCAP_list[[i]][, paste0("calibration_", 
+    #                                                 calibration_prop*100, "_design")])
+    # 
     #---- ****calculate sampling weight ----
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
       #calculate weight for white participants
