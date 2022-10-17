@@ -462,7 +462,7 @@ for(i in 1:length(synthetic_HCAP_list)){
       cell_ID_key[which(!cell_ID_key$cell_ID %in% selected_counts$cell_ID), 
                   paste0(unique(synthetic_HCAP_list[[i]]$dataset_name), "_", 
                          "calibration_", calibration_prop*100, "_design_IPW_", 
-                         group)] <- 1/0.70
+                         group)] <- 1/prop_bh
     }
   }
 }
