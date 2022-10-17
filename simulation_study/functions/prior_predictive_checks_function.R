@@ -162,28 +162,76 @@ prior_predictive_checks <-
             class_name = str_to_sentence(model)
           }
           
+          # latent_class_model <- 
+          #   suppressWarnings(glm(formula(
+          #     paste(class_name, " ~ ", 
+          #           paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+          #           collapse = "")), family = "binomial", 
+          #     #don't select (Intercept) variable
+          #     data = slice_sample(calibration_subset[, vars[-1]], 
+          #                         n = nrow(calibration_subset), 
+          #                         replace = TRUE)))
+          # 
+          # prior_betas <- coefficients(latent_class_model)
+          
+          #test weighting
+          calibration_subset %<>% 
+            mutate("Group" = case_when(Unimpaired == 1 ~ "Unimpaired", 
+                                       MCI == 1 ~ "MCI", 
+                                       Dementia == 1 ~ "Dementia", 
+                                       Other == 1 ~ "Other")) %>%
+            unite("cell_ID", c("black", "hispanic", "stroke"), remove = FALSE, 
+                  sep = "")
+          
+          cell_ID_key_long <- cell_ID_key %>% 
+            pivot_longer(-c("cell_order", "cell_ID", "cell_name"), 
+                         names_to = c("dataset_name", "Group"), 
+                         values_to = "weights", 
+                         names_sep = "_IPW_") %>% filter()
+          
+          calibration_subset %<>% 
+            left_join(., cell_ID_key_long, 
+                      by = c("cell_ID", "Group", "dataset_name"))
+          
+          bootstrap_sample <- 
+            slice_sample(calibration_subset[, c(vars[-1], "weights")], 
+                         n = nrow(calibration_subset), replace = TRUE)
+          
           latent_class_model <- 
             suppressWarnings(glm(formula(
               paste(class_name, " ~ ", 
                     paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
                     collapse = "")), family = "binomial", 
               #don't select (Intercept) variable
-              data = slice_sample(calibration_subset[, vars[-1]], 
-                                  n = nrow(calibration_subset), 
-                                  replace = TRUE)))
+              data = bootstrap_sample, weights = bootstrap_sample$weights))
           
           prior_betas <- coefficients(latent_class_model)
           
+          
           while(sum(is.na(prior_betas)) > 0){
+            # latent_class_model <- 
+            #   suppressWarnings(glm(formula(
+            #     paste(class_name, " ~ ", 
+            #           paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+            #           collapse = "")), family = "binomial", 
+            #     #don't select (Intercept) variable
+            #     data = slice_sample(calibration_subset[, vars[-1]], 
+            #                         n = nrow(calibration_subset), 
+            #                         replace = TRUE)))
+            # 
+            # prior_betas <- coefficients(latent_class_model)
+            
+            bootstrap_sample <- 
+              slice_sample(calibration_subset[, c(vars[-1], "weights")], 
+                           n = nrow(calibration_subset), replace = TRUE)
+            
             latent_class_model <- 
               suppressWarnings(glm(formula(
                 paste(class_name, " ~ ", 
                       paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
                       collapse = "")), family = "binomial", 
                 #don't select (Intercept) variable
-                data = slice_sample(calibration_subset[, vars[-1]], 
-                                    n = nrow(calibration_subset), 
-                                    replace = TRUE)))
+                data = bootstrap_sample, weights = bootstrap_sample$weights))
             
             prior_betas <- coefficients(latent_class_model)
           }
@@ -287,7 +335,7 @@ prior_predictive_checks <-
             prior_counts$Freq <-
               unlist(prior_counts$Freq*
                        weights_matrix[, paste0(unique(calibration_subset$dataset_name),
-                                            "_IPW_", class)])
+                                               "_IPW_", class)])
             
             prior_UtU <- diag(prior_counts$Observed)
           } else{
@@ -736,25 +784,25 @@ prior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# set.seed(20220329)
-# dataset_to_copy = synthetic_HCAP_list[[4]]
-# calibration_sample = !(calibration_scenario == "no_calibration")
-# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
-# calibration_sample_name = calibration_scenario
-# path_to_data = path_to_box
-# path_to_output_folder = paste0(path_to_box,
-#                                "figures/chapter_4/simulation_study/HCAP_",
-#                                unique(dataset_to_copy[, "dataset_name_stem"]),
-#                                "/prior_predictive_checks/")
-# continuous_check_test = TRUE
-# continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
-# categorical_vars = W
-# continuous_vars = Z
-# variable_labels = variable_labels
-# color_palette = color_palette
-# contrasts_matrix = A
-# weights_matrix = cell_ID_key
-# kappa_0_mat = kappa_0_mat
-# nu_0_mat = nu_0_mat
-# num_synthetic = 10
+#---- test function ----
+set.seed(20220329)
+dataset_to_copy = synthetic_HCAP_list[[1]]
+calibration_sample = !(calibration_scenario == "no_calibration")
+calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
+calibration_sample_name = calibration_scenario
+path_to_data = path_to_box
+path_to_output_folder = paste0(path_to_box,
+                               "figures/chapter_4/simulation_study/HCAP_",
+                               unique(dataset_to_copy[, "dataset_name_stem"]),
+                               "/prior_predictive_checks/")
+continuous_check_test = TRUE
+continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+categorical_vars = W
+continuous_vars = Z
+variable_labels = variable_labels
+color_palette = color_palette
+contrasts_matrix = A
+weights_matrix = cell_ID_key
+kappa_0_mat = kappa_0_mat
+nu_0_mat = nu_0_mat
+num_synthetic = 10
