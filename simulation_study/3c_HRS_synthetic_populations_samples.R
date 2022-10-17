@@ -370,7 +370,6 @@ for(i in 1:length(synthetic_HCAP_list)){
 }
 
 #---- ****design calibration ----
-#predicted probabilities of Dementia and MCI
 for(i in 1:length(synthetic_HCAP_list)){
   
   synthetic_HCAP_list[[i]] %<>% 
@@ -421,17 +420,28 @@ for(i in 1:length(synthetic_HCAP_list)){
           w_unimpaired_sample_IDs$HHIDPN), 
       paste0("calibration_", calibration_prop*100, "_design")] <- 1
     
+    # #Sanity check props
+    # synthetic_HCAP_list[[i]] %>% 
+    #   unite("race_cells", c(impaired, black, hispanic), sep = "") %>% 
+    #   dplyr::select("race_cells") %>% table()/nrow(synthetic_HCAP_list[[i]])
+    # 
+    # synthetic_HCAP_list[[i]] %>% filter(calibration_50_design == 1) %>%
+    #   unite("race_cells", c(impaired, black, hispanic), sep = "") %>% 
+    #   dplyr::select("race_cells") %>% 
+    #   table()/sum(synthetic_HCAP_list[[i]]$calibration_50_design)
+    
     #---- ****calculate sampling weight ----
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+      #calculate weight for white participants
       possible_counts <- 
-        synthetic_HCAP_list[[i]] %>% filter(!!sym(group) == 1) %>% 
+        synthetic_HCAP_list[[i]] %>% filter(!!sym(group) == 1 & White == 1) %>% 
         dplyr::select("black", "hispanic", "stroke") %>% 
         unite("cell_code", c("black", "hispanic", "stroke"), sep = "") %>% 
         table() %>% as.data.frame() %>% set_colnames(c("cell_ID", "Freq"))
       
       selected_counts <- 
         synthetic_HCAP_list[[i]] %>% 
-        filter(!!sym(group) == 1 &
+        filter(!!sym(group) == 1 & White == 1 &
                  !!sym(paste0("calibration_", calibration_prop*100, 
                               "_design")) == 1) %>% 
         dplyr::select("black", "hispanic", "stroke") %>% 
@@ -445,6 +455,12 @@ for(i in 1:length(synthetic_HCAP_list)){
                          "calibration_", calibration_prop*100, "_design_IPW_", 
                          group)] <-
         selected_counts$possible/selected_counts$selected
+      
+      #same weight for all black and hispanic participants
+      cell_ID_key[which(!cell_ID_key$cell_ID %in% selected_counts$cell_ID), 
+                  paste0(unique(synthetic_HCAP_list[[i]]$dataset_name), "_", 
+                         "calibration_", calibration_prop*100, "_design_IPW_", 
+                         group)] <- 1/0.70
     }
   }
 }
