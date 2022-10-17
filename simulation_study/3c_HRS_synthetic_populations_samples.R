@@ -370,89 +370,55 @@ for(i in 1:length(synthetic_HCAP_list)){
 }
 
 #---- ****design calibration ----
-filtered_vars_mat <- selected_vars_mat[, c("data_label", "Dementia")] %>% 
-  filter(Dementia != 0)
-
-preds <- filtered_vars_mat$data_label
-beta <- unlist(filtered_vars_mat[, "Dementia"])
-
+#predicted probabilities of Dementia and MCI
 for(i in 1:length(synthetic_HCAP_list)){
-  synthetic_HCAP_list[[i]][, "p_dementia"] <- 
-    as.numeric(expit(as.matrix(synthetic_HCAP_list[[i]][, preds]) %*% 
-                       as.matrix(beta)))
+  
+  synthetic_HCAP_list[[i]] %<>% 
+    mutate("impaired" = ifelse(Dementia == 1 | MCI == 1, 1, 0))
+  
+  synthetic_HCAP_list[[i]] %<>% 
+    unite("sample_cells", c("impaired", "black", "hispanic", "stroke"), sep = "", 
+          remove = FALSE)
+  
+  # #test cells
+  # table(synthetic_HCAP_list[[i]]$sample_cells) %>% as.data.frame() %>% 
+  #   mutate("prop" = Freq/sum(Freq))
   
   for(calibration_prop in c(0.25, 0.50)){
-    #sample 20% within each race/ethnicity based on p(dementia)
-    impaired_sample_IDs <- synthetic_HCAP_list[[i]] %>% 
-      dplyr::select("HHIDPN", "White", "black", "hispanic", "p_dementia") %>% 
-      unite("race_eth_code", c("White", "black", "hispanic")) %>% 
-      group_by(race_eth_code) %>% arrange(desc(p_dementia)) %>%
-      slice_head(n = 0.20*calibration_prop*nrow(synthetic_HCAP_list[[i]])/3) %>% 
-      ungroup() %>% dplyr::select("HHIDPN") %>% unlist()
+    num_impaired <- round(0.70*calibration_prop*nrow(synthetic_HCAP_list[[i]]))
+    num_unimpaired <- 
+      round(calibration_prop*nrow(synthetic_HCAP_list[[i]]) - num_impaired)
     
-    #sample 80% randomly within each race/ethnicity
-    random_sample_IDs <- 
-      tryCatch(synthetic_HCAP_list[[i]] %>% 
-                 filter(!HHIDPN %in% impaired_sample_IDs) %>% 
-                 dplyr::select("HHIDPN", "White", "black", "hispanic") %>% 
-                 unite("race_eth_code", c("White", "black", "hispanic")) %>% 
-                 group_by(race_eth_code) %>%
-                 slice_sample(n = 0.80*calibration_prop*
-                                nrow(synthetic_HCAP_list[[i]])/3) %>% 
-                 ungroup() %>% dplyr::select("HHIDPN") %>% unlist(), 
-               error = function(e) {
-                 #how to handle lack of people in race/ethnic category
-                 subset <- synthetic_HCAP_list[[i]] %>% 
-                   filter(!HHIDPN %in% impaired_sample_IDs) %>% 
-                   dplyr::select("HHIDPN", "White", "black", "hispanic") %>% 
-                   unite("race_eth_code", c("White", "black", "hispanic"))
-                 
-                 counts <- subset %>% group_by(race_eth_code) %>% 
-                   count(race_eth_code)
-                 
-                 #how many do we need to sample
-                 num_to_sample <- 
-                   0.80*calibration_prop*nrow(synthetic_HCAP_list[[i]])/3
-                 
-                 counts %<>% mutate("missing" = num_to_sample - n)
-                 
-                 #take everyone from groups that have fewer than the number we 
-                 #  need
-                 for(code in counts$race_eth_code){
-                   if(counts[which(counts$race_eth_code == code), "missing"] > 0){
-                     selected <- subset %>% filter(race_eth_code == code) %>% 
-                       dplyr::select("HHIDPN") %>% unlist() %>% unname()
-                   } else{
-                     selected <- subset %>% filter(race_eth_code == code) %>% 
-                       slice_sample(n = num_to_sample) %>% dplyr::select("HHIDPN") %>% 
-                       unlist() %>% unname()
-                   }
-                   
-                   if(exists("ids_vec")){
-                     ids_vec <- c(ids_vec, selected)
-                   } else{
-                     ids_vec <- selected
-                   }
-                 }
-                 
-                 #fill in the rest with random sample from the unsampled 
-                 #  observations
-                 missing_obs <- num_to_sample*3 - length(ids_vec)
-                 
-                 if(missing_obs > 0){
-                   #still unselected
-                   subset %<>% filter(!HHIDPN %in% ids_vec)  
-                   ids_vec <- 
-                     c(ids_vec, subset %>% 
-                         slice_sample(n = missing_obs) %>% 
-                         dplyr::select("HHIDPN") %>% unlist() %>% unname())
-                 }
-                 return(ids_vec)
-               })
+    #sample 70% within each race/ethnicity x stroke cell
+    prop_bh <- 0.7
+    
+    bh_sample_IDs <- 
+      synthetic_HCAP_list[[i]] %>% filter(White == 0) %>% 
+      group_by(sample_cells) %>% slice_sample(prop = prop_bh) 
+    
+    #sample remaining from white participants
+    num_bh_impaired <- sum(bh_sample_IDs$impaired)
+    num_bh_unimpaired <- nrow(bh_sample_IDs) - num_bh_impaired
+      
+    num_w_impaired <- num_impaired - num_bh_impaired
+    num_w_unimpaired <- num_unimpaired - num_bh_unimpaired
+    
+    # #Sanity check
+    # num_unimpaired == num_bh_unimpaired + num_w_unimpaired
+    # num_impaired == num_bh_impaired + num_w_impaired
+    
+    w_impaired_sample_IDs <- 
+      synthetic_HCAP_list[[i]] %>% filter(White == 1 & impaired == 1) %>% 
+      slice_sample(n = num_w_impaired)
+    
+    w_unimpaired_sample_IDs <- 
+      synthetic_HCAP_list[[i]] %>% filter(White == 1 & impaired == 0) %>% 
+      slice_sample(n = num_w_unimpaired)
     
     synthetic_HCAP_list[[i]][
       synthetic_HCAP_list[[i]]$HHIDPN %in% 
-        c(impaired_sample_IDs, random_sample_IDs), 
+        c(bh_sample_IDs$HHIDPN, w_impaired_sample_IDs$HHIDPN, 
+          w_unimpaired_sample_IDs$HHIDPN), 
       paste0("calibration_", calibration_prop*100, "_design")] <- 1
     
     #---- ****calculate sampling weight ----
