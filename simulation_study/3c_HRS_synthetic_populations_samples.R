@@ -12,7 +12,8 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
-  mutate_at("cell_ID", as.character)
+  mutate_at("cell_ID", as.character) %>% 
+  dplyr::select(c("cell_order", "cell_ID", "cell_name"))
 
 #---- **HRS analytic dataset ----
 HRS <- read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
@@ -384,6 +385,9 @@ for(i in 1:length(synthetic_HCAP_list)){
   #   mutate("prop" = Freq/sum(Freq))
   
   for(calibration_prop in c(0.25, 0.50)){
+    # #to start fresh for troubleshooting
+    # synthetic_HCAP_list[[i]]$calibration_25_design <- 0
+    
     num_impaired <- round(0.60*calibration_prop*nrow(synthetic_HCAP_list[[i]]))
     num_unimpaired <- 
       round(calibration_prop*nrow(synthetic_HCAP_list[[i]]) - num_impaired)
@@ -420,18 +424,18 @@ for(i in 1:length(synthetic_HCAP_list)){
           w_unimpaired_sample_IDs$HHIDPN), 
       paste0("calibration_", calibration_prop*100, "_design")] <- 1
     
-    # #Sanity check props
-    # synthetic_HCAP_list[[i]] %>%
-    #   unite("race_cells", c(impaired, black, hispanic), sep = "") %>%
-    #   dplyr::select("race_cells") %>% table()/nrow(synthetic_HCAP_list[[i]])
-    # 
-    # synthetic_HCAP_list[[i]] %>% 
-    #   filter(!!sym(paste0("calibration_", calibration_prop*100, "_design")) == 1) %>%
-    #   unite("race_cells", c(impaired, black, hispanic), sep = "") %>%
-    #   dplyr::select("race_cells") %>%
-    #   table()/sum(synthetic_HCAP_list[[i]][, paste0("calibration_", 
-    #                                                 calibration_prop*100, "_design")])
-    # 
+    #Sanity check props
+    synthetic_HCAP_list[[i]] %>%
+      unite("race_cells", c(impaired, black, hispanic), sep = "") %>%
+      dplyr::select("race_cells") %>% table()/nrow(synthetic_HCAP_list[[i]])
+
+    synthetic_HCAP_list[[i]] %>%
+      filter(!!sym(paste0("calibration_", calibration_prop*100, "_design")) == 1) %>%
+      unite("race_cells", c(impaired, black, hispanic), sep = "") %>%
+      dplyr::select("race_cells") %>%
+      table()/sum(synthetic_HCAP_list[[i]][, paste0("calibration_",
+                                                    calibration_prop*100, "_design")])
+
     #---- ****calculate sampling weight ----
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
       #calculate weight for white participants
