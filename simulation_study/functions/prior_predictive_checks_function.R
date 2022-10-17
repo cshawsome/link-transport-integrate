@@ -286,7 +286,7 @@ prior_predictive_checks <-
             #Full observed count
             prior_counts$Freq <-
               unlist(prior_counts$Freq*
-                       cell_ID_key[, paste0(unique(calibration_subset$dataset_name),
+                       weights_matrix[, paste0(unique(calibration_subset$dataset_name),
                                             "_IPW_", class)])
             
             prior_UtU <- diag(prior_counts$Observed)
