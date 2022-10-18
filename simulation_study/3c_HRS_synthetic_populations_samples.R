@@ -386,18 +386,63 @@ for(i in 1:length(synthetic_HCAP_list)){
 
 #---- ****SRS race calibration ----
 for(i in 1:length(synthetic_HCAP_list)){
-  synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
-                                  size = 0.20*nrow(synthetic_HCAP_list[[i]]), 
-                                  replace = FALSE), "calibration_20_SRS_race"] <- 1
+  sample_race_props <- 
+    colMeans(synthetic_HCAP_list[[i]][, c("White", "black", "hispanic")])
   
-  synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
-                                  size = 0.30*nrow(synthetic_HCAP_list[[i]]), 
-                                  replace = FALSE), "calibration_30_SRS_race"] <- 1
-  
-  synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
-                                  size = 0.50*nrow(synthetic_HCAP_list[[i]]), 
-                                  replace = FALSE), "calibration_50_SRS_race"] <- 1
+  for(calibration_prop in c(0.20, 0.35, 0.50)){
+    #set Black and Hispanic proportions
+    B = 0.60
+    H = 0.60
+    
+    #calculate p(selection) for White participants
+    W = (calibration_prop - B*sample_race_props["black"] - 
+           H*sample_race_props["hispanic"])/sample_race_props["White"]
+    
+    #select IDs
+    rm(race_IDs)
+    
+    for(race in c("White", "black", "hispanic")){
+      race_prop = case_when(race == "White" ~ W, 
+                            race == "black" ~ B, 
+                            race == "hispanic" ~ H)
+      
+      subset_IDs <- synthetic_HCAP_list[[i]] %>% filter(!!sym(race) == 1) %>% 
+        slice_sample(prop = race_prop) %>% dplyr::select("HHIDPN") %>% 
+        unlist() %>% unname()
+      
+      if(exists("race_IDs")){
+        race_IDs <- c(race_IDs, subset_IDs)
+      } else{
+        race_IDs <- subset_IDs
+      }
+    }
+    
+    #flag sample
+    synthetic_HCAP_list[[i]][
+      synthetic_HCAP_list[[i]]$HHIDPN %in% race_IDs, 
+      paste0("calibration_", calibration_prop*100,"_SRS_race")] <- 1
+    
+    
+    #store weights
+    cell_ID_key %<>% 
+      mutate(!!sym(paste0("calibration_", calibration_prop*100,"_SRS_race")) := 
+               case_when(str_detect(cell_name, "White") ~ 1/W, 
+                         str_detect(cell_name, "Black") ~ 1/B, 
+                         str_detect(cell_name, "Hispanic") ~ 1/H))
+  }
 }
+
+# #Calculations
+# colMeans(synthetic_HCAP_list[[1]][, c("White", "black", "hispanic")])
+# colMeans(synthetic_HCAP_list[[6]][, c("White", "black", "hispanic")])
+# 
+# 0.5 = W*0.765 + B*0.145 + H*0.090
+# Set B and H = 0.6 to sample 60% of Black and Hispanic participants
+# Then solve for W
+
+#Sanity check
+lapply(synthetic_HCAP_list, function(x)
+  colMeans(x[, paste0("calibration_", c(20, 35, 50),"_SRS_race")]))
 
 # #---- ****design calibration ----
 # for(i in 1:length(synthetic_HCAP_list)){
