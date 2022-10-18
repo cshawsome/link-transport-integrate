@@ -258,8 +258,9 @@ generate_synthetic <-
               ipw_model <- 
                 glm(selected ~ black + hispanic + stroke + MCI + Dementia, 
                     data = bootstrap_sample)
-              weights <- 1/(predict(ipw_model, data = bootstrap_sample)[
-                1:sum(bootstrap_sample$selected)])
+              weights <- 1/(predict(ipw_model, data = bootstrap_sample, 
+                                    type = "response")[
+                                      1:sum(bootstrap_sample$selected)])
               
               latent_class_model <- 
                 suppressWarnings(glm(formula(
@@ -305,8 +306,9 @@ generate_synthetic <-
                 ipw_model <- 
                   glm(selected ~ black + hispanic + stroke + MCI + Dementia, 
                       data = bootstrap_sample)
-                weights <- 1/(predict(ipw_model, data = bootstrap_sample)[
-                  1:sum(bootstrap_sample$selected)])
+                weights <- 1/(predict(ipw_model, data = bootstrap_sample, 
+                                      type = "response")[
+                                        1:sum(bootstrap_sample$selected)])
                 
                 latent_class_model <- 
                   suppressWarnings(glm(formula(

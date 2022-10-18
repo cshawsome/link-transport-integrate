@@ -200,21 +200,33 @@ prior_predictive_checks <-
             mutate("selected" = 1) %>% 
             rbind(synthetic_sample[, vars[-1]] %>% mutate("selected" = 0))
           
-          #calculate weights
-          ipw_model <- 
-            glm(selected ~ black + hispanic + stroke + MCI + Dementia + Other, 
-                data = bootstrap_sample)
-          weights <- 1/(predict(ipw_model, data = bootstrap_sample)[
-            1:sum(bootstrap_sample$selected)])
-          
-          latent_class_model <- 
-            suppressWarnings(glm(formula(
-              paste(class_name, " ~ ", 
-                    paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
-                    collapse = "")), family = "binomial", 
-              #don't select (Intercept) variable
-              data = bootstrap_sample %>% filter(selected == 1), 
-              weights = weights))
+          if(str_detect(calibration_scenario, "design")){
+            #calculate weights
+            ipw_model <- 
+              glm(selected ~ black + hispanic + stroke + MCI + Dementia + Other, 
+                  data = bootstrap_sample)
+            weights <- 1/(predict(ipw_model, data = bootstrap_sample, 
+                                  type = "response")[
+              1:sum(bootstrap_sample$selected)])
+            
+            latent_class_model <- 
+              suppressWarnings(glm(formula(
+                paste(class_name, " ~ ", 
+                      paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+                      collapse = "")), family = "binomial", 
+                #don't select (Intercept) variable
+                data = bootstrap_sample %>% filter(selected == 1), 
+                weights = weights))
+          } else{
+            
+            latent_class_model <- 
+              suppressWarnings(glm(formula(
+                paste(class_name, " ~ ", 
+                      paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+                      collapse = "")), family = "binomial", 
+                #don't select (Intercept) variable
+                data = bootstrap_sample %>% filter(selected == 1)))
+          }
           
           prior_betas <- coefficients(latent_class_model)
           
@@ -237,21 +249,33 @@ prior_predictive_checks <-
               mutate("selected" = 1) %>% 
               rbind(synthetic_sample[, vars[-1]] %>% mutate("selected" = 0))
             
-            #calculate weights
-            ipw_model <- 
-              glm(selected ~ black + hispanic + stroke + MCI + Dementia + Other, 
-                  data = bootstrap_sample)
-            weights <- 1/(predict(ipw_model, data = bootstrap_sample)[
-              1:sum(bootstrap_sample$selected)])
-            
-            latent_class_model <- 
-              suppressWarnings(glm(formula(
-                paste(class_name, " ~ ", 
-                      paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
-                      collapse = "")), family = "binomial", 
-                #don't select (Intercept) variable
-                data = bootstrap_sample %>% filter(selected == 1), 
-                weights = weights))
+            if(str_detect(calibration_scenario, "design")){
+              #calculate weights
+              ipw_model <- 
+                glm(selected ~ black + hispanic + stroke + MCI + Dementia + Other, 
+                    data = bootstrap_sample)
+              weights <- 1/(predict(ipw_model, data = bootstrap_sample, 
+                                    type = "response")[
+                1:sum(bootstrap_sample$selected)])
+              
+              latent_class_model <- 
+                suppressWarnings(glm(formula(
+                  paste(class_name, " ~ ", 
+                        paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+                        collapse = "")), family = "binomial", 
+                  #don't select (Intercept) variable
+                  data = bootstrap_sample %>% filter(selected == 1), 
+                  weights = weights))
+            } else{
+              
+              latent_class_model <- 
+                suppressWarnings(glm(formula(
+                  paste(class_name, " ~ ", 
+                        paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+                        collapse = "")), family = "binomial", 
+                  #don't select (Intercept) variable
+                  data = bootstrap_sample %>% filter(selected == 1)))
+            }
             
             prior_betas <- coefficients(latent_class_model)
           }
@@ -802,25 +826,25 @@ prior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# set.seed(20220329)
-# dataset_to_copy = synthetic_HCAP_list[[1]]
-# calibration_sample = !(calibration_scenario == "no_calibration")
-# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
-# calibration_sample_name = calibration_scenario
-# path_to_data = path_to_box
-# path_to_output_folder = paste0(path_to_box,
-#                                "figures/chapter_4/simulation_study/HCAP_",
-#                                unique(dataset_to_copy[, "dataset_name_stem"]),
-#                                "/prior_predictive_checks/")
-# continuous_check_test = TRUE
-# continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
-# categorical_vars = W
-# continuous_vars = Z
-# variable_labels = variable_labels
-# color_palette = color_palette
-# contrasts_matrix = A
-# weights_matrix = cell_ID_key
-# kappa_0_mat = kappa_0_mat
-# nu_0_mat = nu_0_mat
-# num_synthetic = 10
+#---- test function ----
+set.seed(20220329)
+dataset_to_copy = synthetic_HCAP_list[[1]]
+calibration_sample = !(calibration_scenario == "no_calibration")
+calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
+calibration_sample_name = calibration_scenario
+path_to_data = path_to_box
+path_to_output_folder = paste0(path_to_box,
+                               "figures/chapter_4/simulation_study/HCAP_",
+                               unique(dataset_to_copy[, "dataset_name_stem"]),
+                               "/prior_predictive_checks/")
+continuous_check_test = TRUE
+continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+categorical_vars = W
+continuous_vars = Z
+variable_labels = variable_labels
+color_palette = color_palette
+contrasts_matrix = A
+weights_matrix = cell_ID_key
+kappa_0_mat = kappa_0_mat
+nu_0_mat = nu_0_mat
+num_synthetic = 10
