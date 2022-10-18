@@ -253,21 +253,31 @@ generate_synthetic <-
               mutate("selected" = 1) %>% 
               rbind(synthetic_sample[, vars[-1]] %>% mutate("selected" = 0))
             
-            #calculate weights
-            ipw_model <- 
-              glm(selected ~ black + hispanic + stroke + MCI + Dementia + Other, 
-                  data = bootstrap_sample)
-            weights <- 1/(predict(ipw_model, data = bootstrap_sample)[
-              1:sum(bootstrap_sample$selected)])
-            
-            latent_class_model <- 
-              suppressWarnings(glm(formula(
-                paste(class_name, " ~ ", 
-                      paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
-                      collapse = "")), family = "binomial", 
-                #don't select (Intercept) variable
-                data = bootstrap_sample %>% filter(selected == 1), 
-                weights = weights))
+            if(str_detect(calibration_scenario, "design")){
+              #calculate weights
+              ipw_model <- 
+                glm(selected ~ black + hispanic + stroke + MCI + Dementia, 
+                    data = bootstrap_sample)
+              weights <- 1/(predict(ipw_model, data = bootstrap_sample)[
+                1:sum(bootstrap_sample$selected)])
+              
+              latent_class_model <- 
+                suppressWarnings(glm(formula(
+                  paste(class_name, " ~ ", 
+                        paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+                        collapse = "")), family = "binomial", 
+                  #don't select (Intercept) variable
+                  data = bootstrap_sample %>% filter(selected == 1), 
+                  weights = weights))
+            } else{
+              latent_class_model <- 
+                suppressWarnings(glm(formula(
+                  paste(class_name, " ~ ", 
+                        paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+                        collapse = "")), family = "binomial", 
+                  #don't select (Intercept) variable
+                  data = bootstrap_sample %>% filter(selected == 1)))
+            }
             
             prior_betas <- coefficients(latent_class_model)
             
@@ -290,21 +300,33 @@ generate_synthetic <-
                 mutate("selected" = 1) %>% 
                 rbind(synthetic_sample[, vars[-1]] %>% mutate("selected" = 0))
               
-              #calculate weights
-              ipw_model <- 
-                glm(selected ~ black + hispanic + stroke + MCI + Dementia + Other, 
-                    data = bootstrap_sample)
-              weights <- 1/(predict(ipw_model, data = bootstrap_sample)[
-                1:sum(bootstrap_sample$selected)])
+              if(str_detect(calibration_scenario, "design")){
+                #calculate weights
+                ipw_model <- 
+                  glm(selected ~ black + hispanic + stroke + MCI + Dementia, 
+                      data = bootstrap_sample)
+                weights <- 1/(predict(ipw_model, data = bootstrap_sample)[
+                  1:sum(bootstrap_sample$selected)])
+                
+                latent_class_model <- 
+                  suppressWarnings(glm(formula(
+                    paste(class_name, " ~ ", 
+                          paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+                          collapse = "")), family = "binomial", 
+                    #don't select (Intercept) variable
+                    data = bootstrap_sample %>% filter(selected == 1), 
+                    weights = weights))
+              } else{
+                
+                latent_class_model <- 
+                  suppressWarnings(glm(formula(
+                    paste(class_name, " ~ ", 
+                          paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
+                          collapse = "")), family = "binomial", 
+                    #don't select (Intercept) variable
+                    data = bootstrap_sample %>% filter(selected == 1)))
+              }
               
-              latent_class_model <- 
-                suppressWarnings(glm(formula(
-                  paste(class_name, " ~ ", 
-                        paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
-                        collapse = "")), family = "binomial", 
-                  #don't select (Intercept) variable
-                  data = bootstrap_sample %>% filter(selected == 1), 
-                  weights = weights))
               
               prior_betas <- coefficients(latent_class_model)
               # latent_class_model <- 
