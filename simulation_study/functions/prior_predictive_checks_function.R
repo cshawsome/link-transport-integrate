@@ -374,8 +374,7 @@ prior_predictive_checks <-
         }
         
         if(calibration_sample){
-          prior_counts <- bootstrap_sample[which(bootstrap_sample$selected == 1), 
-                                           c(categorical_vars, class)] %>% 
+          prior_counts <- calibration_subset[, c(categorical_vars, class)] %>% 
             filter(!!sym(class) == 1) %>% 
             unite("cell_ID", all_of(categorical_vars), sep = "") %>% 
             dplyr::select("cell_ID") %>% table() %>% as.data.frame() %>% 
@@ -391,15 +390,15 @@ prior_predictive_checks <-
           
           if(str_detect(calibration_sample_name, "SRS_race") | 
              str_detect(calibration_sample_name, "design")){
+            
             #Make column for observed sampled counts
             prior_counts$Observed <- prior_counts$Freq
             
-            #Store weights 
-            bootstrap_weights <- bootstrap_sample %>% filter(selected == 1) %>%
-              unite(cell_ID, c("black", "hispanic", "stroke"), sep = "") %>% 
-              group_by(cell_ID) %>% summarize_at("weights", mean)
-            
-            prior_counts %<>% left_join(., bootstrap_weights, by = "cell_ID")
+            prior_counts %<>% 
+              left_join(., 
+                        cell_ID_key[, c("cell_ID", calibration_sample_name)] %>% 
+                          rename("weights" = calibration_sample_name), 
+                        by = "cell_ID")
             prior_counts[is.na(prior_counts)] <- 0
             
             #Full observed count
@@ -492,9 +491,8 @@ prior_predictive_checks <-
           }
           
           continuous_covariates <- 
-            bootstrap_sample[, c(categorical_vars, continuous_vars, class, 
-                                 "selected")] %>% 
-            filter(!!sym(class) == 1 & selected == 1) %>% 
+            calibration_subset[, c(categorical_vars, continuous_vars, class)] %>% 
+            filter(!!sym(class) == 1) %>% 
             arrange(black, hispanic, stroke) %>%
             dplyr::select(all_of(continuous_vars)) %>% as.matrix()
           
@@ -862,25 +860,25 @@ prior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# set.seed(20220329)
-# dataset_to_copy = synthetic_HCAP_list[[1]]
-# calibration_sample = !(calibration_scenario == "no_calibration")
-# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
-# calibration_sample_name = calibration_scenario
-# path_to_data = path_to_box
-# path_to_output_folder = paste0(path_to_box,
-#                                "figures/chapter_4/simulation_study/HCAP_",
-#                                unique(dataset_to_copy[, "dataset_name_stem"]),
-#                                "/prior_predictive_checks/")
-# continuous_check_test = TRUE
-# continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
-# categorical_vars = W
-# continuous_vars = Z
-# variable_labels = variable_labels
-# color_palette = color_palette
-# contrasts_matrix = A
-# weights_matrix = cell_ID_key
-# kappa_0_mat = kappa_0_mat
-# nu_0_mat = nu_0_mat
-# num_synthetic = 1000
+#---- test function ----
+set.seed(20220329)
+dataset_to_copy = synthetic_HCAP_list[[1]]
+calibration_sample = !(calibration_scenario == "no_calibration")
+calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
+calibration_sample_name = calibration_scenario
+path_to_data = path_to_box
+path_to_output_folder = paste0(path_to_box,
+                               "figures/chapter_4/simulation_study/HCAP_",
+                               unique(dataset_to_copy[, "dataset_name_stem"]),
+                               "/prior_predictive_checks/")
+continuous_check_test = TRUE
+continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+categorical_vars = W
+continuous_vars = Z
+variable_labels = variable_labels
+color_palette = color_palette
+contrasts_matrix = A
+weights_matrix = cell_ID_key
+kappa_0_mat = kappa_0_mat
+nu_0_mat = nu_0_mat
+num_synthetic = 1000
