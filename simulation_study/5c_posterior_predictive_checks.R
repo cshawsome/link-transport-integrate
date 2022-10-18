@@ -72,7 +72,7 @@ dataset_names <-
 #---- **specify indices ----
 indices <-
   which(dataset_names %in% 
-          paste0("HRS_", c(2000, 4000, 8000), "_sample_", HCAP_sample_prop*100, 
+          paste0("HRS_", c(8000), "_sample_", HCAP_sample_prop*100, 
                  "_", calibration_scenario))
 
 #---- serial checks ----
