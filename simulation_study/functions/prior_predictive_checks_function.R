@@ -121,6 +121,26 @@ prior_predictive_checks <-
       } else{
         calibration_subset <- 
           dataset_to_copy %>% filter(!!sym(calibration_scenario) == 1)
+        
+        #test weighting
+        calibration_subset %<>% 
+          mutate("Group" = case_when(Unimpaired == 1 ~ "Unimpaired", 
+                                     MCI == 1 ~ "MCI", 
+                                     Dementia == 1 ~ "Dementia", 
+                                     Other == 1 ~ "Other")) %>%
+          unite("cell_ID", c("black", "hispanic", "stroke"), remove = FALSE, 
+                sep = "")
+        
+        cell_ID_key_long <- cell_ID_key %>% 
+          pivot_longer(-c("cell_order", "cell_ID", "cell_name"), 
+                       names_to = c("dataset_name", "Group"), 
+                       values_to = "weights", 
+                       names_sep = "_IPW_") %>% filter()
+        
+        calibration_subset %<>% 
+          left_join(., cell_ID_key_long, 
+                    by = c("cell_ID", "Group", "dataset_name"))
+        
       }
     }
     
@@ -174,28 +194,18 @@ prior_predictive_checks <-
           # 
           # prior_betas <- coefficients(latent_class_model)
           
-          #test weighting
-          calibration_subset %<>% 
-            mutate("Group" = case_when(Unimpaired == 1 ~ "Unimpaired", 
-                                       MCI == 1 ~ "MCI", 
-                                       Dementia == 1 ~ "Dementia", 
-                                       Other == 1 ~ "Other")) %>%
-            unite("cell_ID", c("black", "hispanic", "stroke"), remove = FALSE, 
-                  sep = "")
-          
-          cell_ID_key_long <- cell_ID_key %>% 
-            pivot_longer(-c("cell_order", "cell_ID", "cell_name"), 
-                         names_to = c("dataset_name", "Group"), 
-                         values_to = "weights", 
-                         names_sep = "_IPW_") %>% filter()
-          
-          calibration_subset %<>% 
-            left_join(., cell_ID_key_long, 
-                      by = c("cell_ID", "Group", "dataset_name"))
-          
           bootstrap_sample <- 
-            slice_sample(calibration_subset[, c(vars[-1], "weights")], 
-                         n = nrow(calibration_subset), replace = TRUE)
+            slice_sample(calibration_subset[, vars[-1]], 
+                         n = nrow(calibration_subset), replace = TRUE) %>% 
+            mutate("selected" = 1) %>% 
+            rbind(synthetic_sample[, vars[-1]] %>% mutate("selected" = 0))
+          
+          #calculate weights
+          ipw_model <- 
+            glm(selected ~ black + hispanic + stroke + MCI + Dementia + Other, 
+                data = bootstrap_sample)
+          weights <- 1/(predict(ipw_model, data = bootstrap_sample)[
+            1:sum(bootstrap_sample$selected)])
           
           latent_class_model <- 
             suppressWarnings(glm(formula(
@@ -203,10 +213,10 @@ prior_predictive_checks <-
                     paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
                     collapse = "")), family = "binomial", 
               #don't select (Intercept) variable
-              data = bootstrap_sample, weights = bootstrap_sample$weights))
+              data = bootstrap_sample %>% filter(selected == 1), 
+              weights = weights))
           
           prior_betas <- coefficients(latent_class_model)
-          
           
           while(sum(is.na(prior_betas)) > 0){
             # latent_class_model <- 
@@ -222,8 +232,17 @@ prior_predictive_checks <-
             # prior_betas <- coefficients(latent_class_model)
             
             bootstrap_sample <- 
-              slice_sample(calibration_subset[, c(vars[-1], "weights")], 
-                           n = nrow(calibration_subset), replace = TRUE)
+              slice_sample(calibration_subset[, vars[-1]], 
+                           n = nrow(calibration_subset), replace = TRUE) %>% 
+              mutate("selected" = 1) %>% 
+              rbind(synthetic_sample[, vars[-1]] %>% mutate("selected" = 0))
+            
+            #calculate weights
+            ipw_model <- 
+              glm(selected ~ black + hispanic + stroke + MCI + Dementia + Other, 
+                  data = bootstrap_sample)
+            weights <- 1/(predict(ipw_model, data = bootstrap_sample)[
+              1:sum(bootstrap_sample$selected)])
             
             latent_class_model <- 
               suppressWarnings(glm(formula(
@@ -231,7 +250,8 @@ prior_predictive_checks <-
                       paste(get(paste0(model, "_preds"))[-1], collapse = " + "), 
                       collapse = "")), family = "binomial", 
                 #don't select (Intercept) variable
-                data = bootstrap_sample, weights = bootstrap_sample$weights))
+                data = bootstrap_sample %>% filter(selected == 1), 
+                weights = weights))
             
             prior_betas <- coefficients(latent_class_model)
           }
@@ -524,8 +544,7 @@ prior_predictive_checks <-
           assign(paste0("Z_", class), subset[, all_of(continuous_vars)])
         }
       }
-      # }
-      #   #---- END DEBUG ----
+      # #---- END DEBUG ----
       if(calibration_sample){
         group <- c(synthetic_sample$Group, 
                    calibration_subset %>% 
@@ -566,7 +585,6 @@ prior_predictive_checks <-
     runs = num_synthetic
     synthetic <- replicate(num_synthetic, generate_data(color_palette), 
                            simplify = FALSE)
-    
     #---- plots ----
     #---- **dem class ----
     to_copy_dementia_plot_data <- 
