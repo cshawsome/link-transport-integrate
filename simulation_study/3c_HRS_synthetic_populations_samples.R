@@ -336,9 +336,11 @@ for(sample_prop in sample_props){
                     function(x) 
                       x %>% group_by(married_partnered) %>% 
                       slice_sample(prop = sample_prop) %>% 
-                      mutate("calibration_25_SRS" = 0, 
+                      mutate("calibration_20_SRS" = 0,
+                             "calibration_35_SRS" = 0,
                              "calibration_50_SRS" = 0, 
-                             "calibration_25_design" = 0, 
+                             "calibration_20_design" = 0,
+                             "calibration_35_design" = 0,
                              "calibration_50_design" = 0) %>% ungroup() %>% 
                       mutate("dataset_name" = 
                                paste0(dataset_name, "_sample_", 
@@ -349,9 +351,11 @@ for(sample_prop in sample_props){
              function(x) 
                x %>% group_by(married_partnered) %>% 
                slice_sample(prop = sample_prop) %>% 
-               mutate("calibration_25_SRS" = 0, 
+               mutate("calibration_20_SRS" = 0,
+                      "calibration_35_SRS" = 0,
                       "calibration_50_SRS" = 0, 
-                      "calibration_25_design" = 0, 
+                      "calibration_20_design" = 0,
+                      "calibration_35_design" = 0,
                       "calibration_50_design" = 0) %>% ungroup() %>% 
                mutate("dataset_name" = 
                         paste0(dataset_name, "_sample_", sample_prop*100)))
@@ -362,8 +366,12 @@ for(sample_prop in sample_props){
 #---- ****SRS calibration ----
 for(i in 1:length(synthetic_HCAP_list)){
   synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
-                                  size = 0.25*nrow(synthetic_HCAP_list[[i]]), 
-                                  replace = FALSE), "calibration_25_SRS"] <- 1
+                                  size = 0.20*nrow(synthetic_HCAP_list[[i]]), 
+                                  replace = FALSE), "calibration_20_SRS"] <- 1
+  
+  synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
+                                  size = 0.30*nrow(synthetic_HCAP_list[[i]]), 
+                                  replace = FALSE), "calibration_30_SRS"] <- 1
   
   synthetic_HCAP_list[[i]][sample(seq(1, nrow(synthetic_HCAP_list[[i]])), 
                                   size = 0.50*nrow(synthetic_HCAP_list[[i]]), 
@@ -384,9 +392,9 @@ for(i in 1:length(synthetic_HCAP_list)){
   # table(synthetic_HCAP_list[[i]]$sample_cells) %>% as.data.frame() %>% 
   #   mutate("prop" = Freq/sum(Freq))
   
-  for(calibration_prop in c(0.25, 0.50)){
+  for(calibration_prop in c(0.20, 0.35, 0.50)){
     # #to start fresh for troubleshooting
-    # synthetic_HCAP_list[[i]]$calibration_25_design <- 0
+    # synthetic_HCAP_list[[i]]$calibration_50_design <- 0
     
     num_impaired <- round(0.60*calibration_prop*nrow(synthetic_HCAP_list[[i]]))
     num_unimpaired <- 
@@ -424,17 +432,27 @@ for(i in 1:length(synthetic_HCAP_list)){
           w_unimpaired_sample_IDs$HHIDPN), 
       paste0("calibration_", calibration_prop*100, "_design")] <- 1
     
-    #Sanity check props
-    synthetic_HCAP_list[[i]] %>%
-      unite("race_cells", c(impaired, black, hispanic), sep = "") %>%
-      dplyr::select("race_cells") %>% table()/nrow(synthetic_HCAP_list[[i]])
-
-    synthetic_HCAP_list[[i]] %>%
-      filter(!!sym(paste0("calibration_", calibration_prop*100, "_design")) == 1) %>%
-      unite("race_cells", c(impaired, black, hispanic), sep = "") %>%
-      dplyr::select("race_cells") %>%
-      table()/sum(synthetic_HCAP_list[[i]][, paste0("calibration_",
-                                                    calibration_prop*100, "_design")])
+    # #Sanity check props
+    # print("entire sample:")
+    # synthetic_HCAP_list[[i]] %>%
+    #   unite("race_cells", c(impaired, black, hispanic), sep = "") %>%
+    #   dplyr::select("race_cells") %>% table()/nrow(synthetic_HCAP_list[[i]])
+    # 
+    # print("random sample:")
+    # synthetic_HCAP_list[[i]] %>%
+    #   filter(!!sym(paste0("calibration_", calibration_prop*100, "_SRS")) == 1) %>%
+    #   unite("race_cells", c(impaired, black, hispanic), sep = "") %>%
+    #   dplyr::select("race_cells") %>%
+    #   table()/sum(synthetic_HCAP_list[[i]][, paste0("calibration_",
+    #                                                 calibration_prop*100, "_SRS")])
+    # 
+    # print("design sample:")
+    # synthetic_HCAP_list[[i]] %>%
+    #   filter(!!sym(paste0("calibration_", calibration_prop*100, "_design")) == 1) %>%
+    #   unite("race_cells", c(impaired, black, hispanic), sep = "") %>%
+    #   dplyr::select("race_cells") %>%
+    #   table()/sum(synthetic_HCAP_list[[i]][, paste0("calibration_",
+    #                                                 calibration_prop*100, "_design")])
 
     #---- ****calculate sampling weight ----
     for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
