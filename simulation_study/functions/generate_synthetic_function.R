@@ -253,14 +253,21 @@ generate_synthetic <-
               mutate("selected" = 1) %>% 
               rbind(synthetic_sample[, vars[-1]] %>% mutate("selected" = 0))
             
-            if(str_detect(calibration_scenario, "design")){
+            if(str_detect(calibration_scenario, "SRS_race") | 
+               str_detect(calibration_scenario, "design")){
+              
               #calculate weights
-              ipw_model <- 
-                glm(selected ~ black + hispanic + stroke + MCI + Dementia, 
-                    data = bootstrap_sample)
-              weights <- 1/(predict(ipw_model, data = bootstrap_sample, 
-                                    type = "response")[
-                                      1:sum(bootstrap_sample$selected)])
+              if(str_detect(calibration_scenario, "SRS_race")){
+                ipw_model <- glm(selected ~ black + hispanic, 
+                                 data = bootstrap_sample)  
+              } else{
+                ipw_model <- glm(selected ~ black + hispanic + stroke + impaired, 
+                                 data = bootstrap_sample) 
+              }
+              
+              bootstrap_sample[, "weights"] <- 
+                1/(predict(ipw_model, data = bootstrap_sample, 
+                           type = "response"))
               
               latent_class_model <- 
                 suppressWarnings(glm(formula(
@@ -269,8 +276,11 @@ generate_synthetic <-
                         collapse = "")), family = "binomial", 
                   #don't select (Intercept) variable
                   data = bootstrap_sample %>% filter(selected == 1), 
-                  weights = weights))
+                  weights = bootstrap_sample %>% filter(selected == 1) %>% 
+                    dplyr::select("weights") %>% unlist()))
+              
             } else{
+              
               latent_class_model <- 
                 suppressWarnings(glm(formula(
                   paste(class_name, " ~ ", 
@@ -301,14 +311,21 @@ generate_synthetic <-
                 mutate("selected" = 1) %>% 
                 rbind(synthetic_sample[, vars[-1]] %>% mutate("selected" = 0))
               
-              if(str_detect(calibration_scenario, "design")){
+              if(str_detect(calibration_scenario, "SRS_race") | 
+                 str_detect(calibration_scenario, "design")){
+                
                 #calculate weights
-                ipw_model <- 
-                  glm(selected ~ black + hispanic + stroke + MCI + Dementia, 
-                      data = bootstrap_sample)
-                weights <- 1/(predict(ipw_model, data = bootstrap_sample, 
-                                      type = "response")[
-                                        1:sum(bootstrap_sample$selected)])
+                if(str_detect(calibration_scenario, "SRS_race")){
+                  ipw_model <- glm(selected ~ black + hispanic, 
+                                   data = bootstrap_sample)  
+                } else{
+                  ipw_model <- glm(selected ~ black + hispanic + stroke + impaired, 
+                                   data = bootstrap_sample) 
+                }
+                
+                bootstrap_sample[, "weights"] <- 
+                  1/(predict(ipw_model, data = bootstrap_sample, 
+                             type = "response"))
                 
                 latent_class_model <- 
                   suppressWarnings(glm(formula(
@@ -317,7 +334,9 @@ generate_synthetic <-
                           collapse = "")), family = "binomial", 
                     #don't select (Intercept) variable
                     data = bootstrap_sample %>% filter(selected == 1), 
-                    weights = weights))
+                    weights = bootstrap_sample %>% filter(selected == 1) %>% 
+                      dplyr::select("weights") %>% unlist()))
+                
               } else{
                 
                 latent_class_model <- 
@@ -328,7 +347,6 @@ generate_synthetic <-
                     #don't select (Intercept) variable
                     data = bootstrap_sample %>% filter(selected == 1)))
               }
-              
               
               prior_betas <- coefficients(latent_class_model)
               # latent_class_model <- 
@@ -454,19 +472,25 @@ generate_synthetic <-
               prior_count[which(is.na(prior_count$Freq)), "Freq"] <- 0
             }
             
-            if(str_detect(calibration_sample_name, "design")){
+            if(str_detect(calibration_sample_name, "SRS_race") | 
+               str_detect(calibration_sample_name, "design")){
+              
               #Make column for observed sampled counts
-              prior_count$Observed <- prior_count$Freq
+              prior_counts$Observed <- prior_counts$Freq
+              
+              prior_counts %<>% 
+                left_join(., 
+                          cell_ID_key[, c("cell_ID", calibration_sample_name)] %>% 
+                            rename("weights" = calibration_sample_name), 
+                          by = "cell_ID")
+              prior_counts[is.na(prior_counts)] <- 0
               
               #Full observed count
-              fully_observed <-
-                unlist(prior_count$Freq*
-                         cell_ID_key[, paste0(unique(
-                           calibration_subset$dataset_name), "_IPW_", class)])
+              prior_counts %<>% mutate("Freq" = Freq*weights)
+              prior_UtU <- diag(prior_counts$Observed)
               
-              prior_UtU <- diag(prior_count$Observed)
             } else{
-              prior_UtU <- diag(prior_count$Freq)
+              prior_UtU <- diag(prior_counts$Freq)
             }
             
             prior_count %<>% mutate("prop" = Freq/sum(Freq))
