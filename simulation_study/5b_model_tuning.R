@@ -56,12 +56,12 @@ sds <-
 
 #---- data formatting ----
 #---- **user input ----
-#calibration scenario options: "no_calibration", "calibration_50_SRS", 
-# "calibration_50_design", "calibration_100"
-calibration_scenario = "calibration_50_design" 
+#calibration scenario options: "no_calibration", "calibration_20_SRS", 
+# "calibration_35_SRS", "calibration_50_SRS", "calibration_50_design", 
+calibration_scenario = "calibration_20_SRS" 
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.50
+HCAP_sample_prop = 0.25
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
@@ -85,7 +85,7 @@ dataset_names <-
 #---- **specify indices ----
 indices <-
   which(dataset_names %in% 
-          paste0("HRS_", c(8000), "_sample_", HCAP_sample_prop*100, 
+          paste0("HRS_", c(2000, 4000, 8000), "_sample_", HCAP_sample_prop*100, 
                  "_", calibration_scenario))
 
 #---- generate datasets in serial ----
