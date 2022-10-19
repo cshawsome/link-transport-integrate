@@ -58,7 +58,7 @@ sds <-
 #---- **user input ----
 #calibration scenario options: "no_calibration", "calibration_20_SRS", 
 # "calibration_35_SRS", "calibration_50_SRS", "calibration_50_design", 
-calibration_scenario = "calibration_20_SRS" 
+calibration_scenario = "calibration_50_SRS_race" 
 
 #HCAP sample prop options: 0.25, 0.50
 HCAP_sample_prop = 0.25
