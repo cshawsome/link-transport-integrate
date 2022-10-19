@@ -476,21 +476,21 @@ generate_synthetic <-
                str_detect(calibration_sample_name, "design")){
               
               #Make column for observed sampled counts
-              prior_counts$Observed <- prior_counts$Freq
+              prior_count$Observed <- prior_count$Freq
               
-              prior_counts %<>% 
+              prior_count %<>% 
                 left_join(., 
                           cell_ID_key[, c("cell_ID", calibration_sample_name)] %>% 
                             rename("weights" = calibration_sample_name), 
                           by = "cell_ID")
-              prior_counts[is.na(prior_counts)] <- 0
+              prior_count[is.na(prior_count)] <- 0
               
               #Full observed count
-              prior_counts %<>% mutate("Freq" = Freq*weights)
-              prior_UtU <- diag(prior_counts$Observed)
+              prior_count %<>% mutate("Freq" = Freq*weights)
+              prior_UtU <- diag(prior_count$Observed)
               
             } else{
-              prior_UtU <- diag(prior_counts$Freq)
+              prior_UtU <- diag(prior_count$Freq)
             }
             
             prior_count %<>% mutate("prop" = Freq/sum(Freq))
@@ -1043,4 +1043,4 @@ generate_synthetic <-
 # nu_0_mat = nu_0_mat
 # num_synthetic = 1000
 # data_only = FALSE
-
+# 
