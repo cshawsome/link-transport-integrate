@@ -13,8 +13,13 @@ fast_impute <-
     #---- imputation 0: mean imputation ----
     # #check var types: only HHIDPN and Adem_dx_label_collapsed are non-numeric
     # which(lapply(data, class) != "numeric")
-    avgs <- colMeans(data[, -(which(lapply(data, class) != "numeric"))], 
-                     na.rm = TRUE)
+    not_numeric <- which(lapply(data, class) != "numeric")
+    
+    if(length(not_numeric) > 0){
+      avgs <- colMeans(data[, -(not_numeric)], na.rm = TRUE)
+    } else{
+      avgs <- colMeans(data, na.rm = TRUE)
+    }
     
     for(var in impute_vars){
       data[where[, var] == 1 , var] <- avgs[var]
@@ -119,17 +124,17 @@ fast_impute <-
 
 # #---- function testing ----
 # start <- Sys.time()
-# fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
-#             path_for_output = paste0(path_to_box, "data/ADAMS/cleaned/"), 
+# fast_impute(predictor_matrix = predict, data = ADAMS_analytic,
+#             path_for_output = paste0(path_to_box, "data/ADAMS/cleaned/"),
 #             method = "PMM", m = 2, maxit = 15)
 # end <- Sys.time() - start
 # 
 # #test output
-# test_where <- 
+# test_where <-
 #   read_csv(file = paste0(path_to_box, "data/ADAMS/cleaned/MI/where.csv"))
-# test_trace_data <- 
+# test_trace_data <-
 #   read_csv(file = paste0(path_to_box, "data/ADAMS/cleaned/MI/trace_data.csv"))
-# test_impute_data <- 
+# test_impute_data <-
 #   readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets"))
 
 
