@@ -61,41 +61,28 @@ HCAP_imputed <-
 # #Sanity check
 # colMeans(is.na(HCAP_imputed))[which(colMeans(is.na(HCAP_imputed)) > 0)]
 
-#---- OLD ----
-
-
 #---- clean: subjective cog decline vars ----
-HCAP %<>% mutate(subj_cog_count = subj_cog_better + subj_cog_worse)
+HCAP_imputed %<>% mutate(subj_cog_count = subj_cog_better + subj_cog_worse)
 
 #check counts
-table(HCAP$subj_cog_count)
+table(HCAP_imputed$subj_cog_count)
 
 #---- **subjective cog same ----
-HCAP %<>% mutate("subj_cog_same" = ifelse(subj_cog_count == 0, 1, 0))
+HCAP_imputed %<>% mutate("subj_cog_same" = ifelse(subj_cog_count == 0, 1, 0))
 
 #---- **subjective cog better/worse ----
-fix_these <- which(HCAP$subj_cog_count > 1)
+fix_these <- which(HCAP_imputed$subj_cog_count > 1)
 
 for(index in fix_these){
-  HCAP[index, sample(c("subj_cog_worse", "subj_cog_better"), size = 1)] <- 0
+  HCAP_imputed[index, sample(c("subj_cog_worse", "subj_cog_better"), size = 1)] <- 0
 }
 
 # #Sanity check-- should only have sums equal to 1
-# HCAP %<>% 
+# HCAP_imputed %<>%
 #   mutate(subj_cog_count = subj_cog_better + subj_cog_worse + subj_cog_same)
 # 
-# table(HCAP$subj_cog_count)
-
-#---- last bin check ----
-# #sum should be 2235
-# check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "delrc_cat", "ser7_cat", 
-#                 "adl_cat", "iadl_cat", "wrc_yes_cat", "wrc_no_cat", "imm_cp_cat", 
-#                 "del_cp_cat")
-# 
-# for(var in check_vars){
-#   print(sum(table(HCAP[, var])))
-# }
+# table(HCAP_imputed$subj_cog_count)
 
 #---- save dataset ----
-HCAP %>% dplyr::select(-one_of("subj_cog_count", "contingency_cell")) %>% 
+HCAP_imputed %>% dplyr::select(-one_of("subj_cog_count")) %>% 
   write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv"))
