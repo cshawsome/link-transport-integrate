@@ -287,7 +287,7 @@ PR_hispanic <- hispanic_risk/white_risk
 
 #---- **save superpop_imputed data ----
 write_csv(superpop_imputed, 
-          paste0(path_to_box, "data/superpopulations/superpop_imputed_1000000.csv"))
+          paste0(path_to_box, "data/superpopulations/superpop_1000000.csv"))
 
 #---- **save impairment class props ----
 write_csv(colMeans(superpop_imputed[, c("Unimpaired", "MCI", "Dementia", "Other")]) %>% 
