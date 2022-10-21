@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "magrittr", "vroom", "locfit")
+p_load("here", "tidyverse", "magrittr", "vroom", "locfit", "miceFast", "ggforce")
 
 options(scipen = 999)
 
@@ -42,7 +42,6 @@ source(here::here("functions", "fast_impute.R"))
 #---- draw synthetic superpopulation ----
 set.seed(20220905)
 
-start <- Sys.time()
 superpop_size <- 1000000
 superpop <- sample_n(HRS %>% dplyr::select(-one_of("r13proxy", "HCAP_SELECT")), 
                      size = superpop_size, replace = TRUE) %>% 
@@ -86,7 +85,7 @@ predict[needs_imputing, needs_imputing] <-
 predict[, not_predictors] <- 0
 
 #---- imputation ----
-#About 6 seconds
+#About XX minutes
 set.seed(20221021)
 start <- Sys.time()
 fast_impute(predictor_matrix = predict, data = superpop_HCAP, 
