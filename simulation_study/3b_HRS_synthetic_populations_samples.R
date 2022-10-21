@@ -85,7 +85,7 @@ predict[needs_imputing, needs_imputing] <-
 predict[, not_predictors] <- 0
 
 #---- imputation ----
-#About XX minutes
+#About 6 minutes
 set.seed(20221021)
 start <- Sys.time()
 fast_impute(predictor_matrix = predict, data = superpop_HCAP, 
@@ -101,9 +101,10 @@ superpop_imputed <-
 # #Sanity check
 # colMeans(is.na(superpop_imputed))[which(colMeans(is.na(superpop_imputed)) > 0)]
 
-#---- **standardize continuous vars ----
+#---- **standardize non-interaction continuous vars ----
 standardize_vars <- str_remove(unique(selected_vars_mat$data_label)[
   str_detect(unique(selected_vars_mat$data_label), "_Z")], "_Z")
+standardize_vars <- standardize_vars[!grepl("\\*", standardize_vars)]
 
 Z_score <- function(data, vars){
   subset <- data %>% dplyr::select(all_of(vars)) %>% 
@@ -141,9 +142,12 @@ write_csv(means, paste0(path_to_box, "data/superpopulations/superpop_means.csv")
 write_csv(sds, paste0(path_to_box, "data/superpopulations/superpop_sds.csv"))
 
 #---- **impairment classes ----
-#---- ****predict values in superpop ----
+#---- **** add vars ----
 superpop_imputed %<>% mutate("Intercept" = 1)
 
+
+
+#---- ****predict values in superpop ----
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
   filtered_vars_mat <- selected_vars_mat[, c("data_label", class)] %>% 
     filter(!!sym(class) != 0)
