@@ -13,10 +13,32 @@ ADAMS_imputed_clean <-
                  "MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
-variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
+
+#---- add interactions ----
+add_interactions <- function(dataset, cog_vars){
+  for(var in cog_vars){
+    #race interaction
+    dataset %<>% mutate(!!sym(paste0("black*", var)) := Black*!!sym(var))
+    dataset %<>% mutate(!!sym(paste0("hispanic*", var)) := Hispanic*!!sym(var))
+    
+    #edyrs interaction
+    dataset %<>% mutate(!!sym(paste0("edyrs_Z*", var)) := EDYRS_Z*!!sym(var))
+  }
+  
+  return(dataset)
+}
+
+cog_vars <-
+  c("ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", "ANSER7T_Z", "ANAFTOT_Z", 
+    "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", "ANWM2TOT_Z", "ANBWC20", 
+    "ANCPTOT_Z", "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR",  
+    "ANPRES", "ANSMEM2_Better", "ANSMEM2_Worse")
+
+ADAMS_imputed_clean %<>% lapply(., function(x) add_interactions(x, cog_vars))
 
 #---- variable list ----
-#variables and groups in order of priority for model inclusion 
+#variables are grouped in order of priority for model inclusion 
 # (based on conceptual model and prioritizing variables with least missingness
 # in unimputed datasets)
 #sociodemographics: "AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS_Z", 
@@ -31,18 +53,36 @@ variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 # 
 # health: "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken",
 #   "Amoderate_drinking", "Aheavy_drinking"
+# 
+# race x cognitive variables interactions: black x 
+#  ("ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", "ANSER7T_Z", 
+#   "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", "ANWM2TOT_Z", 
+#   "ANBWC20", "ANCPTOT_Z", "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", 
+#   "ANSCISOR",  "ANPRES", "ANSMEM2_Better", "ANSMEM2_Worse"), 
+#   hispanic x 
+#  ("ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", "ANSER7T_Z", 
+#   "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", "ANWM2TOT_Z", 
+#   "ANBWC20", "ANCPTOT_Z", "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", 
+#   "ANSCISOR",  "ANPRES", "ANSMEM2_Better", "ANSMEM2_Worse")
+# 
+# education x cognitive variables interactions: EDYRS_Z x 
+#  ("ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", "ANSER7T_Z", 
+#   "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", "ANWM2TOT_Z", 
+#   "ANBWC20", "ANCPTOT_Z", "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", 
+#   "ANSCISOR",  "ANPRES", "ANSMEM2_Better", "ANSMEM2_Worse")
 
 #Because we Z-scored continuous variables, the interpretations for beta are for 
 # a 1 SD change in the continuous predictors
 
-var_list <- c("AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS_Z", "Not working", 
-              "Retired", "Married/partnered", "ANMSETOT_norm_Z", "ANIMMCR_Z", 
-              "ANDELCOR_Z", "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", 
-              "ANWM1TOT_Z","ANWM2TOT_Z", "ANBWC20", "ANCPTOT_Z", "ANRCPTOT_Z", 
-              "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR", "ANPRES", 
-              "ANSMEM2_Better", "ANSMEM2_Worse", "Aadla_Z", "Aiadla_Z", 
-              "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", "Ahibpe", 
-              "Asmoken", "Amoderate_drinking", "Aheavy_drinking")
+var_list <- 
+  c("AAGE_Z", "Female",  "EDYRS_Z", "Not working", "Retired", "Married/partnered", 
+    "ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", "ANSER7T_Z", "ANAFTOT_Z", 
+    "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z","ANWM2TOT_Z", "ANBWC20", "ANCPTOT_Z", 
+    "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR", "ANPRES", 
+    "ANSMEM2_Better", "ANSMEM2_Worse", "Aadla_Z", "Aiadla_Z", "Abmi_derived_Z", 
+    "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", "Amoderate_drinking", 
+    "Aheavy_drinking", paste0("black*", cog_vars), paste0("hispanic*", cog_vars), 
+    paste0("edyrs_Z*", cog_vars))
 
 #---- stack data and add weights ----
 ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
@@ -99,7 +139,7 @@ lasso_reg <- function(data, var_list){
   return(list("models" = model_list, "lambdas" = lambda_vec))
 }
 
-#About 20 secs
+#About 1.5 mins
 start <- Sys.time()
 variable_selection <- lasso_reg(ADAMS_imputed_stacked, var_list)
 end <- Sys.time() - start
