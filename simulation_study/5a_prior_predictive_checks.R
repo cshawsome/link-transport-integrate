@@ -54,14 +54,14 @@ kappa_0_mat <- read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix.csv"))
 
 #---- data formatting ----
 #---- **user input ----
-#calibration scenario options: "no_calibration", 
+#calibration scenario options: "ADAMS_prior", 
 # "calibration_20_SRS", "calibration_35_SRS", "calibration_50_SRS", 
 # "calibration_20_SRS_race", "calibration_35_SRS_race", "calibration_50_SRS_race", 
 # "calibration_50_design"
-calibration_scenario = "calibration_35_SRS" 
+calibration_scenario = "ADAMS_prior" 
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.50
+HCAP_sample_prop = 0.25
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
@@ -93,7 +93,7 @@ set.seed(20220329)
 start <- Sys.time()
 lapply(synthetic_HCAP_list[indices], function(x)
   prior_predictive_checks(dataset_to_copy = x, calibration_sample = 
-                            !(calibration_scenario == "no_calibration"), 
+                            !(calibration_scenario == "ADAMS_prior"), 
                           calibration_prop = 
                             suppressWarnings(
                               parse_number(calibration_scenario)/100), 
@@ -120,7 +120,7 @@ set.seed(20220329)
 start <- Sys.time()
 future_lapply(synthetic_HCAP_list[indices], function(x)
   prior_predictive_checks(dataset_to_copy = x, calibration_sample = 
-                            !(calibration_scenario == "no_calibration"), 
+                            !(calibration_scenario == "ADAMS_prior"), 
                           calibration_prop = 
                             suppressWarnings(
                               parse_number(calibration_scenario)/100), 

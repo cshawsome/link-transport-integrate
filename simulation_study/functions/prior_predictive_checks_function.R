@@ -16,7 +16,7 @@ prior_predictive_checks <-
     #---- update path to output folder ----
     if(!calibration_sample){
       path_to_output_folder <- 
-        paste0(path_to_output_folder, "no_calibration_sample/")
+        paste0(path_to_output_folder, "ADAMS_prior_sample/")
     } else{
       path_to_output_folder <- 
         paste0(path_to_output_folder, calibration_sample_name, "/")
@@ -863,7 +863,7 @@ prior_predictive_checks <-
 # #---- test function ----
 # set.seed(20220329)
 # dataset_to_copy = synthetic_HCAP_list[[1]]
-# calibration_sample = !(calibration_scenario == "no_calibration")
+# calibration_sample = !(calibration_scenario == "ADAMS_prior")
 # calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
 # calibration_sample_name = calibration_scenario
 # path_to_data = path_to_box
