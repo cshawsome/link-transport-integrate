@@ -8,8 +8,9 @@ p_load("tidyverse", "magrittr")
 #---- all scenarios ----
 HRS_samples_sizes <- c(2000, 4000, 8000)
 HCAP_sampling_prop <- c(25, 50)
-calibration_scenario <- c("ADAMS_prior", "calibration_50_SRS", 
-                          "calibration_50_design")
+calibration_scenario <- c("ADAMS_prior", 
+                          paste0("calibration_", c(20, 35, 50), "_SRS"), 
+                          paste0("calibration_", c(20, 35, 50), "_SRS"))
 batch_size <- 15
 total_runs <- 1000
 
