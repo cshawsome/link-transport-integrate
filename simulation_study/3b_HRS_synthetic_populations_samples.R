@@ -16,14 +16,66 @@ cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>%
   dplyr::select(c("cell_order", "cell_ID", "cell_name"))
 
 #---- **HRS analytic dataset ----
-HRS <- read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
+HRS <- read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv")) %>% 
+  dplyr::select(-one_of("memimp16"))
 
-# #Sanity check: only imputed memory scores should have missingness
+# #Sanity check: should be no missing data
 # colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
 
 #---- **HCAP analytic dataset ----
 HCAP <- 
-  read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv"))
+  read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv")) %>% 
+  rename("no_drinking" = "r13no_drinking")
+
+# #Sanity check: there should be no missing data
+# colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
+
+#---- **ADAMS variable selection results ----
+selected_vars_mat <- 
+  read_csv(paste0(path_to_box, 
+                  "data/variable_selection/model_coefficients.csv"))
+
+#---- source functions ----
+source(here::here("functions", "fast_impute.R"))
+
+#---- draw synthetic superpopulation ----
+set.seed(20220905)
+
+start <- Sys.time()
+superpop_size <- 1000000
+superpop <- sample_n(HRS %>% dplyr::select(-one_of("r13proxy", "HCAP_SELECT")), 
+                     size = superpop_size, replace = TRUE) %>% 
+  mutate("HHIDPN" = seq(1, superpop_size), 
+         "HCAP" = 0)
+
+#add columns for neuropsych
+neuropsych_cols <- colnames(HCAP)[!colnames(HCAP) %in% colnames(HRS)]
+neuropsych_cols <- neuropsych_cols[-which(neuropsych_cols %in% 
+                                            c("intercept", "r13no_drinking"))]
+
+superpop[, neuropsych_cols] <- NA
+
+#---- stack superpop and HCAP ----
+colnames(HCAP)[which(!colnames(HCAP) %in% colnames(superpop))]
+colnames(superpop)[which(!colnames(superpop) %in% colnames(HCAP))]
+
+superpop_HCAP <- rbind(superpop, HCAP %>% 
+                         dplyr::select(-one_of("intercept")) %>% 
+                         mutate("HCAP" = 1))
+
+#---- **summarize missingness ----
+#double check that all of these are in the rownames of the imputation matrix
+needs_imputing <- names(colMeans(is.na(superpop_HCAP))[
+  which(colMeans(is.na(superpop_HCAP)) > 0)])
+
+
+
+#---- OLD ----
+
+
+#---- define imputation var types ----
+not_predictors <- c("HHIDPN", "White", "Other", "Working", "r13no_drinking",
+                    "subj_cog_same")
 
 #---- **imputation matrix ----
 hotdeck_vars_mat <- 
@@ -31,10 +83,7 @@ hotdeck_vars_mat <-
                   "data/superpopulations/hotdeck_impute_mat.csv")) %>% 
   column_to_rownames("var_names")
 
-#---- **ADAMS variable selection results ----
-selected_vars_mat <- 
-  read_csv(paste0(path_to_box, 
-                  "data/variable_selection/model_coefficients.csv"))
+
 
 # #---- **fixed betas ----
 # fixed_betas <- 
@@ -44,16 +93,7 @@ selected_vars_mat <-
 #---- source functions ----
 source(here("simulation_study", "functions", "hotdeck_function.R"))
 
-#---- synthetic superpopulation ----
-set.seed(20220905)
 
-start <- Sys.time()
-superpop_size <- 1000000
-superpop <- sample_n(HRS, size = superpop_size, replace = TRUE) %>% 
-  mutate("HHIDPN" = seq(1, superpop_size))
-
-#add columns for neuropsych
-superpop[, rownames(hotdeck_vars_mat)] <- NA
 
 superpop %<>% 
   hotdeck(dataset_to_impute = ., hotdeck_dataset = HCAP, 
