@@ -159,15 +159,22 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
 # #Sanity check
 # View(head(superpop_imputed[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")]))
 
+# #---- **draw all categories using weighted vector ----
+# superpop_imputed[, "dem_class"] <-
+#   apply(superpop_imputed[,
+#                  c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1,
+#         function(x)
+#           sample(c("Unimpaired", "MCI", "Dementia", "Other"), size = 1, prob = x))
+
 #---- **draw impaired categories only using weighted vector ----
 superpop_imputed[, "dem_class"] <-
   apply(superpop_imputed[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1,
         function(x) str_remove(names(which.max(x)), "p_"))
 
-superpop_imputed[superpop_imputed$dem_class != "Unimpaired", "dem_class"] <- 
-  apply(superpop_imputed[superpop_imputed$dem_class != "Unimpaired", 
-                 c("p_MCI", "p_Dementia", "p_Other")], 1, 
-        function(x) 
+superpop_imputed[superpop_imputed$dem_class != "Unimpaired", "dem_class"] <-
+  apply(superpop_imputed[superpop_imputed$dem_class != "Unimpaired",
+                 c("p_MCI", "p_Dementia", "p_Other")], 1,
+        function(x)
           sample(c("MCI", "Dementia", "Other"), size = 1, prob = x))
 
 superpop_imputed %<>% 
@@ -182,32 +189,36 @@ superpop_imputed %<>%
 
 #---- **QC superpop_imputed ----
 #---- ****overall summaries ----
-#U: 37.0%, M: 16.1%, D: 26.4%, O: 20.4%
+#old: U: 37.0%, M: 16.1%, D: 26.4%, O: 20.4%
+#new: U: 41.4%, M: 12.3%, D: 27.7%, O: 18.7%
 colMeans(superpop_imputed[, c("Unimpaired", "MCI", "Dementia", "Other")])
 
-#More dementia among women? Yes (M: 25.2%, W: 27.2%)
+#More dementia among women? 
+#old: Yes (M: 25.2%, W: 27.2%)
+#new: No (M: 27.6%, W: 27.7%)
 mean(superpop_imputed[superpop_imputed$female == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$female == 0, "Dementia"])
 
-#More dementia among racial/ethnic minorities? Kind of? 
-# (w: 25.7%, b: 33.3%, h: 22.3%)
+#More dementia among racial/ethnic minorities?  
+# old: Kind of? (w: 25.7%, b: 33.3%, h: 22.3%)
+# new: Yes (w: 25.7%, b: 32.1%, h: 36.6%)
 mean(superpop_imputed[superpop_imputed$White == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$black == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$hispanic == 1, "Dementia"])
 
-#Age: increased risk by year (PR = 1.03)
+#Age: increased risk by year (old: PR = 1.03; new: PR = 1.06)
 exp(coefficients(glm(Dementia ~ age, data = superpop_imputed, family = "poisson")))
 
-#Years of Education: decreased risk by higher education (PR = 0.98)
+#Years of Education: decreased risk by higher education (old: PR = 0.98, new: PR = 0.95)
 exp(coefficients(glm(Dementia ~ edyrs, data = superpop_imputed, family = "poisson")))
 
-#Stroke: increased risk for yes vs. no (PR = 1.70)
+#Stroke: increased risk for yes vs. no (old: PR = 1.70, new: PR = 1.91)
 exp(coefficients(glm(Dementia ~ stroke, data = superpop_imputed, family = "poisson")))
 
-#Diabetes: no increased risk for yes vs. no (PR = 1.00)
+#Diabetes: no increased risk for yes vs. no (old: PR = 1.00, new: PR = 1.03)
 exp(coefficients(glm(Dementia ~ diabe, data = superpop_imputed, family = "poisson")))
 
-#Diabetes: increased risk for any impairment yes vs. no (PR = 1.10)
+#Diabetes: increased risk for any impairment yes vs. no (old: PR = 1.10, new: PR = 1.13)
 superpop_imputed %<>% mutate("any_impairment" = Dementia + MCI)
 exp(coefficients(glm(any_impairment ~ diabe, data = superpop_imputed, family = "poisson")))
 
@@ -258,37 +269,37 @@ for(race in c("white", "black", "hispanic")){
 # agesex_standardized$hispanic_dem_risk*agesex_standardized$superpop_imputed_count
 
 #---- ******estimates ----
-#0.254
+#old: 0.254, new: 0.253
 white_risk <- 
   sum(agesex_standardized$expected_white_dem_count)/nrow(superpop_imputed)
-#0.343
+#old: 0.343, new: 0.340
 black_risk <- 
   sum(agesex_standardized$expected_black_dem_count)/nrow(superpop_imputed)
-#0.225
+#old: 0.225, new: 0.377
 hispanic_risk <- 
   sum(agesex_standardized$expected_hispanic_dem_count)/nrow(superpop_imputed)
 
 #PR compared to white
-#1.35
+#old: 1.35, new: 1.35
 PR_black <- black_risk/white_risk
-#0.88
+#old: 0.88, new: 1.49
 PR_hispanic <- hispanic_risk/white_risk
 
 #---- **save superpop_imputed data ----
 write_csv(superpop_imputed, 
-          paste0(path_to_box, "data/superpop_imputedulations/superpop_imputed_1000000.csv"))
+          paste0(path_to_box, "data/superpopulations/superpop_imputed_1000000.csv"))
 
 #---- **save impairment class props ----
 write_csv(colMeans(superpop_imputed[, c("Unimpaired", "MCI", "Dementia", "Other")]) %>% 
             as.matrix() %>% as.data.frame() %>% set_colnames("prop") %>% 
             rownames_to_column("Group"), 
           paste0(path_to_box, 
-                 "data/superpop_imputedulations/impairment_class_props.csv"))
+                 "data/superpopulations/impairment_class_props.csv"))
 
 #---- **save age and sex-standardized table ----
 write_csv(agesex_standardized, 
           paste0(path_to_box, 
-                 "data/superpop_imputedulations/agesex_standardized_prevs.csv"))
+                 "data/superpopulations/agesex_standardized_prevs.csv"))
 
 #---- synthetic HRS ----
 #create one set of synthetic HRS for tuning 
