@@ -3,7 +3,7 @@
 # error = Merged with joblog
 #$ -o /u/home/c/cshaw343/link_transport_integrate/joblogs/joblog.$JOB_ID.$TASK_ID #creates a file called joblog.jobidnumber to write to. 
 #$ -j y 
-#$ -l h_rt=7:00:00,h_data=7G #requests 7 hours, 7GB of data (per core) 
+#$ -l h_rt=8:00:00,h_data=7G #requests 8 hours, 7GB of data (per core) 
 #$ -pe shared 1 #requests 1 core
 # Email address to notify
 #$ -M $USER@mail #don't change this line, finds your email in the system 
@@ -27,9 +27,11 @@ export OMP_NUM_THREADS=1 #uses max 1 thread (needs to match -pe shared)
 #
 #sample_size = c(2000, 4000, 8000)
 #sample_prop = c(0.25, 0.50)
-#calibration = c("no_calibration", "calibration_50_SRS")
+#calibration = c("ADAMS_prior", 
+# "calibration_20_SRS", "calibration_35_SRS", "calibration_50_SRS",
+# "calibration_20_SRS_race", "calibration_35_SRS_race", "calibration_50_SRS_race")
 #
-#the task ID indicates the row of the simulation scenario .csv file 
+#the task ID indicates the job number simulation scenario .csv file 
 
 echo "======"
 echo SGE_TASK_ID=$SGE_TASK_ID      
