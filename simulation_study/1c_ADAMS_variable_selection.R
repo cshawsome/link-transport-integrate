@@ -81,8 +81,10 @@ var_list <-
     "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR", "ANPRES", 
     "ANSMEM2_Better", "ANSMEM2_Worse", "Aadla_Z", "Aiadla_Z", "Abmi_derived_Z", 
     "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", "Amoderate_drinking", 
-    "Aheavy_drinking", paste0("black*", cog_vars), paste0("hispanic*", cog_vars), 
-    paste0("edyrs_Z*", cog_vars))
+    "Aheavy_drinking") 
+    
+    # paste0("black*", cog_vars), paste0("hispanic*", cog_vars), 
+    # paste0("edyrs_Z*", cog_vars))
 
 #---- stack data and add weights ----
 ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
