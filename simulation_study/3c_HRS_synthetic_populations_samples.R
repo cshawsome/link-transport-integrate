@@ -15,6 +15,11 @@ cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>%
   mutate_at("cell_ID", as.character) %>% 
   dplyr::select(c("cell_order", "cell_ID", "cell_name"))
 
+#---- **imputation mat ----
+hotdeck_impute_mat <- read_csv(paste0(path_to_box, "data/superpopulations/", 
+                                      "hotdeck_impute_mat.csv")) %>% 
+  column_to_rownames("var_names")
+
 #---- **HRS analytic dataset ----
 HRS <- read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv")) %>% 
   dplyr::select(-one_of("memimp16"))
@@ -37,7 +42,7 @@ selected_vars_mat <-
                   "data/variable_selection/model_coefficients.csv"))
 
 #---- source functions ----
-source(here::here("functions", "fast_impute.R"))
+source(here::here("simulation_study", "functions", "hotdeck_function.R"))
 
 #---- draw synthetic superpopulation ----
 set.seed(20220905)
@@ -45,58 +50,66 @@ set.seed(20220905)
 superpop_size <- 1000000
 superpop <- sample_n(HRS %>% dplyr::select(-one_of("r13proxy", "HCAP_SELECT")), 
                      size = superpop_size, replace = TRUE) %>% 
-  mutate("HHIDPN" = seq(1, superpop_size), 
-         "HCAP" = 0)
+  mutate("HHIDPN" = seq(1, superpop_size))
 
 #add columns for neuropsych
 neuropsych_cols <- colnames(HCAP)[!colnames(HCAP) %in% colnames(HRS)]
-neuropsych_cols <- neuropsych_cols[-which(neuropsych_cols == "intercept")]
+neuropsych_cols <- 
+  neuropsych_cols[-c(which(neuropsych_cols == "intercept"), 
+                     which(str_detect(neuropsych_cols, "cat")), 
+                     which(str_detect(neuropsych_cols, "pool")))]
 
 superpop[, neuropsych_cols] <- NA
 
-#---- stack superpop and HCAP ----
-colnames(HCAP)[which(!colnames(HCAP) %in% colnames(superpop))]
-colnames(superpop)[which(!colnames(superpop) %in% colnames(HCAP))]
+# #---- stack superpop and HCAP ----
+# colnames(HCAP)[which(!colnames(HCAP) %in% colnames(superpop))]
+# colnames(superpop)[which(!colnames(superpop) %in% colnames(HCAP))]
+# 
+# superpop_HCAP <- rbind(superpop, HCAP %>% 
+#                          dplyr::select(-one_of("intercept")) %>% 
+#                          mutate("HCAP" = 1))
 
-superpop_HCAP <- rbind(superpop, HCAP %>% 
-                         dplyr::select(-one_of("intercept")) %>% 
-                         mutate("HCAP" = 1))
+# #---- **summarize missingness ----
+# #double check that all of these are in the rownames of the imputation matrix
+# needs_imputing <- names(colMeans(is.na(superpop_HCAP))[
+#   which(colMeans(is.na(superpop_HCAP)) > 0)])
+# 
+# #---- define imputation var types ----
+# not_predictors <- c("HHIDPN", "White", "Other", "Working", "no_drinking",
+#                     "subj_cog_same", "HCAP")
+# 
+# #---- predictor matrix ----
+# predict <- 
+#   matrix(1, nrow = length(needs_imputing), ncol = ncol(superpop_HCAP)) %>% 
+#   set_rownames(needs_imputing) %>% set_colnames(colnames(superpop_HCAP))
+# 
+# #---- **cannot predict themselves ----
+# predict[needs_imputing, needs_imputing] <- 
+#   (diag(x = 1, nrow = length(needs_imputing), 
+#         ncol = length(needs_imputing)) == 0)*1
+# 
+# #---- **non-predictors ----
+# predict[, not_predictors] <- 0
 
-#---- **summarize missingness ----
-#double check that all of these are in the rownames of the imputation matrix
-needs_imputing <- names(colMeans(is.na(superpop_HCAP))[
-  which(colMeans(is.na(superpop_HCAP)) > 0)])
+# #---- PMM imputation ----
+# #About 6 minutes
+# set.seed(20221021)
+# start <- Sys.time()
+# fast_impute(predictor_matrix = predict, data = superpop_HCAP, 
+#             path_for_output = paste0(path_to_box, "data/superpopulations/"),
+#             method = "PMM", m = 1, maxit = 15, chunk = 1)
+# end <- Sys.time() - start
 
-#---- define imputation var types ----
-not_predictors <- c("HHIDPN", "White", "Other", "Working", "no_drinking",
-                    "subj_cog_same", "HCAP")
+# #---- read in results ----
+# superpop_imputed <- 
+#   readRDS(paste0(path_to_box, "data/superpopulations/MI/chunk_1/MI_datasets")) %>% 
+#   as.data.frame() %>% filter(HCAP == 0)
 
-#---- predictor matrix ----
-predict <- 
-  matrix(1, nrow = length(needs_imputing), ncol = ncol(superpop_HCAP)) %>% 
-  set_rownames(needs_imputing) %>% set_colnames(colnames(superpop_HCAP))
+# #Sanity check
+# colMeans(is.na(superpop_imputed))[which(colMeans(is.na(superpop_imputed)) > 0)]
 
-#---- **cannot predict themselves ----
-predict[needs_imputing, needs_imputing] <- 
-  (diag(x = 1, nrow = length(needs_imputing), 
-        ncol = length(needs_imputing)) == 0)*1
-
-#---- **non-predictors ----
-predict[, not_predictors] <- 0
-
-#---- imputation ----
-#About 6 minutes
-set.seed(20221021)
-start <- Sys.time()
-fast_impute(predictor_matrix = predict, data = superpop_HCAP, 
-            path_for_output = paste0(path_to_box, "data/superpopulations/"),
-            method = "PMM", m = 1, maxit = 15, chunk = 1)
-end <- Sys.time() - start
-
-#---- read in results ----
-superpop_imputed <- 
-  readRDS(paste0(path_to_box, "data/superpopulations/MI/chunk_1/MI_datasets")) %>% 
-  as.data.frame() %>% filter(HCAP == 0)
+#---- hotdeck imputation ----
+superpop_imputed <- hotdeck(superpop, HCAP, hotdeck_impute_mat)
 
 # #Sanity check
 # colMeans(is.na(superpop_imputed))[which(colMeans(is.na(superpop_imputed)) > 0)]
@@ -145,15 +158,15 @@ write_csv(sds, paste0(path_to_box, "data/superpopulations/superpop_sds.csv"))
 #---- **** add vars ----
 superpop_imputed %<>% mutate("Intercept" = 1)
 
-interaction_vars <- 
-  selected_vars_mat$data_label[grepl("\\*", selected_vars_mat$data_label)]
-
-for(var in interaction_vars){
-  split_var <- str_split(var, pattern = "[*]")
-  
-  superpop_imputed %<>% 
-    mutate(!!sym(var) := !!sym(split_var[[1]][1])*!!sym(split_var[[1]][2]))
-}
+# interaction_vars <- 
+#   selected_vars_mat$data_label[grepl("\\*", selected_vars_mat$data_label)]
+# 
+# for(var in interaction_vars){
+#   split_var <- str_split(var, pattern = "[*]")
+#   
+#   superpop_imputed %<>% 
+#     mutate(!!sym(var) := !!sym(split_var[[1]][1])*!!sym(split_var[[1]][2]))
+# }
 
 #---- ****predict values in superpop ----
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
@@ -170,10 +183,10 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
 # #Sanity check
 # View(head(superpop_imputed[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")]))
 
-#---- **draw impaired categories using highest prob ----
-superpop_imputed[, "dem_class"] <-
-  apply(superpop_imputed[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1,
-        function(x) str_remove(names(which.max(x)), "p_"))
+# #---- **draw impaired categories using highest prob ----
+# superpop_imputed[, "dem_class"] <-
+#   apply(superpop_imputed[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1,
+#         function(x) str_remove(names(which.max(x)), "p_"))
 
 # #---- **draw all categories using weighted vector ----
 # superpop_imputed[, "dem_class"] <-
@@ -182,16 +195,16 @@ superpop_imputed[, "dem_class"] <-
 #         function(x)
 #           sample(c("Unimpaired", "MCI", "Dementia", "Other"), size = 1, prob = x))
 
-# #---- **draw impaired categories only using weighted vector ----
-# superpop_imputed[, "dem_class"] <-
-#   apply(superpop_imputed[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1,
-#         function(x) str_remove(names(which.max(x)), "p_"))
-# 
-# superpop_imputed[superpop_imputed$dem_class != "Unimpaired", "dem_class"] <-
-#   apply(superpop_imputed[superpop_imputed$dem_class != "Unimpaired",
-#                          c("p_MCI", "p_Dementia", "p_Other")], 1,
-#         function(x)
-#           sample(c("MCI", "Dementia", "Other"), size = 1, prob = x))
+#---- **draw impaired categories only using weighted vector ----
+superpop_imputed[, "dem_class"] <-
+  apply(superpop_imputed[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1,
+        function(x) str_remove(names(which.max(x)), "p_"))
+
+superpop_imputed[superpop_imputed$dem_class != "Unimpaired", "dem_class"] <-
+  apply(superpop_imputed[superpop_imputed$dem_class != "Unimpaired",
+                         c("p_MCI", "p_Dementia", "p_Other")], 1,
+        function(x)
+          sample(c("MCI", "Dementia", "Other"), size = 1, prob = x))
 
 superpop_imputed %<>% 
   mutate("Unimpaired" = ifelse(dem_class == "Unimpaired", 1, 0), 
@@ -205,45 +218,44 @@ superpop_imputed %<>%
 
 #---- **QC superpop_imputed ----
 #---- ****overall summaries ----
-#hotdeck: U: 37.0%, M: 16.1%, D: 26.4%, O: 20.4%
-#hotdeck + race/eth: 
+#hotdeck: U: 37.1%, M: 16.2%, D: 26.4%, O: 20.3%
 #PMM: U: 41.4%, M: 12.3%, D: 27.7%, O: 18.7%
 #PMM + intx: U: 39.4%, M: 13.1%, D: 29.1%, O: 18.4%
-#PMM + intx + conditional impaired: 
+#PMM + intx + conditional impaired: U: 17.4%, M: 19.4%, D: 29.0%, O: 34.2%
 colMeans(superpop_imputed[, c("Unimpaired", "MCI", "Dementia", "Other")])
 
 #More dementia among women? 
-#hotdeck: Yes (M: 25.2%, W: 27.2%)
+#hotdeck: Yes (M: 25.1%, W: 27.3%)
 #PMM: No (M: 27.6%, W: 27.7%)
 #PMM + intx: No (M: 29.4%, W: 29.0%)
 mean(superpop_imputed[superpop_imputed$female == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$female == 0, "Dementia"])
 
 #More dementia among racial/ethnic minorities?  
-# hotdeck: Kind of? (w: 25.7%, b: 33.3%, h: 22.3%)
+# hotdeck: Kind of? (w: 25.6%, b: 33.2%, h: 22.5%)
 # PMM: Yes (w: 25.7%, b: 32.1%, h: 36.6%)
 # PMM + intx: Yes (w: 27.7%, b: 31.3%, h: 38.4%)
 mean(superpop_imputed[superpop_imputed$White == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$black == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$hispanic == 1, "Dementia"])
 
-#Age: increased risk by year (old: PR = 1.03; new: PR = 1.06)
+#Age: increased risk by year (hotdeck: PR = 1.03; PMM: PR = 1.06)
 exp(coefficients(glm(Dementia ~ age, data = superpop_imputed, 
                      family = "poisson")))
 
-#Years of Education: decreased risk by higher education (old: PR = 0.98, new: PR = 0.95)
+#Years of Education: decreased risk by higher education (hotdeck: PR = 0.98, PMM: PR = 0.95)
 exp(coefficients(glm(Dementia ~ edyrs, data = superpop_imputed, 
                      family = "poisson")))
 
-#Stroke: increased risk for yes vs. no (old: PR = 1.70, new: PR = 1.91)
+#Stroke: increased risk for yes vs. no (hotdeck: PR = 1.69, PMM: PR = 1.91)
 exp(coefficients(glm(Dementia ~ stroke, data = superpop_imputed, 
                      family = "poisson")))
 
-#Diabetes: no increased risk for yes vs. no (old: PR = 1.00, new: PR = 1.03)
+#Diabetes: no increased risk for yes vs. no (hotdeck: PR = 1.01, PMM: PR = 1.03)
 exp(coefficients(glm(Dementia ~ diabe, data = superpop_imputed, 
                      family = "poisson")))
 
-#Diabetes: increased risk for any impairment yes vs. no (old: PR = 1.10, new: PR = 1.13)
+#Diabetes: increased risk for any impairment yes vs. no (hotdeck: PR = 1.10, PMM: PR = 1.13)
 superpop_imputed %<>% mutate("any_impairment" = Dementia + MCI)
 exp(coefficients(glm(any_impairment ~ diabe, data = superpop_imputed, 
                      family = "poisson")))
@@ -297,20 +309,20 @@ for(race in c("white", "black", "hispanic")){
 # agesex_standardized$hispanic_dem_risk*agesex_standardized$superpop_imputed_count
 
 #---- ******estimates ----
-#old: 0.254, new: 0.253
+#hotdeck: 0.254, PMM: 0.253
 white_risk <- 
   sum(agesex_standardized$expected_white_dem_count)/nrow(superpop_imputed)
-#old: 0.343, new: 0.340
+#hotdeck: 0.342, PMM: 0.340
 black_risk <- 
   sum(agesex_standardized$expected_black_dem_count)/nrow(superpop_imputed)
-#old: 0.225, new: 0.377
+#hotdeck: 0.227, PMM: 0.377
 hispanic_risk <- 
   sum(agesex_standardized$expected_hispanic_dem_count)/nrow(superpop_imputed)
 
 #PR compared to white
-#old: 1.35, new: 1.35
+#hotdeck: 1.35, PMM: 1.35
 PR_black <- black_risk/white_risk
-#old: 0.88, new: 1.49
+#hotdeck: 0.89, PMM: 1.49
 PR_hispanic <- hispanic_risk/white_risk
 
 #---- **save superpop_imputed data ----
@@ -371,10 +383,7 @@ for(sample_prop in sample_props){
                              "calibration_50_SRS" = 0,
                              "calibration_20_SRS_race" = 0,
                              "calibration_35_SRS_race" = 0,
-                             "calibration_50_SRS_race" = 0,
-                             "calibration_20_design" = 0,
-                             "calibration_35_design" = 0,
-                             "calibration_50_design" = 0) %>% ungroup() %>% 
+                             "calibration_50_SRS_race" = 0) %>% ungroup() %>% 
                       mutate("dataset_name" = 
                                paste0(dataset_name, "_sample_", 
                                       sample_prop*100))))
@@ -389,10 +398,7 @@ for(sample_prop in sample_props){
                       "calibration_50_SRS" = 0, 
                       "calibration_20_SRS_race" = 0,
                       "calibration_35_SRS_race" = 0,
-                      "calibration_50_SRS_race" = 0, 
-                      "calibration_20_design" = 0,
-                      "calibration_35_design" = 0,
-                      "calibration_50_design" = 0) %>% ungroup() %>% 
+                      "calibration_50_SRS_race" = 0) %>% ungroup() %>% 
                mutate("dataset_name" = 
                         paste0(dataset_name, "_sample_", sample_prop*100)))
   }
@@ -470,9 +476,9 @@ for(i in 1:length(synthetic_HCAP_list)){
 # Set B and H = 0.6 to sample 60% of Black and Hispanic participants
 # Then solve for W
 
-#Sanity check
-lapply(synthetic_HCAP_list, function(x)
-  colMeans(x[, paste0("calibration_", c(20, 35, 50),"_SRS_race")]))
+# #Sanity check
+# lapply(synthetic_HCAP_list, function(x)
+#   colMeans(x[, paste0("calibration_", c(20, 35, 50),"_SRS_race")]))
 
 # #---- ****design calibration ----
 # for(i in 1:length(synthetic_HCAP_list)){
