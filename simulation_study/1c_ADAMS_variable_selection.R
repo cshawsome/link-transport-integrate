@@ -15,27 +15,27 @@ ADAMS_imputed_clean <-
 
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 
-#---- add interactions ----
-add_interactions <- function(dataset, cog_vars){
-  for(var in cog_vars){
-    #race interaction
-    dataset %<>% mutate(!!sym(paste0("black*", var)) := Black*!!sym(var))
-    dataset %<>% mutate(!!sym(paste0("hispanic*", var)) := Hispanic*!!sym(var))
-    
-    #edyrs interaction
-    dataset %<>% mutate(!!sym(paste0("edyrs_Z*", var)) := EDYRS_Z*!!sym(var))
-  }
-  
-  return(dataset)
-}
-
-cog_vars <-
-  c("ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", "ANSER7T_Z", "ANAFTOT_Z", 
-    "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", "ANWM2TOT_Z", "ANBWC20", 
-    "ANCPTOT_Z", "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR",  
-    "ANPRES", "ANSMEM2_Better", "ANSMEM2_Worse")
-
-ADAMS_imputed_clean %<>% lapply(., function(x) add_interactions(x, cog_vars))
+# #---- add interactions ----
+# add_interactions <- function(dataset, cog_vars){
+#   for(var in cog_vars){
+#     #race interaction
+#     dataset %<>% mutate(!!sym(paste0("black*", var)) := Black*!!sym(var))
+#     dataset %<>% mutate(!!sym(paste0("hispanic*", var)) := Hispanic*!!sym(var))
+#     
+#     #edyrs interaction
+#     dataset %<>% mutate(!!sym(paste0("edyrs_Z*", var)) := EDYRS_Z*!!sym(var))
+#   }
+#   
+#   return(dataset)
+# }
+# 
+# cog_vars <-
+#   c("ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", "ANSER7T_Z", "ANAFTOT_Z", 
+#     "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z", "ANWM2TOT_Z", "ANBWC20", 
+#     "ANCPTOT_Z", "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR",  
+#     "ANPRES", "ANSMEM2_Better", "ANSMEM2_Worse")
+# 
+# ADAMS_imputed_clean %<>% lapply(., function(x) add_interactions(x, cog_vars))
 
 #---- variable list ----
 #variables are grouped in order of priority for model inclusion 
@@ -75,13 +75,13 @@ ADAMS_imputed_clean %<>% lapply(., function(x) add_interactions(x, cog_vars))
 # a 1 SD change in the continuous predictors
 
 var_list <- 
-  c("AAGE_Z", "Female",  "EDYRS_Z", "Not working", "Retired", "Married/partnered", 
-    "ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", "ANSER7T_Z", "ANAFTOT_Z", 
-    "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z","ANWM2TOT_Z", "ANBWC20", "ANCPTOT_Z", 
-    "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", "ANCACTUS", "ANSCISOR", "ANPRES", 
-    "ANSMEM2_Better", "ANSMEM2_Worse", "Aadla_Z", "Aiadla_Z", "Abmi_derived_Z", 
-    "Astroke", "Adiabe", "Ahearte", "Ahibpe", "Asmoken", "Amoderate_drinking", 
-    "Aheavy_drinking") 
+  c("AAGE_Z", "Black", "Hispanic", "Female",  "EDYRS_Z", "Not working", "Retired", 
+    "Married/partnered", "ANMSETOT_norm_Z", "ANIMMCR_Z", "ANDELCOR_Z", 
+    "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z",
+    "ANWM2TOT_Z", "ANBWC20", "ANCPTOT_Z", "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", 
+    "ANCACTUS", "ANSCISOR", "ANPRES", "ANSMEM2_Better", "ANSMEM2_Worse", 
+    "Aadla_Z", "Aiadla_Z", "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", 
+    "Ahibpe", "Asmoken", "Amoderate_drinking", "Aheavy_drinking") 
     
     # paste0("black*", cog_vars), paste0("hispanic*", cog_vars), 
     # paste0("edyrs_Z*", cog_vars))
@@ -112,15 +112,15 @@ lasso_reg <- function(data, var_list){
     set_names(c("Unimpaired", "Other", "MCI", "Dementia"))
   
   for(class in c("Unimpaired", "Other", "MCI", "Dementia")){
-    # #Try unconditional models
-    # model_data <- data
+    #Try unconditional models
+    model_data <- data
     
-    #Impaired models conditional on being impaired
-    if(class == "Unimpaired"){
-      model_data <- data
-    } else {
-      model_data <- data %>% filter(Unimpaired == 0)
-    } 
+    # #Impaired models conditional on being impaired
+    # if(class == "Unimpaired"){
+    #   model_data <- data
+    # } else {
+    #   model_data <- data %>% filter(Unimpaired == 0)
+    # } 
     
     # #Conditional models
     # if(class == "Unimpaired"){
