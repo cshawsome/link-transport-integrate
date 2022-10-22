@@ -8,7 +8,7 @@ posterior_predictive_checks <-
       #---- read in synthetic data ----
       file_paths <- 
         list.dirs(path = paste0(path_to_analyses_folder, "synthetic_data/", 
-                                "no_calibration_sample"), 
+                                "ADAMS_prior"), 
                   full.names = TRUE, recursive = FALSE)
       
       for(chain in 1:length(file_paths)){
@@ -60,11 +60,11 @@ posterior_predictive_checks <-
         for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
           if(!dir.exists(paste0(path_to_figures_folder, 
                                 "posterior_predictive_checks/", 
-                                "no_calibration_sample/run_", chain, 
+                                "ADAMS_prior/run_", chain, 
                                 "/cell_counts/"))){
             dir.create(paste0(path_to_figures_folder, 
                               "posterior_predictive_checks/", 
-                              "no_calibration_sample/run_", chain, 
+                              "ADAMS_prior/run_", chain, 
                               "/cell_counts/"), recursive = TRUE)
           }
         }
@@ -74,11 +74,11 @@ posterior_predictive_checks <-
         for(metric in c("median", "skew")){
           if(!dir.exists(paste0(path_to_figures_folder, 
                                 "posterior_predictive_checks/", 
-                                "no_calibration_sample/run_", chain, 
+                                "ADAMS_prior/run_", chain, 
                                 "/continuous_vars/", metric, "/"))){
             dir.create(paste0(path_to_figures_folder, 
                               "posterior_predictive_checks/", 
-                              "no_calibration_sample/run_", chain, 
+                              "ADAMS_prior/run_", chain, 
                               "/continuous_vars/", metric, "/"), 
                        recursive = TRUE)
           }
@@ -121,7 +121,7 @@ posterior_predictive_checks <-
       #---- **read in data ----
       file_paths <- 
         list.dirs(path = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "no_calibration_sample"), full.names = TRUE, 
+                                "ADAMS_prior"), full.names = TRUE, 
                   recursive = FALSE)
       
       group_membership <- 
@@ -165,7 +165,7 @@ posterior_predictive_checks <-
     if(!calibration_sample){
       ggsave(filename = "group_membership_chains.jpeg", plot = chain_convergence, 
              path = paste0(path_to_figures_folder, "posterior_predictive_checks/", 
-                           "no_calibration_sample/"), 
+                           "ADAMS_prior/"), 
              width = 10, height = 5, units = "in", device = "jpeg")  
     } else{
       ggsave(filename = "group_membership_chains.jpeg", plot = chain_convergence, 
@@ -244,7 +244,7 @@ posterior_predictive_checks <-
       if(!calibration_sample){
         ggsave(filename = paste0(path_to_figures_folder, 
                                  "posterior_predictive_checks/", 
-                                 "no_calibration_sample/run_", chain, 
+                                 "ADAMS_prior/run_", chain, 
                                  "/cell_counts/overall_count.jpeg"), 
                width = 3, height = 4, units = "in")
       } else{
@@ -348,7 +348,7 @@ posterior_predictive_checks <-
         if(!calibration_sample){
           ggsave(filename = paste0(path_to_figures_folder, 
                                    "posterior_predictive_checks/", 
-                                   "no_calibration_sample/run_", chain, 
+                                   "ADAMS_prior/run_", chain, 
                                    "/cell_counts/", tolower(dem_group), 
                                    "_count.jpeg"), 
                  width = 3, height = 4, units = "in")
@@ -419,7 +419,7 @@ posterior_predictive_checks <-
       if(!calibration_sample){
         ggsave(filename = paste0(path_to_figures_folder, 
                                  "posterior_predictive_checks/", 
-                                 "no_calibration_sample/run_", chain_num, 
+                                 "ADAMS_prior/run_", chain_num, 
                                  "/continuous_vars/median/overall.jpeg"), 
                width = 8, height = 10, units = "in")
       } else{
@@ -502,7 +502,7 @@ posterior_predictive_checks <-
         if(!calibration_sample){
           ggsave(filename = paste0(path_to_figures_folder, 
                                    "posterior_predictive_checks/", 
-                                   "no_calibration_sample/run_", 
+                                   "ADAMS_prior/run_", 
                                    chain_num, "/continuous_vars/median/", 
                                    tolower(dem_group), ".jpeg"), 
                  width = 8, height = 10, units = "in")  
@@ -568,7 +568,7 @@ posterior_predictive_checks <-
       if(!calibration_sample){
         ggsave(filename = paste0(path_to_figures_folder, 
                                  "posterior_predictive_checks/", 
-                                 "no_calibration_sample/run_", chain_num, 
+                                 "ADAMS_prior/run_", chain_num, 
                                  "/continuous_vars/skew/overall.jpeg"), 
                width = 8, height = 10, units = "in")  
       } else{
@@ -652,7 +652,7 @@ posterior_predictive_checks <-
         if(!calibration_sample){
           ggsave(filename = paste0(path_to_figures_folder, 
                                    "posterior_predictive_checks/", 
-                                   "no_calibration_sample/run_", 
+                                   "ADAMS_prior/run_", 
                                    chain_num, "/continuous_vars/skew/", 
                                    tolower(dem_group), ".jpeg"), 
                  width = 8, height = 10, units = "in")  
@@ -715,7 +715,7 @@ posterior_predictive_checks <-
     if(!calibration_sample){
       ggsave(filename = paste0(path_to_figures_folder, 
                                "posterior_predictive_checks/", 
-                               "no_calibration_sample/", 
+                               "ADAMS_prior/", 
                                "impairment_classes_combined_all_runs.jpeg"), 
              height = 5, width = 10, units = "in")
     } else{
@@ -750,7 +750,7 @@ posterior_predictive_checks <-
       if(!calibration_sample){
         ggsave(filename = paste0(path_to_figures_folder, 
                                  "posterior_predictive_checks/", 
-                                 "no_calibration_sample/run_", chain_num,  
+                                 "ADAMS_prior/run_", chain_num,  
                                  "/impairment_classes.jpeg"), 
                height = 4, width = 5.5, units = "in")
       } else{
