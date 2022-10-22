@@ -10,23 +10,23 @@ generate_synthetic <-
     if(!calibration_sample){
       if(!data_only){
         if(!dir.exists(paste0(path_to_analyses_folder, "synthetic_data/", 
-                              "no_calibration_sample/run_", run_number))){
+                              "ADAMS_prior_sample/run_", run_number))){
           dir.create(paste0(path_to_analyses_folder, "synthetic_data/", 
-                            "no_calibration_sample/run_", run_number), 
+                            "ADAMS_prior_sample/run_", run_number), 
                      recursive = TRUE)
         }
         
         if(!dir.exists(paste0(path_to_figures_folder, "diagnostics/", 
-                              "no_calibration_sample/run_", run_number))){
+                              "ADAMS_prior_sample/run_", run_number))){
           dir.create(paste0(path_to_figures_folder, "diagnostics/", 
-                            "no_calibration_sample/run_", run_number), 
+                            "ADAMS_prior_sample/run_", run_number), 
                      recursive = TRUE)
         }
         
         if(!dir.exists(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                              "no_calibration_sample/run_", run_number))){
+                              "ADAMS_prior_sample/run_", run_number))){
           dir.create(paste0(path_to_analyses_folder, "diagnostics_data/", 
-                            "no_calibration_sample/run_", run_number), 
+                            "ADAMS_prior_sample/run_", run_number), 
                      recursive = TRUE)
         }
       }
@@ -759,7 +759,7 @@ generate_synthetic <-
       if(!calibration_sample){
         saveRDS(dataset_list,
                 file = paste0(path_to_analyses_folder, "synthetic_data/", 
-                              "no_calibration_sample/run_", run_number, 
+                              "ADAMS_prior_sample/run_", run_number, 
                               "/synthetic_dataset_list"))
       } else{
         saveRDS(dataset_list,
@@ -799,7 +799,7 @@ generate_synthetic <-
       if(!calibration_sample){
         ggsave(filename = "gamma_chain.jpeg", plot = gamma_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
-                             "no_calibration_sample/run_", run_number), 
+                             "ADAMS_prior_sample/run_", run_number), 
                height = 7, width = 12, units = "in", device = "jpeg")
       } else{
         ggsave(filename = "gamma_chain.jpeg", plot = gamma_chain_plot, 
@@ -833,7 +833,7 @@ generate_synthetic <-
         ggsave(filename = "latent_class_chain.jpeg", 
                plot = latent_class_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
-                             "no_calibration_sample/run_", run_number), 
+                             "ADAMS_prior_sample/run_", run_number), 
                height = 7, width = 10, units = "in", device = "jpeg")
       } else{
         ggsave(filename = "latent_class_chain.jpeg", 
@@ -874,7 +874,7 @@ generate_synthetic <-
       if(!calibration_sample){
         ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
-                             "no_calibration_sample/run_", run_number), 
+                             "ADAMS_prior_sample/run_", run_number), 
                height = 7, width = 10, units = "in", device = "jpeg")
       } else{
         ggsave(filename = "pi_chain.jpeg", plot = pi_chain_plot, 
@@ -910,7 +910,7 @@ generate_synthetic <-
       if(!calibration_sample){
         ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
-                             "no_calibration_sample/run_", run_number), 
+                             "ADAMS_prior_sample/run_", run_number), 
                height = 7, width = 12, units = "in", device = "jpeg")
       } else{
         ggsave(filename = "Sigma_chain.jpeg", plot = Sigma_chain_plot, 
@@ -949,7 +949,7 @@ generate_synthetic <-
       if(!calibration_sample){
         ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
                path = paste0(path_to_figures_folder, "diagnostics/", 
-                             "no_calibration_sample/run_", run_number), 
+                             "ADAMS_prior_sample/run_", run_number), 
                height = 15, width = 12, units = "in", device = "jpeg")
       } else{
         ggsave(filename = "mu_chain.jpeg", plot = mu_chain_plot, 
@@ -963,27 +963,27 @@ generate_synthetic <-
       if(!calibration_sample){
         write_csv(gamma_plot_data, 
                   file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "no_calibration_sample/run_", run_number, 
+                                "ADAMS_prior_sample/run_", run_number, 
                                 "/gamma_plot_data.csv"))
         
         write_csv(latent_class_data, 
                   file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "no_calibration_sample/run_", run_number, 
+                                "ADAMS_prior_sample/run_", run_number, 
                                 "/latent_class_data.csv"))
         
         write_csv(pi_chain_data, 
                   file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "no_calibration_sample/run_", run_number, 
+                                "ADAMS_prior_sample/run_", run_number, 
                                 "/pi_chain_data.csv"))
         
         write_csv(Sigma_chain_data, 
                   file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "no_calibration_sample/run_", run_number, 
+                                "ADAMS_prior_sample/run_", run_number, 
                                 "/Sigma_chain_data.csv"))
         
         write_csv(mu_chain_data, 
                   file = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                "no_calibration_sample/run_", run_number, 
+                                "ADAMS_prior_sample/run_", run_number, 
                                 "/mu_chain_data.csv"))
       } else{
         write_csv(gamma_plot_data, 
@@ -1022,7 +1022,7 @@ generate_synthetic <-
 # dataset_to_copy = synthetic_HCAP_list[[4]]
 # orig_means = means
 # orig_sds = sds
-# calibration_sample = !(calibration_scenario == "no_calibration")
+# calibration_sample = !(calibration_scenario == "ADAMS_prior")
 # calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
 # calibration_sample_name = calibration_scenario
 # path_to_data = paste0(path_to_box,"data/")
