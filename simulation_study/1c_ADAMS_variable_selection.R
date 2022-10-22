@@ -120,7 +120,7 @@ lasso_reg <- function(data, var_list){
     #   model_data <- data
     # } else {
     #   model_data <- data %>% filter(Unimpaired == 0)
-    # } 
+    # }
     
     # #Conditional models
     # if(class == "Unimpaired"){
