@@ -110,9 +110,17 @@ lasso_reg <- function(data, var_list){
     set_names(c("Unimpaired", "Other", "MCI", "Dementia"))
   
   for(class in c("Unimpaired", "Other", "MCI", "Dementia")){
-    #Try unconditional models
-    model_data <- data
+    # #Try unconditional models
+    # model_data <- data
     
+    #Impaired models conditional on being impaired
+    if(class == "Unimpaired"){
+      model_data <- data
+    } else {
+      model_data <- data %>% filter(Unimpaired == 0)
+    } 
+    
+    # #Conditional models
     # if(class == "Unimpaired"){
     #   model_data <- data
     # } else if(class == "Other"){
