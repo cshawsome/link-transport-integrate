@@ -318,4 +318,4 @@ HRS %>%
                         "HISPANIC_indicator", "ETHNIC_label", "PJ005M1_label", 
                         "PJ005M1_collapsed_label", "drinks_per_week", 
                         "drink_cat", "drink_cat_label")) %>% 
-  write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
+  write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_clean.csv"))
