@@ -96,7 +96,7 @@ end <- Sys.time() - start
 #---- read in results ----
 superpop_imputed <- 
   readRDS(paste0(path_to_box, "data/superpopulations/MI/chunk_1/MI_datasets")) %>% 
-  as.data.frame()
+  as.data.frame() %>% filter(HCAP == 0)
 
 # #Sanity check
 # colMeans(is.na(superpop_imputed))[which(colMeans(is.na(superpop_imputed)) > 0)]
@@ -145,7 +145,15 @@ write_csv(sds, paste0(path_to_box, "data/superpopulations/superpop_sds.csv"))
 #---- **** add vars ----
 superpop_imputed %<>% mutate("Intercept" = 1)
 
+interaction_vars <- 
+  selected_vars_mat$data_label[grepl("\\*", selected_vars_mat$data_label)]
 
+for(var in interaction_vars){
+  split_var <- str_split(var, pattern = "[*]")
+  
+  superpop_imputed %<>% 
+    mutate(!!sym(var) := !!sym(split_var[[1]][1])*!!sym(split_var[[1]][2]))
+}
 
 #---- ****predict values in superpop ----
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
@@ -162,6 +170,11 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
 # #Sanity check
 # View(head(superpop_imputed[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")]))
 
+#---- **draw impaired categories using highest prob ----
+superpop_imputed[, "dem_class"] <-
+  apply(superpop_imputed[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1,
+        function(x) str_remove(names(which.max(x)), "p_"))
+
 # #---- **draw all categories using weighted vector ----
 # superpop_imputed[, "dem_class"] <-
 #   apply(superpop_imputed[,
@@ -169,16 +182,16 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
 #         function(x)
 #           sample(c("Unimpaired", "MCI", "Dementia", "Other"), size = 1, prob = x))
 
-#---- **draw impaired categories only using weighted vector ----
-superpop_imputed[, "dem_class"] <-
-  apply(superpop_imputed[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1,
-        function(x) str_remove(names(which.max(x)), "p_"))
-
-superpop_imputed[superpop_imputed$dem_class != "Unimpaired", "dem_class"] <-
-  apply(superpop_imputed[superpop_imputed$dem_class != "Unimpaired",
-                 c("p_MCI", "p_Dementia", "p_Other")], 1,
-        function(x)
-          sample(c("MCI", "Dementia", "Other"), size = 1, prob = x))
+# #---- **draw impaired categories only using weighted vector ----
+# superpop_imputed[, "dem_class"] <-
+#   apply(superpop_imputed[, c("p_Unimpaired", "p_MCI", "p_Dementia", "p_Other")], 1,
+#         function(x) str_remove(names(which.max(x)), "p_"))
+# 
+# superpop_imputed[superpop_imputed$dem_class != "Unimpaired", "dem_class"] <-
+#   apply(superpop_imputed[superpop_imputed$dem_class != "Unimpaired",
+#                          c("p_MCI", "p_Dementia", "p_Other")], 1,
+#         function(x)
+#           sample(c("MCI", "Dementia", "Other"), size = 1, prob = x))
 
 superpop_imputed %<>% 
   mutate("Unimpaired" = ifelse(dem_class == "Unimpaired", 1, 0), 
@@ -192,51 +205,63 @@ superpop_imputed %<>%
 
 #---- **QC superpop_imputed ----
 #---- ****overall summaries ----
-#old: U: 37.0%, M: 16.1%, D: 26.4%, O: 20.4%
-#new: U: 41.4%, M: 12.3%, D: 27.7%, O: 18.7%
+#hotdeck: U: 37.0%, M: 16.1%, D: 26.4%, O: 20.4%
+#hotdeck + race/eth: 
+#PMM: U: 41.4%, M: 12.3%, D: 27.7%, O: 18.7%
+#PMM + intx: U: 39.4%, M: 13.1%, D: 29.1%, O: 18.4%
+#PMM + intx + conditional impaired: 
 colMeans(superpop_imputed[, c("Unimpaired", "MCI", "Dementia", "Other")])
 
 #More dementia among women? 
-#old: Yes (M: 25.2%, W: 27.2%)
-#new: No (M: 27.6%, W: 27.7%)
+#hotdeck: Yes (M: 25.2%, W: 27.2%)
+#PMM: No (M: 27.6%, W: 27.7%)
+#PMM + intx: No (M: 29.4%, W: 29.0%)
 mean(superpop_imputed[superpop_imputed$female == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$female == 0, "Dementia"])
 
 #More dementia among racial/ethnic minorities?  
-# old: Kind of? (w: 25.7%, b: 33.3%, h: 22.3%)
-# new: Yes (w: 25.7%, b: 32.1%, h: 36.6%)
+# hotdeck: Kind of? (w: 25.7%, b: 33.3%, h: 22.3%)
+# PMM: Yes (w: 25.7%, b: 32.1%, h: 36.6%)
+# PMM + intx: Yes (w: 27.7%, b: 31.3%, h: 38.4%)
 mean(superpop_imputed[superpop_imputed$White == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$black == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$hispanic == 1, "Dementia"])
 
 #Age: increased risk by year (old: PR = 1.03; new: PR = 1.06)
-exp(coefficients(glm(Dementia ~ age, data = superpop_imputed, family = "poisson")))
+exp(coefficients(glm(Dementia ~ age, data = superpop_imputed, 
+                     family = "poisson")))
 
 #Years of Education: decreased risk by higher education (old: PR = 0.98, new: PR = 0.95)
-exp(coefficients(glm(Dementia ~ edyrs, data = superpop_imputed, family = "poisson")))
+exp(coefficients(glm(Dementia ~ edyrs, data = superpop_imputed, 
+                     family = "poisson")))
 
 #Stroke: increased risk for yes vs. no (old: PR = 1.70, new: PR = 1.91)
-exp(coefficients(glm(Dementia ~ stroke, data = superpop_imputed, family = "poisson")))
+exp(coefficients(glm(Dementia ~ stroke, data = superpop_imputed, 
+                     family = "poisson")))
 
 #Diabetes: no increased risk for yes vs. no (old: PR = 1.00, new: PR = 1.03)
-exp(coefficients(glm(Dementia ~ diabe, data = superpop_imputed, family = "poisson")))
+exp(coefficients(glm(Dementia ~ diabe, data = superpop_imputed, 
+                     family = "poisson")))
 
 #Diabetes: increased risk for any impairment yes vs. no (old: PR = 1.10, new: PR = 1.13)
 superpop_imputed %<>% mutate("any_impairment" = Dementia + MCI)
-exp(coefficients(glm(any_impairment ~ diabe, data = superpop_imputed, family = "poisson")))
+exp(coefficients(glm(any_impairment ~ diabe, data = superpop_imputed, 
+                     family = "poisson")))
 
 #---- ****age and sex-standardized estimates by race ----
 #---- ******create age strata ----
 superpop_imputed %<>% 
-  mutate("age_cat" = cut(age, breaks = c(70, 75, 80, 85, 90, max(superpop_imputed$age)), 
-                         include.lowest = TRUE, right = FALSE))
+  mutate("age_cat" = 
+           cut(age, breaks = c(70, 75, 80, 85, 90, max(superpop_imputed$age)), 
+               include.lowest = TRUE, right = FALSE))
 
 # #Sanity check
 # table(superpop_imputed$age_cat, useNA = "ifany")
 
 #---- ******standardization tables ----
 agesex_totals <- 
-  superpop_imputed %>% group_by(female, age_cat) %>% count() %>% arrange(female) %>% 
+  superpop_imputed %>% group_by(female, age_cat) %>% count() %>% 
+  arrange(female) %>% 
   set_colnames(c("female", "age", "superpop_imputed_count")) %>% 
   dplyr::select("superpop_imputed_count", everything())
 
