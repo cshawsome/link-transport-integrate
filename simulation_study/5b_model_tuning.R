@@ -56,11 +56,10 @@ sds <-
 
 #---- data formatting ----
 #---- **user input ----
-#calibration scenario options: "no_calibration", 
+#calibration scenario options: "ADAMS_prior", 
 # "calibration_20_SRS", "calibration_35_SRS", "calibration_50_SRS",
-# "calibration_20_SRS_race", "calibration_35_SRS_race", "calibration_50_SRS_race", 
-# "calibration_50_design", 
-calibration_scenario = "calibration_50_SRS_race" 
+# "calibration_20_SRS_race", "calibration_35_SRS_race", "calibration_50_SRS_race"
+calibration_scenario = "ADAMS_prior" 
 
 #HCAP sample prop options: 0.25, 0.50
 HCAP_sample_prop = 0.50
@@ -99,7 +98,7 @@ lapply(synthetic_HCAP_list[indices], function(x)
                      starting_props = c(0.25, 0.25, 0.25, 0.25),
                      dataset_to_copy = x, orig_means = means, orig_sds = sds, 
                      calibration_sample = 
-                       !(calibration_scenario == "no_calibration"), 
+                       !(calibration_scenario == "ADAMS_prior"), 
                      calibration_prop = 
                        suppressWarnings(parse_number(calibration_scenario)/100), 
                      calibration_sample_name = calibration_scenario,
@@ -128,7 +127,7 @@ future_lapply(synthetic_HCAP_list[indices], function(x)
                      starting_props = c(0.25, 0.25, 0.25, 0.25),
                      dataset_to_copy = x, orig_means = means, orig_sds = sds, 
                      calibration_sample = 
-                       !(calibration_scenario == "no_calibration"), 
+                       !(calibration_scenario == "ADAMS_prior"), 
                      calibration_prop = 
                        suppressWarnings(parse_number(calibration_scenario)/100),
                      calibration_sample_name = calibration_scenario, 

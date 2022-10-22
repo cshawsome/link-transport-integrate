@@ -43,12 +43,13 @@ A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
 
 #---- data formatting ----
 #---- **user input ----
-#calibration scenario options: "no_calibration", "calibration_50_SRS", 
-# "calibration_50_design", "calibration_100"
-calibration_scenario = "calibration_50_design"
+#calibration scenario options: "ADAMS_prior", 
+# "calibration_20_SRS", "calibration_35_SRS", "calibration_50_SRS",
+# "calibration_20_SRS_race", "calibration_35_SRS_race", "calibration_50_SRS_race"
+calibration_scenario = "ADAMS_prior"
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.50
+HCAP_sample_prop = 0.25
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
@@ -72,7 +73,7 @@ dataset_names <-
 #---- **specify indices ----
 indices <-
   which(dataset_names %in% 
-          paste0("HRS_", c(8000), "_sample_", HCAP_sample_prop*100, 
+          paste0("HRS_", c(2000, 4000, 8000), "_sample_", HCAP_sample_prop*100, 
                  "_", calibration_scenario))
 
 #---- serial checks ----

@@ -56,9 +56,8 @@ kappa_0_mat <- read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix.csv"))
 #---- **user input ----
 #calibration scenario options: "ADAMS_prior", 
 # "calibration_20_SRS", "calibration_35_SRS", "calibration_50_SRS", 
-# "calibration_20_SRS_race", "calibration_35_SRS_race", "calibration_50_SRS_race", 
-# "calibration_50_design"
-calibration_scenario = "ADAMS_prior" 
+# "calibration_20_SRS_race", "calibration_35_SRS_race", "calibration_50_SRS_race"
+calibration_scenario = "calibration_20_SRS" 
 
 #HCAP sample prop options: 0.25, 0.50
 HCAP_sample_prop = 0.25
