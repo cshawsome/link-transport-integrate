@@ -93,7 +93,7 @@ simulation_function <-
     
     #---- **calibration status ----
     calibration_status <- 
-      ifelse(all_sim_scenarios[scenario, "calibration"] == "no_calibration", 
+      ifelse(all_sim_scenarios[scenario, "calibration"] == "ADAMS_prior", 
              FALSE, TRUE)
     
     #---- ****flag calibration subsample ----
@@ -113,7 +113,7 @@ simulation_function <-
       
       dataset_to_copy[not_selected, calibration_sample_name] <- 0
     } else{
-      calibration_sample_name <- "no_calibration"
+      calibration_sample_name <- "ADAMS_prior"
     }
     
     #---- **true impairment class counts ----
