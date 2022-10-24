@@ -46,10 +46,10 @@ A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
 #calibration scenario options: "ADAMS_prior", 
 # "calibration_20_SRS", "calibration_35_SRS", "calibration_50_SRS",
 # "calibration_20_SRS_race", "calibration_35_SRS_race", "calibration_50_SRS_race"
-calibration_scenario = "ADAMS_prior"
+calibration_scenario = "calibration_35_SRS_race"
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.25
+HCAP_sample_prop = 0.50
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
@@ -76,32 +76,32 @@ indices <-
           paste0("HRS_", c(2000, 4000, 8000), "_sample_", HCAP_sample_prop*100, 
                  "_", calibration_scenario))
 
-#---- serial checks ----
-start <- Sys.time()
-
-lapply(synthetic_HCAP_list[indices], function(x)
-  posterior_predictive_checks(dataset_to_copy = x, 
-                              calibration_sample = 
-                                !(calibration_scenario == "no_calibration"),
-                              calibration_prop = 
-                                suppressWarnings(
-                                  parse_number(calibration_scenario)/100),  
-                              calibration_sample_name = calibration_scenario,
-                              categorical_covariates = W, 
-                              continuous_covariates = Z, contrasts_matrix = A,
-                              cell_ID_key = cell_ID_key, 
-                              variable_labels = variable_labels, 
-                              color_palette = color_palette,
-                              path_to_analyses_folder = 
-                                paste0(path_to_box, 
-                                       "analyses/simulation_study/HCAP_", 
-                                       unique(x[, "dataset_name_stem"]), "/"), 
-                              path_to_figures_folder = 
-                                paste0(path_to_box,
-                                       "figures/chapter_4/simulation_study/HCAP_", 
-                                       unique(x[, "dataset_name_stem"]), "/")))
-
-end <- Sys.time() - start
+# #---- serial checks ----
+# start <- Sys.time()
+# 
+# lapply(synthetic_HCAP_list[indices], function(x)
+#   posterior_predictive_checks(dataset_to_copy = x, 
+#                               calibration_sample = 
+#                                 !(calibration_scenario == "no_calibration"),
+#                               calibration_prop = 
+#                                 suppressWarnings(
+#                                   parse_number(calibration_scenario)/100),  
+#                               calibration_sample_name = calibration_scenario,
+#                               categorical_covariates = W, 
+#                               continuous_covariates = Z, contrasts_matrix = A,
+#                               cell_ID_key = cell_ID_key, 
+#                               variable_labels = variable_labels, 
+#                               color_palette = color_palette,
+#                               path_to_analyses_folder = 
+#                                 paste0(path_to_box, 
+#                                        "analyses/simulation_study/HCAP_", 
+#                                        unique(x[, "dataset_name_stem"]), "/"), 
+#                               path_to_figures_folder = 
+#                                 paste0(path_to_box,
+#                                        "figures/chapter_4/simulation_study/HCAP_", 
+#                                        unique(x[, "dataset_name_stem"]), "/")))
+# 
+# end <- Sys.time() - start
 
 #---- parallel checks ----
 start <- Sys.time()

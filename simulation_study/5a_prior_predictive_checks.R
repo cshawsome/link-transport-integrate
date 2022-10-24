@@ -57,10 +57,10 @@ kappa_0_mat <- read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix.csv"))
 #calibration scenario options: "ADAMS_prior", 
 # "calibration_20_SRS", "calibration_35_SRS", "calibration_50_SRS", 
 # "calibration_20_SRS_race", "calibration_35_SRS_race", "calibration_50_SRS_race"
-calibration_scenario = "calibration_20_SRS" 
+calibration_scenario = "calibration_35_SRS_race" 
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.25
+HCAP_sample_prop = 0.50
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
@@ -87,32 +87,32 @@ indices <-
           paste0("HRS_", c(2000, 4000, 8000), "_sample_", HCAP_sample_prop*100, 
                  "_", calibration_scenario))
 
-#---- serial checks ----
-set.seed(20220329)
-start <- Sys.time()
-lapply(synthetic_HCAP_list[indices], function(x)
-  prior_predictive_checks(dataset_to_copy = x, calibration_sample = 
-                            !(calibration_scenario == "ADAMS_prior"), 
-                          calibration_prop = 
-                            suppressWarnings(
-                              parse_number(calibration_scenario)/100), 
-                          calibration_sample_name = calibration_scenario,
-                          path_to_data = path_to_box, 
-                          path_to_output_folder =
-                            paste0(path_to_box,
-                                   "figures/chapter_4/simulation_study/HCAP_",
-                                   unique(x[, "dataset_name_stem"]),
-                                   "/prior_predictive_checks/"), 
-                          continuous_check_test = TRUE,
-                          continuous_check = c("Unimpaired", "MCI", "Dementia", 
-                                               "Other"),
-                          categorical_vars = W, continuous_vars = Z,
-                          variable_labels = variable_labels, 
-                          color_palette = color_palette, contrasts_matrix = A,
-                          weights_matrix = cell_ID_key, 
-                          kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
-                          num_synthetic = 1000))
-end <- Sys.time() - start
+# #---- serial checks ----
+# set.seed(20220329)
+# start <- Sys.time()
+# lapply(synthetic_HCAP_list[indices], function(x)
+#   prior_predictive_checks(dataset_to_copy = x, calibration_sample = 
+#                             !(calibration_scenario == "ADAMS_prior"), 
+#                           calibration_prop = 
+#                             suppressWarnings(
+#                               parse_number(calibration_scenario)/100), 
+#                           calibration_sample_name = calibration_scenario,
+#                           path_to_data = path_to_box, 
+#                           path_to_output_folder =
+#                             paste0(path_to_box,
+#                                    "figures/chapter_4/simulation_study/HCAP_",
+#                                    unique(x[, "dataset_name_stem"]),
+#                                    "/prior_predictive_checks/"), 
+#                           continuous_check_test = TRUE,
+#                           continuous_check = c("Unimpaired", "MCI", "Dementia", 
+#                                                "Other"),
+#                           categorical_vars = W, continuous_vars = Z,
+#                           variable_labels = variable_labels, 
+#                           color_palette = color_palette, contrasts_matrix = A,
+#                           weights_matrix = cell_ID_key, 
+#                           kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
+#                           num_synthetic = 1000))
+# end <- Sys.time() - start
 
 #---- parallel checks ----
 set.seed(20220329)
