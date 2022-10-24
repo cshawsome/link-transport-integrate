@@ -408,7 +408,7 @@ simulation_function <-
 # categorical_vars = W = c("black", "hispanic", "stroke")
 # continuous_vars = Z = colnames(superpop)[str_detect(colnames(superpop), "_Z")]
 # id_var = "HHIDPN"
-# scenario = scenario_num = 1 #no calibration sample size 2000, HCAP prop 25
+# scenario = scenario_num = 1207 #calibration_50_SRS, HRS sample size 2000, HCAP prop 25
 # path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 # superpopulation <- superpop
 # orig_means = means <-
