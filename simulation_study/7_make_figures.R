@@ -61,9 +61,9 @@ ggsave(filename = "ADAMS_mix_Z.jpeg", plot = last_plot(),
 
 #---- check number of simulation runs ----
 #Missing runs:
-# n = 2000, sample = 25, calibration_50_SRS: 556
-# n = 2000, sample = 50, calibration_50_SRS: 27
-# n = 4000, sample = 25, calibration 50 SRS: 19
+# n = 2000, sample = 25, calibration_50_SRS: 526
+# n = 2000, sample = 50, calibration_50_SRS: 21
+# n = 4000, sample = 25, calibration 50 SRS: 6
 
 #---- **read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
