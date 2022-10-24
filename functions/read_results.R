@@ -34,7 +34,7 @@ read_results <- function(path, skip = 0){
     data <- data.table::fread(path, fill = TRUE, skip = skip) %>% 
       na.omit() 
     
-    if(str_detect(unique(data$dataset_name), "no_calibration")){
+    if(str_detect(unique(data$dataset_name), "ADAMS_prior")){
       data %<>% mutate("dataset_name" = paste0(dataset_name, "_NA"))
     }
     
