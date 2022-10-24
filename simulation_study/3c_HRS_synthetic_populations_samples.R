@@ -435,7 +435,7 @@ for(i in 1:length(synthetic_HCAP_list)){
            H*sample_race_props["hispanic"])/sample_race_props["White"]
     
     #select IDs
-    rm(race_IDs)
+    if(exists("race_IDs")){rm(race_IDs)}
     
     for(race in c("White", "black", "hispanic")){
       race_prop = case_when(race == "White" ~ W, 
