@@ -253,11 +253,11 @@ generate_synthetic <-
               mutate("selected" = 1) %>% 
               rbind(synthetic_sample[, vars[-1]] %>% mutate("selected" = 0))
             
-            if(str_detect(calibration_scenario, "SRS_race") | 
-               str_detect(calibration_scenario, "design")){
+            if(str_detect(calibration_sample_name, "SRS_race") | 
+               str_detect(calibration_sample_name, "design")){
               
               #calculate weights
-              if(str_detect(calibration_scenario, "SRS_race")){
+              if(str_detect(calibration_sample_name, "SRS_race")){
                 ipw_model <- glm(selected ~ black + hispanic, 
                                  data = bootstrap_sample)  
               } else{
@@ -311,11 +311,11 @@ generate_synthetic <-
                 mutate("selected" = 1) %>% 
                 rbind(synthetic_sample[, vars[-1]] %>% mutate("selected" = 0))
               
-              if(str_detect(calibration_scenario, "SRS_race") | 
-                 str_detect(calibration_scenario, "design")){
+              if(str_detect(calibration_sample_name, "SRS_race") | 
+                 str_detect(calibration_sample_name, "design")){
                 
                 #calculate weights
-                if(str_detect(calibration_scenario, "SRS_race")){
+                if(str_detect(calibration_sample_name, "SRS_race")){
                   ipw_model <- glm(selected ~ black + hispanic, 
                                    data = bootstrap_sample)  
                 } else{
