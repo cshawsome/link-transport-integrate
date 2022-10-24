@@ -104,14 +104,60 @@ simulation_function <-
       
       calibration_prop <- readr::parse_number(calibration_sample_name)/100
       
-      dataset_to_copy[sample(seq(1, nrow(dataset_to_copy)), 
-                             size = calibration_prop*nrow(dataset_to_copy), 
-                             replace = FALSE), calibration_sample_name] <- 1
+      if(str_detect(calibration_sample_name, "SRS_race")){
+        sample_race_props <- 
+          colMeans(dataset_to_copy[, c("White", "black", "hispanic")])
+        
+        #set Black and Hispanic proportions
+        B = 0.60
+        H = 0.60
+        
+        #calculate p(selection) for White participants
+        W = (calibration_prop - B*sample_race_props["black"] - 
+               H*sample_race_props["hispanic"])/sample_race_props["White"]
+        
+        #select IDs
+        for(race in c("White", "black", "hispanic")){
+          race_prop = case_when(race == "White" ~ W, 
+                                race == "black" ~ B, 
+                                race == "hispanic" ~ H)
+          
+          subset_IDs <- dataset_to_copy %>% filter(!!sym(race) == 1) %>% 
+            slice_sample(prop = race_prop) %>% dplyr::select("HHIDPN") %>% 
+            unlist() %>% unname()
+          
+          if(exists("race_IDs")){
+            race_IDs <- c(race_IDs, subset_IDs)
+          } else{
+            race_IDs <- subset_IDs
+          }
+        }
+        
+        #flag sample
+        dataset_to_copy[
+          dataset_to_copy$HHIDPN %in% race_IDs, 
+          paste0("calibration_", calibration_prop*100,"_SRS_race")] <- 1
+        
+        
+        #store weights
+        cell_ID_key %<>% 
+          mutate(!!sym(paste0("calibration_", calibration_prop*100,"_SRS_race")) := 
+                   case_when(str_detect(cell_name, "White") ~ 1/W, 
+                             str_detect(cell_name, "Black") ~ 1/B, 
+                             str_detect(cell_name, "Hispanic") ~ 1/H))
+        
+        
+      } else{
+        dataset_to_copy[sample(seq(1, nrow(dataset_to_copy)), 
+                               size = calibration_prop*nrow(dataset_to_copy), 
+                               replace = FALSE), calibration_sample_name] <- 1
+      }
       
       #set unselected to 0
       not_selected <- which(is.na(dataset_to_copy[, calibration_sample_name]))
       
       dataset_to_copy[not_selected, calibration_sample_name] <- 0
+      
     } else{
       calibration_sample_name <- "ADAMS_prior"
     }
