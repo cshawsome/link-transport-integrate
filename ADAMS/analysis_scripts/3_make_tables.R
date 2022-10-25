@@ -4,7 +4,7 @@ if (!require("pacman")){
 }
 
 p_load("here", "tidyverse", "magrittr", "haven", "stringr", "NormPsy", "labelled", 
-       "gtsummary")
+       "gtsummary", "writexl")
 
 options(scipen = 999)
 
@@ -15,37 +15,100 @@ source(paste0(here::here("functions", "read_da_dct.R")))
 #---- **read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
-ADAMS_train <- 
+ADAMS_subset_mixed <- 
+  read_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_subset_mixed.csv"))
+
+ADAMS_train_IDs <- 
   read_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_train.csv")) %>% 
-  mutate("dataset" = "ADAMS Training\n(Wave A)")
+  dplyr::select("HHIDPN") %>% unlist() %>% unname()
 
-ADAMS_test <- 
+ADAMS_test_IDs <- 
   read_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_test.csv")) %>% 
-  mutate("dataset" = "ADAMS Testing\n(Wave A)")
+  dplyr::select("HHIDPN") %>% unlist() %>% unname()
 
-ADAMS <- rbind(ADAMS_train, ADAMS_test)
+ADAMS <- rbind(ADAMS_subset_mixed %>% filter(HHIDPN %in% c(ADAMS_train_IDs)) %>% 
+                 mutate(dataset = "train"), 
+               ADAMS_subset_mixed %>% filter(HHIDPN %in% c(ADAMS_test_IDs)) %>% 
+                 mutate(dataset = "test")) 
 
-#---- **select/order vars ----
-#remove these variables
-ADAMS %<>% dplyr::select(c("AAGE", "ETHNIC_label", "Abmi", "Aiadla", "Astroke",
-                           "ANSER7T", "ANIMMCR", "ANDELCOR", "ANMSETOT_norm",  
-                           "ANRECYES", "ANWM1TOT", "proxy_cog", "Adem_dx_cat", 
-                           "dataset"))
+#---- **set factor levels ----
+ADAMS %<>% mutate_at("ETHNIC_label", function(x) 
+  factor(x, levels = c("White", "Black", "Hispanic"))) %>% 
+  mutate_at("Adem_dx_cat", function(x) 
+    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other")))
+
+#---- **label variables ----
+ADAMS %<>% 
+  labelled::set_variable_labels(AAGE = "Age",
+                                ETHNIC_label = "Race/Ethnicity",
+                                Abmi = "BMI",
+                                Aiadla = "IADLs",
+                                Astroke = "History of stroke",
+                                ANSER7T = "Serial 7s", 
+                                ANIMMCR = "Immediate word recall", 
+                                ANDELCOR = "Delayed word recall", 
+                                ANMSETOT_norm = "Total MMSE (normalized)", 
+                                ANRECYES = "Word recall (yes)", 
+                                ANWM1TOT = "Immediate story recall", 
+                                proxy_cog = "Average Jorm IQCODE", 
+                                Adem_dx_cat = "Adjudicated impairment")
+
+#---- **label categories ----
+ADAMS %<>% 
+  labelled::set_value_labels(dataset = 
+                               c("ADAMS Training\n (Wave A)" = "train", 
+                                 "ADAMS Hold Out\n (Wave A)" = "test"),
+                             Astroke = c("History of Stroke" = 1,
+                                         "No History of Stroke" = 0))
 
 #---- **make table ----
-tab1 <- ADAMS %>% 
-  tbl_summary(by = dataset, 
-              statistic = list(all_continuous() ~ "{mean} ({sd})"))
+ADAMS_table <- ADAMS %>%
+  #set labelled variables as factors 
+  purrr::modify_if(labelled::is.labelled, labelled::to_factor) %>%
+  gtsummary::tbl_summary(missing = "no", 
+                         by = dataset,
+                         statistic = list(all_continuous() ~ "{mean} ({sd})"),
+                         #If we don't specify these variables types, all levels 
+                         #  will be summarized
+                         type = list(Astroke ~ "dichotomous", 
+                                     Aiadla ~ "continuous", 
+                                     ANSER7T ~ "continuous"),
+                         
+                         #Specifying the level of dichotomous the variable that 
+                         #  should be displayed
+                         value = list(Astroke = "History of Stroke"),
+                         
+                         #Specifying the number of decimal places for 
+                         #  categorical vars
+                         digits = list(all_continuous() ~ 1, 
+                                       ETHNIC_label ~ c(0, 1),
+                                       Astroke ~ c(0, 1), 
+                                       Adem_dx_cat ~ c(0, 1)),
+                         
+                         #Specifying the exact variables I want in the table
+                         include = c(AAGE, ETHNIC_label, Abmi, Astroke, Aiadla, 
+                                     ANSER7T, ANIMMCR, ANDELCOR, ANMSETOT_norm, 
+                                     ANRECYES, ANWM1TOT, proxy_cog, 
+                                     Adem_dx_cat)) %>%
+  
+  #Renaming the header
+  gtsummary::modify_header(label = "Variable") %>%
+  
+  #Adding in percents
+  gtsummary::add_overall() %>%
+  
+  #Moving labels from the bottom to next to each of the variables
+  gtsummary::add_stat_label(location = "row") %>%
+  
+  # #bolding the variables
+  # gtsummary::bold_labels() %>%
+  
+  #setting as a tibble so that it can be output to excel
+  gtsummary::as_tibble()
 
-
-set_value_labels(high_accult = c("High"=1, "Low"=0)) %>% 
-  modify_if(is.labelled, to_factor) %>% 
-  modify_header(label = "**Variable**") %>%
-  add_overall() %>% 
-  add_stat_label(location = "row") %>%
-  modify_spanning_header(c("stat_1","stat_2") ~ "**Acculturation Level**") %>%
-  modify_spanning_header(starts_with("stat_") ~ "Table 1") %>% 
-  bold_labels() 
+#---- **save output ----
+writexl::write_xlsx(gtsummary::as_tibble(ADAMS_table), path = paste0(
+  path_to_box, "tables/chapter_3/table3.2_ADAMS_characteristics.xlsx"))
 
 #---- in-text analyses ----
 #---- **% in "Other" category ----
