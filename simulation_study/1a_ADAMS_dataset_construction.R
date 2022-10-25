@@ -631,6 +631,30 @@ ADAMS[409, c(bmi_vars, weight_vars)] <- NA
 # lapply(ADAMS[, drinkn_vars], FUN = which.max)
 # ADAMS[651, c(drinkd_vars, drinkn_vars)]
 
+#---- **alcohol consumption ----
+ADAMS %<>% mutate("Adrinks_per_week" = Adrinkn*Adrinkd)
+
+ADAMS %<>% 
+    mutate("Adrink_cat" = 
+             case_when(Adrinks_per_week == 0 ~ 1,
+                       Female == 0 & 
+                         (Adrinks_per_week >= 1 & Adrinks_per_week < 14) ~ 2,
+                       Female == 1 &
+                         (Adrinks_per_week >= 1 & Adrinks_per_week < 7) ~ 2,
+                       Female == 0 &
+                         (Adrinks_per_week >= 14 | Adrinkn >= 4) ~ 3,
+                       Female == 1 &
+                         (Adrinks_per_week >= 7 | Adrinkn >= 3) ~ 3)) %>% 
+    mutate("Adrink_cat_label" = 
+             case_when(Adrink_cat == 1 ~ "No Drinking", 
+                       Adrink_cat == 2 ~ "Moderate Drinking", 
+                       Adrink_cat == 3 ~ "Heavy Drinking")) %>% 
+    mutate("Ano_drinking" = ifelse(Adrink_cat_label == "No Drinking", 1, 0), 
+           "Amoderate_drinking" = 
+             ifelse(Adrink_cat_label == "Moderate Drinking", 1, 0), 
+           "Aheavy_drinking" = 
+             ifelse(Adrink_cat_label == "Heavy Drinking", 1, 0))
+  
 #---- save datasets ----
 #clean data
 ADAMS %>% write_csv(paste0(path_to_box, "data/ADAMS/cleaned/ADAMS_clean.csv"))
