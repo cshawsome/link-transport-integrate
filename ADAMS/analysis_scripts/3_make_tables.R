@@ -94,7 +94,7 @@ ADAMS_table <- ADAMS %>%
   #Renaming the header
   gtsummary::modify_header(label = "Variable") %>%
   
-  #Adding in percents
+  #Adding an overall column
   gtsummary::add_overall() %>%
   
   #Moving labels from the bottom to next to each of the variables
