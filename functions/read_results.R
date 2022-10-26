@@ -35,18 +35,20 @@ read_results <- function(path, skip = 0){
       na.omit() 
     
     if(str_detect(unique(data$dataset_name), "ADAMS_prior")){
-      data %<>% mutate("dataset_name" = paste0(dataset_name, "_NA"))
+      data %<>% mutate("dataset_name" = paste0(dataset_name, "_NA_NA"))
     }
     
     data %<>% 
       separate(dataset_name, 
                into = c("HRS_text", "sample_size", "sample_text", "HCAP_prop", 
-                        "calibration1", "calibration2", "calibration_sampling"), 
+                        "calibration1", "calibration2", "calibration_sampling", 
+                        "sampling_strata"), 
                sep = "_", remove = FALSE) %>% 
       dplyr::select(-one_of("HRS_text", "sample_text")) %>%
       unite("calibration", c("calibration1", "calibration2")) %>%
       mutate_at(vars(-one_of("time", "dataset_name", "calibration", 
-                             "calibration_sampling")), as.numeric)
+                             "calibration_sampling", "sampling_strata")), 
+                as.numeric)
     #}
     
     return(data)
