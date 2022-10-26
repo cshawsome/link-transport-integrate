@@ -100,9 +100,6 @@ ADAMS_table <- ADAMS %>%
   #Moving labels from the bottom to next to each of the variables
   gtsummary::add_stat_label(location = "row") %>%
   
-  # #bolding the variables
-  # gtsummary::bold_labels() %>%
-  
   #setting as a tibble so that it can be output to excel
   gtsummary::as_tibble()
 
