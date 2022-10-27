@@ -38,6 +38,11 @@ read_results <- function(path, skip = 0){
       data %<>% mutate("dataset_name" = paste0(dataset_name, "_NA_NA"))
     }
     
+    if(str_detect(unique(data$dataset_name), "SRS") & 
+       !str_detect(unique(data$dataset_name), "race")){
+      data %<>% mutate("dataset_name" = paste0(dataset_name, "_NA"))
+    }
+    
     data %<>% 
       separate(dataset_name, 
                into = c("HRS_text", "sample_size", "sample_text", "HCAP_prop", 
