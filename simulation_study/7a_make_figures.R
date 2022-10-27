@@ -9,61 +9,8 @@ install_github("thomasp85/patchwork")
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
 
-#---- Figure X: comparing real HRS with synthetic HRS ----
-#---- **read in data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-
-#---- **variable labels ----
-variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
-
-#---- **color palette ----
-color_palette <- read_csv(here("color_palette.csv"))
-
-#---- ****ADAMS imputed data ----
-ADAMS_imputed_clean <- 
-  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned"))
-
-#stack data and rename variables
-ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
-  rename_at(vars(variable_labels$ADAMS), ~ variable_labels$data_label)
-
-#---- **ADAMS plots ----
-plot_data <- ADAMS_imputed_stacked[1:nrow(ADAMS_imputed_clean[[1]]), ] %>% 
-  dplyr::select(c(all_of(continuous_vars), 
-                  "Unimpaired", "MCI", "Dementia", "Other")) %>% 
-  pivot_longer(cols = c("Unimpaired", "MCI", "Dementia", "Other"), 
-               names_to = "Group") %>% filter(value == 1) %>% 
-  rename_at(vars(plot_labels$data_label), ~ plot_labels$figure_label) %>% 
-  dplyr::select(-c("value")) %>% 
-  pivot_longer(-c("Group"), names_to = "Variable") %>% 
-  left_join(color_palette) %>% 
-  mutate("order" = case_when(Group == "Unimpaired" ~ 1, 
-                             Group == "MCI" ~ 2, 
-                             Group == "Dementia" ~ 3, 
-                             Group == "Other" ~ 4))
-
-plot_data$Color <- reorder(plot_data$Color, plot_data$order)
-plot_data$Group <- reorder(plot_data$Group, plot_data$order)
-
-ggplot(data = plot_data, aes(x = value, color = Color, fill = Color)) + 
-  geom_density(alpha = 0.5) + theme_minimal() + 
-  theme(text = element_text(size = 10)) + 
-  scale_color_identity(guide = "legend", labels = levels(plot_data$Group)) + 
-  scale_fill_identity(guide = "legend", labels = levels(plot_data$Group)) +
-  theme(legend.position = "bottom") + xlab("") + 
-  facet_wrap(vars(Variable), scales = "free", ncol = 4) +
-  guides(fill = guide_legend(title = "Group")) +
-  guides(color = guide_legend(title = "Group"))
-
-ggsave(filename = "ADAMS_mix_Z.jpeg", plot = last_plot(), 
-       path = paste0(path_to_box, "figures/simulation_study/"), 
-       width = 8, height = 10, units = "in", device = "jpeg")
-
 #---- check number of simulation runs ----
-#Missing runs:
-# n = 2000, sample = 25, calibration_50_SRS: 526
-# n = 2000, sample = 50, calibration_50_SRS: 21
-# n = 4000, sample = 25, calibration 50 SRS: 6
+#Number of missing runs noted in simulation study log
 
 #---- **read in data ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
@@ -77,8 +24,19 @@ results <- do.call(rbind, lapply(results_paths, read_results)) %>%
 
 table(results$dataset_name, useNA = "ifany")
 
-#---- Figure X: mean and 95% CI impairment class counts ----
-#---- **truth ----
+#---- Figure 4.XX + 5.XX: mean and 95% CI impairment class counts ----
+#---- **read in data ----
+#---- ****results ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+results_paths <- 
+  list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
+             full.names = TRUE, pattern = "*.csv")
+
+results <- do.call(rbind, lapply(results_paths, read_results)) %>% 
+  group_by(dataset_name) %>% slice_head(n = 1000)
+
+#---- ****truth ----
 superpop_impairment_props <- 
   read_csv(paste0(path_to_box, 
                   "data/superpopulations/impairment_class_props.csv"))
@@ -86,8 +44,8 @@ superpop_impairment_props$Group <-
   factor(superpop_impairment_props$Group, 
          levels = c("Unimpaired", "MCI", "Dementia", "Other"))
 
-#---- **color palette ----
-color_palette <- read_csv(here("color_palette.csv"))
+#---- ****color palette ----
+color_palette <- read_csv(here::here("color_palette.csv"))
 
 group_colors <- color_palette$Color
 names(group_colors) <- color_palette$Group
@@ -108,7 +66,8 @@ results %<>%
            as.numeric(superpop_impairment_props[
              superpop_impairment_props$Group == "Other", "prop"]))
 
-results %<>% mutate(sample_size = HCAP_prop/100*sample_size)
+results %<>% mutate("HRS_sample_size" = sample_size)
+results %<>% mutate("sample_size" = HCAP_prop/100*sample_size)
 
 results %<>% 
   mutate(mean_Unimpaired_prop = mean_Unimpaired/sample_size, 
@@ -125,7 +84,8 @@ results %<>%
          UCI_Other_prop = UCI_Other/sample_size)
 
 plot_data <- results %>% 
-  group_by(calibration, calibration_sampling, HCAP_prop, sample_size) %>% 
+  group_by(calibration, calibration_sampling, sampling_strata, HCAP_prop, 
+           sample_size, HRS_sample_size) %>% 
   summarise_at(paste0(
     c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other", 
       "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other", 
@@ -137,84 +97,120 @@ plot_data <- results %>%
       "UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other"), "_prop"),
     names_to = c(".value", "Group"), names_pattern = "(.*?)_(.*)") %>% 
   mutate_at("Group", function(x) str_remove(x, "_prop")) %>% 
-  mutate_at("sample_size", as.factor) %>% 
+  mutate_at("HRS_sample_size", as.factor) %>% 
   mutate_at("Group", function(x) 
     factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
   mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ 
-                                   "Sample Proportion\n25% of HRS", 
+                                   "HCAP Proportion\n25% of HRS", 
                                  HCAP_prop == 50 ~ 
-                                   "Sample Proportion\n50% of HRS")) %>% 
-  mutate("calibration_sampling" = 
+                                   "HCAP Proportion\n50% of HRS")) %>% 
+  mutate("prior_sample" = 
            case_when(calibration_sampling == "NA" ~ "ADAMS", 
                      calibration_sampling == "SRS" & 
-                       calibration == "calibration_50" ~ 
-                       "HCAP 50% SRS Adjudication"))
+                       calibration == "calibration_50" & 
+                       sampling_strata == "NA" ~ 
+                       "HCAP 50% SRS Adjudication",
+                     calibration_sampling == "SRS" & 
+                       calibration == "calibration_50" & 
+                       sampling_strata == "race" ~ 
+                       "HCAP 50% Race-stratified SRS Adjudication",
+                     calibration_sampling == "SRS" & 
+                       calibration == "calibration_35" & 
+                       sampling_strata == "NA" ~ 
+                       "HCAP 35% SRS Adjudication", 
+                     calibration_sampling == "SRS" & 
+                       calibration == "calibration_35" & 
+                       sampling_strata == "race" ~ 
+                       "HCAP 35% Race-stratified SRS Adjudication"))
 
-#---- **plot v1: no HCAP calibration ----
-ggplot(data = plot_data %>% filter(calibration == "no_calibration"), 
-       aes(x = mean, y = sample_size)) +
+#---- **plot Figure 4.XX: no HCAP calibration ----
+ggplot(data = plot_data %>% filter(calibration == "ADAMS_prior"), 
+       aes(x = mean, y = factor(HRS_sample_size))) +
   geom_vline(data = superpop_impairment_props, aes(xintercept = prop), 
-             size = 2, color = rep(color_palette$Color, 2)) +
-  geom_point(size = 3) + 
+             size = 2) +
+  #, color = rep(color_palette$Color, 2)) +
+  geom_point(size = 4, shape = 1) + 
   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.3, size = 1) + theme_bw() + 
   facet_grid(cols = vars(Group), rows = vars(HCAP_prop), scales = "free_y") + 
   scale_x_continuous(breaks = seq(0.10, 0.40, by = 0.05)) +
-  xlab("Impairment class proportion") + ylab("HCAP sample size") + 
+  xlab("Impairment class proportion") + ylab("HRS sample size") + 
   theme(text = element_text(size = 24))  
 
-ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "mean_CI_impairement_class_no_HCAP_adjudication.jpeg"), 
+ggsave(filename = 
+         paste0(path_to_box, "figures/chapter_4/simulation_study/", 
+                "figure4.XX_mean_CI_impairement_class_no_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 14.75, height = 6.5, units = "in")
 
-#---- **plot v2: HCAP calibration ----
+#---- **plot Figure 5.XX: HCAP calibration ----
 #add data for 100% adjudication
 HCAP_all_adjudicated <- results %>% ungroup() %>%
   dplyr::select(c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other", 
-                  "sample_size", "HCAP_prop")) %>% 
-  group_by(HCAP_prop, sample_size) %>% 
+                  "sample_size", "HRS_sample_size", "HCAP_prop")) %>% 
+  group_by(HCAP_prop, sample_size, HRS_sample_size) %>% 
   summarise_at(c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other"), 
                mean) %>% 
   pivot_longer(c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other"), 
                names_to = "Group", values_to = "mean") %>% 
   mutate_at("Group", function(x) str_remove(x, "true_")) %>% 
   mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ 
-                                   "Sample Proportion\n25% of HRS", 
+                                   "HCAP Proportion\n25% of HRS", 
                                  HCAP_prop == 50 ~ 
-                                   "Sample Proportion\n50% of HRS")) %>% 
+                                   "HCAP Proportion\n50% of HRS")) %>% 
   mutate(mean = mean/sample_size) %>%
   mutate("calibration" = "calibration_100", 
-         "calibration_sampling" = "HCAP 100% Adjudication",
-         "LCI" = NA, "UCI" = NA) %>% mutate_at("sample_size", as.factor)
+         "prior_sample" = "HCAP 100% Adjudication",
+         "LCI" = NA, "UCI" = NA) %>% mutate_at("HRS_sample_size", as.factor)
 
 plot_data %<>% rbind(., HCAP_all_adjudicated)
-plot_data$calibration_sampling <- 
-  factor(plot_data$calibration_sampling, 
+plot_data$prior_sample <- 
+  factor(plot_data$prior_sample, 
          levels = c("HCAP 100% Adjudication", "ADAMS", 
-                    "HCAP 50% SRS Adjudication"))
+                    "HCAP 35% SRS Adjudication", "HCAP 50% SRS Adjudication", 
+                    "HCAP 35% Race-stratified SRS Adjudication", 
+                    "HCAP 50% Race-stratified SRS Adjudication"))
 plot_data$Group <- 
   factor(plot_data$Group, levels = c("Unimpaired", "MCI", "Dementia", "Other"))
 
 ggplot(data = plot_data, 
-       aes(x = mean, y = sample_size, shape = calibration_sampling)) +
+       aes(x = mean, y = HRS_sample_size, color = prior_sample, 
+           shape = prior_sample)) +
   geom_vline(data = superpop_impairment_props, aes(xintercept = prop), 
-             size = 2, color = rep(color_palette$Color, 2)) +
-  geom_point(size = 4, position = position_dodge(-0.6)) + 
-  scale_shape_manual(values = c(18, 1, 19)) + 
+             size = 1.5) +
+  geom_point(size = 3, position = position_dodge(-0.75)) + 
+  scale_shape_manual(values = c(15, 1, rep(19, 4))) +
+  scale_color_manual(values = c("#fbb040", "black", 
+                                "#288fb4", "#1d556f", 
+                                "#f35f5f", "#cc435f")) + 
   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
-                position = position_dodge(-0.6)) + theme_bw() + 
+                position = position_dodge(-0.75)) + theme_bw() + 
   facet_grid(cols = vars(Group), rows = vars(HCAP_prop), scales = "free_y") + 
   scale_x_continuous(breaks = seq(0.00, 0.70, by = 0.10)) +
-  xlab("Impairment class proportion") + ylab("HCAP sample size") + 
+  xlab("Impairment class proportion") + ylab("HRS sample size") + 
   theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Adjudicated Sample for Prior"))
+  guides(shape = guide_legend(title = "Adjudicated Sample\nfor Prior", 
+                              nrow = 3, byrow = TRUE), 
+         color = guide_legend(title = "Adjudicated Sample\nfor Prior"), 
+         nrow = 3, byrow = TRUE)
 
-ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "mean_CI_impairement_class_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 14.75, height = 6.5, units = "in")
+ggsave(filename = 
+         paste0(path_to_box, "figures/chapter_5/simulation_study/", 
+                "figure5.XX_mean_CI_impairement_class_HCAP_adjudication.jpeg"), 
+       dpi = 300, width = 15.25, height = 8, units = "in")
 
-#---- Figure X: 95% CI coverage impairment classes ----
-#---- **color palette ----
-color_palette <- read_csv(here("color_palette.csv"))
+#---- Figure 4.XX + 5.XX: 95% CI coverage impairment classes ----
+#---- **read in data ----
+#---- ****results ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+results_paths <- 
+  list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
+             full.names = TRUE, pattern = "*.csv")
+
+results <- do.call(rbind, lapply(results_paths, read_results)) %>% 
+  group_by(dataset_name) %>% slice_head(n = 1000)
+
+#---- ****color palette ----
+color_palette <- read_csv(here::here("color_palette.csv"))
 
 group_colors <- color_palette$Color
 names(group_colors) <- color_palette$Group
@@ -779,7 +775,7 @@ ggplot(data = plot_data,
   xlab("Prevalence Ratio (PR)") + ylab("HRS sample size") + 
   guides(shape = guide_legend(title = "Adjudicated Sample for Prior")) + 
   theme(text = element_text(size = 24), legend.position = "bottom") 
-  
+
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
                          "mean_CI_PR_HCAP_adjudication.jpeg"), dpi = 300, 
        width = 13.5, height = 7.25, units = "in")
@@ -839,3 +835,55 @@ ggplot(data = plot_data, aes(x = sample_size, y = PR, group = Comparison)) +
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
                          "PR_coverage_HCAP_adjudiation.jpeg"), dpi = 300, 
        width = 13.25, height = 7.25, units = "in")
+
+#---- OLD ----
+#---- Figure X: comparing real HRS with synthetic HRS ----
+#---- **read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+#---- **variable labels ----
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
+
+#---- **color palette ----
+color_palette <- read_csv(here("color_palette.csv"))
+
+#---- ****ADAMS imputed data ----
+ADAMS_imputed_clean <- 
+  readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/MI_datasets_cleaned"))
+
+#stack data and rename variables
+ADAMS_imputed_stacked <- do.call(rbind, ADAMS_imputed_clean) %>% 
+  rename_at(vars(variable_labels$ADAMS), ~ variable_labels$data_label)
+
+#---- **ADAMS plots ----
+plot_data <- ADAMS_imputed_stacked[1:nrow(ADAMS_imputed_clean[[1]]), ] %>% 
+  dplyr::select(c(all_of(continuous_vars), 
+                  "Unimpaired", "MCI", "Dementia", "Other")) %>% 
+  pivot_longer(cols = c("Unimpaired", "MCI", "Dementia", "Other"), 
+               names_to = "Group") %>% filter(value == 1) %>% 
+  rename_at(vars(plot_labels$data_label), ~ plot_labels$figure_label) %>% 
+  dplyr::select(-c("value")) %>% 
+  pivot_longer(-c("Group"), names_to = "Variable") %>% 
+  left_join(color_palette) %>% 
+  mutate("order" = case_when(Group == "Unimpaired" ~ 1, 
+                             Group == "MCI" ~ 2, 
+                             Group == "Dementia" ~ 3, 
+                             Group == "Other" ~ 4))
+
+plot_data$Color <- reorder(plot_data$Color, plot_data$order)
+plot_data$Group <- reorder(plot_data$Group, plot_data$order)
+
+ggplot(data = plot_data, aes(x = value, color = Color, fill = Color)) + 
+  geom_density(alpha = 0.5) + theme_minimal() + 
+  theme(text = element_text(size = 10)) + 
+  scale_color_identity(guide = "legend", labels = levels(plot_data$Group)) + 
+  scale_fill_identity(guide = "legend", labels = levels(plot_data$Group)) +
+  theme(legend.position = "bottom") + xlab("") + 
+  facet_wrap(vars(Variable), scales = "free", ncol = 4) +
+  guides(fill = guide_legend(title = "Group")) +
+  guides(color = guide_legend(title = "Group"))
+
+ggsave(filename = "ADAMS_mix_Z.jpeg", plot = last_plot(), 
+       path = paste0(path_to_box, "figures/simulation_study/"), 
+       width = 8, height = 10, units = "in", device = "jpeg")
+
