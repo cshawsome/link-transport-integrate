@@ -24,7 +24,7 @@ results <- do.call(rbind, lapply(results_paths, read_results)) %>%
 
 table(results$dataset_name, useNA = "ifany")
 
-#---- Figure 4.XX + 5.XX: mean and 95% CI impairment class counts ----
+#---- Figure 4.XX + 5.XX: mean and 95% CI impairment class proportions ----
 #---- **read in data ----
 #---- ****results ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
