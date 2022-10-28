@@ -683,6 +683,41 @@ posterior_predictive_checks <-
       group_by(chain, sample) %>%
       mutate_at("sample", as.numeric) 
     
+    # #test variance estimates for Unimpaired
+    # Unimpaired <- synthetic_dementia_plot_data %>% filter(Group == "Unimpaired")
+    # mean(Unimpaired$n)
+    # quantile(Unimpaired$n, probs = 0.025)
+    # quantile(Unimpaired$n, probs = 0.975)
+    # plotrix::std.error(Unimpaired$n)
+    # sd(Unimpaired$n)
+    # 
+    # within_var <- synthetic_sample %>% filter(p_unimpaired != 0) %>%
+    #   group_by(sample) %>%
+    #   summarize_at(c("p_unimpaired", "p_mci", "p_dementia", "p_other"),
+    #                function(x) sum(x*(1-x))) %>% colMeans()
+    # 
+    # between_var = var(Unimpaired$n)
+    # 
+    # var_total <- within_var["p_unimpaired"] + between_var + between_var/1000
+    # 
+    # #old intervals
+    # mean(Unimpaired$n)
+    # mean(Unimpaired$n) - 1.96*sd(Unimpaired$n)
+    # mean(Unimpaired$n) + 1.96*sd(Unimpaired$n)
+    # 
+    # mean(Unimpaired$n)/sum(dementia_plot_data$truth)
+    # (mean(Unimpaired$n) - 1.96*sd(Unimpaired$n))/sum(dementia_plot_data$truth)
+    # (mean(Unimpaired$n) + 1.96*sd(Unimpaired$n))/sum(dementia_plot_data$truth)
+    # 
+    # #new intervals
+    # mean(Unimpaired$n)
+    # mean(Unimpaired$n) - 1.96*sqrt(var_total)
+    # mean(Unimpaired$n) + 1.96*sqrt(var_total)
+    # 
+    # mean(Unimpaired$n)/sum(dementia_plot_data$truth)
+    # (mean(Unimpaired$n) - 1.96*sqrt(var_total))/sum(dementia_plot_data$truth)
+    # (mean(Unimpaired$n) + 1.96*sqrt(var_total))/sum(dementia_plot_data$truth)
+    
     #---- **combined plot ----
     combined_plot_data <- synthetic_dementia_plot_data %>% ungroup() %>% 
       group_by(chain, Group) %>% 
@@ -692,6 +727,9 @@ posterior_predictive_checks <-
       left_join(dementia_plot_data, by = "Group") %>% 
       left_join(color_palette, by = "Group") %>%
       mutate("chain" = paste0("Chain ", chain))
+    
+    combined_plot_data[, c("mean", "lower", "upper", "truth")] <- 
+      combined_plot_data[, c("mean", "lower", "upper", "truth")]/4000
     
     combined_plot_data$Group <- 
       factor(combined_plot_data$Group, 
@@ -764,7 +802,7 @@ posterior_predictive_checks <-
   }
 
 # #---- test function ----
-# dataset_to_copy = synthetic_HCAP_list[[1]]
+# dataset_to_copy = synthetic_HCAP_list[[6]]
 # calibration_sample = TRUE
 # calibration_prop =
 #   as.numeric(str_remove(calibration_scenario, "HCAP_"))/100
