@@ -59,7 +59,7 @@ sds <-
 #calibration scenario options: "ADAMS_prior", 
 # "calibration_20_SRS", "calibration_35_SRS", "calibration_50_SRS",
 # "calibration_20_SRS_race", "calibration_35_SRS_race", "calibration_50_SRS_race"
-calibration_scenario = "calibration_35_SRS_race" 
+calibration_scenario = "calibration_50_SRS" 
 
 #HCAP sample prop options: 0.25, 0.50
 HCAP_sample_prop = 0.50
@@ -86,37 +86,37 @@ dataset_names <-
 #---- **specify indices ----
 indices <-
   which(dataset_names %in% 
-          paste0("HRS_", c(2000, 4000, 8000), "_sample_", HCAP_sample_prop*100, 
+          paste0("HRS_", c(8000), "_sample_", HCAP_sample_prop*100, 
                  "_", calibration_scenario))
 
-# #---- generate datasets in serial ----
-# set.seed(20220925)
-# start <- Sys.time()
-# 
-# lapply(synthetic_HCAP_list[indices], function(x)
-#   generate_synthetic(warm_up = 100, run_number = 1, 
-#                      starting_props = c(0.25, 0.25, 0.25, 0.25),
-#                      dataset_to_copy = x, orig_means = means, orig_sds = sds, 
-#                      calibration_sample = 
-#                        !(calibration_scenario == "ADAMS_prior"), 
-#                      calibration_prop = 
-#                        suppressWarnings(parse_number(calibration_scenario)/100), 
-#                      calibration_sample_name = calibration_scenario,
-#                      path_to_data = paste0(path_to_box,"data/"), 
-#                      path_to_analyses_folder = 
-#                        paste0(path_to_box, "analyses/simulation_study/HCAP_", 
-#                               unique(x[, "dataset_name_stem"]), "/"), 
-#                      path_to_figures_folder = 
-#                        paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-#                               "HCAP_", unique(x[, "dataset_name_stem"]), "/"), 
-#                      categorical_vars = W, continuous_vars = Z, 
-#                      id_var = "HHIDPN", variable_labels = variable_labels, 
-#                      cell_ID_key = cell_ID_key, color_palette = color_palette, 
-#                      contrasts_matrix = A, kappa_0_mat = kappa_0_mat, 
-#                      nu_0_mat = nu_0_mat, num_synthetic = 1000, 
-#                      data_only = FALSE))
-# 
-# end <- Sys.time() - start
+#---- generate datasets in serial ----
+set.seed(20220925)
+start <- Sys.time()
+
+lapply(synthetic_HCAP_list[indices], function(x)
+  generate_synthetic(warm_up = 100, run_number = 1,
+                     starting_props = c(0.25, 0.25, 0.25, 0.25),
+                     dataset_to_copy = x, orig_means = means, orig_sds = sds,
+                     calibration_sample =
+                       !(calibration_scenario == "ADAMS_prior"),
+                     calibration_prop =
+                       suppressWarnings(parse_number(calibration_scenario)/100),
+                     calibration_sample_name = calibration_scenario,
+                     path_to_data = paste0(path_to_box,"data/"),
+                     path_to_analyses_folder =
+                       paste0(path_to_box, "analyses/simulation_study/HCAP_",
+                              unique(x[, "dataset_name_stem"]), "/"),
+                     path_to_figures_folder =
+                       paste0(path_to_box, "figures/chapter_4/simulation_study/",
+                              "HCAP_", unique(x[, "dataset_name_stem"]), "/"),
+                     categorical_vars = W, continuous_vars = Z,
+                     id_var = "HHIDPN", variable_labels = variable_labels,
+                     cell_ID_key = cell_ID_key, color_palette = color_palette,
+                     contrasts_matrix = A, kappa_0_mat = kappa_0_mat,
+                     nu_0_mat = nu_0_mat, num_synthetic = 1000,
+                     data_only = FALSE))
+
+end <- Sys.time() - start
 
 #---- generate datasets in parallel ----
 set.seed(20220925)
