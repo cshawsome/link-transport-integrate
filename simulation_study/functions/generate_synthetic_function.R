@@ -58,6 +58,10 @@ generate_synthetic <-
       } 
     }
     
+    #pre-allocate predicted impairment columns
+    dataset_to_copy %<>% 
+      mutate("p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, "p_dementia" = 0)
+    
     #---- set prior distributions ----
     if(!calibration_sample){
       #---- **latent classes ----
@@ -212,9 +216,7 @@ generate_synthetic <-
     for(b in 1:B){
       #---- start over at each run with dataset we wish to copy ----
       synthetic_sample <- dataset_to_copy %>%
-        dplyr::select("HHIDPN", all_of(vars)) %>%
-        #pre-allocate columns
-        mutate("p_unimpaired" = 0, "p_other" = 0, "p_mci" = 0, "p_dementia" = 0)
+        dplyr::select("HHIDPN", all_of(vars)) 
       
       #---- **split sample ----
       if(calibration_sample & !calibration_sample_name == "calibration_100"){
@@ -737,8 +739,7 @@ generate_synthetic <-
       #---- ****save synthetic sample ----
       if(b > warm_up){
         synthetic_sample %<>% 
-          dplyr::select(-one_of(c("p_unimpaired", "p_other", "p_mci", 
-                                  "p_dementia", "Group")))
+          dplyr::select(-one_of("Group"))
         
         if(!exists("dataset_list")){
           dataset_list <- list()
@@ -1019,7 +1020,7 @@ generate_synthetic <-
 # warm_up = 100
 # run_number = 1
 # starting_props = c(0.25, 0.25, 0.25, 0.25)
-# dataset_to_copy = synthetic_HCAP_list[[4]]
+# dataset_to_copy = synthetic_HCAP_list[[6]]
 # orig_means = means
 # orig_sds = sds
 # calibration_sample = !(calibration_scenario == "ADAMS_prior")
