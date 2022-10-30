@@ -406,15 +406,15 @@ ggplot(data = plot_data, aes(x = sample_size, y = value, group = prior_sample,
   theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
   facet_grid(rows = vars(HCAP_prop), cols = vars(class)) + 
   theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Adjudicated Sample\nfor Prior", 
-                              nrow = 3, byrow = FALSE), 
-         color = guide_legend(title = "Adjudicated Sample\nfor Prior"), 
-         nrow = 3, byrow = TRUE)
+  guides(shape = guide_legend(title = "Adjudicated\nPrior\nSample", 
+                              nrow = 5, byrow = FALSE), 
+         color = guide_legend(title = "Adjudicated\nPrior\nSample"), 
+         nrow = 5, byrow = FALSE)
 
 ggsave(filename = 
          paste0(path_to_box, "figures/chapter_5/simulation_study/", 
                 "figure5.XX_impairement_class_coverage_HCAP_adjudication.jpeg"), 
-       dpi = 300, height = 7.25, width = 14, units = "in")
+       dpi = 300, height = 7.5, width = 17, units = "in")
 
 #----- Figure 4.XXa + 5.XXa: bias impairment class props ----
 #---- **read in data ----
