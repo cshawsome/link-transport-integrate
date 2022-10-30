@@ -17,8 +17,11 @@ results_paths <-
              full.names = TRUE, pattern = "*.csv")
 
 results <- do.call(rbind, lapply(results_paths, read_results)) %>% 
-  group_by(dataset_name) %>% slice_head(n = 1000)
-
+  group_by(dataset_name) %>% slice_head(n = 1000) %>% 
+  mutate("HRS_sample_size" = sample_size) %>% 
+  mutate("HCAP_sample_size" = HCAP_prop/100*HRS_sample_size) %>% 
+  dplyr::select(-one_of("sample_size"))
+  
 #---- check number of simulation runs ----
 #Number of missing runs noted in simulation study log
 table(results$dataset_name, useNA = "ifany")
@@ -46,12 +49,14 @@ results %<>%
 
 #---- **combined scenario ----
 ADAMS_results <- results %>% filter(prior_sample == "ADAMS") %>% 
-  dplyr::select("dataset_name", "prior_sample", "sample_size", "HCAP_prop", 
+  dplyr::select("dataset_name", "prior_sample", "HRS_sample_size", 
+                "HCAP_sample_size", "HCAP_prop", 
                 paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other")), 
                 paste0("LCI_", c("Unimpaired", "MCI", "Dementia", "Other")), 
                 paste0("UCI_", c("Unimpaired", "MCI", "Dementia", "Other"))) %>%
   set_colnames(c(
-    "dataset_name", "prior_sample", "sample_size", "HCAP_prop", 
+    "dataset_name", "prior_sample", "HRS_sample_size", "HCAP_sample_size", 
+    "HCAP_prop", 
     paste0("ADAMS_mean_", c("Unimpaired", "MCI", "Dementia", "Other")), 
     paste0("ADAMS_LCI_", c("Unimpaired", "MCI", "Dementia", "Other")), 
     paste0("ADAMS_UCI_", c("Unimpaired", "MCI", "Dementia", "Other")))) %>% 
@@ -92,12 +97,12 @@ combined_results[, c(paste0("ADAMS_mean_",
 #fill in matching ADAMS data (like a cbind but making sure correct rows are 
 # matched)
 for(prior_group in unique(combined_results$prior_sample)){
-  for(HRS_n in unique(combined_results$sample_size)){
+  for(HRS_n in unique(combined_results$HRS_sample_size)){
     for(sample_prop in unique(combined_results$HCAP_prop)){
       
       rows <- 
         which(combined_results$prior_sample == prior_group & 
-                combined_results$sample_size == HRS_n & 
+                combined_results$HRS_sample_size == HRS_n & 
                 combined_results$HCAP_prop == sample_prop)
       
       combined_results[
@@ -161,21 +166,23 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
                 !!sym(paste0("combined_UCI_", class))))
 }
 
-#---- ****select relevant rows ----
+#---- ****select relevant columns ----
 combined_results %<>% 
-  dplyr::select("dataset_name", "sample_size", "HCAP_prop", 
-                "prior_sample", 
+  dplyr::select("dataset_name", "HRS_sample_size", "HCAP_sample_size", 
+                "HCAP_prop", "prior_sample", 
+                paste0("true_", c("Unimpaired", "MCI", "Dementia", "Other")),
                 paste0("combined_mean_", 
-                       c("Unimpaired", "MCI", "Dementia", "Other")), 
+                       c("Unimpaired", "MCI", "Dementia", "Other")),
                 paste0("combined_LCI_", 
                        c("Unimpaired", "MCI", "Dementia", "Other")), 
                 paste0("combined_UCI_", 
                        c("Unimpaired", "MCI", "Dementia", "Other")), 
                 paste0("combined_", c("Unimpaired", "MCI", "Dementia", "Other"), 
                        "_coverage")) %>% 
-  set_colnames(c("dataset_name", "sample_size", "HCAP_prop", 
-                 "prior_sample", 
-                 paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other")), 
+  set_colnames(c("dataset_name", "HRS_sample_size", "HCAP_sample_size", 
+                 "HCAP_prop", "prior_sample", 
+                 paste0("true_", c("Unimpaired", "MCI", "Dementia", "Other")),
+                 paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other")),
                  paste0("LCI_", c("Unimpaired", "MCI", "Dementia", "Other")), 
                  paste0("UCI_", c("Unimpaired", "MCI", "Dementia", "Other")), 
                  paste0(c("Unimpaired", "MCI", "Dementia", "Other"), 
@@ -216,25 +223,22 @@ results %<>%
            as.numeric(superpop_impairment_props[
              superpop_impairment_props$Group == "Other", "prop"]))
 
-results %<>% mutate("HRS_sample_size" = sample_size)
-results %<>% mutate("sample_size" = HCAP_prop/100*sample_size)
-
 results %<>% 
-  mutate(mean_Unimpaired_prop = mean_Unimpaired/sample_size, 
-         mean_MCI_prop = mean_MCI/sample_size, 
-         mean_Dementia_prop = mean_Dementia/sample_size, 
-         mean_Other_prop = mean_Other/sample_size) %>% 
-  mutate(LCI_Unimpaired_prop = LCI_Unimpaired/sample_size, 
-         LCI_MCI_prop = LCI_MCI/sample_size, 
-         LCI_Dementia_prop = LCI_Dementia/sample_size, 
-         LCI_Other_prop = LCI_Other/sample_size) %>%
-  mutate(UCI_Unimpaired_prop = UCI_Unimpaired/sample_size, 
-         UCI_MCI_prop = UCI_MCI/sample_size, 
-         UCI_Dementia_prop = UCI_Dementia/sample_size, 
-         UCI_Other_prop = UCI_Other/sample_size)
+  mutate(mean_Unimpaired_prop = mean_Unimpaired/HCAP_sample_size, 
+         mean_MCI_prop = mean_MCI/HCAP_sample_size, 
+         mean_Dementia_prop = mean_Dementia/HCAP_sample_size, 
+         mean_Other_prop = mean_Other/HCAP_sample_size) %>% 
+  mutate(LCI_Unimpaired_prop = LCI_Unimpaired/HCAP_sample_size, 
+         LCI_MCI_prop = LCI_MCI/HCAP_sample_size, 
+         LCI_Dementia_prop = LCI_Dementia/HCAP_sample_size, 
+         LCI_Other_prop = LCI_Other/HCAP_sample_size) %>%
+  mutate(UCI_Unimpaired_prop = UCI_Unimpaired/HCAP_sample_size, 
+         UCI_MCI_prop = UCI_MCI/HCAP_sample_size, 
+         UCI_Dementia_prop = UCI_Dementia/HCAP_sample_size, 
+         UCI_Other_prop = UCI_Other/HCAP_sample_size)
 
 plot_data <- results %>% 
-  group_by(prior_sample, HCAP_prop, sample_size, HRS_sample_size) %>% 
+  group_by(prior_sample, HCAP_prop, HCAP_sample_size, HRS_sample_size) %>% 
   summarise_at(paste0(
     c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other", 
       "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other", 
@@ -254,12 +258,11 @@ plot_data <- results %>%
                                  HCAP_prop == 50 ~ 
                                    "HCAP Proportion\n50% of HRS"))
 
-#---- **plot Figure 4.XX: no HCAP calibration ----
+#---- **plot 4.XX: no HCAP calibration ----
 ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
        aes(x = mean, y = factor(HRS_sample_size))) +
   geom_vline(data = superpop_impairment_props, aes(xintercept = prop), 
-             size = 2) +
-  #, color = rep(color_palette$Color, 2)) +
+             size = 2, color = rep(color_palette$Color, 2)) +
   geom_point(size = 4, shape = 1) + 
   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.3, size = 1) + theme_bw() + 
   facet_grid(cols = vars(Group), rows = vars(HCAP_prop), scales = "free_y") + 
@@ -272,12 +275,12 @@ ggsave(filename =
                 "figure4.XX_mean_CI_impairement_class_no_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 14.75, height = 6.5, units = "in")
 
-#---- **plot Figure 5.XX: HCAP calibration ----
+#---- **plot 5.XX: HCAP calibration ----
 #add data for 100% adjudication
 HCAP_all_adjudicated <- results %>% ungroup() %>%
   dplyr::select(c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other", 
-                  "sample_size", "HRS_sample_size", "HCAP_prop")) %>% 
-  group_by(HCAP_prop, sample_size, HRS_sample_size) %>% na.omit() %>%
+                  "HCAP_sample_size", "HRS_sample_size", "HCAP_prop")) %>% 
+  group_by(HCAP_prop, HCAP_sample_size, HRS_sample_size) %>% na.omit() %>%
   summarise_at(c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other"), 
                mean) %>% 
   pivot_longer(c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other"), 
@@ -287,7 +290,7 @@ HCAP_all_adjudicated <- results %>% ungroup() %>%
                                    "HCAP Proportion\n25% of HRS", 
                                  HCAP_prop == 50 ~ 
                                    "HCAP Proportion\n50% of HRS")) %>% 
-  mutate(mean = mean/sample_size) %>%
+  mutate(mean = mean/HCAP_sample_size) %>%
   mutate("calibration" = "calibration_100", 
          "prior_sample" = "HCAP 100% Adjudication",
          "LCI" = NA, "UCI" = NA) %>% mutate_at("HRS_sample_size", as.factor)
@@ -345,7 +348,7 @@ names(group_colors) <- color_palette$Group
 
 #---- **plot data ----
 plot_data <- results %>% 
-  group_by(prior_sample, HCAP_prop, sample_size) %>% 
+  group_by(prior_sample, HCAP_prop, sample_size, HRS_sample_size) %>% 
   summarise_at(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"), 
                mean) %>% 
   pivot_longer(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"),
@@ -369,16 +372,17 @@ plot_data$prior_sample <-
                     "HCAP 35% Race-stratified SRS Adjudication + ADAMS", 
                     "HCAP 50% Race-stratified SRS Adjudication + ADAMS"))
 
-#---- **plot Figure 4.XX: no HCAP calibration ----
+#---- **plot 4.XX: no HCAP calibration ----
 ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
-       aes(x = sample_size, y = value, group = class)) + 
+       aes(x = as.factor(HRS_sample_size), y = value, group = class, 
+           color = class)) + 
   geom_line(size = 1.5) + 
   geom_point(size = 3, shape = 1) + 
-  #scale_color_manual(values = group_colors) +
+  scale_color_manual(values = group_colors) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
-  theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop), cols = vars(class), scales = "free_x") + 
-  #guides(color = guide_legend(title = "Group")) + 
+  theme_bw() + ylab("95% CI coverage") + xlab("HRS Sample Size") +
+  facet_grid(rows = vars(HCAP_prop), scales = "free_x") + 
+  guides(color = guide_legend(title = "Group")) + 
   theme(text = element_text(size = 24), legend.position = "bottom")      
 
 ggsave(filename = 
@@ -386,7 +390,7 @@ ggsave(filename =
                 "figure4.XX_impairement_class_coverage_no_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#---- **plot Figure 5.XX: HCAP calibration ----
+#---- **plot 5.XX: HCAP calibration ----
 ggplot(data = plot_data, aes(x = sample_size, y = value, group = prior_sample, 
                              color = prior_sample, shape = prior_sample)) + 
   geom_line(size = 1.5) + geom_point(size = 3) + 
@@ -410,7 +414,7 @@ ggsave(filename =
                 "figure5.XX_impairement_class_coverage_HCAP_adjudication.jpeg"), 
        dpi = 300, height = 7.5, width = 17, units = "in")
 
-#----- Figure 4.XXa + 5.XXa: bias impairment class props ----
+#----- Figure 4.XXa-c + 5.XXa-c: bias impairment class props ----
 #---- **read in data ----
 #---- ****color palette ----
 color_palette <- read_csv(here::here("color_palette.csv"))
@@ -418,9 +422,9 @@ color_palette <- read_csv(here::here("color_palette.csv"))
 group_colors <- color_palette$Color
 names(group_colors) <- color_palette$Group
 
-#---- **plot data: counts ----
+#---- **plot data ----
 plot_data <- results %>% ungroup() %>%
-  dplyr::select("calibration", "calibration_sampling", "HCAP_prop", "sample_size", 
+  dplyr::select("prior_sample", "HCAP_prop", "sample_size", "HRS_sample_size", 
                 paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other")), 
                 paste0("true_", c("Unimpaired", "MCI", "Dementia", "Other"))) %>%
   pivot_longer(c(paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other")), 
@@ -428,69 +432,176 @@ plot_data <- results %>% ungroup() %>%
                names_to = c(".value", "class"), 
                names_sep = "_") %>% 
   mutate("mean" = mean/sample_size, "true" = true/sample_size) %>%
-  mutate("bias" = mean - true) %>%
+  mutate("error" = mean - true) %>% 
+  mutate("squared_error" = error^2) %>%
+  mutate("percent_error" = error/true) %>%
   mutate_at("class", function(x) 
     factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
-  mutate_at("sample_size", as.factor) %>% 
+  mutate_at("HRS_sample_size", as.factor) %>% 
   mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ 
                                    "Sample Proportion\n25% of HRS", 
                                  HCAP_prop == 50 ~ 
                                    "Sample Proportion\n50% of HRS")) %>% 
-  mutate("calibration_sampling" = 
-           case_when(calibration_sampling == "NA" ~ "ADAMS", 
-                     calibration_sampling == "SRS" & 
-                       calibration == "calibration_50" ~ 
-                       "HCAP 50% SRS\nAdjudication"))
+  group_by(prior_sample, HCAP_prop, HRS_sample_size, class) %>% 
+  summarize_at(c("error", "percent_error", "squared_error"), mean) %>% 
+  rename(c("bias" = "error", "percent_bias" = "percent_error")) %>% 
+  mutate("RMSE" = sqrt(squared_error))
 
-#---- **plot v1.1: overall + no HCAP calibration ----
-ggplot(data = plot_data %>% filter(calibration == "no_calibration"), 
-       aes(x = sample_size, y = bias, color = class)) + 
-  geom_boxplot(size = 1) +
-  scale_color_manual(values = group_colors) + 
+plot_data$prior_sample <- 
+  factor(plot_data$prior_sample, 
+         levels = c("HCAP 100% Adjudication", "ADAMS", 
+                    "HCAP 35% SRS Adjudication", "HCAP 50% SRS Adjudication", 
+                    "HCAP 35% Race-stratified SRS Adjudication", 
+                    "HCAP 50% Race-stratified SRS Adjudication", 
+                    "HCAP 35% SRS Adjudication + ADAMS", 
+                    "HCAP 50% SRS Adjudication + ADAMS", 
+                    "HCAP 35% Race-stratified SRS Adjudication + ADAMS", 
+                    "HCAP 50% Race-stratified SRS Adjudication + ADAMS"))
+
+#---- **plot 4.XXa: bias + no HCAP calibration ----
+ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
+       aes(x = HRS_sample_size, y = bias, group = class)) + 
+  geom_line(size = 1.5) + 
+  geom_point(size = 3, shape = 1) + 
   geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
   ylab("Bias") + 
-  facet_grid(rows = vars(HCAP_prop), scales = "free_x") + 
-  guides(color = guide_legend(title = "Group")) + 
-  scale_x_discrete(name = "HCAP Sample Size", 
-                   breaks = unique(plot_data$sample_size)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")       
+  facet_grid(rows = vars(HCAP_prop), cols = vars(class), scales = "free_x") + 
+  scale_x_discrete(name = "HRS Sample Size", 
+                   breaks = unique(plot_data$HRS_sample_size)) + 
+  theme(text = element_text(size = 24))       
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "impairement_class_bias_prop_no_HCAP_adjudication", 
-                         ".jpeg"), 
+                         "figure4.XXa_impairement_class_bias_prop_no_HCAP_", 
+                         "adjudication.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#---- **plot v2.1: overall + HCAP calibration ----
-ggplot(data = plot_data, aes(x = sample_size, y = bias, color = class)) + 
-  geom_boxplot(size = 1) +
-  scale_color_manual(values = group_colors) + 
+#---- **plot 5.XXa: bias + HCAP calibration ----
+ggplot(data = plot_data, aes(x = sample_size, y = bias, color = prior_sample, 
+                             group = prior_sample, shape = prior_sample)) + 
+  geom_line(size = 1.5) + geom_point(size = 3) + 
+  scale_shape_manual(values = c(1, rep(19, 4), rep(1, 4))) +
+  scale_color_manual(values = c("black", 
+                                "#288fb4", "#1d556f", 
+                                "#f35f5f", "#cc435f", 
+                                "#288fb4", "#1d556f", 
+                                "#f35f5f", "#cc435f")) +
   geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
   ylab("Bias") + 
-  facet_grid(rows = vars(HCAP_prop), cols = vars(calibration_sampling), 
-             scales = "free_x") + 
-  guides(color = guide_legend(title = "Group")) + 
-  scale_x_discrete(name = "HCAP Sample Size", 
+  facet_grid(rows = vars(HCAP_prop), cols = vars(class), scales = "free_x") + 
+  scale_x_discrete(name = "HRS Sample Size", 
                    breaks = unique(plot_data$sample_size)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")       
+  theme(text = element_text(size = 24), legend.position = "bottom")  + 
+  guides(shape = guide_legend(title = "Adjudicated\nPrior\nSample", 
+                              nrow = 5, byrow = FALSE), 
+         color = guide_legend(title = "Adjudicated\nPrior\nSample"), 
+         nrow = 5, byrow = FALSE)
+
+ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
+                         "figure5.XXa_impairement_class_bias_prop_HCAP_", 
+                         "adjudication.jpeg"), 
+       dpi = 300, width = 17, height = 7.50, units = "in")
+
+#---- **plot 4.XXb: percent bias + no HCAP calibration ----
+ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
+       aes(x = sample_size, y = percent_bias, group = class)) + 
+  geom_line(size = 1.5) + 
+  geom_point(size = 3, shape = 1) + 
+  geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
+  ylab("Percent bias") + 
+  facet_grid(rows = vars(HCAP_prop), cols = vars(class), scales = "free_x") + 
+  scale_x_discrete(name = "HRS Sample Size", 
+                   breaks = unique(plot_data$sample_size)) + 
+  theme(text = element_text(size = 24))       
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "impairement_class_bias_prop_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 13.5, height = 7.25, units = "in")
+                         "figure4.XXb_impairement_class_percent_bias_prop_no_", 
+                         "HCAP_adjudication.jpeg"), 
+       dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#---- **plot data: counts x race ----
+#---- **plot 5.XXb: percent bias + HCAP calibration ----
+ggplot(data = plot_data, 
+       aes(x = sample_size, y = percent_bias, color = prior_sample, 
+           group = prior_sample, shape = prior_sample)) + 
+  geom_line(size = 1.5) + geom_point(size = 3) + 
+  scale_shape_manual(values = c(1, rep(19, 4), rep(1, 4))) +
+  scale_color_manual(values = c("black", 
+                                "#288fb4", "#1d556f", 
+                                "#f35f5f", "#cc435f", 
+                                "#288fb4", "#1d556f", 
+                                "#f35f5f", "#cc435f")) +
+  geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
+  ylab("Percent bias") + 
+  facet_grid(rows = vars(HCAP_prop), cols = vars(class), scales = "free_x") + 
+  scale_x_discrete(name = "HRS Sample Size", 
+                   breaks = unique(plot_data$sample_size)) + 
+  theme(text = element_text(size = 24), legend.position = "bottom")  + 
+  guides(shape = guide_legend(title = "Adjudicated\nPrior\nSample", 
+                              nrow = 5, byrow = FALSE), 
+         color = guide_legend(title = "Adjudicated\nPrior\nSample"), 
+         nrow = 5, byrow = FALSE)
+
+ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
+                         "figure5.XXb_impairement_class_percent_bias_prop_HCAP_", 
+                         "adjudication.jpeg"), 
+       dpi = 300, width = 17, height = 7.50, units = "in")
+
+#---- **plot 4.XXc: RMSE + no HCAP calibration ----
+ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
+       aes(x = sample_size, y = RMSE, group = class)) + 
+  geom_line(size = 1.5) + 
+  geom_point(size = 3, shape = 1) + theme_bw() + 
+  ylab("RMSE") + 
+  facet_grid(rows = vars(HCAP_prop), cols = vars(class), scales = "free_x") + 
+  scale_x_discrete(name = "HRS Sample Size", 
+                   breaks = unique(plot_data$sample_size)) + 
+  theme(text = element_text(size = 24))       
+
+ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
+                         "figure4.XXc_impairement_class_RMSE_prop_no_HCAP_", 
+                         "adjudication.jpeg"), 
+       dpi = 300, width = 13.5, height = 6.25, units = "in")
+
+#---- **plot 5.XXc: RMSE + HCAP calibration ----
+ggplot(data = plot_data, aes(x = sample_size, y = RMSE, color = prior_sample, 
+           group = prior_sample, shape = prior_sample)) + 
+  geom_line(size = 1.5) + geom_point(size = 3) + 
+  scale_shape_manual(values = c(1, rep(19, 4), rep(1, 4))) +
+  scale_color_manual(values = c("black", 
+                                "#288fb4", "#1d556f", 
+                                "#f35f5f", "#cc435f", 
+                                "#288fb4", "#1d556f", 
+                                "#f35f5f", "#cc435f")) +
+  geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
+  ylab("RMSE") + 
+  facet_grid(rows = vars(HCAP_prop), cols = vars(class), scales = "free_x") + 
+  scale_x_discrete(name = "HRS Sample Size", 
+                   breaks = unique(plot_data$sample_size)) + 
+  theme(text = element_text(size = 24), legend.position = "bottom")  + 
+  guides(shape = guide_legend(title = "Adjudicated\nPrior\nSample", 
+                              nrow = 5, byrow = FALSE), 
+         color = guide_legend(title = "Adjudicated\nPrior\nSample"), 
+         nrow = 5, byrow = FALSE)
+
+ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
+                         "figure5.XXc_RMSE_bias_prop_HCAP_adjudication.jpeg"), 
+       dpi = 300, width = 17, height = 7.50, units = "in")
+
+#---- Figure 4.XXa-c + 5.XXa-c: race-stratified bias ----
+#---- **plot data ----
 cols_by_race <- expand_grid(c("mean", "true"), 
                             c("Unimpaired", "MCI", "Dementia", "Other"), 
                             c("white", "black", "hispanic")) %>% 
   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
 
 plot_data <- results %>% ungroup() %>%
-  dplyr::select("calibration", "calibration_sampling", "HCAP_prop", "sample_size",  
+  dplyr::select("prior_sample", "HCAP_prop", "sample_size",  
                 all_of(cols_by_race)) %>%
   pivot_longer(all_of(cols_by_race),
                names_to = c(".value", "class", "race"), 
                names_sep = "_") %>% 
   mutate("mean" = mean/sample_size, "true" = true/sample_size) %>%
-  mutate("bias" = mean - true) %>%
+  mutate("error" = mean - true) %>%
+  mutate("squared_error")
   mutate_at("sample_size", as.factor) %>%
   mutate_at("race", function(x) str_to_sentence(x)) %>%
   mutate_at("class", function(x) 
@@ -501,13 +612,23 @@ plot_data <- results %>% ungroup() %>%
                                    "Sample Proportion\n25% of HRS", 
                                  HCAP_prop == 50 ~ 
                                    "Sample Proportion\n50% of HRS")) %>% 
-  mutate("calibration_sampling" = 
-           case_when(calibration_sampling == "NA" ~ "ADAMS", 
-                     calibration_sampling == "SRS" & 
-                       calibration == "calibration_50" ~ 
-                       "HCAP 50% SRS\nAdjudication"))
+  group_by(prior_sample, HCAP_prop, sample_size, class, race) %>% 
+  summarize_at(c("error", "percent_error", "squared_error"), mean) %>% 
+  rename(c("bias" = "error", "percent_bias" = "percent_error")) %>% 
+  mutate("RMSE" = sqrt(squared_error))
 
-#---- **plot v1.2: by race + no HCAP calibration ----
+plot_data$prior_sample <- 
+  factor(plot_data$prior_sample, 
+         levels = c("HCAP 100% Adjudication", "ADAMS", 
+                    "HCAP 35% SRS Adjudication", "HCAP 50% SRS Adjudication", 
+                    "HCAP 35% Race-stratified SRS Adjudication", 
+                    "HCAP 50% Race-stratified SRS Adjudication", 
+                    "HCAP 35% SRS Adjudication + ADAMS", 
+                    "HCAP 50% SRS Adjudication + ADAMS", 
+                    "HCAP 35% Race-stratified SRS Adjudication + ADAMS", 
+                    "HCAP 50% Race-stratified SRS Adjudication + ADAMS"))
+
+#---- **plot 4.XX: bias by race + no HCAP calibration ----
 ggplot(data = plot_data %>% filter(calibration == "no_calibration"), 
        aes(x = sample_size, y = bias, color = class)) + 
   geom_boxplot(size = 0.60) +
