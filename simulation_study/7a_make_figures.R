@@ -186,13 +186,6 @@ results %<>% plyr::rbind.fill(., combined_results)
 
 #---- Figure 4.XX + 5.XX: mean and 95% CI impairment class proportions ----
 #---- **read in data ----
-#---- ****results ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-
-results_paths <- 
-  list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
-             full.names = TRUE, pattern = "*.csv")
-
 #---- ****truth ----
 superpop_impairment_props <- 
   read_csv(paste0(path_to_box, 
@@ -343,6 +336,7 @@ ggsave(filename =
        dpi = 300, width = 17, height = 11, units = "in")
 
 #---- Figure 4.XX + 5.XX: 95% CI coverage impairment classes ----
+#---- **read in data ----
 #---- ****color palette ----
 color_palette <- read_csv(here::here("color_palette.csv"))
 
@@ -418,16 +412,6 @@ ggsave(filename =
 
 #----- Figure 4.XXa + 5.XXa: bias impairment class props ----
 #---- **read in data ----
-#---- ****results ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-
-results_paths <- 
-  list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
-             full.names = TRUE, pattern = "*.csv")
-
-results <- do.call(rbind, lapply(results_paths, read_results)) %>% 
-  group_by(dataset_name) %>% slice_head(n = 1000)
-
 #---- ****color palette ----
 color_palette <- read_csv(here::here("color_palette.csv"))
 
