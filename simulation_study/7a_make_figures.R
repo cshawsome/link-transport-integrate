@@ -92,11 +92,7 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
 # matched)
 
 #create place-holder columns
-race_impairment_placeholders <-
-  expand_grid(c("ADAMS_mean", "ADAMS_SE"),
-              c("Unimpaired", "MCI", "Dementia", "Other"),
-              c("white", "black", "hispanic")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+new_cols_cores <- c(overall_cols, by_race_cols)
 
 for(prior_group in unique(results$prior_sample)[-which(
   unique(results$prior_sample) == "ADAMS")]){
@@ -108,7 +104,13 @@ for(prior_group in unique(results$prior_sample)[-which(
                 results$HRS_sample_size == HRS_n &
                 results$HCAP_prop == sample_prop)
       
-      results[rows, c(paste0("ADAMS_mean_",
+      results[rows, c(paste0("ADAMS_", new_cols))] <- 
+      
+      
+              
+              
+              
+              c(paste0("ADAMS_mean_",
                              c("Unimpaired", "MCI", "Dementia", "Other")),
                       paste0("ADAMS_SE_",
                              c("Unimpaired", "MCI", "Dementia", "Other")),
