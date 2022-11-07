@@ -66,6 +66,7 @@ results[, paste0(calc_props, "_prop")] <-
   results[, calc_props]/results$HCAP_sample_size
 
 #---- **SEs ----
+#on the prop scale
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
   for(race in c("overall", "white", "black", "hispanic"))
     if(race == "overall"){
@@ -88,70 +89,6 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
 }
 
 #---- format data ----
-#fill in matching ADAMS data (like a cbind but making sure correct rows are
-# matched)
-
-#create place-holder columns
-new_cols_cores <- c(overall_cols, by_race_cols)
-
-for(prior_group in unique(results$prior_sample)[-which(
-  unique(results$prior_sample) == "ADAMS")]){
-  for(HRS_n in unique(results$HRS_sample_size)){
-    for(sample_prop in unique(results$HCAP_prop)){
-      
-      rows <-
-        which(results$prior_sample == prior_group &
-                results$HRS_sample_size == HRS_n &
-                results$HCAP_prop == sample_prop)
-      
-      results[rows, c(paste0("ADAMS_", new_cols))] <- 
-      
-      
-              
-              
-              
-              c(paste0("ADAMS_mean_",
-                             c("Unimpaired", "MCI", "Dementia", "Other")),
-                      paste0("ADAMS_SE_",
-                             c("Unimpaired", "MCI", "Dementia", "Other")),
-                      all_of(race_placeholders))] <-
-        results %>% filter(prior_sample == "ADAMS" & HRS_sample_size == HRS_n & 
-                             HCAP_prop == sample_prop) %>%
-        slice_head(n = length(rows)) %>% ungroup() %>%
-        dplyr::select(c(paste0("ADAMS_mean_",
-                               c("Unimpaired", "MCI", "Dementia", "Other")),
-                        paste0("ADAMS_SE_",
-                               c("Unimpaired", "MCI", "Dementia", "Other")),
-                        all_of(race_placeholders)))
-    }
-  }
-}
-
-#---- **meta analysis ----
-for(prior_sample_name in unique(results$prior_sample)[-which(
-  unique(results$prior_sample) == "ADAMS")]){
-  for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-    subset <- results %>% ungroup() %>%
-      filter(prior_sample %in% c("ADAMS", prior_sample_name)) %>% 
-      dplyr::select(c("prior_sample", "HCAP_prop", "HRS_sample_size", 
-                      paste0("mean_", class, "_prop"), 
-                      paste0("SE_", class))) %>% 
-      set_colnames(c(
-        "prior_sample", "HCAP_prop", "HRS_sample_size", "mean", "SE")) %>%
-      mutate("log_transform" = log(mean)) %>% 
-      group_by(prior_sample, HCAP_prop, HRS_sample_size) %>% 
-      summarize_at(c("mean", "SE", "log_transform"), mean)
-    
-    subset_test <- subset[c(6, 12), ]
-    
-    m.gen <- metagen(TE = log_transform, seTE = SE, studlab = prior_sample,
-                     data = subset_test, method.tau = "PM", sm = "PLN",
-                     random = TRUE, hakn = TRUE)
-    
-    summary(m.gen)
-  }
-}
-
 results %<>% 
   mutate("prior_sample" = 
            case_when(calibration_sampling == "NA" ~ "ADAMS", 
@@ -171,6 +108,72 @@ results %<>%
                        calibration == "calibration_35" & 
                        sampling_strata == "race" ~ 
                        "HCAP 35% Race-stratified SRS Adjudication"))
+
+#fill in matching ADAMS data (like a cbind but making sure correct rows are
+# matched)
+#create place-holder columns
+new_cols_cores <- c(overall_cols, by_race_cols)
+
+for(prior_group in unique(results$prior_sample)[-which(
+  unique(results$prior_sample) == "ADAMS")]){
+  for(HRS_n in unique(results$HRS_sample_size)){
+    for(sample_prop in unique(results$HCAP_prop)){
+      rows <-
+        which(results$prior_sample == prior_group &
+                results$HRS_sample_size == HRS_n &
+                results$HCAP_prop == sample_prop)
+      
+      results[rows, c(paste0("ADAMS_", all_of(new_cols_cores)), 
+                      paste0("ADAMS_", all_of(new_cols_cores), "_prop"))] <- 
+        results %>% filter(prior_sample == "ADAMS" & HRS_sample_size == HRS_n & 
+                             HCAP_prop == sample_prop) %>%
+        slice_head(n = length(rows)) %>% ungroup() %>%
+        dplyr::select(c(all_of(new_cols_cores)), 
+                      paste0(all_of(new_cols_cores), "_prop"))
+    }
+  }
+}
+
+#---- **meta analysis ----
+for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+  for(i in 1:nrow(results %>% filter(prior_sample != "ADAMS"))){
+    m.gen <- metagen(TE = log_transform, seTE = SE, studlab = prior_sample,
+                     data = results[i, ] %>% mutate("log_transform" = log()), 
+                     method.tau = "PM", sm = "PLN", random = TRUE, hakn = TRUE)
+  }
+}
+
+
+
+
+# for(prior_group in unique(results$prior_sample)[-which(
+#   unique(results$prior_sample) == "ADAMS")]){
+#   for(HRS_n in unique(results$HRS_sample_size)){
+#     for(sample_prop in unique(results$HCAP_prop)){
+#       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+#         subset <- results %>% ungroup() %>%
+#           filter(prior_sample %in% c("ADAMS", prior_group) & 
+#                    HRS_sample_size == HRS_n & HCAP_prop == sample_prop) %>% 
+#           dplyr::select(c("prior_sample", "HCAP_prop", "HRS_sample_size", 
+#                           paste0("mean_", class, "_prop"), 
+#                           paste0("SE_", class))) %>% 
+#           set_colnames(c(
+#             "prior_sample", "HCAP_prop", "HRS_sample_size", "mean", "SE")) %>%
+#           mutate("log_transform" = log(mean)) %>% 
+#           group_by(prior_sample, HCAP_prop, HRS_sample_size) %>% 
+#           summarize_at(c("mean", "SE", "log_transform"), mean)
+#         
+#         m.gen <- metagen(TE = log_transform, seTE = SE, studlab = prior_sample,
+#                          data = subset, method.tau = "PM", sm = "PLN",
+#                          random = TRUE, hakn = TRUE)
+#         
+#         summary(m.gen)
+#       }
+#     }
+#   }
+# }
+
+
 
 #---- Figure 4.XX + 5.XX: mean and 95% CI impairment class proportions ----
 #---- **read in data ----
