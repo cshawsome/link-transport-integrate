@@ -278,14 +278,14 @@ colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
 health_vars <- c(paste0("r13", c("bmi", "smoken", "hibpe", "diabe", "hearte", 
                                  "stroke")))
 
-#remove people missing any health variables (N = 2461, dropped n = 73)
-HRS %<>% drop_na(health_vars) 
+#remove people missing any health variables (N = 6886, dropped n = 207)
+HRS %<>% drop_na(all_of(health_vars))
 
 # #Sanity check
 # colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
 
 #---- **summarize missingness on any cognitive assessment ----
-#There are 570 participants missing at least one cognitive assessment in HCAP
+#There are 573 participants missing at least one cognitive assessment in HCAP
 subset <- names(colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)])
 remove_vars <- c("r13drinkd", "r13pstmem", "memimp16", "RACE_label", 
                  "RACE_White", "RACE_Black", "RACE_Other", "drinks_per_week")
