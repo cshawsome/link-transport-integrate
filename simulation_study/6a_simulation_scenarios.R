@@ -33,7 +33,7 @@ write_csv(sim_scenarios,
 
 #---- missing runs ----
 missing_runs_function <- 
-  function(missing_scenario_number, n_missing_runs, HRS_sample_size, 
+  function(missing_scenario_number, seed_start, n_missing_runs, HRS_sample_size, 
            HCAP_sampling_prop, calibration_scenario, 
            sim_scenarios_dataframe = NA){
     
@@ -43,7 +43,7 @@ missing_runs_function <-
     max_batch_count <- total_runs/batch_size
     seeds <- 
       seq(1, max_batch_count*batch_size, by = batch_size)*
-      missing_scenario_number*1000
+      missing_scenario_number*seed_start
     
     additional_missing_runs <- 
       as.data.frame(expand.grid(HRS_sample_size, HCAP_sampling_prop, 
@@ -70,11 +70,48 @@ missing_runs_function <-
 
 #---- **1: n = 2000; HCAP_prop = 25; calibration_scenario = calibration_35_SRS ----
 sim_scenarios_missing_runs <- 
-  missing_runs_function(missing_scenario_number = 1, n_missing_runs = 838, 
-                        HRS_sample_size = 2000, HCAP_sampling_prop = 25, 
+  missing_runs_function(missing_scenario_number = 1, seed_start = 10000, 
+                        n_missing_runs = 21, HRS_sample_size = 2000, 
+                        HCAP_sampling_prop = 25, 
                         calibration_scenario = 
                           c(paste0("calibration_", c(35), "_SRS")), 
                         sim_scenarios_dataframe = NA)
+
+#---- **2: n = 2000; HCAP_prop = 25; calibration_scenario = calibration_35_SRS_race ----
+sim_scenarios_missing_runs <- 
+  missing_runs_function(missing_scenario_number = 2, seed_start = 10000, 
+                        n_missing_runs = 15, HRS_sample_size = 2000, 
+                        HCAP_sampling_prop = 25, 
+                        calibration_scenario = 
+                          c(paste0("calibration_", c(35), "_SRS_race")), 
+                        sim_scenarios_dataframe = sim_scenarios_missing_runs)
+
+#---- **3: n = 2000; HCAP_prop = 25; calibration_scenario = calibration_50_SRS_race ----
+sim_scenarios_missing_runs <- 
+  missing_runs_function(missing_scenario_number = 3, seed_start = 10000, 
+                        n_missing_runs = 237, HRS_sample_size = 2000, 
+                        HCAP_sampling_prop = 25, 
+                        calibration_scenario = 
+                          c(paste0("calibration_", c(50), "_SRS_race")), 
+                        sim_scenarios_dataframe = sim_scenarios_missing_runs)
+
+#---- **4: n = 4000; HCAP_prop = 25; calibration_scenario = calibration_50_SRS_race ----
+sim_scenarios_missing_runs <- 
+  missing_runs_function(missing_scenario_number = 4, seed_start = 10000, 
+                        n_missing_runs = 17, HRS_sample_size = 4000, 
+                        HCAP_sampling_prop = 25, 
+                        calibration_scenario = 
+                          c(paste0("calibration_", c(50), "_SRS_race")), 
+                        sim_scenarios_dataframe = sim_scenarios_missing_runs)
+
+#---- **5: n = 2000; HCAP_prop = 50; calibration_scenario = calibration_50_SRS_race ----
+sim_scenarios_missing_runs <- 
+  missing_runs_function(missing_scenario_number = 5, seed_start = 10000, 
+                        n_missing_runs = 10, HRS_sample_size = 2000, 
+                        HCAP_sampling_prop = 50, 
+                        calibration_scenario = 
+                          c(paste0("calibration_", c(50), "_SRS_race")), 
+                        sim_scenarios_dataframe = sim_scenarios_missing_runs)
 
 #---- **save output ----
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
