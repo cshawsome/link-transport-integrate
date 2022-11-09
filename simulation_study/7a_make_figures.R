@@ -173,8 +173,6 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
 #   }
 # }
 
-
-
 #---- Figure 4.XX + 5.XX: mean and 95% CI impairment class proportions ----
 #---- **read in data ----
 #---- ****color palette ----
@@ -249,11 +247,11 @@ plot_data$prior_sample <-
          levels = c("HCAP 100% Adjudication", "ADAMS", 
                     "HCAP 35% SRS Adjudication", "HCAP 50% SRS Adjudication", 
                     "HCAP 35% Race-stratified SRS Adjudication", 
-                    "HCAP 50% Race-stratified SRS Adjudication", 
-                    "HCAP 35% SRS Adjudication + ADAMS", 
-                    "HCAP 50% SRS Adjudication + ADAMS", 
-                    "HCAP 35% Race-stratified SRS Adjudication + ADAMS", 
-                    "HCAP 50% Race-stratified SRS Adjudication + ADAMS"))
+                    "HCAP 50% Race-stratified SRS Adjudication"))
+                    # "HCAP 35% SRS Adjudication + ADAMS", 
+                    # "HCAP 50% SRS Adjudication + ADAMS", 
+                    # "HCAP 35% Race-stratified SRS Adjudication + ADAMS", 
+                    # "HCAP 50% Race-stratified SRS Adjudication + ADAMS"))
 plot_data$Group <- 
   factor(plot_data$Group, levels = c("Unimpaired", "MCI", "Dementia", "Other"))
 
@@ -275,10 +273,10 @@ ggplot(data = plot_data,
   scale_x_continuous(breaks = seq(0.00, 0.70, by = 0.10)) +
   xlab("Impairment class proportion") + ylab("HRS sample size") + 
   theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Adjudicated\nPrior\nSample", 
-                              nrow = 5, byrow = TRUE), 
-         color = guide_legend(title = "Adjudicated\nPrior\nSample"), 
-         nrow = 5, byrow = TRUE)
+  guides(shape = guide_legend(title = "Prior", title.vjust = 0.5, nrow = 3, 
+                              byrow = TRUE), 
+         color = guide_legend(title = "Prior", title.vjust = 0.5, nrow = 3, 
+                              byrow = TRUE))  
 
 ggsave(filename = 
          paste0(path_to_box, "figures/chapter_5/simulation_study/", 
