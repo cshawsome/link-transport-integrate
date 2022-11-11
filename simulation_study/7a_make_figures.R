@@ -36,57 +36,50 @@ superpop_impairment_props$Group <-
 table(results$dataset_name, useNA = "ifany")
 
 #---- extra calcs ----
-#---- **proportions ----
-results %<>% 
-  mutate(true_Unimpaired_prop = 
-           as.numeric(superpop_impairment_props[
-             superpop_impairment_props$Group == "Unimpaired", "prop"]), 
-         true_MCI_prop = 
-           as.numeric(superpop_impairment_props[
-             superpop_impairment_props$Group == "MCI", "prop"]), 
-         true_Dementia_prop = 
-           as.numeric(superpop_impairment_props[
-             superpop_impairment_props$Group == "Dementia", "prop"]), 
-         true_Other_prop = 
-           as.numeric(superpop_impairment_props[
-             superpop_impairment_props$Group == "Other", "prop"]))
-
-overall_cols <- expand_grid(c("mean", "LCI", "UCI"),
-                            c("Unimpaired", "MCI", "Dementia", "Other")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
-
-by_race_cols <- expand_grid(c("mean", "LCI", "UCI"),
-                            c("Unimpaired", "MCI", "Dementia", "Other"),
-                            c("white", "black", "hispanic")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
-
-calc_props <- c(overall_cols, by_race_cols)
-
-results[, paste0(calc_props, "_prop")] <- 
-  results[, calc_props]/results$HCAP_sample_size
-
 #---- **SEs ----
-#on the prop scale
+#on the count scale
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
   for(race in c("overall", "white", "black", "hispanic"))
     if(race == "overall"){
       results %<>%
         mutate(!!sym(paste0("SE_", class)) :=
                  rowMeans(cbind(
-                   abs(!!sym(paste0("mean_", class, "_prop")) -
-                         !!sym(paste0("LCI_", class, "_prop"))),
-                   abs(!!sym(paste0("mean_", class, "_prop")) -
-                         !!sym(paste0("UCI_", class, "_prop")))))/1.96)
+                   abs(!!sym(paste0("mean_", class)) -
+                         !!sym(paste0("LCI_", class))),
+                   abs(!!sym(paste0("mean_", class)) -
+                         !!sym(paste0("UCI_", class)))))/1.96)
     } else{
       results %<>%
         mutate(!!sym(paste0("SE_", class, "_", race)) :=
                  rowMeans(cbind(
-                   abs(!!sym(paste0("mean_", class, "_", race, "_prop")) -
-                         !!sym(paste0("LCI_", class, "_", race, "_prop"))),
-                   abs(!!sym(paste0("mean_", class, "_", race, "_prop")) -
-                         !!sym(paste0("UCI_", class, "_", race, "_prop")))))/1.96)
+                   abs(!!sym(paste0("mean_", class, "_", race)) -
+                         !!sym(paste0("LCI_", class, "_", race))),
+                   abs(!!sym(paste0("mean_", class, "_", race)) -
+                         !!sym(paste0("UCI_", class, "_", race)))))/1.96)
     }
 }
+
+# #on the prop scale
+# for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+#   for(race in c("overall", "white", "black", "hispanic"))
+#     if(race == "overall"){
+#       results %<>%
+#         mutate(!!sym(paste0("SE_", class)) :=
+#                  rowMeans(cbind(
+#                    abs(!!sym(paste0("mean_", class, "_prop")) -
+#                          !!sym(paste0("LCI_", class, "_prop"))),
+#                    abs(!!sym(paste0("mean_", class, "_prop")) -
+#                          !!sym(paste0("UCI_", class, "_prop")))))/1.96)
+#     } else{
+#       results %<>%
+#         mutate(!!sym(paste0("SE_", class, "_", race)) :=
+#                  rowMeans(cbind(
+#                    abs(!!sym(paste0("mean_", class, "_", race, "_prop")) -
+#                          !!sym(paste0("LCI_", class, "_", race, "_prop"))),
+#                    abs(!!sym(paste0("mean_", class, "_", race, "_prop")) -
+#                          !!sym(paste0("UCI_", class, "_", race, "_prop")))))/1.96)
+#     }
+# }
 
 #---- format data ----
 results %<>% 
@@ -109,10 +102,29 @@ results %<>%
                        sampling_strata == "race" ~ 
                        "HCAP 35% Race-stratified SRS Adjudication"))
 
-#fill in matching ADAMS data (like a cbind but making sure correct rows are
-# matched)
+#---- match ADAMS data ----
+# like a cbind but making sure correct rows are matched
 #create place-holder columns
-new_cols_cores <- c(overall_cols, by_race_cols)
+overall_cols <- expand_grid(c("mean", "LCI", "UCI"),
+                            c("Unimpaired", "MCI", "Dementia", "Other")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+by_race_cols <- expand_grid(c("mean", "LCI", "UCI"),
+                            c("Unimpaired", "MCI", "Dementia", "Other"),
+                            c("white", "black", "hispanic")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+SE_cols <- expand_grid(c("SE"),
+                       c("Unimpaired", "MCI", "Dementia", "Other")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+SE_by_race_cols <- expand_grid(c("SE"),
+                               c("Unimpaired", "MCI", "Dementia", "Other"),
+                               c("white", "black", "hispanic")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
+
+pt_est_cols_cores <- c(overall_cols, by_race_cols)
+SE_cols_cores <- c(SE_cols, SE_by_race_cols)
 
 for(prior_group in unique(results$prior_sample)[-which(
   unique(results$prior_sample) == "ADAMS")]){
@@ -123,55 +135,239 @@ for(prior_group in unique(results$prior_sample)[-which(
                 results$HRS_sample_size == HRS_n &
                 results$HCAP_prop == sample_prop)
       
-      results[rows, c(paste0("ADAMS_", all_of(new_cols_cores)), 
-                      paste0("ADAMS_", all_of(new_cols_cores), "_prop"))] <- 
+      results[rows, c(paste0("ADAMS_", all_of(pt_est_cols_cores)), 
+                      paste0("ADAMS_", all_of(SE_cols_cores)))] <- 
         results %>% filter(prior_sample == "ADAMS" & HRS_sample_size == HRS_n & 
                              HCAP_prop == sample_prop) %>%
         slice_head(n = length(rows)) %>% ungroup() %>%
-        dplyr::select(c(all_of(new_cols_cores)), 
-                      paste0(all_of(new_cols_cores), "_prop"))
+        dplyr::select(c(all_of(pt_est_cols_cores), all_of(SE_cols_cores)))
     }
   }
 }
 
-#---- **meta analysis ----
+#---- **combined estimates ----
+#impairment classes (count scale)
+combined_results <- results %>% filter(prior_sample != "ADAMS")
+
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-  for(i in 1:nrow(results %>% filter(prior_sample != "ADAMS"))){
-    m.gen <- metagen(TE = log_transform, seTE = SE, studlab = prior_sample,
-                     data = results[i, ] %>% mutate("log_transform" = log()), 
-                     method.tau = "PM", sm = "PLN", random = TRUE, hakn = TRUE)
+  for(race in c("overall", "white", "black", "hispanic")){
+    if(race == "overall"){
+      #---- ****mean estimates ----
+      combined_results %<>%
+        mutate(!!sym(paste0("combined_mean_", class)) :=
+                 rowMeans(cbind(!!sym(paste0("mean_", class)),
+                                !!sym(paste0("ADAMS_mean_", class)))))
+      
+      #---- ****within variance ----
+      combined_results %<>%
+        mutate(!!sym(paste0("within_var_", class)) :=
+                 rowMeans(cbind(!!sym(paste0("SE_", class)),
+                                !!sym(paste0("ADAMS_SE_", class)))))
+      
+      #---- ****between variance ----
+      combined_results %<>%
+        mutate(!!sym(paste0("between_var_", class)) :=
+                 apply(cbind(!!sym(paste0("mean_", class)),
+                             !!sym(paste0("ADAMS_mean_", class))),
+                       1, var))
+      
+      #---- ****LCIs ----
+      combined_results %<>%
+        mutate(!!sym(paste0("combined_LCI_", class)) :=
+                 !!sym(paste0("combined_mean_", class)) -
+                 1.96*sqrt(!!sym(paste0("within_var_", class)) +
+                             !!sym(paste0("between_var_", class)) +
+                             !!sym(paste0("between_var_", class))/2))
+      
+      #---- ****UCIs ----
+      combined_results %<>%
+        mutate(!!sym(paste0("combined_UCI_", class)) :=
+                 !!sym(paste0("combined_mean_", class)) +
+                 1.96*sqrt(!!sym(paste0("within_var_", class)) +
+                             !!sym(paste0("between_var_", class)) +
+                             !!sym(paste0("between_var_", class))/2))
+      
+      #---- ****coverage ----
+      combined_results %<>%
+        mutate(!!sym(paste0("combined_", class, "_coverage")) :=
+                 (!!sym(paste0("true_", class)) >=
+                    !!sym(paste0("combined_LCI_", class)))*
+                 (!!sym(paste0("true_", class)) <=
+                    !!sym(paste0("combined_UCI_", class))))
+    } else{
+      #---- ****mean estimates ----
+      combined_results %<>%
+        mutate(!!sym(paste0("combined_mean_", class, "_", race)) :=
+                 rowMeans(cbind(
+                   !!sym(paste0("mean_", class, "_", race)),
+                   !!sym(paste0("ADAMS_mean_", class, "_", race)))))
+      
+      #---- ****within variance ----
+      combined_results %<>%
+        mutate(!!sym(paste0("within_var_", class, "_", race)) :=
+                 rowMeans(cbind(!!sym(paste0("SE_", class, "_", race)),
+                                !!sym(paste0("ADAMS_SE_", class, "_", race)))))
+      
+      #---- ****between variance ----
+      combined_results %<>%
+        mutate(!!sym(paste0("between_var_", class, "_", race)) :=
+                 apply(cbind(!!sym(paste0("mean_", class, "_", race)),
+                             !!sym(paste0("ADAMS_mean_", class, "_", race))), 1,
+                       var))
+      
+      #---- ****LCIs ----
+      combined_results %<>%
+        mutate(!!sym(paste0("combined_LCI_", class, "_", race)) :=
+                 !!sym(paste0("combined_mean_", class, "_", race)) -
+                 1.96*sqrt(!!sym(paste0("within_var_", class, "_", race)) +
+                             !!sym(paste0("between_var_", class, "_", race)) +
+                             !!sym(paste0("between_var_", class, "_", race))/2))
+      
+      #---- ****UCIs ----
+      combined_results %<>%
+        mutate(!!sym(paste0("combined_UCI_", class, "_", race)) :=
+                 !!sym(paste0("combined_mean_", class, "_", race)) +
+                 1.96*sqrt(!!sym(paste0("within_var_", class, "_", race)) +
+                             !!sym(paste0("between_var_", class, "_", race)) +
+                             !!sym(paste0("between_var_", class, "_", race))/2))
+      
+      #---- ****coverage ----
+      combined_results %<>%
+        mutate(!!sym(paste0("combined_", class, "_coverage", "_", race)) :=
+                 (!!sym(paste0("true_", class, "_", race)) >=
+                    !!sym(paste0("combined_LCI_", class, "_", race)))*
+                 (!!sym(paste0("true_", class, "_", race)) <=
+                    !!sym(paste0("combined_UCI_", class, "_", race))))
+    }
   }
 }
 
-
-
-
-# for(prior_group in unique(results$prior_sample)[-which(
-#   unique(results$prior_sample) == "ADAMS")]){
-#   for(HRS_n in unique(results$HRS_sample_size)){
-#     for(sample_prop in unique(results$HCAP_prop)){
-#       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-#         subset <- results %>% ungroup() %>%
-#           filter(prior_sample %in% c("ADAMS", prior_group) & 
-#                    HRS_sample_size == HRS_n & HCAP_prop == sample_prop) %>% 
-#           dplyr::select(c("prior_sample", "HCAP_prop", "HRS_sample_size", 
-#                           paste0("mean_", class, "_prop"), 
-#                           paste0("SE_", class))) %>% 
-#           set_colnames(c(
-#             "prior_sample", "HCAP_prop", "HRS_sample_size", "mean", "SE")) %>%
-#           mutate("log_transform" = log(mean)) %>% 
-#           group_by(prior_sample, HCAP_prop, HRS_sample_size) %>% 
-#           summarize_at(c("mean", "SE", "log_transform"), mean)
-#         
-#         m.gen <- metagen(TE = log_transform, seTE = SE, studlab = prior_sample,
-#                          data = subset, method.tau = "PM", sm = "PLN",
-#                          random = TRUE, hakn = TRUE)
-#         
-#         summary(m.gen)
-#       }
+# #impairment classes (prop scale)
+# combined_results <- results %>% filter(prior_sample != "ADAMS")
+# 
+# for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+#   for(race in c("overall", "white", "black", "hispanic")){
+#     if(race == "overall"){
+#       #---- ****mean estimates ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_mean_", class, "_prop")) :=
+#                  rowMeans(cbind(!!sym(paste0("mean_", class, "_prop")),
+#                                 !!sym(paste0("ADAMS_mean_", class, "_prop")))))
+#       
+#       #---- ****within variance ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("within_var_", class)) :=
+#                  rowMeans(cbind(!!sym(paste0("SE_", class)),
+#                                 !!sym(paste0("ADAMS_SE_", class)))))
+#       
+#       #---- ****between variance ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("between_var_", class)) :=
+#                  apply(cbind(!!sym(paste0("mean_", class, "_prop")),
+#                              !!sym(paste0("ADAMS_mean_", class, "_prop"))), 
+#                        1, var))
+#       
+#       #---- ****LCIs ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_LCI_", class, "_prop")) :=
+#                  !!sym(paste0("combined_mean_", class, "_prop")) -
+#                  1.96*sqrt(!!sym(paste0("within_var_", class)) +
+#                              !!sym(paste0("between_var_", class)) +
+#                              !!sym(paste0("between_var_", class))/2))
+#       
+#       #---- ****UCIs ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_UCI_", class, "_prop")) :=
+#                  !!sym(paste0("combined_mean_", class, "_prop")) +
+#                  1.96*sqrt(!!sym(paste0("within_var_", class)) +
+#                              !!sym(paste0("between_var_", class)) +
+#                              !!sym(paste0("between_var_", class))/2))
+#       
+#       #---- ****coverage ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_", class, "_coverage")) :=
+#                  (!!sym(paste0("true_", class, "_prop")) >=
+#                     !!sym(paste0("combined_LCI_", class, "_prop")))*
+#                  (!!sym(paste0("true_", class, "_prop")) <=
+#                     !!sym(paste0("combined_UCI_", class, "_prop"))))
+#     } else{
+#       #---- ****mean estimates ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_mean_", class, "_", race)) :=
+#                  rowMeans(cbind(
+#                    !!sym(paste0("mean_", class, "_", race)),
+#                    !!sym(paste0("ADAMS_mean_", class, "_", race)))))
+#       
+#       #---- ****within variance ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("within_var_", class, "_", race)) :=
+#                  rowMeans(cbind(!!sym(paste0("SE_", class, "_", race)),
+#                                 !!sym(paste0("ADAMS_SE_", class, "_", race)))))
+#       
+#       #---- ****between variance ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("between_var_", class, "_", race)) :=
+#                  apply(cbind(!!sym(paste0("mean_", class, "_", race)),
+#                              !!sym(paste0("ADAMS_mean_", class, "_", race))), 1,
+#                        var))
+#       
+#       #---- ****LCIs ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_LCI_", class, "_", race)) :=
+#                  !!sym(paste0("combined_mean_", class, "_", race)) -
+#                  1.96*sqrt(!!sym(paste0("within_var_", class, "_", race)) +
+#                              !!sym(paste0("between_var_", class, "_", race)) +
+#                              !!sym(paste0("between_var_", class, "_", race))/2))
+#       
+#       #---- ****UCIs ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_UCI_", class, "_", race)) :=
+#                  !!sym(paste0("combined_mean_", class, "_", race)) +
+#                  1.96*sqrt(!!sym(paste0("within_var_", class, "_", race)) +
+#                              !!sym(paste0("between_var_", class, "_", race)) +
+#                              !!sym(paste0("between_var_", class, "_", race))/2))
+#       
+#       #---- ****coverage ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_", class, "_coverage", "_", race)) :=
+#                  (!!sym(paste0("true_", class, "_", race)) >=
+#                     !!sym(paste0("combined_LCI_", class, "_", race)))*
+#                  (!!sym(paste0("true_", class, "_", race)) <=
+#                     !!sym(paste0("combined_UCI_", class, "_", race))))
 #     }
 #   }
 # }
+
+#----- ****bind results ----
+combined_results %<>% 
+  mutate("prior_sample" = paste0(prior_sample, " + ADAMS")) %>% 
+  dplyr::select(contains("combined"), "prior_sample", "dataset_name", "HCAP_prop", 
+                "HRS_sample_size", "HCAP_sample_size")
+
+combined_results %<>% 
+  set_colnames(str_remove(colnames(combined_results), "combined_"))
+
+results %<>% plyr::rbind.fill(., combined_results)
+
+#---- **proportions ----
+results %<>% 
+  mutate(true_Unimpaired_prop = 
+           as.numeric(superpop_impairment_props[
+             superpop_impairment_props$Group == "Unimpaired", "prop"]), 
+         true_MCI_prop = 
+           as.numeric(superpop_impairment_props[
+             superpop_impairment_props$Group == "MCI", "prop"]), 
+         true_Dementia_prop = 
+           as.numeric(superpop_impairment_props[
+             superpop_impairment_props$Group == "Dementia", "prop"]), 
+         true_Other_prop = 
+           as.numeric(superpop_impairment_props[
+             superpop_impairment_props$Group == "Other", "prop"]))
+
+calc_props <- c(overall_cols, by_race_cols)
+
+results[, paste0(calc_props, "_prop")] <- 
+  results[, calc_props]/results$HCAP_sample_size
 
 #---- Figure 4.XX + 5.XX: mean and 95% CI impairment class proportions ----
 #---- **read in data ----
@@ -236,8 +432,7 @@ HCAP_all_adjudicated <- results %>% ungroup() %>%
                                  HCAP_prop == 50 ~ 
                                    "HCAP Proportion\n50% of HRS")) %>% 
   mutate(mean = mean/HCAP_sample_size) %>%
-  mutate("calibration" = "calibration_100", 
-         "prior_sample" = "HCAP 100% Adjudication",
+  mutate("prior_sample" = "HCAP 100% Adjudication",
          "LCI" = NA, "UCI" = NA) %>% mutate_at("HRS_sample_size", as.factor)
 
 plot_data %<>% rbind(., HCAP_all_adjudicated) 
@@ -247,11 +442,12 @@ plot_data$prior_sample <-
          levels = c("HCAP 100% Adjudication", "ADAMS", 
                     "HCAP 35% SRS Adjudication", "HCAP 50% SRS Adjudication", 
                     "HCAP 35% Race-stratified SRS Adjudication", 
-                    "HCAP 50% Race-stratified SRS Adjudication"))
-                    # "HCAP 35% SRS Adjudication + ADAMS", 
-                    # "HCAP 50% SRS Adjudication + ADAMS", 
-                    # "HCAP 35% Race-stratified SRS Adjudication + ADAMS", 
-                    # "HCAP 50% Race-stratified SRS Adjudication + ADAMS"))
+                    "HCAP 50% Race-stratified SRS Adjudication", 
+                    "HCAP 35% SRS Adjudication + ADAMS",
+                    "HCAP 50% SRS Adjudication + ADAMS",
+                    "HCAP 35% Race-stratified SRS Adjudication + ADAMS",
+                    "HCAP 50% Race-stratified SRS Adjudication + ADAMS"))
+
 plot_data$Group <- 
   factor(plot_data$Group, levels = c("Unimpaired", "MCI", "Dementia", "Other"))
 
@@ -273,9 +469,9 @@ ggplot(data = plot_data,
   scale_x_continuous(breaks = seq(0.00, 0.70, by = 0.10)) +
   xlab("Impairment class proportion") + ylab("HRS sample size") + 
   theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Prior", title.vjust = 0.5, nrow = 3, 
+  guides(shape = guide_legend(title = "Prior", title.vjust = 0.5, nrow = 5, 
                               byrow = TRUE), 
-         color = guide_legend(title = "Prior", title.vjust = 0.5, nrow = 3, 
+         color = guide_legend(title = "Prior", title.vjust = 0.5, nrow = 5, 
                               byrow = TRUE))  
 
 ggsave(filename = 
@@ -311,11 +507,11 @@ plot_data$prior_sample <-
          levels = c("HCAP 100% Adjudication", "ADAMS", 
                     "HCAP 35% SRS Adjudication", "HCAP 50% SRS Adjudication", 
                     "HCAP 35% Race-stratified SRS Adjudication", 
-                    "HCAP 50% Race-stratified SRS Adjudication", 
-                    "HCAP 35% SRS Adjudication + ADAMS", 
-                    "HCAP 50% SRS Adjudication + ADAMS", 
-                    "HCAP 35% Race-stratified SRS Adjudication + ADAMS", 
-                    "HCAP 50% Race-stratified SRS Adjudication + ADAMS"))
+                    "HCAP 50% Race-stratified SRS Adjudication")) 
+# "HCAP 35% SRS Adjudication + ADAMS", 
+# "HCAP 50% SRS Adjudication + ADAMS", 
+# "HCAP 35% Race-stratified SRS Adjudication + ADAMS", 
+# "HCAP 50% Race-stratified SRS Adjudication + ADAMS"))
 
 #---- **plot 4.XX: no HCAP calibration ----
 ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
@@ -325,9 +521,9 @@ ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"),
   geom_point(size = 3, shape = 1) + 
   scale_color_manual(values = group_colors) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
-  theme_bw() + ylab("95% CI coverage") + xlab("HRS Sample Size") +
+  theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
   facet_grid(rows = vars(HCAP_prop), scales = "free_x") + 
-  guides(color = guide_legend(title = "Group")) + 
+  guides(color = guide_legend(title = "Impairment Class")) + 
   theme(text = element_text(size = 24), legend.position = "bottom")      
 
 ggsave(filename = 
@@ -347,13 +543,13 @@ ggplot(data = plot_data,
                                 "#288fb4", "#1d556f", 
                                 "#f35f5f", "#cc435f")) + 
   geom_hline(yintercept = 0.95, lty = "dashed") +
-  theme_bw() + ylab("95% CI coverage") + xlab("HRS Sample Size") +
+  theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
   facet_grid(rows = vars(HCAP_prop), cols = vars(class)) + 
   theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Adjudicated\nPrior\nSample", 
-                              nrow = 5, byrow = FALSE), 
-         color = guide_legend(title = "Adjudicated\nPrior\nSample"), 
-         nrow = 5, byrow = FALSE)
+  guides(shape = guide_legend(title = "Prior", 
+                              nrow = 3, byrow = FALSE), 
+         color = guide_legend(title = "Prior"), 
+         nrow = 3, byrow = FALSE)
 
 ggsave(filename = 
          paste0(path_to_box, "figures/chapter_5/simulation_study/", 
@@ -1060,6 +1256,43 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/",
        dpi = 300, width = 17, height = 8, units = "in") 
 
 #---- OLD ----
+# # #---- **meta analysis ----
+# for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+#   for(i in 1:nrow(results %>% filter(prior_sample != "ADAMS"))){
+#     m.gen <- metagen(TE = log_transform, seTE = SE, studlab = prior_sample,
+#                      data = results[i, ] %>% mutate("log_transform" = log()),
+#                      method.tau = "PM", sm = "PLN", random = TRUE, hakn = TRUE)
+#   }
+# }
+# 
+# 
+# for(prior_group in unique(results$prior_sample)[-which(
+#   unique(results$prior_sample) == "ADAMS")]){
+#   for(HRS_n in unique(results$HRS_sample_size)){
+#     for(sample_prop in unique(results$HCAP_prop)){
+#       for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+#         subset <- results %>% ungroup() %>%
+#           filter(prior_sample %in% c("ADAMS", prior_group) &
+#                    HRS_sample_size == HRS_n & HCAP_prop == sample_prop) %>%
+#           dplyr::select(c("prior_sample", "HCAP_prop", "HRS_sample_size",
+#                           paste0("mean_", class),
+#                           paste0("SE_", class))) %>%
+#           set_colnames(c(
+#             "prior_sample", "HCAP_prop", "HRS_sample_size", "mean", "SE")) %>%
+#           group_by(prior_sample, HCAP_prop, HRS_sample_size) %>%
+#           summarize_at(c("mean", "SE"), mean)
+#         
+#         m.gen <- metamean(n = rep(1000, nrow(subset)), mean = mean, sd = SE, 
+#                           studlab = prior_sample, data = subset, 
+#                           method.tau = "REML", sm = "MRAW", random = TRUE, 
+#                           hakn = TRUE)
+#         
+#         summary(m.gen)
+#       }
+#     }
+#   }
+# }
+
 # #---- **combined scenario ----
 # impairment_by_race <- expand_grid(c("mean", "LCI", "UCI"), 
 #                                   c("Unimpaired", "MCI", "Dementia", "Other"), 
@@ -1199,98 +1432,6 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/",
 #                      all_of(race_placeholders))] <- NA
 # 
 # 
-# #impairment classes
-# for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-#   for(race in c("overall", "white", "black", "hispanic")){
-#     if(race == "overall"){
-#       #---- ****mean estimates ----
-#       combined_results %<>% 
-#         mutate(!!sym(paste0("combined_mean_", class)) := 
-#                  rowMeans(cbind(!!sym(paste0("mean_", class)), 
-#                                 !!sym(paste0("ADAMS_mean_", class)))))
-#       
-#       #---- ****within variance ----
-#       combined_results %<>% 
-#         mutate(!!sym(paste0("within_var_", class)) := 
-#                  rowMeans(cbind(!!sym(paste0("SE_", class)), 
-#                                 !!sym(paste0("ADAMS_SE_", class)))))
-#       
-#       #---- ****between variance ----
-#       combined_results %<>% 
-#         mutate(!!sym(paste0("between_var_", class)) := 
-#                  apply(cbind(!!sym(paste0("mean_", class)), 
-#                              !!sym(paste0("ADAMS_mean_", class))), 1, var))
-#       
-#       #---- ****LCIs ----
-#       combined_results %<>% 
-#         mutate(!!sym(paste0("combined_LCI_", class)) := 
-#                  !!sym(paste0("combined_mean_", class)) - 
-#                  1.96*sqrt(!!sym(paste0("within_var_", class)) + 
-#                              !!sym(paste0("between_var_", class)) + 
-#                              !!sym(paste0("between_var_", class))/2))
-#       
-#       #---- ****UCIs ----
-#       combined_results %<>% 
-#         mutate(!!sym(paste0("combined_UCI_", class)) := 
-#                  !!sym(paste0("combined_mean_", class)) + 
-#                  1.96*sqrt(!!sym(paste0("within_var_", class)) + 
-#                              !!sym(paste0("between_var_", class)) + 
-#                              !!sym(paste0("between_var_", class))/2))
-#       
-#       #---- ****coverage ----
-#       combined_results %<>% 
-#         mutate(!!sym(paste0("combined_", class, "_coverage")) := 
-#                  (!!sym(paste0("true_", class)) >= 
-#                     !!sym(paste0("combined_LCI_", class)))* 
-#                  (!!sym(paste0("true_", class)) <= 
-#                     !!sym(paste0("combined_UCI_", class))))
-#     } else{
-#       #---- ****mean estimates ----
-#       combined_results %<>% 
-#         mutate(!!sym(paste0("combined_mean_", class, "_", race)) := 
-#                  rowMeans(cbind(
-#                    !!sym(paste0("mean_", class, "_", race)), 
-#                    !!sym(paste0("ADAMS_mean_", class, "_", race)))))
-#       
-#       #---- ****within variance ----
-#       combined_results %<>% 
-#         mutate(!!sym(paste0("within_var_", class, "_", race)) := 
-#                  rowMeans(cbind(!!sym(paste0("SE_", class, "_", race)), 
-#                                 !!sym(paste0("ADAMS_SE_", class, "_", race)))))
-#       
-#       #---- ****between variance ----
-#       combined_results %<>% 
-#         mutate(!!sym(paste0("between_var_", class, "_", race)) := 
-#                  apply(cbind(!!sym(paste0("mean_", class, "_", race)), 
-#                              !!sym(paste0("ADAMS_mean_", class, "_", race))), 1, 
-#                        var))
-#       
-#       #---- ****LCIs ----
-#       combined_results %<>% 
-#         mutate(!!sym(paste0("combined_LCI_", class, "_", race)) := 
-#                  !!sym(paste0("combined_mean_", class, "_", race)) - 
-#                  1.96*sqrt(!!sym(paste0("within_var_", class, "_", race)) + 
-#                              !!sym(paste0("between_var_", class, "_", race)) + 
-#                              !!sym(paste0("between_var_", class, "_", race))/2))
-#       
-#       #---- ****UCIs ----
-#       combined_results %<>% 
-#         mutate(!!sym(paste0("combined_UCI_", class, "_", race)) := 
-#                  !!sym(paste0("combined_mean_", class, "_", race)) + 
-#                  1.96*sqrt(!!sym(paste0("within_var_", class, "_", race)) + 
-#                              !!sym(paste0("between_var_", class, "_", race)) + 
-#                              !!sym(paste0("between_var_", class, "_", race))/2))
-#       
-#       #---- ****coverage ----
-#       combined_results %<>% 
-#         mutate(!!sym(paste0("combined_", class, "_coverage", "_", race)) := 
-#                  (!!sym(paste0("true_", class, "_", race)) >= 
-#                     !!sym(paste0("combined_LCI_", class, "_", race)))* 
-#                  (!!sym(paste0("true_", class, "_", race)) <= 
-#                     !!sym(paste0("combined_UCI_", class, "_", race))))
-#     }
-#   }
-# }
 # 
 # #dem prev + PR
 # for(measure in c("dem_prev", "PR")){
@@ -1405,8 +1546,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/",
 #                         "_coverage"), 
 #                  str_remove(all_of(cols_by_race), "combined_")))
 # 
-# #---- ****bind with original results ----
-# results %<>% plyr::rbind.fill(., combined_results)
+
 
 
 #---- Figure X: comparing real HRS with synthetic HRS ----
