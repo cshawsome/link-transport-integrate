@@ -375,7 +375,6 @@ indicator_vars <-
 ADAMS %<>% 
   mutate_at(all_of(indicator_vars), function(x) ifelse(x > 0.5, 1, 0))
 
-
 #---- **join data ----
 table_data <- rbind.fill(ADAMS, HCAP) %>% rbind.fill(., HRS) %>% 
   rbind.fill(superpop)
