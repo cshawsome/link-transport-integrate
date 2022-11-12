@@ -316,7 +316,7 @@ ADAMS_imputed_list <-
                  "MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric))
 
-ADAMS <- do.call(rbind, ADAMS_imputed_list)
+ADAMS <- Reduce(`+`, ADAMS_imputed_list) / length(ADAMS_imputed_list)
 
 ADAMS_labels <- 
   variable_labels[which(variable_labels$ADAMS %in% colnames(ADAMS)), ]
@@ -365,6 +365,16 @@ HRS %<>%
 superpop %<>% dplyr::select(c(all_of(selected_vars), 
                               "Unimpaired", "MCI", "Dementia", "Other")) %>% 
   mutate("dataset" = "Superpopulation")
+
+#---- **format ADAMS indicator vars ----
+indicator_vars <- 
+  c("retired", "not_working", "married_partnered", "stroke", "diabe", "hearte", 
+    "hibpe", "moderate_drinking", "heavy_drinking", "cactus", "scissor", "pres", 
+    "bwc20", "subj_cog_better", "subj_cog_worse")
+
+ADAMS %<>% 
+  mutate_at(all_of(indicator_vars), function(x) ifelse(x > 0.5, 1, 0))
+
 
 #---- **join data ----
 table_data <- rbind.fill(ADAMS, HCAP) %>% rbind.fill(., HRS) %>% 
