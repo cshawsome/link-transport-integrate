@@ -45,12 +45,14 @@ HRS_vars <- c(paste0("r", cog_waves, "mpart"), paste0("r", hrs_waves, "height"),
               paste0("r", cog_waves, "pres"), paste0("r", cog_waves, "cogtot"), 
               paste0("r", cog_waves, "pstmem_Better"), 
               paste0("r", cog_waves, "pstmem_Same"), 
-              paste0("r", cog_waves, "pstmem_Worse"))
+              paste0("r", cog_waves, "pstmem_Worse"), "memimp00", "memimp02", 
+              "memimp04", "Astroke", "Ahibpe", "Adiabe", "Ahearte", "Abmi", 
+              "Aiadla", "Aadla", "Asmoken", "Adrinkd", "Adrinkn")
 
 not_predictors <- c("HHIDPN", "AYEAR", "White", "ANMSETOT_norm", 
-                    "Adem_dx_label_collapsed", "Unimpaired", "Astroke", "Ahibpe", 
-                    "Adiabe", "Ahearte", "Abmi", "Aiadla", "Aadla", "Asmoken", 
-                    "Adrinkd", "Adrinkn")
+                    "Adem_dx_label_collapsed", "Unimpaired", "Adrink_cat", 
+                    "Adrink_cat_label", "Ano_drinking", "Adrinks_per_week", 
+                    "Amoderate_drinking", "Aheavy_drinking")
 
 # #Sanity check
 # union_var_names <- c(sociodem_vars, ADAMS_vars, HRS_vars, not_predictors)
@@ -97,9 +99,8 @@ predict[paste0("ANSMEM2_", c("Better", "Same", "Worse")),
         paste0("r", cog_waves, "pstmem_Worse")] <- 1
 
 #---- **derived vars (do not impute) ----
-remove <- c("ANMSETOT_norm", 
-            paste0("A", c("stroke", "hibpe", "diabe", "hearte", "bmi", "iadla", 
-                          "adla", "smoken", "drinkd", "drinkn"))) 
+remove <- c("ANMSETOT_norm", "Adrink_cat_label", "Ano_drinking", 
+            "Amoderate_drinking", "Aheavy_drinking") 
 
 predict <- predict[!rownames(predict) %in% remove, ]
 
@@ -108,10 +109,10 @@ predict <- predict[!rownames(predict) %in% remove, ]
 colSums(predict[, not_predictors])
 
 #---- imputation ----
-#About 5 mins
+#About 7 mins
 set.seed(20220202)
 start <- Sys.time()
-fast_impute(predictor_matrix = predict, data = ADAMS_analytic, 
+fast_impute(predictor_matrix = predict, data = ADAMS_analytic,
             path_for_output = paste0(path_to_box, "data/ADAMS/cleaned/"),
             method = "PMM", m = 25, maxit = 15, chunk = 1)
 end <- Sys.time() - start
@@ -121,25 +122,25 @@ ADAMS_imputed <-
   readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/chunk_1/MI_datasets"))
 
 #---- derive post-imputation variables ----
-hrs_waves <- seq(4, 7)
-
-derive_vars <- function(data, waves){
-  for(wave in waves){
-    data %<>% 
-      #---- **bmi ----
-    mutate(!!paste0("r", wave, "bmi_derived") := 
-             !!sym(paste0("r", wave, "weight"))/
-             (!!sym(paste0("r", wave, "height"))*
-                !!sym(paste0("r", wave, "height")))) %>% 
-      #---- **drinks per week ----
-    mutate(!!paste0("r", wave, "drinks_per_week") := 
-             !!sym(paste0("r", wave, "drinkd"))*
-             !!sym(paste0("r", wave, "drinkn")))
-  }
-  return(data)
-}
-
-ADAMS_imputed <- lapply(ADAMS_imputed, derive_vars, hrs_waves)
+# hrs_waves <- seq(4, 7)
+# 
+# derive_vars <- function(data, waves){
+#   for(wave in waves){
+#     data %<>% 
+#       #---- **bmi ----
+#     mutate(!!paste0("r", wave, "bmi_derived") := 
+#              !!sym(paste0("r", wave, "weight"))/
+#              (!!sym(paste0("r", wave, "height"))*
+#                 !!sym(paste0("r", wave, "height")))) %>% 
+#       #---- **drinks per week ----
+#     mutate(!!paste0("r", wave, "drinks_per_week") := 
+#              !!sym(paste0("r", wave, "drinkd"))*
+#              !!sym(paste0("r", wave, "drinkn")))
+#   }
+#   return(data)
+# }
+# 
+# ADAMS_imputed <- lapply(ADAMS_imputed, derive_vars, hrs_waves)
 ADAMS_imputed <- lapply(ADAMS_imputed, function(x) x %<>% 
                           mutate("ANMSETOT_norm" = normMMSE(ANMSETOT)))
 
@@ -150,21 +151,21 @@ ADAMS_imputed <- lapply(ADAMS_imputed, function(x) x %<>%
 # View(test[, c("r4drinkd", "r4drinkn", "r4drinks_per_week")])
 # tail(colnames(test))
 
-#---- representative health variables ----
-health_vars <- c("adla", "bmi_derived", "diabe", "drinks_per_week", "hearte", 
-                 "hibpe", "iadla", "smoken", "stroke")
-
-rep_vars <- function(data, vars){
-  for(var in vars){
-    data %<>% 
-      mutate(!!paste0("A", var) := 
-               case_when(AYEAR %in% c(2001, 2002) ~ !!sym(paste0("r5", var)), 
-                         AYEAR %in% c(2003, 2004) ~ !!sym(paste0("r6", var))))
-  }
-  return(data)
-}
-
-ADAMS_imputed <- lapply(ADAMS_imputed, rep_vars, health_vars)
+# #---- representative health variables ----
+# health_vars <- c("adla", "bmi_derived", "diabe", "drinks_per_week", "hearte", 
+#                  "hibpe", "iadla", "smoken", "stroke")
+# 
+# rep_vars <- function(data, vars){
+#   for(var in vars){
+#     data %<>% 
+#       mutate(!!paste0("A", var) := 
+#                case_when(AYEAR %in% c(2001, 2002) ~ !!sym(paste0("r5", var)), 
+#                          AYEAR %in% c(2003, 2004) ~ !!sym(paste0("r6", var))))
+#   }
+#   return(data)
+# }
+# 
+# ADAMS_imputed <- lapply(ADAMS_imputed, rep_vars, health_vars)
 
 # #Sanity check
 # test <- ADAMS_imputed[[1]]
@@ -279,7 +280,7 @@ gen_cog <- c("SELFCOG", "ANBWC20", "ANCACTUS", "ANDELCOR", "ANIMMCR", "ANPRES",
              "avg_proxy_cog_Better", "avg_proxy_cog_Worse")
 functional <- c("Aadla", "Aiadla")
 health <- c("Adiabe", "Ahearte", "Ahibpe", "Asmoken", "Astroke", 
-            "Amoderate_drinking", "Aheavy_drinking", "Abmi_derived")
+            "Amoderate_drinking", "Aheavy_drinking", "Abmi")
 
 outcome <- c("Unimpaired", "MCI", "Dementia", "Other")
 
@@ -301,7 +302,7 @@ ADAMS_imputed_clean <-
 standardize_vars <- c("AAGE", "EDYRS", "ANMSETOT_norm", "ANAFTOT", "ANCPTOT", 
                       "ANRCPTOT","ANRECNO", "ANRECYES", "ANTMASEC", "ANWM1TOT", 
                       "ANWM2TOT", "SELFCOG", "ANDELCOR", "ANIMMCR", "ANSER7T", 
-                      "Aadla", "Aiadla", "Abmi_derived")
+                      "Aadla", "Aiadla", "Abmi")
 
 Z_score <- function(data, vars){
   subset <- data %>% dplyr::select(all_of(vars)) %>% 
