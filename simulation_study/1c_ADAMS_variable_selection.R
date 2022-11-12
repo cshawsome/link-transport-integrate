@@ -80,7 +80,7 @@ var_list <-
     "ANSER7T_Z", "ANAFTOT_Z", "ANRECYES_Z", "ANRECNO_Z", "ANWM1TOT_Z",
     "ANWM2TOT_Z", "ANBWC20", "ANCPTOT_Z", "ANRCPTOT_Z", "ANTMASEC_Z", "SELFCOG_Z", 
     "ANCACTUS", "ANSCISOR", "ANPRES", "ANSMEM2_Better", "ANSMEM2_Worse", 
-    "Aadla_Z", "Aiadla_Z", "Abmi_derived_Z", "Astroke", "Adiabe", "Ahearte", 
+    "Aadla_Z", "Aiadla_Z", "Abmi_Z", "Astroke", "Adiabe", "Ahearte", 
     "Ahibpe", "Asmoken", "Amoderate_drinking", "Aheavy_drinking") 
     
     # paste0("black*", cog_vars), paste0("hispanic*", cog_vars), 
