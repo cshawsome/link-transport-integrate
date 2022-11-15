@@ -68,53 +68,43 @@ missing_runs_function <-
     }
   }
 
-#---- **1: n = 2000; HCAP_prop = 25; calibration_scenario = calibration_35_SRS ----
-sim_scenarios_missing_runs <- 
-  missing_runs_function(missing_scenario_number = 1, seed_start = 10000, 
-                        n_missing_runs = 21, HRS_sample_size = 2000, 
-                        HCAP_sampling_prop = 25, 
-                        calibration_scenario = 
-                          c(paste0("calibration_", c(35), "_SRS")), 
-                        sim_scenarios_dataframe = NA)
+#---- **read in missing scenarios table ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+missing_scenarios_table <- 
+  read_csv(paste0(path_to_box, "analyses/missing_scenarios_table.csv"))
 
-#---- **2: n = 2000; HCAP_prop = 25; calibration_scenario = calibration_35_SRS_race ----
-sim_scenarios_missing_runs <- 
-  missing_runs_function(missing_scenario_number = 2, seed_start = 10000, 
-                        n_missing_runs = 15, HRS_sample_size = 2000, 
-                        HCAP_sampling_prop = 25, 
-                        calibration_scenario = 
-                          c(paste0("calibration_", c(35), "_SRS_race")), 
-                        sim_scenarios_dataframe = sim_scenarios_missing_runs)
+missing_scenarios_table %<>% 
+  mutate("scenario_num" = seq(1:nrow(missing_scenarios_table)))
 
-#---- **3: n = 2000; HCAP_prop = 25; calibration_scenario = calibration_50_SRS_race ----
-sim_scenarios_missing_runs <- 
-  missing_runs_function(missing_scenario_number = 3, seed_start = 10000, 
-                        n_missing_runs = 237, HRS_sample_size = 2000, 
-                        HCAP_sampling_prop = 25, 
-                        calibration_scenario = 
-                          c(paste0("calibration_", c(50), "_SRS_race")), 
-                        sim_scenarios_dataframe = sim_scenarios_missing_runs)
-
-#---- **4: n = 4000; HCAP_prop = 25; calibration_scenario = calibration_50_SRS_race ----
-sim_scenarios_missing_runs <- 
-  missing_runs_function(missing_scenario_number = 4, seed_start = 10000, 
-                        n_missing_runs = 17, HRS_sample_size = 4000, 
-                        HCAP_sampling_prop = 25, 
-                        calibration_scenario = 
-                          c(paste0("calibration_", c(50), "_SRS_race")), 
-                        sim_scenarios_dataframe = sim_scenarios_missing_runs)
-
-#---- **5: n = 2000; HCAP_prop = 50; calibration_scenario = calibration_50_SRS_race ----
-sim_scenarios_missing_runs <- 
-  missing_runs_function(missing_scenario_number = 5, seed_start = 10000, 
-                        n_missing_runs = 10, HRS_sample_size = 2000, 
-                        HCAP_sampling_prop = 50, 
-                        calibration_scenario = 
-                          c(paste0("calibration_", c(50), "_SRS_race")), 
-                        sim_scenarios_dataframe = sim_scenarios_missing_runs)
+#---- **create submission table ----
+for(i in 1:nrow(missing_scenarios_table)){
+  if(i == 1){
+    sim_scenarios_missing_runs <- 
+      missing_runs_function(
+        missing_scenario_number = 
+          as.numeric(missing_scenarios_table[i, "scenario_num"]), 
+        seed_start = 100000, 
+        n_missing_runs = as.numeric(missing_scenarios_table[i, "Num Missing"]), 
+        HRS_sample_size = as.numeric(missing_scenarios_table[i, "HRS Sample Size"]), 
+        HCAP_sampling_prop = as.numeric(missing_scenarios_table[i, "HCAP prop"]), 
+        calibration_scenario = 
+          as.character(missing_scenarios_table[i, "Calibration"]), 
+        sim_scenarios_dataframe = NA)
+  } else{
+    sim_scenarios_missing_runs %<>% 
+      missing_runs_function(
+        missing_scenario_number = 
+          as.numeric(missing_scenarios_table[i, "scenario_num"]), 
+        seed_start = 100000, 
+        n_missing_runs = as.numeric(missing_scenarios_table[i, "Num Missing"]), 
+        HRS_sample_size = as.numeric(missing_scenarios_table[i, "HRS Sample Size"]), 
+        HCAP_sampling_prop = as.numeric(missing_scenarios_table[i, "HCAP prop"]), 
+        calibration_scenario = 
+          as.character(missing_scenarios_table[i, "Calibration"]), 
+        sim_scenarios_dataframe = .)
+  }
+}
 
 #---- **save output ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-
 write_csv(sim_scenarios_missing_runs, 
           paste0(path_to_box, "data/", "sim_study_scenarios_missing_runs.csv"))
