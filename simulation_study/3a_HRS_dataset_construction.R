@@ -277,6 +277,7 @@ HRS %<>% drop_na(all_of(health_vars))
 
 #---- **summarize missingness on any cognitive assessment ----
 #There are 573 participants missing at least one cognitive assessment in HRS
+# and 570 missing total cognition... it's not worth recovering the 3 with hotdecking
 subset <- names(colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)])
 remove_vars <- c("r13drinkd", "r13pstmem", "memimp16", "RACE_label", 
                  "RACE_White", "RACE_Black", "RACE_Other", "drinks_per_week")
