@@ -396,7 +396,8 @@ posterior_predictive_checks <-
       mutate("truth" = 0, 
              "label" = 
                rep(unlist(variable_labels[
-                 which(variable_labels$data_label %in% continuous_covariates), 
+                 which(unique(variable_labels$data_label) %in% 
+                         continuous_covariates), 
                  "figure_label"]), num_chains))
     
     for(var in continuous_covariates){
@@ -468,7 +469,8 @@ posterior_predictive_checks <-
       mutate("truth" = 0, 
              "label" = 
                rep(unlist(variable_labels[
-                 which(variable_labels$data_label %in% continuous_covariates), 
+                 which(unique(variable_labels$data_label) %in% 
+                         continuous_covariates), 
                  "figure_label"]), num_chains*4)) %>% 
       left_join(color_palette, by = c("group" = "Group"))
     
@@ -545,7 +547,8 @@ posterior_predictive_checks <-
     synthetic_continuous %<>% 
       mutate("truth" = 0, 
              "label" = rep(unlist(variable_labels[
-               which(variable_labels$data_label %in% continuous_covariates), 
+               which(unique(variable_labels$data_label) %in% 
+                       continuous_covariates), 
                "figure_label"]), num_chains))
     
     for(var in continuous_covariates){
@@ -617,7 +620,8 @@ posterior_predictive_checks <-
       mutate("truth" = 0, 
              "label" = 
                rep(unlist(variable_labels[
-                 which(variable_labels$data_label %in% continuous_covariates), 
+                 which(unique(variable_labels$data_label) %in% 
+                          continuous_covariates), 
                  "figure_label"]), num_chains*4)) %>% 
       left_join(color_palette, by = c("group" = "Group"))
     
@@ -802,8 +806,8 @@ posterior_predictive_checks <-
   }
 
 # #---- test function ----
-# dataset_to_copy = synthetic_HCAP_list[[6]]
-# calibration_sample = TRUE
+# dataset_to_copy = synthetic_HCAP_list[[1]]
+# calibration_sample = FALSE
 # calibration_prop =
 #   as.numeric(str_remove(calibration_scenario, "HCAP_"))/100
 # calibration_sample_name = calibration_scenario
