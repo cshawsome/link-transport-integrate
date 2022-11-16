@@ -19,8 +19,11 @@ source(here::here("HCAP", "functions", "prior_predictive_checks_function.R"))
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **HCAP data ----
-HCAP_analytic <- 
-  read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic.csv")) 
+HCAP_imputed <- 
+  readRDS(paste0(path_to_box, "analyses/HCAP/HCAP_MI_hotdeck")) 
+
+#just do checks on one dataset
+HCAP_analytic <- HCAP_imputed[[1]]
 
 #---- **variable labels ----
 variable_labels <- 
