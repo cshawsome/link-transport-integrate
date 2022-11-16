@@ -82,7 +82,7 @@ indices <-
 # lapply(synthetic_HCAP_list[indices], function(x)
 #   posterior_predictive_checks(dataset_to_copy = x, 
 #                               calibration_sample = 
-#                                 !(calibration_scenario == "no_calibration"),
+#                                 !(calibration_scenario == "ADAMS_prior"),
 #                               calibration_prop = 
 #                                 suppressWarnings(
 #                                   parse_number(calibration_scenario)/100),  
@@ -109,7 +109,7 @@ start <- Sys.time()
 future_lapply(synthetic_HCAP_list[indices], function(x)
   posterior_predictive_checks(dataset_to_copy = x, 
                               calibration_sample = 
-                                !(calibration_scenario == "no_calibration"),
+                                !(calibration_scenario == "ADAMS_prior"),
                               calibration_prop = 
                                 suppressWarnings(
                                   parse_number(calibration_scenario)/100), 
