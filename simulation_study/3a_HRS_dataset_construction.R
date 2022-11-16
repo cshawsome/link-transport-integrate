@@ -75,21 +75,12 @@ RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/",
 #Remove labeled data format
 val_labels(RAND) <- NULL
 
-#---- **HRS imputed memory scores ----
-mem_scores <- 
-  read_sas(paste0(path_to_box, "data/HRS/imputed_memory/", 
-                  "dpmemimp_oct2020.sas7bdat")) %>% 
-  dplyr::select(c("HHID", "PN", "memimp16")) %>% 
-  mutate_at(c("HHID"), as.numeric) %>% 
-  unite("HHIDPN", c("HHID", "PN"), sep = "")
-
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
 #---- join data ----
 HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>% 
-  left_join(., RAND, by = "HHIDPN") %>% 
-  left_join(., mem_scores, by = "HHIDPN")
+  left_join(., RAND, by = "HHIDPN")
 
 #---- clean data ----
 #---- **HCAP selection ----
@@ -285,17 +276,13 @@ HRS %<>% drop_na(all_of(health_vars))
 # colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
 
 #---- **summarize missingness on any cognitive assessment ----
-#There are 573 participants missing at least one cognitive assessment in HCAP
+#There are 573 participants missing at least one cognitive assessment in HRS
 subset <- names(colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)])
 remove_vars <- c("r13drinkd", "r13pstmem", "memimp16", "RACE_label", 
                  "RACE_White", "RACE_Black", "RACE_Other", "drinks_per_week")
 cog_vars <- subset[-which(subset %in% remove_vars)]
 
 nrow(HRS) - nrow(HRS %>% drop_na(all_of(cog_vars)))
-
-#---- **summarize missingness on imputed memory scores ----
-#There are 682 people missing imputed memory scores
-sum(is.na(HRS$memimp16))
 
 #---- **CC cognitive assessments ----
 HRS %<>% drop_na(all_of(cog_vars))
