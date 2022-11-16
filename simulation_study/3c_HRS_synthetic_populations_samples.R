@@ -169,16 +169,16 @@ superpop_imputed %<>%
 
 #---- **QC superpop_imputed ----
 #---- ****overall summaries ----
-#hotdeck: U: 37.1%, M: 16.2%, D: 26.4%, O: 20.3%
+#hotdeck: U: 37.3%, M: 16.4%, D: 26.0%, O: 20.4%
 colMeans(superpop_imputed[, c("Unimpaired", "MCI", "Dementia", "Other")])
 
 #More dementia among women? 
-#hotdeck: Yes (M: 25.1%, W: 27.3%)
+#hotdeck: Yes (M: 24.5%, W: 26.9%)
 mean(superpop_imputed[superpop_imputed$female == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$female == 0, "Dementia"])
 
 #More dementia among racial/ethnic minorities?  
-# hotdeck: Yes (w: 25.6%, b: 33.2%, h: 22.5%)
+# hotdeck: Yes (w: 24.3%, b: 33.1%, h: 29.6%)
 mean(superpop_imputed[superpop_imputed$White == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$black == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$hispanic == 1, "Dementia"])
@@ -187,19 +187,19 @@ mean(superpop_imputed[superpop_imputed$hispanic == 1, "Dementia"])
 exp(coefficients(glm(Dementia ~ age, data = superpop_imputed, 
                      family = "poisson")))
 
-#Years of Education: decreased risk by higher education (hotdeck: PR = 0.98)
+#Years of Education: decreased risk by higher education (hotdeck: PR = 0.95)
 exp(coefficients(glm(Dementia ~ edyrs, data = superpop_imputed, 
                      family = "poisson")))
 
-#Stroke: increased risk for yes vs. no (hotdeck: PR = 1.69)
+#Stroke: increased risk for yes vs. no (hotdeck: PR = 1.72)
 exp(coefficients(glm(Dementia ~ stroke, data = superpop_imputed, 
                      family = "poisson")))
 
-#Diabetes: no increased risk for yes vs. no (hotdeck: PR = 1.01)
+#Diabetes: no increased risk for yes vs. no (hotdeck: PR = 1.03)
 exp(coefficients(glm(Dementia ~ diabe, data = superpop_imputed, 
                      family = "poisson")))
 
-#Diabetes: increased risk for any impairment yes vs. no (hotdeck: PR = 1.10)
+#Diabetes: increased risk for any impairment yes vs. no (hotdeck: PR = 1.11)
 superpop_imputed %<>% mutate("any_impairment" = Dementia + MCI)
 exp(coefficients(glm(any_impairment ~ diabe, data = superpop_imputed, 
                      family = "poisson")))
@@ -253,20 +253,20 @@ for(race in c("white", "black", "hispanic")){
 # agesex_standardized$hispanic_dem_risk*agesex_standardized$superpop_imputed_count
 
 #---- ******estimates ----
-#hotdeck: 0.254
+#hotdeck: 0.24
 white_risk <- 
   sum(agesex_standardized$expected_white_dem_count)/nrow(superpop_imputed)
-#hotdeck: 0.342
+#hotdeck: 0.33
 black_risk <- 
   sum(agesex_standardized$expected_black_dem_count)/nrow(superpop_imputed)
-#hotdeck: 0.227
+#hotdeck: 0.30
 hispanic_risk <- 
   sum(agesex_standardized$expected_hispanic_dem_count)/nrow(superpop_imputed)
 
 #PR compared to white
-#hotdeck: 1.35
+#hotdeck: 1.37
 PR_black <- black_risk/white_risk
-#hotdeck: 0.89
+#hotdeck: 1.25
 PR_hispanic <- hispanic_risk/white_risk
 
 #---- **save superpop_imputed data ----
