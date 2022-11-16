@@ -387,10 +387,11 @@ HCAP %<>% drop_na(health_vars)
 # colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
 
 #---- **summarize missingness on hrs total cognition ----
-#There are XX participants HRS total cognition... we are using this as an 
-# important measure in the hotdecking step
+#There are 163 participants missing HRS total cognition... 
+# we are using this as an important measure in the hotdecking step
 nrow(HCAP) - nrow(HCAP %>% drop_na(r13cogtot))
 
+#remove people missing hrs total cognition (N = 2298, dropped n = 163)
 HCAP %<>% drop_na(r13cogtot)
 
 #---- rename columns ----
