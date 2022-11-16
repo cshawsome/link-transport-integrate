@@ -732,8 +732,8 @@ posterior_predictive_checks <-
       left_join(color_palette, by = "Group") %>%
       mutate("chain" = paste0("Chain ", chain))
     
-    combined_plot_data[, c("mean", "lower", "upper", "truth")] <- 
-      combined_plot_data[, c("mean", "lower", "upper", "truth")]/4000
+    # combined_plot_data[, c("mean", "lower", "upper", "truth")] <- 
+    #   combined_plot_data[, c("mean", "lower", "upper", "truth")]/4000
     
     combined_plot_data$Group <- 
       factor(combined_plot_data$Group, 
