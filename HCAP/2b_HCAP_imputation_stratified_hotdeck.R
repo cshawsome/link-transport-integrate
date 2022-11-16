@@ -197,16 +197,6 @@ HCAP_impute_list %<>% lapply(., clean_dummy_vars)
 #   print(lapply(HCAP_impute_list, function(x) table(x[, var])))
 # }
 
-#---- last bin check ----
-# #sum should be 2235
-# check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "delrc_cat", "ser7_cat", 
-#                 "adl_cat", "iadl_cat", "wrc_yes_cat", "wrc_no_cat", "imm_cp_cat", 
-#                 "del_cp_cat")
-# 
-# for(var in check_vars){
-#   print(sum(table(HCAP[, var])))
-# }
-
 #---- save dataset ----
-HCAP %>% dplyr::select(-one_of("subj_cog_count", "contingency_cell")) %>% 
-  write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic.csv"))
+HCAP_impute_list %>% 
+  saveRDS(paste0(path_to_box, "analyses/HCAP/HCAP_MI_hotdeck"))
