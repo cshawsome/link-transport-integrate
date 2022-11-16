@@ -402,4 +402,5 @@ HCAP %<>%
   rename_at(vars(variable_labels$HCAP), ~ variable_labels$data_label)
 
 #---- save dataset ----
-HCAP %>% write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv"))
+HCAP %>% 
+  write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean_for_sim.csv"))
