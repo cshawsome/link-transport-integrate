@@ -80,17 +80,17 @@ HCAP_data_path <- paste0(path_to_box, "data/HCAP/HC16/HC16da/HC16HP_R.da")
 HCAP_dict_path <- paste0(path_to_box, "data/HCAP/HC16/HC16sta/HC16HP_R.dct")
 
 HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") %>% 
-  #select variables: ID, total MMSE score, object naming (scissor, cactus), 
-  # president naming, animal naming, word recall (immediate), 
-  # word recall (delayed), word list recall (yes, no), 
+  #select variables: ID, respondent flag, total MMSE score, 
+  # object naming (scissor, cactus), president naming, animal naming, 
+  # word recall (immediate), word recall (delayed), word list recall (yes, no), 
   # brave man recall (immediate), story recall (immediate), 
   # brave man recall (delayed), story recall (delayed), 
   # constructional praxis (immediate), constructional praxis (delayed), trails A
-  dplyr::select("HHIDPN", "H1RMSESCORE", "H1RTICSSCISOR", "H1RTICSCACTUS", 
-                "H1RTICSPRES", "H1RAFSCORE", "H1RWLIMM1SCORE", "H1RWLIMM2SCORE", 
-                "H1RWLIMM3SCORE", "H1RWLDELSCORE", "H1RWLRECYSCORE", 
-                "H1RWLRECNSCORE", "H1RBMIMMSCORE", "H1RLMIMMSCORE",
-                "H1RBMDELSCORE", "H1RLMDELSCORE", "H1RCPIMMSCORE", 
+  dplyr::select("HHIDPN", "H1RIFLAG", "H1RMSESCORE", "H1RTICSSCISOR", 
+                "H1RTICSCACTUS", "H1RTICSPRES", "H1RAFSCORE", "H1RWLIMM1SCORE", 
+                "H1RWLIMM2SCORE", "H1RWLIMM3SCORE", "H1RWLDELSCORE", 
+                "H1RWLRECYSCORE", "H1RWLRECNSCORE", "H1RBMIMMSCORE", 
+                "H1RLMIMMSCORE","H1RBMDELSCORE", "H1RLMDELSCORE", "H1RCPIMMSCORE", 
                 "H1RCPDELSCORE", "H1RTMASCORE") %>% 
   #get rid of leading 0
   mutate_at("HHIDPN", as.numeric) %>% 
@@ -236,7 +236,6 @@ HCAP %<>%
          "r13heavy_drinking" = 
            ifelse(r13drink_cat_label == "Heavy Drinking", 1, 0))
 
-
 #---- **subjective cognitive change ----
 # table(HCAP$r13pstmem, useNA = "ifany")
 HCAP %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0), 
@@ -282,9 +281,9 @@ HCAP %<>%
             #don't know/incorrect  
             function(x) ifelse(x %in% c(5, 8), 0, x))
 
-#Sanity check
-table(HCAP$H1RTICSSCISOR, useNA = "ifany")
-table(HCAP$H1RTICSCACTUS, useNA = "ifany")
+# #Sanity check
+# table(HCAP$H1RTICSSCISOR, useNA = "ifany")
+# table(HCAP$H1RTICSCACTUS, useNA = "ifany")
 
 #---- **President naming ----
 # table(HCAP$H1RTICSPRES, useNA = "ifany")
