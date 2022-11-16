@@ -22,15 +22,16 @@ HCAP <- read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv")) %>%
 
 #---- **imputation matrix ----
 hotdeck_vars_mat <- 
-  read_csv(paste0(path_to_box, "data/HCAP/hotdeck_impute_mat.csv")) %>% 
+  read_csv(paste0(path_to_box, "analyses/HCAP/hotdeck_impute_mat.csv")) %>% 
   column_to_rownames("var_names")
 
 #---- **summarize missingness ----
 #double check that all of these are in the rownames of the imputation matrix
+#do 10 imputations because max missingness is 9.6%
 colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
 
 #---- source functions ----
-source(here::here("simulation_study", "functions", "hotdeck_function.R"))
+source(here::here("HCAP", "functions", "hotdeck_function.R"))
 
 #---- impute: derive variable bins ----
 HCAP %<>% 
@@ -41,7 +42,9 @@ HCAP %<>%
     #---- **education ----
     "edyrs_cat" = cut(edyrs, 
                       breaks = c(0, 11, 12, max(HCAP$edyrs)),
-                      include.lowest = TRUE, right = TRUE), 
+                      include.lowest = TRUE, right = TRUE),
+    #---- **bmi ----
+    "bmi_cat" = cut_number(bmi, n = 5),
     #---- **immediate word recall ----
     "immrc_cat" = cut(immrc, breaks = c(0, 6, 8, max(HCAP$immrc, na.rm = TRUE)), 
                       include.lowest = TRUE, right = FALSE),
@@ -82,27 +85,39 @@ HCAP %<>%
     "trailsA_cat" = cut_number(trailsA, n = 5))
 
 # #Sanity check bins
-# check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "delrc_cat", "ser7_cat", 
-#                 "hrs_cog_HCAP_cat", "hrs_cog_superpop_cat", "mmse_norm_cat", 
-#                 "wrc_yes_cat", "wrc_no_cat", "animal_naming_cat", 
-#                 "imm_story_cat", "del_story_cat", "imm_cp_cat", "del_cp_cat", 
+# check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "delrc_cat", "ser7_cat",
+#                 "hrs_cog_HCAP_cat", "hrs_cog_superpop_cat", "mmse_norm_cat",
+#                 "wrc_yes_cat", "wrc_no_cat", "animal_naming_cat",
+#                 "imm_story_cat", "del_story_cat", "imm_cp_cat", "del_cp_cat",
 #                 "trailsA_cat")
 # 
 # for(var in check_vars){
 #   print(table(HCAP[, var]))
 # }
 
-#---- impute: hotdecking ----
-set.seed(20220904)
-HCAP %<>% 
-  hotdeck(dataset_to_impute = ., hotdeck_dataset = HCAP, 
-          imputation_mat = hotdeck_vars_mat, 
-          binary_vars = c("subj_cog_better", "subj_cog_worse", "bwc20", "scissor", 
-                          "cactus", "pres"), 
-          dataset_specific_vars = c("hrs_cog"), dataset_specific_label = "HCAP")
+#---- impute: MI hotdecking ----
+set.seed(20221116)
+m = 10
+HCAP_impute_list <- list()
 
-#Sanity check
-colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
+for(i in 1:m){
+  HCAP_impute_list[[i]] <- 
+    hotdeck(dataset_to_impute = HCAP, hotdeck_dataset = HCAP, 
+            imputation_mat = hotdeck_vars_mat, 
+            binary_vars = c("moderate_drinking", "heavy_drinking", 
+                            "not_working", "retired", "smoken", "hibpe", 
+                            "diabe", "hearte", "stroke", "subj_cog_better", 
+                            "subj_cog_worse", "bwc20", "scissor", "cactus", 
+                            "pres"), 
+            dataset_specific_vars = c("hrs_cog"), 
+            dataset_specific_label = "HCAP")
+}
+
+# #Sanity check
+# colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
+# #pool size
+# apply(HCAP[, str_detect(colnames(HCAP), "pool")], 2, 
+#       function(x) min(x, na.rm = TRUE))
 
 #---- clean: subjective cog decline vars ----
 HCAP %<>% mutate(subj_cog_count = subj_cog_better + subj_cog_worse)
@@ -126,6 +141,50 @@ for(index in fix_these){
 # 
 # table(HCAP$subj_cog_count)
 
+#---- clean: drinking vars ----
+HCAP %<>% mutate(drinking_count = moderate_drinking + heavy_drinking)
+
+#check counts
+table(HCAP$drinking_count)
+
+#---- **no drinking ----
+HCAP %<>% mutate("no_drinking" = ifelse(drinking_count == 0, 1, 0))
+
+#---- **moderate/heavy drinking ----
+fix_these <- which(HCAP$drinking_count > 1)
+
+for(index in fix_these){
+  HCAP[index, sample(c("moderate_drinking", "heavy_drinking"), size = 1)] <- 0
+}
+
+# #Sanity check-- should only have sums equal to 1
+# HCAP %<>%
+#   mutate(drinking_count = no_drinking + moderate_drinking + heavy_drinking)
+# 
+# table(HCAP$drinking_count)
+
+#---- clean: employment vars ----
+HCAP %<>% mutate(employment_count = not_working + retired)
+
+#check counts
+table(HCAP$employment_count)
+
+#---- **working ----
+HCAP %<>% mutate("working" = ifelse(employment_count == 0, 1, 0))
+
+#---- **not working/retired ----
+fix_these <- which(HCAP$employment_count > 1)
+
+for(index in fix_these){
+  HCAP[index, sample(c("not_working", "retired"), size = 1)] <- 0
+}
+
+# #Sanity check-- should only have sums equal to 1
+# HCAP %<>%
+#   mutate(employment_count = working + not_working + retired)
+# 
+# table(HCAP$employment_count)
+
 #---- last bin check ----
 # #sum should be 2235
 # check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "delrc_cat", "ser7_cat", 
@@ -138,4 +197,4 @@ for(index in fix_these){
 
 #---- save dataset ----
 HCAP %>% dplyr::select(-one_of("subj_cog_count", "contingency_cell")) %>% 
-  write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv"))
+  write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic.csv"))
