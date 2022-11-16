@@ -96,22 +96,13 @@ HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") %>%
   mutate_at("HHIDPN", as.numeric) %>% 
   mutate_at("HHIDPN", as.character)
 
-#---- **HRS imputed memory scores ----
-mem_scores <- 
-  read_sas(paste0(path_to_box, "data/HRS/imputed_memory/", 
-                  "dpmemimp_oct2020.sas7bdat")) %>% 
-  dplyr::select(c("HHID", "PN", "memimp16")) %>% 
-  mutate_at(c("HHID"), as.numeric) %>% 
-  unite("HHIDPN", c("HHID", "PN"), sep = "")
-
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
 #---- join data ----
 HCAP <- left_join(HCAP_2016, HRS_tracker, by = "HHIDPN") %>% 
   left_join(., HRS_core, by = "HHIDPN") %>%
-  left_join(., RAND, by = "HHIDPN") %>% 
-  left_join(., mem_scores, by = "HHIDPN")
+  left_join(., RAND, by = "HHIDPN")
 
 #---- clean data ----
 #---- **HCAP select ----
@@ -395,34 +386,12 @@ HCAP %<>% drop_na(health_vars)
 # #Sanity check
 # colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
 
-#---- **summarize missingness on any cognitive assessment ----
-#There are 334 participants missing at least one cognitive assessment in HCAP
-subset <- names(colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)])
-remove_vars <- c("H1RMSESCORE", "H1RWLIMM1SCORE", "H1RWLIMM2SCORE", 
-                 "H1RWLIMM3SCORE", "memimp16")
-cog_vars <- subset[-which(subset %in% remove_vars)]
+#---- **summarize missingness on hrs total cognition ----
+#There are XX participants HRS total cognition... we are using this as an 
+# important measure in the hotdecking step
+nrow(HCAP) - nrow(HCAP %>% drop_na(r13cogtot))
 
-nrow(HCAP) - nrow(HCAP %>% drop_na(all_of(cog_vars)))
-
-#---- **summarize missingness on imputed memory scores ----
-#There are 226 people missing imputed memory scores
-sum(is.na(HCAP$memimp16))
-
-#---- ****sanity check missing imputed memory ----
-length(which(HCAP_2016$HHIDPN %in% mem_scores$HHIDPN))
-length(which(RAND$HHIDPN %in% mem_scores$HHIDPN))
-
-length(mem_scores$HHIDPN[which(!mem_scores$HHIDPN %in% HCAP_2016$HHIDPN)])
-length(mem_scores$HHIDPN[which(mem_scores$HHIDPN %in% HCAP_2016$HHIDPN)])
-
-View(as.data.frame(
-  mem_scores$HHIDPN[which(!mem_scores$HHIDPN %in% HCAP_2016$HHIDPN)]))
-
-View(as.data.frame(
-  HCAP_2016$HHIDPN[which(!HCAP_2016$HHIDPN %in% mem_scores$HHIDPN)]))
-
-#remove people missing imputed memory (N = 2235, dropped n = 226)
-HCAP %<>% drop_na(memimp16) 
+HCAP %<>% drop_na(r13cogtot)
 
 #---- rename columns ----
 variable_labels <- 
