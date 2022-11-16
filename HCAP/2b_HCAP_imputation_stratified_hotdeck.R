@@ -197,6 +197,24 @@ HCAP_impute_list %<>% lapply(., clean_dummy_vars)
 #   print(lapply(HCAP_impute_list, function(x) table(x[, var])))
 # }
 
+#---- standardize continuous vars ----
+standardize_vars <- c("animal_naming", "delrc", "wrc_yes", "wrc_no", "imm_cp", 
+                      "del_cp", "trailsA", "age", "edyrs", "bmi", "ser7", 
+                      "hrs_cog", "adl", "iadl", "mmse_norm", "immrc", "imm_story", 
+                      "del_story")
+
+Z_score <- function(data, vars){
+  subset <- data %>% dplyr::select(all_of(vars)) %>% 
+    mutate_all(scale) %>% set_colnames(paste0(all_of(vars), "_Z"))
+  
+  data %<>% cbind(., subset)
+  
+  return(data)
+}
+
+HCAP_impute_list <- lapply(HCAP_impute_list, Z_score, standardize_vars)
+
+
 #---- save dataset ----
 HCAP_impute_list %>% 
   saveRDS(paste0(path_to_box, "analyses/HCAP/HCAP_MI_hotdeck"))
