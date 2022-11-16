@@ -113,77 +113,89 @@ for(i in 1:m){
             dataset_specific_label = "HCAP")
 }
 
-# #Sanity check
+# #Sanity check-- do this on one element of the list at a time
 # colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
 # #pool size
 # apply(HCAP[, str_detect(colnames(HCAP), "pool")], 2, 
 #       function(x) min(x, na.rm = TRUE))
 
-#---- clean: subjective cog decline vars ----
-HCAP %<>% mutate(subj_cog_count = subj_cog_better + subj_cog_worse)
+#---- clean dummy vars ----
+clean_dummy_vars <- function(data){
+  #---- clean: subjective cog decline vars ----
+  data %<>% mutate(subj_cog_count = subj_cog_better + subj_cog_worse)
+  
+  # #check counts
+  # table(data$subj_cog_count)
+  
+  #---- **subjective cog same ----
+  data %<>% mutate("subj_cog_same" = ifelse(subj_cog_count == 0, 1, 0))
+  
+  #---- **subjective cog better/worse ----
+  fix_these <- which(data$subj_cog_count > 1)
+  
+  for(index in fix_these){
+    data[index, sample(c("subj_cog_worse", "subj_cog_better"), size = 1)] <- 0
+  }
+  
+  #Sanity check-- should only have sums equal to 1
+  data %<>%
+    mutate(subj_cog_count = subj_cog_better + subj_cog_worse + subj_cog_same)
 
-#check counts
-table(HCAP$subj_cog_count)
+  #table(data$subj_cog_count)
+  
+  #---- clean: drinking vars ----
+  data %<>% mutate(drinking_count = moderate_drinking + heavy_drinking)
+  
+  # #check counts
+  # table(data$drinking_count)
+  
+  #---- **no drinking ----
+  data %<>% mutate("no_drinking" = ifelse(drinking_count == 0, 1, 0))
+  
+  #---- **moderate/heavy drinking ----
+  fix_these <- which(data$drinking_count > 1)
+  
+  for(index in fix_these){
+    data[index, sample(c("moderate_drinking", "heavy_drinking"), size = 1)] <- 0
+  }
+  
+  #Sanity check-- should only have sums equal to 1
+  data %<>%
+    mutate(drinking_count = no_drinking + moderate_drinking + heavy_drinking)
 
-#---- **subjective cog same ----
-HCAP %<>% mutate("subj_cog_same" = ifelse(subj_cog_count == 0, 1, 0))
+  #table(data$drinking_count)
+  
+  #---- clean: employment vars ----
+  data %<>% mutate(employment_count = not_working + retired)
+  
+  # #check counts
+  # table(data$employment_count)
+  
+  #---- **working ----
+  data %<>% mutate("working" = ifelse(employment_count == 0, 1, 0))
+  
+  #---- **not working/retired ----
+  fix_these <- which(data$employment_count > 1)
+  
+  for(index in fix_these){
+    data[index, sample(c("not_working", "retired"), size = 1)] <- 0
+  }
+  
+  #Sanity check-- should only have sums equal to 1
+  data %<>%
+    mutate(employment_count = working + not_working + retired)
 
-#---- **subjective cog better/worse ----
-fix_these <- which(HCAP$subj_cog_count > 1)
-
-for(index in fix_these){
-  HCAP[index, sample(c("subj_cog_worse", "subj_cog_better"), size = 1)] <- 0
+  #table(data$employment_count)
+  
+  return(data)
 }
 
-# #Sanity check-- should only have sums equal to 1
-# HCAP %<>%
-#   mutate(subj_cog_count = subj_cog_better + subj_cog_worse + subj_cog_same)
-# 
-# table(HCAP$subj_cog_count)
+HCAP_impute_list %<>% lapply(., clean_dummy_vars)
 
-#---- clean: drinking vars ----
-HCAP %<>% mutate(drinking_count = moderate_drinking + heavy_drinking)
-
-#check counts
-table(HCAP$drinking_count)
-
-#---- **no drinking ----
-HCAP %<>% mutate("no_drinking" = ifelse(drinking_count == 0, 1, 0))
-
-#---- **moderate/heavy drinking ----
-fix_these <- which(HCAP$drinking_count > 1)
-
-for(index in fix_these){
-  HCAP[index, sample(c("moderate_drinking", "heavy_drinking"), size = 1)] <- 0
-}
-
-# #Sanity check-- should only have sums equal to 1
-# HCAP %<>%
-#   mutate(drinking_count = no_drinking + moderate_drinking + heavy_drinking)
-# 
-# table(HCAP$drinking_count)
-
-#---- clean: employment vars ----
-HCAP %<>% mutate(employment_count = not_working + retired)
-
-#check counts
-table(HCAP$employment_count)
-
-#---- **working ----
-HCAP %<>% mutate("working" = ifelse(employment_count == 0, 1, 0))
-
-#---- **not working/retired ----
-fix_these <- which(HCAP$employment_count > 1)
-
-for(index in fix_these){
-  HCAP[index, sample(c("not_working", "retired"), size = 1)] <- 0
-}
-
-# #Sanity check-- should only have sums equal to 1
-# HCAP %<>%
-#   mutate(employment_count = working + not_working + retired)
-# 
-# table(HCAP$employment_count)
+# #Sanity check-- should all be 1
+# for(var in c("subj_cog_count", "drinking_count", "employment_count")){
+#   print(lapply(HCAP_impute_list, function(x) table(x[, var])))
+# }
 
 #---- last bin check ----
 # #sum should be 2235
