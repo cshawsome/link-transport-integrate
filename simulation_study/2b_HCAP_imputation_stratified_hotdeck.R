@@ -79,16 +79,14 @@ HCAP %<>%
                        breaks = c(0, 4, 6, 8, max(HCAP$imm_cp, na.rm = TRUE)), 
                        include.lowest = TRUE, right = TRUE),
     #---- **trails A ----
-    "trailsA_cat" = cut_number(trailsA, n = 5), 
-    #---- **imputed memory ----
-    "memimp16_cat" = cut_number(memimp16, n = 4))
+    "trailsA_cat" = cut_number(trailsA, n = 5))
 
 # #Sanity check bins
 # check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "delrc_cat", "ser7_cat", 
 #                 "hrs_cog_HCAP_cat", "hrs_cog_superpop_cat", "mmse_norm_cat", 
 #                 "wrc_yes_cat", "wrc_no_cat", "animal_naming_cat", 
 #                 "imm_story_cat", "del_story_cat", "imm_cp_cat", "del_cp_cat", 
-#                 "trailsA_cat", "memimp16_cat")
+#                 "trailsA_cat")
 # 
 # for(var in check_vars){
 #   print(table(HCAP[, var]))
@@ -123,7 +121,7 @@ for(index in fix_these){
 }
 
 # #Sanity check-- should only have sums equal to 1
-# HCAP %<>% 
+# HCAP %<>%
 #   mutate(subj_cog_count = subj_cog_better + subj_cog_worse + subj_cog_same)
 # 
 # table(HCAP$subj_cog_count)
