@@ -96,6 +96,9 @@ HCAP_2016 <- read_da_dct(HCAP_data_path, HCAP_dict_path, HHIDPN = "TRUE") %>%
   mutate_at("HHIDPN", as.numeric) %>% 
   mutate_at("HHIDPN", as.character)
 
+#---- **variable labels ----
+variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
+
 #---- join data ----
 HCAP <- left_join(HCAP_2016, HRS_tracker, by = "HHIDPN") %>% 
   left_join(., HRS_core, by = "HHIDPN") %>%
@@ -236,14 +239,20 @@ HCAP %<>%
          "r13heavy_drinking" = 
            ifelse(r13drink_cat_label == "Heavy Drinking", 1, 0))
 
+# #Sanity check
+# table(HCAP$r13no_drinking, useNA = "ifany")
+
+#---- **HRS cognitive test score ----
+# table(HCAP$r13cogtot, useNA = "ifany")
+
 #---- **subjective cognitive change ----
 # table(HCAP$r13pstmem, useNA = "ifany")
 HCAP %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0), 
                  "subj_cog_same" = ifelse(r13pstmem == 2, 1, 0), 
                  "subj_cog_worse" = ifelse(r13pstmem == 3, 1, 0))
 
-#---- **HRS cognitive test score ----
-# table(HCAP$r13cogtot, useNA = "ifany")
+# #Sanity checking
+# table(HCAP$subj_cog_better, useNA = "ifany")
 
 #---- **MMSE ----
 #table(HCAP$H1RMSESCORE, useNA = "ifany")
