@@ -26,7 +26,7 @@ rand_variables =
     paste0("r", rand_waves, "hibpe"), paste0("r", rand_waves, "diabe"),
     paste0("r", rand_waves, "hearte"), paste0("r", rand_waves, "smoken"),
     paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"),
-    #Cognitive variables: serial 7s, total MMSE score, BWC (20),
+    #Cognitive variables: serial 7s, total hrs cog score, BWC (20),
     # subjective cognitive change
     paste0("r", rand_waves, "ser7"), paste0("r", rand_waves, "cogtot"), 
     paste0("r", rand_waves, "bwc20"), paste0("r", rand_waves, "pstmem"))
@@ -366,47 +366,21 @@ HCAP %<>% mutate_at("H1RTMASCORE",
 # #Sanity check
 # table(HCAP$H1RTMASCORE, useNA = "ifany")
 
-#---- **filter: missing all neurospych + general cognitive measures ----
-neuro_cog_measures <- c("H1RMSESCORE", "H1RTICSSCISOR", "H1RTICSCACTUS", 
-                        "H1RTICSPRES", "H1RAFSCORE", "H1RWLDELSCORE", 
-                        "H1RWLRECYSCORE", "H1RWLRECNSCORE", "H1RCPIMMSCORE", 
-                        "H1RCPDELSCORE", "H1RTMASCORE", "r13ser7", "r13bwc20", 
-                        "r13cogtot", "r13pstmem", "H1RWLIMMSCORE", 
-                        "H1RIMMSTORYSCORE", "H1RDELSTORYSCORE")
+#---- rename columns ----
+variable_labels <- 
+  variable_labels[which(variable_labels$HCAP %in% colnames(HCAP)), ]
 
 HCAP %<>% 
-  mutate("num_cog_measures" = 
-           rowSums(!is.na(HCAP %>% 
-                            dplyr::select(all_of(neuro_cog_measures))))) %>% 
-  #N = 2444; dropped n = 106
-  filter(num_cog_measures > 0)
-
-# #Sanity check
-# table(HCAP$num_cog_measures, useNA = "ifany")
+  rename_at(vars(variable_labels$HCAP), ~ variable_labels$data_label)
 
 #---- **summarize missingness ----
-colMeans(is.na(HCAP))
+#make sure all of these are in the rows of the imputation matrix
+names(colMeans(is.na(HCAP))[colMeans(is.na(HCAP)) > 0])
 
 #---- save datasets ----
 HCAP %>% write_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv"))
 
-#---- **standardize continuous vars ----
-standardize_vars <- 
-  c("PAGE", "SCHLYRS", "H1RMSESCORE_norm", "H1RWLIMMSCORE", "H1RWLDELSCORE", 
-    "r13ser7", "H1RAFSCORE", "H1RWLRECYSCORE", "H1RWLRECNSCORE", 
-    "H1RIMMSTORYSCORE", "H1RDELSTORYSCORE", "r13bwc20", "H1RCPIMMSCORE", 
-    "H1RCPDELSCORE", "H1RTMASCORE", "r13cogtot", "r13adla", "r13iadla",
-    "r13bmi")
 
-Z_score <- function(data, vars){
-  subset <- data %>% dplyr::select(all_of(vars)) %>% 
-    mutate_all(scale) %>% set_colnames(paste0(all_of(vars), "_Z")) %>% 
-    mutate_all(as.numeric)
-  
-  data %<>% cbind(., subset)
-  
-  return(data)
-}
 
 HCAP_analytic <- HCAP %>% na.omit() %>% Z_score(., standardize_vars)
 HCAP_analytic %>% 
