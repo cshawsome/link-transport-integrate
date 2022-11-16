@@ -21,8 +21,7 @@ hotdeck_impute_mat <- read_csv(paste0(path_to_box, "data/superpopulations/",
   column_to_rownames("var_names")
 
 #---- **HRS analytic dataset ----
-HRS <- read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv")) %>% 
-  dplyr::select(-one_of("memimp16"))
+HRS <- read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv")) 
 
 # #Sanity check: should be no missing data
 # colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
@@ -30,7 +29,6 @@ HRS <- read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv")) %>%
 #---- **HCAP analytic dataset ----
 HCAP <- 
   read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv")) %>% 
-  dplyr::select(-one_of("memimp16")) %>% 
   rename("no_drinking" = "r13no_drinking")
 
 # #Sanity check: there should be no missing data
@@ -60,53 +58,6 @@ neuropsych_cols <-
                      which(str_detect(neuropsych_cols, "pool")))]
 
 superpop[, neuropsych_cols] <- NA
-
-# #---- stack superpop and HCAP ----
-# colnames(HCAP)[which(!colnames(HCAP) %in% colnames(superpop))]
-# colnames(superpop)[which(!colnames(superpop) %in% colnames(HCAP))]
-# 
-# superpop_HCAP <- rbind(superpop, HCAP %>% 
-#                          dplyr::select(-one_of("intercept")) %>% 
-#                          mutate("HCAP" = 1))
-
-# #---- **summarize missingness ----
-# #double check that all of these are in the rownames of the imputation matrix
-# needs_imputing <- names(colMeans(is.na(superpop_HCAP))[
-#   which(colMeans(is.na(superpop_HCAP)) > 0)])
-# 
-# #---- define imputation var types ----
-# not_predictors <- c("HHIDPN", "White", "Other", "Working", "no_drinking",
-#                     "subj_cog_same", "HCAP")
-# 
-# #---- predictor matrix ----
-# predict <- 
-#   matrix(1, nrow = length(needs_imputing), ncol = ncol(superpop_HCAP)) %>% 
-#   set_rownames(needs_imputing) %>% set_colnames(colnames(superpop_HCAP))
-# 
-# #---- **cannot predict themselves ----
-# predict[needs_imputing, needs_imputing] <- 
-#   (diag(x = 1, nrow = length(needs_imputing), 
-#         ncol = length(needs_imputing)) == 0)*1
-# 
-# #---- **non-predictors ----
-# predict[, not_predictors] <- 0
-
-# #---- PMM imputation ----
-# #About 6 minutes
-# set.seed(20221021)
-# start <- Sys.time()
-# fast_impute(predictor_matrix = predict, data = superpop_HCAP, 
-#             path_for_output = paste0(path_to_box, "data/superpopulations/"),
-#             method = "PMM", m = 1, maxit = 15, chunk = 1)
-# end <- Sys.time() - start
-
-# #---- read in results ----
-# superpop_imputed <- 
-#   readRDS(paste0(path_to_box, "data/superpopulations/MI/chunk_1/MI_datasets")) %>% 
-#   as.data.frame() %>% filter(HCAP == 0)
-
-# #Sanity check
-# colMeans(is.na(superpop_imputed))[which(colMeans(is.na(superpop_imputed)) > 0)]
 
 #---- hotdeck imputation ----
 superpop_imputed <- hotdeck(superpop, HCAP, hotdeck_impute_mat)
@@ -219,43 +170,36 @@ superpop_imputed %<>%
 #---- **QC superpop_imputed ----
 #---- ****overall summaries ----
 #hotdeck: U: 37.1%, M: 16.2%, D: 26.4%, O: 20.3%
-#PMM: U: 41.4%, M: 12.3%, D: 27.7%, O: 18.7%
-#PMM + intx: U: 39.4%, M: 13.1%, D: 29.1%, O: 18.4%
-#PMM + intx + conditional impaired: U: 17.4%, M: 19.4%, D: 29.0%, O: 34.2%
 colMeans(superpop_imputed[, c("Unimpaired", "MCI", "Dementia", "Other")])
 
 #More dementia among women? 
 #hotdeck: Yes (M: 25.1%, W: 27.3%)
-#PMM: No (M: 27.6%, W: 27.7%)
-#PMM + intx: No (M: 29.4%, W: 29.0%)
 mean(superpop_imputed[superpop_imputed$female == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$female == 0, "Dementia"])
 
 #More dementia among racial/ethnic minorities?  
-# hotdeck: Kind of? (w: 25.6%, b: 33.2%, h: 22.5%)
-# PMM: Yes (w: 25.7%, b: 32.1%, h: 36.6%)
-# PMM + intx: Yes (w: 27.7%, b: 31.3%, h: 38.4%)
+# hotdeck: Yes (w: 25.6%, b: 33.2%, h: 22.5%)
 mean(superpop_imputed[superpop_imputed$White == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$black == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$hispanic == 1, "Dementia"])
 
-#Age: increased risk by year (hotdeck: PR = 1.03; PMM: PR = 1.06)
+#Age: increased risk by year (hotdeck: PR = 1.03)
 exp(coefficients(glm(Dementia ~ age, data = superpop_imputed, 
                      family = "poisson")))
 
-#Years of Education: decreased risk by higher education (hotdeck: PR = 0.98, PMM: PR = 0.95)
+#Years of Education: decreased risk by higher education (hotdeck: PR = 0.98)
 exp(coefficients(glm(Dementia ~ edyrs, data = superpop_imputed, 
                      family = "poisson")))
 
-#Stroke: increased risk for yes vs. no (hotdeck: PR = 1.69, PMM: PR = 1.91)
+#Stroke: increased risk for yes vs. no (hotdeck: PR = 1.69)
 exp(coefficients(glm(Dementia ~ stroke, data = superpop_imputed, 
                      family = "poisson")))
 
-#Diabetes: no increased risk for yes vs. no (hotdeck: PR = 1.01, PMM: PR = 1.03)
+#Diabetes: no increased risk for yes vs. no (hotdeck: PR = 1.01)
 exp(coefficients(glm(Dementia ~ diabe, data = superpop_imputed, 
                      family = "poisson")))
 
-#Diabetes: increased risk for any impairment yes vs. no (hotdeck: PR = 1.10, PMM: PR = 1.13)
+#Diabetes: increased risk for any impairment yes vs. no (hotdeck: PR = 1.10)
 superpop_imputed %<>% mutate("any_impairment" = Dementia + MCI)
 exp(coefficients(glm(any_impairment ~ diabe, data = superpop_imputed, 
                      family = "poisson")))
@@ -309,20 +253,20 @@ for(race in c("white", "black", "hispanic")){
 # agesex_standardized$hispanic_dem_risk*agesex_standardized$superpop_imputed_count
 
 #---- ******estimates ----
-#hotdeck: 0.254, PMM: 0.253
+#hotdeck: 0.254
 white_risk <- 
   sum(agesex_standardized$expected_white_dem_count)/nrow(superpop_imputed)
-#hotdeck: 0.342, PMM: 0.340
+#hotdeck: 0.342
 black_risk <- 
   sum(agesex_standardized$expected_black_dem_count)/nrow(superpop_imputed)
-#hotdeck: 0.227, PMM: 0.377
+#hotdeck: 0.227
 hispanic_risk <- 
   sum(agesex_standardized$expected_hispanic_dem_count)/nrow(superpop_imputed)
 
 #PR compared to white
-#hotdeck: 1.35, PMM: 1.35
+#hotdeck: 1.35
 PR_black <- black_risk/white_risk
-#hotdeck: 0.89, PMM: 1.49
+#hotdeck: 0.89
 PR_hispanic <- hispanic_risk/white_risk
 
 #---- **save superpop_imputed data ----
