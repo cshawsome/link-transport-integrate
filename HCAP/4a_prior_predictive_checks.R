@@ -20,20 +20,15 @@ path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **HCAP data ----
 HCAP_imputed <- 
-  readRDS(paste0(path_to_box, "analyses/HCAP/HCAP_MI_hotdeck")) 
+  readRDS(paste0(path_to_box, "analyses/HCAP/HCAP_MI_hotdeck")) %>% 
+  lapply(., function(x) x %<>% mutate("(Intercept)" = 1))
 
 #just do checks on one dataset
-HCAP_analytic <- HCAP_imputed[[1]]
+HCAP_analytic <- HCAP_imputed[[1]] 
 
 #---- **variable labels ----
 variable_labels <- 
-  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
-  filter(HCAP %in% colnames(HCAP_analytic)) 
-
-#label data
-HCAP_analytic %<>% 
-  rename_at(vars(variable_labels$HCAP), ~ variable_labels$data_label) %>% 
-  mutate("(Intercept)" = 1)
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
 #---- **impairment class color palette ----
 color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv")) 
@@ -63,7 +58,7 @@ kappa_0_mat <-
   read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix_HCAP.csv"))
 
 #---- run checks in serial ----
-set.seed(20220819)
+set.seed(20221116)
 start <- Sys.time()
 
 #---- **run checks ----
@@ -74,7 +69,7 @@ prior_predictive_checks(dataset_to_copy = HCAP_analytic,
                         path_to_data = path_to_box, 
                         path_to_output_folder =
                           paste0(path_to_box,
-                                 "figures/HCAP/prior_predictive_checks/"), 
+                                 "figures/chapter_6/prior_predictive_checks/"), 
                         continuous_check_test = TRUE,
                         continuous_check = c("Unimpaired", "MCI", "Dementia", 
                                              "Other"),
