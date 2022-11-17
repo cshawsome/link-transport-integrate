@@ -65,6 +65,11 @@ prior_predictive_checks <-
       }
     }
     
+    if(!dir.exists(paste0(path_to_output_folder, "cell_counts/"))){
+      dir.create(paste0(path_to_output_folder, "cell_counts/"), 
+                 recursive = TRUE) 
+    }
+    
     #---- cell ID key ----
     cell_ID_key <- read_csv(paste0(path_to_data, "data/cell_ID_key.csv"))
     
