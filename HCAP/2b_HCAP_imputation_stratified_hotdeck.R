@@ -9,7 +9,7 @@ p_load("tidyverse", "here", "magrittr", "tidyr")
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **clean HCAP ----
-HCAP <- read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv")) %>% 
+HCAP <- read_csv(paste0(path_to_box, "analyses/HCAP/HCAP_clean.csv")) %>% 
   dplyr::select(-one_of("H1RMSESCORE", "H1RWLIMM1SCORE", "H1RWLIMM2SCORE", 
                         "H1RWLIMM3SCORE", "H1RBMIMMSCORE", "H1RLMIMMSCORE", 
                         "H1RBMDELSCORE", "H1RLMDELSCORE", "HCAP_SELECT", 
