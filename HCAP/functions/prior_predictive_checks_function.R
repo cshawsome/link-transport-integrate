@@ -9,7 +9,7 @@ prior_predictive_checks <-
     #---- update path to output folder ----
     if(!calibration_sample){
       path_to_output_folder <- 
-        paste0(path_to_output_folder, "no_calibration_sample/")
+        paste0(path_to_output_folder, "ADAMS_prior/")
     } else{
       path_to_output_folder <- 
         paste0(path_to_output_folder, "calibration_", calibration_sample_name, 
