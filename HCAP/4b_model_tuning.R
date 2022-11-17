@@ -16,24 +16,22 @@ source(here::here("HCAP", "functions", "generate_synthetic_function.R"))
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **HCAP data ----
-HCAP_analytic <- 
-  read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic.csv")) 
+HCAP_imputed <- 
+  readRDS(paste0(path_to_box, "analyses/HCAP/HCAP_MI_hotdeck")) %>% 
+  lapply(., function(x) x %<>% mutate("(Intercept)" = 1))
+
+#just do checks on one dataset
+HCAP_analytic <- HCAP_imputed[[1]] 
 
 #---- **variable labels ----
 variable_labels <- 
-  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
-  filter(HCAP %in% colnames(HCAP_analytic)) 
-
-#label data
-HCAP_analytic %<>% 
-  rename_at(vars(variable_labels$HCAP), ~ variable_labels$data_label) %>% 
-  mutate("(Intercept)" = 1)
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
 #---- **cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
   mutate_all(as.character)
 
-#---- **impairement class color palette ----
+#---- **impairment class color palette ----
 color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv")) 
 
 #---- define vars ----
@@ -56,7 +54,7 @@ kappa_0_mat <-
   read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix_HCAP.csv"))
 
 #---- generate datasets ----
-set.seed(20220822)
+set.seed(20221116)
 start <- Sys.time()
 
 generate_synthetic(warm_up = 100, run_number = 1, 
@@ -68,7 +66,7 @@ generate_synthetic(warm_up = 100, run_number = 1,
                    path_to_analyses_folder = 
                      paste0(path_to_box, "analyses/HCAP/"), 
                    path_to_figures_folder = 
-                     paste0(path_to_box, "figures/HCAP/"), 
+                     paste0(path_to_box, "figures/chapter_6/"), 
                    categorical_vars = W, continuous_vars = Z, 
                    id_var = "HHIDPN", variable_labels = variable_labels, 
                    cell_ID_key = cell_ID_key, color_palette = color_palette, 

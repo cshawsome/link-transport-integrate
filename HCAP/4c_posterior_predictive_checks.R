@@ -15,18 +15,16 @@ source(here::here("HCAP", "functions", "posterior_predictive_checks_function.R")
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **HCAP data ----
-HCAP_analytic <- 
-  read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic.csv"))
+HCAP_imputed <- 
+  readRDS(paste0(path_to_box, "analyses/HCAP/HCAP_MI_hotdeck")) %>% 
+  lapply(., function(x) x %<>% mutate("(Intercept)" = 1))
+
+#just do checks on one dataset
+HCAP_analytic <- HCAP_imputed[[1]] 
 
 #---- **variable labels ----
 variable_labels <- 
-  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) %>% 
-  filter(HCAP %in% colnames(HCAP_analytic)) 
-
-#label data
-HCAP_analytic %<>% 
-  rename_at(vars(variable_labels$HCAP), ~ variable_labels$data_label) %>% 
-  mutate("(Intercept)" = 1) 
+  read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
 #---- **cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
@@ -47,7 +45,7 @@ Z <- all_vars[str_detect(all_vars, "_Z")]
 A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
 
 #---- run checks ----
-set.seed(20220329)
+set.seed(20221116)
 start <- Sys.time()
 
 posterior_predictive_checks(dataset_to_copy = HCAP_analytic, 
@@ -61,6 +59,6 @@ posterior_predictive_checks(dataset_to_copy = HCAP_analytic,
                             path_to_analyses_folder = 
                               paste0(path_to_box, "analyses/HCAP/"), 
                             path_to_figures_folder = 
-                              paste0(path_to_box,"figures/HCAP/"))
+                              paste0(path_to_box,"figures/chapter_6/"))
 
 end <- Sys.time() - start
