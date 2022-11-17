@@ -410,11 +410,40 @@ prior_predictive_checks <-
                       mu = mu[, paste0(class, ":", j)], Sigma = sig_Y)
           }
         }
-        assign(paste0("Z_", class), subset[, all_of(continuous_vars)])
+        #---- **save categorical ----
+        if(calibration_sample){
+          assign(paste0("W_", class), rbind(
+            subset[, all_of(categorical_vars)], 
+            calibration_subset[calibration_subset[, class] == 1, 
+                               all_of(categorical_vars)]))
+        } else{
+          assign(paste0("W_", class), subset[, all_of(categorical_vars)])
+        }
+        
+        #---- **save continuous ----
+        if(calibration_sample){
+          assign(paste0("Z_", class), rbind(
+            subset[, all_of(continuous_vars)], 
+            calibration_subset[calibration_subset[, class] == 1, 
+                               all_of(continuous_vars)]))
+        } else{
+          assign(paste0("Z_", class), subset[, all_of(continuous_vars)])
+        }
       }
       
+      group <- synthetic_sample$Group
+      
       #---- **return ----
-      return(list("Group" = synthetic_sample$Group, 
+      return(list("Group" = group,
+                  "W_unimpaired" = W_Unimpaired %>% 
+                    mutate("Group" = "Unimpaired"),
+                  "W_other" = W_Other %>% 
+                    mutate("Group" = "Other"), 
+                  "W_mci" = W_MCI %>% 
+                    mutate("Group" = "MCI"), 
+                  "W_dementia" = W_Dementia %>% 
+                    mutate("Group" = "Dementia"),
+                  
                   "Z_unimpaired" = Z_Unimpaired %>% 
                     mutate("Group" = "Unimpaired") %>% 
                     left_join(color_palette, by = "Group"), 
@@ -620,31 +649,109 @@ prior_predictive_checks <-
                   renderer = gifski_renderer())
       }
     }
+    
+    #---- **categorical ----
+    #pre-allocate results matrix
+    synthetic_counts <- 
+      matrix(0, nrow = nrow(contrasts_matrix)*4, 
+             ncol = (num_synthetic + 2)) %>% as.data.frame() %>% 
+      set_colnames(c(seq(1, num_synthetic), "group", "cell"))
+    
+    synthetic_counts[, "group"] <- 
+      rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
+          each = nrow(contrasts_matrix))
+    
+    cells <- contrasts_matrix[, -1] %>% as.data.frame() %>% 
+      unite("cell_ID", sep = "") %>% left_join(cell_ID_key, by = "cell_ID")
+    
+    synthetic_counts[, "cell"] <- rep(cells$cell_name, 4)
+    
+    
+    #counts from synthetic datasets
+    for(num in 1:num_synthetic){
+      for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+        counts <- synthetic[[num]][[paste0("W_", tolower(group))]] 
+        
+        if(nrow(counts) == 0){
+          synthetic_counts[which(synthetic_counts$group == group), num] <- 0
+        } else{
+          counts %<>% dplyr::select(-one_of("Group")) %>%
+            unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+            set_colnames(c("cell_ID", "Freq")) %>% 
+            left_join(cell_ID_key, ., by = "cell_ID")
+          
+          counts[which(is.na(counts$Freq)), "Freq"] <- 0
+          
+          synthetic_counts[
+            which(synthetic_counts$group == group & 
+                    synthetic_counts$cell %in% counts$cell_name), num] <- 
+            counts$Freq
+        }
+      }
+    }
+    
+    synthetic_count_plot_data <- synthetic_counts %>% mutate("truth" = 0) 
+    
+    #true counts
+    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
+      counts <- dataset_to_copy %>% filter(!!as.symbol(group) == 1) %>% 
+        dplyr::select(all_of(categorical_vars)) %>% 
+        unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
+        set_colnames(c("cell_ID", "Freq")) %>% 
+        left_join(cell_ID_key, ., by = "cell_ID")
+      
+      counts[which(is.na(counts$Freq)), "Freq"] <- 0
+      
+      synthetic_count_plot_data[
+        which(synthetic_count_plot_data$group == group & 
+                synthetic_count_plot_data$cell %in% counts$cell_name), 
+        "truth"] <- counts$Freq
+    }
+    
+    synthetic_count_plot_data %<>% 
+      pivot_longer(-c("group", "cell", "truth")) %>% 
+      left_join(color_palette, by = c("group" = "Group"))
+    
+    for(dem_group in unique(synthetic_count_plot_data$group)){
+      subset <- synthetic_count_plot_data %>% filter(group == dem_group)
+      ggplot(data = subset , aes(x = value)) + 
+        geom_histogram(fill = "black", color = "black") + theme_bw() + 
+        xlab("Contingency Cell Count") + ylab("") + 
+        facet_wrap(facets = vars(cell), ncol = 2, scales = "free") +
+        geom_vline(aes(xintercept = truth), color = unique(subset$Color),
+                   size = 1) +
+        theme(text = element_text(size = 8), 
+              strip.text = element_text(size = 8))  
+      
+      if(!calibration_sample){
+        ggsave(filename = paste0(path_to_output_folder, "cell_counts/", 
+                                 tolower(dem_group), "_count.jpeg"), 
+               width = 3, height = 4, units = "in")
+      } else{
+        ggsave(filename = paste0(path_to_output_folder, "cell_counts/", 
+                                 tolower(dem_group), "_count.jpeg"), 
+               width = 3, height = 4, units = "in")
+      }
+      
   }
 
-# #---- test function ----
-# unimpaired_preds = unimpaired_preds
-# other_preds = other_preds
-# mci_preds = mci_preds
-# categorical_vars = W
-# continuous_vars = Z
-# variable_labels = variable_labels
-# color_palette = color_palette
-# dataset_to_copy = synthetic_HCAP_list[[7]]
-# num_synthetic = 1000
-# unimpaired_betas = unimpaired_betas
-# unimpaired_cov = unimpaired_cov
-# other_betas = other_betas
-# other_cov = other_cov
-# mci_betas = mci_betas
-# mci_cov = mci_cov
-# alpha_0_dist = alpha_0_dist
-# prior_Sigma = prior_Sigma
-# prior_V_inv = prior_V_inv
-# prior_beta = priors_beta
-# nu_0 = nu_0[, unique(synthetic_data_list[[1]]$dataset_name)]
-# kappa_0_mat = kappa_0_mat
-# contrasts_matrix = A
-# path_to_output_folder = paste0(path_to_box, "figures/simulation_study/HCAP_HRS_",
-#                         unique(synthetic_data_list[[1]][, "dataset_name"]),
-#                         "/prior_predictive_checks/")
+#---- test function ----
+dataset_to_copy = HCAP_analytic 
+calibration_sample = FALSE 
+calibration_prop = NA
+calibration_sample_name = NA
+path_to_raw_prior_sample = NA 
+path_to_data = path_to_box 
+path_to_output_folder =
+  paste0(path_to_box,
+         "figures/chapter_6/prior_predictive_checks/") 
+continuous_check_test = TRUE
+continuous_check = c("Unimpaired", "MCI", "Dementia", "Other")
+categorical_vars = W
+continuous_vars = Z
+variable_labels = variable_labels 
+color_palette = color_palette
+contrasts_matrix = A
+kappa_0_mat = kappa_0_mat
+nu_0_mat = nu_0_mat
+num_synthetic = 1000
