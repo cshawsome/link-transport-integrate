@@ -34,10 +34,10 @@ write_csv(sim_scenarios,
 #---- missing runs ----
 missing_runs_function <- 
   function(missing_scenario_number, seed_start, n_missing_runs, HRS_sample_size, 
-           HCAP_sampling_prop, calibration_scenario, 
+           HCAP_sampling_prop, calibration_scenario, batch_n,
            sim_scenarios_dataframe = NA){
     
-    batch_size = 15
+    batch_size = batch_n
     total_runs <- n_missing_runs*1/((1000 - n_missing_runs)/1000)
     
     max_batch_count <- total_runs/batch_size
