@@ -96,7 +96,7 @@ for(i in 1:nrow(missing_scenarios_table)){
       missing_runs_function(
         missing_scenario_number = 
           as.numeric(missing_scenarios_table[i, "scenario_num"]), 
-        seed_start = 100000, 
+        seed_start = 1000, 
         n_missing_runs = as.numeric(missing_scenarios_table[i, "Num Missing"]), 
         HRS_sample_size = as.numeric(missing_scenarios_table[i, "HRS Sample Size"]), 
         HCAP_sampling_prop = as.numeric(missing_scenarios_table[i, "HCAP prop"]), 
@@ -106,6 +106,9 @@ for(i in 1:nrow(missing_scenarios_table)){
         sim_scenarios_dataframe = .)
   }
 }
+
+#check that I didn't overflow the seed
+.Machine$integer.max > max(sim_scenarios_missing_runs$seed)
 
 #---- **save output ----
 write_csv(sim_scenarios_missing_runs, 
