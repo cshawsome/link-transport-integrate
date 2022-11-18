@@ -83,12 +83,13 @@ for(i in 1:nrow(missing_scenarios_table)){
       missing_runs_function(
         missing_scenario_number = 
           as.numeric(missing_scenarios_table[i, "scenario_num"]), 
-        seed_start = 100000, 
+        seed_start = 1000, 
         n_missing_runs = as.numeric(missing_scenarios_table[i, "Num Missing"]), 
         HRS_sample_size = as.numeric(missing_scenarios_table[i, "HRS Sample Size"]), 
         HCAP_sampling_prop = as.numeric(missing_scenarios_table[i, "HCAP prop"]), 
         calibration_scenario = 
           as.character(missing_scenarios_table[i, "Calibration"]), 
+        batch_n = as.numeric(missing_scenarios_table[i, "batch_n"]),
         sim_scenarios_dataframe = NA)
   } else{
     sim_scenarios_missing_runs %<>% 
@@ -101,6 +102,7 @@ for(i in 1:nrow(missing_scenarios_table)){
         HCAP_sampling_prop = as.numeric(missing_scenarios_table[i, "HCAP prop"]), 
         calibration_scenario = 
           as.character(missing_scenarios_table[i, "Calibration"]), 
+        batch_n = as.numeric(missing_scenarios_table[i, "batch_n"]),
         sim_scenarios_dataframe = .)
   }
 }
