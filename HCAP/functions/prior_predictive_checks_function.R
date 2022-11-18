@@ -61,7 +61,6 @@ prior_predictive_checks <-
         
         dir.create(paste0(path_to_output_folder, "continuous_vars/test_set/", 
                           "combined"), recursive = TRUE)
-        
       }
     }
     
