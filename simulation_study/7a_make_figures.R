@@ -100,7 +100,15 @@ results %<>%
                      calibration_sampling == "SRS" & 
                        calibration == "calibration_35" & 
                        sampling_strata == "race" ~ 
-                       "HCAP 35% Race-stratified SRS Adjudication"))
+                       "HCAP 35% Race-stratified SRS Adjudication", 
+                     calibration_sampling == "SRS" & 
+                       calibration == "calibration_20" & 
+                       sampling_strata == "NA" ~ 
+                       "HCAP 20% SRS Adjudication", 
+                     calibration_sampling == "SRS" & 
+                       calibration == "calibration_20" & 
+                       sampling_strata == "race" ~ 
+                       "HCAP 20% Race-stratified SRS Adjudication"))
 
 #---- match ADAMS data ----
 # like a cbind but making sure correct rows are matched
@@ -440,11 +448,15 @@ plot_data %<>% rbind(., HCAP_all_adjudicated)
 plot_data$prior_sample <- 
   factor(plot_data$prior_sample, 
          levels = c("HCAP 100% Adjudication", "ADAMS", 
+                    "HCAP 20% SRS Adjudication",
                     "HCAP 35% SRS Adjudication", "HCAP 50% SRS Adjudication", 
+                    "HCAP 20% Race-stratified SRS Adjudication", 
                     "HCAP 35% Race-stratified SRS Adjudication", 
                     "HCAP 50% Race-stratified SRS Adjudication", 
+                    "HCAP 20% SRS Adjudication + ADAMS",
                     "HCAP 35% SRS Adjudication + ADAMS",
                     "HCAP 50% SRS Adjudication + ADAMS",
+                    "HCAP 20% Race-stratified SRS Adjudication + ADAMS",
                     "HCAP 35% Race-stratified SRS Adjudication + ADAMS",
                     "HCAP 50% Race-stratified SRS Adjudication + ADAMS"))
 
