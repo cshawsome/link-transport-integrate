@@ -62,7 +62,7 @@ sds <-
 calibration_scenario = "ADAMS_prior" 
 
 #HCAP sample prop options: 0.25, 0.50
-HCAP_sample_prop = 0.25
+HCAP_sample_prop = 0.50
 
 #---- **read in data ----
 synthetic_HCAP_list <- 
@@ -86,7 +86,7 @@ dataset_names <-
 #---- **specify indices ----
 indices <-
   which(dataset_names %in% 
-          paste0("HRS_", c(2000, 4000, 8000), "_sample_", HCAP_sample_prop*100, 
+          paste0("HRS_", c(8000), "_sample_", HCAP_sample_prop*100, 
                  "_", calibration_scenario))
 
 # #---- generate datasets in serial ----
