@@ -72,15 +72,17 @@ posterior_predictive_checks <-
       
       for(chain in 1:num_chains){
         for(metric in c("median", "skew")){
-          if(!dir.exists(paste0(path_to_figures_folder, 
+          for(group in c("unimpaired", "mci", "dementia", "other")){
+            if(!dir.exists(paste0(path_to_figures_folder, 
+                                  "posterior_predictive_checks/", 
+                                  "ADAMS_prior/run_", chain, 
+                                  "/continuous_vars/", metric, "/", group, "/"))){
+              dir.create(paste0(path_to_figures_folder, 
                                 "posterior_predictive_checks/", 
                                 "ADAMS_prior/run_", chain, 
-                                "/continuous_vars/", metric, "/"))){
-            dir.create(paste0(path_to_figures_folder, 
-                              "posterior_predictive_checks/", 
-                              "ADAMS_prior/run_", chain, 
-                              "/continuous_vars/", metric, "/"), 
-                       recursive = TRUE)
+                                "/continuous_vars/", metric, "/", group, "/"), 
+                         recursive = TRUE)
+            }
           }
         }
       }
@@ -102,15 +104,17 @@ posterior_predictive_checks <-
       
       for(chain in 1:num_chains){
         for(metric in c("median", "skew")){
-          if(!dir.exists(paste0(path_to_figures_folder, 
+          for(group in c("unimpaired", "mci", "dementia", "other")){
+            if(!dir.exists(paste0(path_to_figures_folder, 
+                                  "posterior_predictive_checks/", 
+                                  calibration_sample_name, "/run_", chain, 
+                                  "/continuous_vars/", metric, "/", group, "/"))){
+              dir.create(paste0(path_to_figures_folder, 
                                 "posterior_predictive_checks/", 
                                 calibration_sample_name, "/run_", chain, 
-                                "/continuous_vars/", metric, "/"))){
-            dir.create(paste0(path_to_figures_folder, 
-                              "posterior_predictive_checks/", 
-                              calibration_sample_name, "/run_", chain, 
-                              "/continuous_vars/", metric, "/"), 
-                       recursive = TRUE)
+                                "/continuous_vars/", metric, "/", group, "/"), 
+                         recursive = TRUE)
+            }
           }
         }
       }
@@ -491,6 +495,35 @@ posterior_predictive_checks <-
         subset <- synthetic_continuous %>% 
           filter(group == dem_group & chain == chain_num)
         
+        #---- ******by var ----
+        for(var_name in unique(subset$label)){
+          var_subset <- subset %>% filter(label == var_name)
+          
+          ggplot(data = var_subset , aes(x = value)) + 
+            geom_histogram(fill = "black", color = "black") + theme_bw() + 
+            xlab("Median") + ggtitle(var_name) + 
+            geom_vline(aes(xintercept = truth), color = unique(subset$Color), 
+                       size = 1) + 
+            theme(text = element_text(size = 10)) 
+          
+          if(!calibration_sample){
+            ggsave(filename = paste0(path_to_figures_folder, 
+                                     "posterior_predictive_checks/", 
+                                     "ADAMS_prior/run_", 
+                                     chain_num, "/continuous_vars/median/", 
+                                     tolower(dem_group), "/", var_name, ".jpeg"), 
+                   width = 2.5, height = 2.5, units = "in")  
+          } else{
+            ggsave(filename = paste0(path_to_figures_folder, 
+                                     "posterior_predictive_checks/", 
+                                     calibration_sample_name, "/run_", 
+                                     chain_num, "/continuous_vars/median/", 
+                                     tolower(dem_group), "/", var_name, ".jpeg"), 
+                   width = 8, height = 10, units = "in")  
+          }
+        }
+        
+        #---- ******facet plot ----
         ggplot(data = subset , aes(x = value)) + 
           geom_histogram(fill = "black", color = "black") + theme_bw() + 
           xlab("Median") + ggtitle(dem_group) + 
@@ -621,7 +654,7 @@ posterior_predictive_checks <-
              "label" = 
                rep(unlist(variable_labels[
                  which(unique(variable_labels$data_label) %in% 
-                          continuous_covariates), 
+                         continuous_covariates), 
                  "figure_label"]), num_chains*4)) %>% 
       left_join(color_palette, by = c("group" = "Group"))
     
@@ -643,6 +676,35 @@ posterior_predictive_checks <-
         subset <- synthetic_continuous %>% 
           filter(group == dem_group & chain == chain_num)
         
+        #---- ******by var ----
+        for(var_name in unique(subset$label)){
+          var_subset <- subset %>% filter(label == var_name)
+          
+          ggplot(data = var_subset , aes(x = value)) + 
+            geom_histogram(fill = "black", color = "black") + theme_bw() + 
+            xlab("Median") + ggtitle(var_name) + 
+            geom_vline(aes(xintercept = truth), color = unique(subset$Color), 
+                       size = 1) + 
+            theme(text = element_text(size = 10)) 
+          
+          if(!calibration_sample){
+            ggsave(filename = paste0(path_to_figures_folder, 
+                                     "posterior_predictive_checks/", 
+                                     "ADAMS_prior/run_", 
+                                     chain_num, "/continuous_vars/skew/", 
+                                     tolower(dem_group), "/", var_name, ".jpeg"), 
+                   width = 2.5, height = 2.5, units = "in")  
+          } else{
+            ggsave(filename = paste0(path_to_figures_folder, 
+                                     "posterior_predictive_checks/", 
+                                     calibration_sample_name, "/run_", 
+                                     chain_num, "/continuous_vars/skew/", 
+                                     tolower(dem_group), "/", var_name, ".jpeg"), 
+                   width = 8, height = 10, units = "in")  
+          }
+        }
+        
+        #---- ******facet plot ----
         ggplot(data = subset , aes(x = value)) + 
           geom_histogram(fill = "black", color = "black") + theme_bw() + 
           xlab("Skew") + ggtitle(dem_group) + 
@@ -806,7 +868,7 @@ posterior_predictive_checks <-
   }
 
 # #---- test function ----
-# dataset_to_copy = synthetic_HCAP_list[[1]]
+# dataset_to_copy = synthetic_HCAP_list[[6]]
 # calibration_sample = FALSE
 # calibration_prop =
 #   as.numeric(str_remove(calibration_scenario, "HCAP_"))/100
@@ -821,5 +883,5 @@ posterior_predictive_checks <-
 #   paste0(path_to_box, "analyses/simulation_study/HCAP_",
 #          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
 # path_to_figures_folder =
-#   paste0(path_to_box,"figures/simulation_study/HCAP_",
+#   paste0(path_to_box,"figures/chapter_4/simulation_study/HCAP_",
 #          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
