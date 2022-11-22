@@ -801,6 +801,7 @@ posterior_predictive_checks <-
       factor(combined_plot_data$Group, 
              levels = c("Unimpaired", "MCI", "Dementia", "Other"))
     
+    #---- ****count ----
     ggplot(data = combined_plot_data, 
            aes(x = Group, y = mean)) + theme_bw() + 
       geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
@@ -820,18 +821,51 @@ posterior_predictive_checks <-
       ggsave(filename = paste0(path_to_figures_folder, 
                                "posterior_predictive_checks/", 
                                "ADAMS_prior/", 
-                               "impairment_classes_combined_all_runs.jpeg"), 
+                               "impairment_classes_combined_all_runs_count.jpeg"), 
              height = 5, width = 10, units = "in")
     } else{
       ggsave(filename = paste0(path_to_figures_folder, 
                                "posterior_predictive_checks/",
                                calibration_sample_name,
-                               "/impairment_classes_combined_all_runs.jpeg"), 
+                               "/impairment_classes_combined_all_runs_count.jpeg"), 
              height = 5, width = 10, units = "in")
     }
     
-    #---- ** individual plots ----
+    #---- ****prop ----
+    ggplot(data = combined_plot_data %>% 
+             mutate_at(c("mean", "lower", "upper", "truth"), 
+                       function(x) x/nrow(dataset_to_copy)), 
+           aes(x = Group, y = mean)) + theme_bw() + 
+      geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
+                    width = 0.10) + 
+      geom_point(aes(size = 1, color = Group)) +
+      geom_point(aes(x = Group, y = truth, size = 1), color = "black",
+                 shape = 18, alpha = 1) + 
+      xlab("") + ylab("Mean Proportion") + theme(legend.position = "none") + 
+      scale_color_manual(
+        values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
+      facet_wrap(facets = as.factor(combined_plot_data$chain), 
+                 nrow = 2, ncol = 3) +
+      ggtitle(paste0("95% Credible intervals from ", num_samples, 
+                     " synthetic datasets"))
+    
+    if(!calibration_sample){
+      ggsave(filename = paste0(path_to_figures_folder, 
+                               "posterior_predictive_checks/", 
+                               "ADAMS_prior/", 
+                               "impairment_classes_combined_all_runs_prop.jpeg"), 
+             height = 5, width = 10, units = "in")
+    } else{
+      ggsave(filename = paste0(path_to_figures_folder, 
+                               "posterior_predictive_checks/",
+                               calibration_sample_name,
+                               "/impairment_classes_combined_all_runs_prop.jpeg"), 
+             height = 5, width = 10, units = "in")
+    }
+    
+    #---- **individual plots ----
     for(chain_num in 1:num_chains){
+      #---- ****count ----
       ggplot(data = combined_plot_data %>% 
                filter(chain == paste0("Chain ", chain_num)), 
              aes(x = Group, y = mean)) + 
@@ -855,33 +889,69 @@ posterior_predictive_checks <-
         ggsave(filename = paste0(path_to_figures_folder, 
                                  "posterior_predictive_checks/", 
                                  "ADAMS_prior/run_", chain_num,  
-                                 "/impairment_classes.jpeg"), 
+                                 "/impairment_classes_count.jpeg"), 
                height = 4, width = 5.5, units = "in")
       } else{
         ggsave(filename = paste0(path_to_figures_folder, 
                                  "posterior_predictive_checks/", 
                                  calibration_sample_name, "/run_", chain_num,  
-                                 "/impairment_classes.jpeg"), 
+                                 "/impairment_classes_count.jpeg"), 
+               height = 4, width = 5.5, units = "in")
+      }
+      
+      #---- ****prop ----
+      ggplot(data = combined_plot_data %>% 
+               filter(chain == paste0("Chain ", chain_num)) %>% 
+               mutate_at(c("mean", "lower", "upper", "truth"), 
+                         function(x) x/nrow(dataset_to_copy)), 
+             aes(x = Group, y = mean)) + 
+        geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
+                      width = 0.10) + 
+        geom_point(aes(size = 1, color = Group)) + 
+        theme_minimal() + 
+        geom_point(aes(x = Group, y = truth, size = 1), shape = 18, 
+                   color = "black") + 
+        xlab("") + ylab("Count") + 
+        theme(text = element_text(size = 10), legend.title = element_blank(), 
+              legend.position = "none", 
+              plot.title = element_text(size = 10)) +
+        scale_color_manual(
+          values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
+        ggtitle(paste0("95% Credible intervals from ", num_samples, 
+                       " synthetic datasets")) + 
+        guides(color = "none") 
+      
+      if(!calibration_sample){
+        ggsave(filename = paste0(path_to_figures_folder, 
+                                 "posterior_predictive_checks/", 
+                                 "ADAMS_prior/run_", chain_num,  
+                                 "/impairment_classes_prop.jpeg"), 
+               height = 4, width = 5.5, units = "in")
+      } else{
+        ggsave(filename = paste0(path_to_figures_folder, 
+                                 "posterior_predictive_checks/", 
+                                 calibration_sample_name, "/run_", chain_num,  
+                                 "/impairment_classes_prop.jpeg"), 
                height = 4, width = 5.5, units = "in")
       }
     }
   }
 
-#---- test function ----
-dataset_to_copy = synthetic_HCAP_list[[6]]
-calibration_sample = FALSE
-calibration_prop =
-  as.numeric(str_remove(calibration_scenario, "HCAP_"))/100
-calibration_sample_name = calibration_scenario
-categorical_covariates = W
-continuous_covariates = Z
-contrasts_matrix = A
-cell_ID_key = cell_ID_key
-variable_labels = variable_labels
-color_palette = color_palette
-path_to_analyses_folder =
-  paste0(path_to_box, "analyses/simulation_study/HCAP_",
-         unique(dataset_to_copy[, "dataset_name_stem"]), "/")
-path_to_figures_folder =
-  paste0(path_to_box,"figures/chapter_4/simulation_study/HCAP_",
-         unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+# #---- test function ----
+# dataset_to_copy = synthetic_HCAP_list[[6]]
+# calibration_sample = FALSE
+# calibration_prop =
+#   as.numeric(str_remove(calibration_scenario, "HCAP_"))/100
+# calibration_sample_name = calibration_scenario
+# categorical_covariates = W
+# continuous_covariates = Z
+# contrasts_matrix = A
+# cell_ID_key = cell_ID_key
+# variable_labels = variable_labels
+# color_palette = color_palette
+# path_to_analyses_folder =
+#   paste0(path_to_box, "analyses/simulation_study/HCAP_",
+#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+# path_to_figures_folder =
+#   paste0(path_to_box,"figures/chapter_4/simulation_study/HCAP_",
+#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
