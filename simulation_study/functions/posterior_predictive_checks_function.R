@@ -682,7 +682,7 @@ posterior_predictive_checks <-
           
           ggplot(data = var_subset , aes(x = value)) + 
             geom_histogram(fill = "black", color = "black") + theme_bw() + 
-            xlab("Median") + ggtitle(var_name) + 
+            xlab("Skew") + ggtitle(var_name) + 
             geom_vline(aes(xintercept = truth), color = unique(subset$Color), 
                        size = 1) + 
             theme(text = element_text(size = 10)) 
