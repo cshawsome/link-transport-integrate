@@ -36,6 +36,17 @@ superpop_impairment_props$Group <-
 table(results$dataset_name, useNA = "ifany")
 
 #---- extra calcs ----
+#---- **log PR measures ----
+PR_cols <- 
+  expand_grid(c("mean", "LCI", "UCI"), "PR",
+              c("black", "hispanic")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+results %<>% 
+  cbind(., results %>% ungroup() %>% dplyr::select(all_of(PR_cols)) %>% 
+          mutate_all(.funs = log) %>% 
+          set_colnames(str_replace(PR_cols, "_PR_", "_log_PR_")))
+
 #---- **SEs ----
 #on the count scale
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
@@ -59,9 +70,9 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
     }
 }
 
-for(measure in c("dem_prev", "PR")){
+for(measure in c("dem_prev", "log_PR")){
   for(race in c("white", "black", "hispanic")){
-    if(measure == "PR" & race == "white"){next}
+    if(measure == "log_PR" & race == "white"){next}
     
     results %<>%
       mutate(!!sym(paste0("SE_", measure, "_", race)) :=
@@ -121,7 +132,7 @@ dem_prev_cols <-
   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
 
 PR_cols <- 
-  expand_grid(c("mean"), "PR", c("black", "hispanic")) %>%
+  expand_grid(c("mean"), "log_PR", c("black", "hispanic")) %>%
   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
 
 impairment_SE_cols <- 
@@ -141,7 +152,7 @@ dem_prev_SE_cols <-
   unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
 
 PR_SE_cols <- 
-  expand_grid(c("SE"), c("PR"),
+  expand_grid(c("SE"), c("log_PR"),
               c("black", "hispanic")) %>%
   unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
 
@@ -268,9 +279,9 @@ for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
 }
 
 #---- ****dementia prevalence + PR ----
-for(measure in c("dem_prev", "PR")){
+for(measure in c("dem_prev", "log_PR")){
   for(race in c("white", "black", "hispanic")){
-    if(measure == "PR" & race == "white"){next}
+    if(measure == "log_PR" & race == "white"){next}
     
     #---- ******mean estimates ----
     combined_results %<>%
@@ -307,8 +318,24 @@ for(measure in c("dem_prev", "PR")){
                1.96*sqrt(!!sym(paste0("within_var_", measure, "_", race)) +
                            !!sym(paste0("between_var_", measure, "_", race)) +
                            !!sym(paste0("between_var_", measure, "_", race))/2))
-    
-    #---- ******coverage ----
+  }
+}
+
+#---- ******convert back to PR ----
+cols_to_convert <- 
+  expand_grid(c("combined"), c("mean", "LCI", "UCI"), c("log_PR"),
+              c("black", "hispanic")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
+
+combined_results %<>% 
+  cbind(., combined_results %>% ungroup() %>% 
+          dplyr::select(all_of(cols_to_convert)) %>% mutate_all(.funs = exp) %>% 
+          set_colnames(str_replace(cols_to_convert, "_log_PR_", "_PR_")))
+
+#---- ******coverage ----
+for(measure in c("dem_prev", "PR")){
+  for(race in c("white", "black", "hispanic")){
+    if(measure == "PR" & race == "white"){next}
     combined_results %<>%
       mutate(!!sym(paste0("combined_", measure, "_coverage", "_", race)) :=
                (!!sym(paste0("true_", measure, "_", race)) >=
@@ -318,13 +345,12 @@ for(measure in c("dem_prev", "PR")){
   }
 }
 
-
 #----- ****bind results ----
 combined_results %<>% 
   mutate("prior_sample" = paste0(prior_sample, " + ADAMS")) %>% 
   dplyr::select(contains("combined"), contains("true"), "prior_sample", 
                 "dataset_name", "HCAP_prop", "HRS_sample_size", 
-                "HCAP_sample_size")
+                "HCAP_sample_size") 
 
 combined_results %<>% 
   set_colnames(str_remove(colnames(combined_results), "combined_"))
@@ -346,12 +372,14 @@ results %<>%
            as.numeric(superpop_impairment_props[
              superpop_impairment_props$Group == "Other", "prop"]))
 
-calc_props <- pt_est_cols_cores
+calc_props <- 
+  pt_est_cols_cores[-c(which(str_detect(pt_est_cols_cores, "dem_prev")), 
+                       which(str_detect(pt_est_cols_cores, "log_PR")))]
 
 results[, paste0(calc_props, "_prop")] <- 
   results[, calc_props]/results$HCAP_sample_size
 
-#---- Figure 4.12 + 5.XX: mean and 95% CI impairment class proportions ----
+#---- Figure 4.12 + 5.9 + 5.XX: mean and 95% CI impairment class proportions ----
 #---- **read in data ----
 #---- ****color palette ----
 color_palette <- read_csv(here::here("color_palette.csv"))
@@ -401,7 +429,7 @@ ggsave(filename =
                 "figure4.12_mean_CI_impairment_class_no_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 14.75, height = 6.5, units = "in")
 
-#---- **plot 5.XX: HCAP calibration ----
+#---- **plot 5.9: HCAP calibration ----
 #add data for 100% adjudication
 HCAP_all_adjudicated <- results %>% ungroup() %>%
   dplyr::select(c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other", 
@@ -467,7 +495,7 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
 
 ggsave(filename = 
          paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                "figure5.XX_mean_CI_impairment_class_HCAP_adjudication.jpeg"), 
+                "figure5.9_mean_CI_impairment_class_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 20, height = 10, units = "in")
 
 #---- **plot 5.XX: HCAP calibration + ADAMS ----
@@ -497,7 +525,7 @@ ggsave(filename =
                 "figure5.XX_mean_CI_impairment_class_HCAP_adjudication_plus_ADAMS.jpeg"), 
        dpi = 300, width = 20, height = 10, units = "in")
 
-#---- Figure 4.13 + 5.XX: 95% CI coverage impairment classes ----
+#---- Figure 4.13 + 5.10: 95% CI coverage impairment classes ----
 #---- **read in data ----
 #---- ****color palette ----
 color_palette <- read_csv(here::here("color_palette.csv"))
@@ -556,7 +584,7 @@ ggsave(filename =
                 "figure4.13_impairment_class_coverage_no_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#---- **plot 5.XX: HCAP calibration ----
+#---- **plot 5.10: HCAP calibration ----
 ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
        aes(x = HRS_sample_size, y = value, group = prior_sample, 
            color = prior_sample, shape = prior_sample)) + 
@@ -577,7 +605,7 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
 
 ggsave(filename = 
          paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                "figure5.XX_impairment_class_coverage_HCAP_adjudication.jpeg"), 
+                "figure5.10_impairment_class_coverage_HCAP_adjudication.jpeg"), 
        dpi = 300, height = 7.5, width = 20, units = "in")
 
 #---- **plot 5.XX: HCAP calibration + ADAMS ----
@@ -603,7 +631,7 @@ ggsave(filename =
                 "figure5.XX_impairment_class_coverage_HCAP_adjudication_plus_ADAMS.jpeg"), 
        dpi = 300, height = 7.5, width = 23, units = "in")
 
-#----- Figure 4.14a-b + 5.XXa-b: bias, percent bias ----
+#----- Figure 4.14a-b + 5.11a-b + 5.XXa-b: bias, percent bias ----
 #---- **read in data ----
 #---- ****color palette ----
 color_palette <- read_csv(here::here("color_palette.csv"))
@@ -674,7 +702,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "adjudication.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#---- **plot 5.XXa: bias + HCAP calibration ----
+#---- **plot 5.11a: bias + HCAP calibration ----
 ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
        aes(x = HRS_sample_size, y = bias, color = prior_sample, 
            group = prior_sample, shape = prior_sample)) + 
@@ -697,7 +725,7 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
          nrow = 3, byrow = TRUE)
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.XXa_impairment_class_bias_prop_HCAP_", 
+                         "figure5.11a_impairment_class_bias_prop_HCAP_", 
                          "adjudication.jpeg"), 
        dpi = 300, width = 20, height = 7.50, units = "in")
 
@@ -727,7 +755,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/",
                          "adjudication_plus_ADAMS.jpeg"), 
        dpi = 300, width = 20, height = 7.50, units = "in")
 
-#---- **plot 4.XXb: percent bias + no HCAP calibration ----
+#---- **plot 4.14b: percent bias + no HCAP calibration ----
 ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
        aes(x = HRS_sample_size, y = percent_bias, group = class, 
            color = class)) + 
@@ -748,7 +776,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "HCAP_adjudication.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#---- **plot 5.XXb: percent bias + HCAP calibration ----
+#---- **plot 5.11b: percent bias + HCAP calibration ----
 ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
        aes(x = HRS_sample_size, y = percent_bias, color = prior_sample, 
            group = prior_sample, shape = prior_sample)) + 
@@ -770,7 +798,7 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
          nrow = 3, byrow = TRUE)
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.XXb_impairment_class_percent_bias_prop_HCAP_", 
+                         "figure5.11b_impairment_class_percent_bias_prop_HCAP_", 
                          "adjudication.jpeg"), 
        dpi = 300, width = 20, height = 7.50, units = "in")
 
@@ -818,7 +846,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "adjudication.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#---- Figure 5.XX: RMSE + HCAP calibration ----
+#---- Figure 5.12: RMSE + HCAP calibration ----
 ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
        aes(x = HRS_sample_size, y = RMSE, color = prior_sample, 
            group = prior_sample, shape = prior_sample)) + 
@@ -839,7 +867,7 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
          nrow = 3, byrow = TRUE)
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.XX_RMSE_bias_prop_HCAP_adjudication.jpeg"), 
+                         "figure5.12_RMSE_bias_prop_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 20, height = 7.50, units = "in")
 
 #---- Figure 5.XX: RMSE + HCAP calibration + ADAMS ----
@@ -865,7 +893,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/",
                          "figure5.XX_RMSE_bias_prop_HCAP_adjudication_plus_ADAMS.jpeg"), 
        dpi = 300, width = 23, height = 7.50, units = "in")
 
-#---- Figure 4.16a-b + 5.XXa-b: race-stratified bias, percent bias----
+#---- Figure 4.16a-b + 5.13a-b + 5.XXa-b: race-stratified bias, percent bias----
 #---- **read in data ----
 #---- ****color palette ----
 color_palette <- read_csv(here::here("color_palette.csv"))
@@ -938,7 +966,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "HCAP_calibration.jpeg"), 
        dpi = 300, width = 13.5, height = 7.25, units = "in")
 
-#---- **plot 5.XXa: by race + HCAP calibration ----
+#---- **plot 5.13a: by race + HCAP calibration ----
 y_limits <- plot_data %>% filter(!str_detect(prior_sample, "\\+")) %>% 
   ungroup() %>% summarize_at("bias", .funs = list(min, max))
 
@@ -966,7 +994,7 @@ for(race_subset in unique(plot_data$race)){
            nrow = 3, byrow = TRUE) + ggtitle(str_to_sentence(race_subset))
   
   ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                           "figure5.XXa_impairment_class_bias_prop_", 
+                           "figure5.13a_impairment_class_bias_prop_", 
                            race_subset, "_HCAP_adjudication.jpeg"), 
          dpi = 300, width = 20, height = 7.50, units = "in")
 }
@@ -1022,7 +1050,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "race_no_HCAP_calibration.jpeg"), 
        dpi = 300, width = 13.5, height = 7.25, units = "in")
 
-#---- **plot 5.XXb: percent by race + HCAP calibration ----
+#---- **plot 5.13b: percent by race + HCAP calibration ----
 y_limits <- plot_data %>% filter(!str_detect(prior_sample, "\\+")) %>% 
   ungroup() %>% summarize_at("percent_bias", .funs = list(min, max))
 
@@ -1031,8 +1059,8 @@ for(race_subset in unique(plot_data$race)){
            filter(!str_detect(prior_sample, "\\+")), 
          aes(x = HRS_sample_size, y = percent_bias, color = prior_sample, 
              group = prior_sample, shape = prior_sample)) + 
-    geom_line(size = 1.5) + 
-    geom_point(size = 3) + 
+    geom_line(size = 1.5) + geom_point(size = 3) + 
+    ylim(c(y_limits[[1]], y_limits[[2]])) +
     scale_shape_manual(values = c(1, rep(19, 6))) +
     scale_color_manual(values = c("black",
                                   #green, pink, blue
@@ -1050,7 +1078,7 @@ for(race_subset in unique(plot_data$race)){
            nrow = 3, byrow = TRUE) + ggtitle(str_to_sentence(race_subset))
   
   ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                           "figure5.XXb_impairment_class_percent_bias_prop_", 
+                           "figure5.13b_impairment_class_percent_bias_prop_", 
                            race_subset, "_HCAP_adjudication.jpeg"), 
          dpi = 300, width = 20, height = 7.50, units = "in")
 }
@@ -1064,8 +1092,8 @@ for(race_subset in unique(plot_data$race)){
            filter(str_detect(prior_sample, "\\+")), 
          aes(x = HRS_sample_size, y = percent_bias, color = prior_sample, 
              group = prior_sample, shape = prior_sample)) + 
-    geom_line(size = 1.5) + 
-    geom_point(size = 3) + 
+    geom_line(size = 1.5) + geom_point(size = 3) + 
+    ylim(c(y_limits[[1]], y_limits[[2]])) +
     scale_shape_manual(values = c(rep(19, 6))) +
     scale_color_manual(values = c(#green, pink, blue
       "#61bbb6", "#f35f5f","#288fb4",   
@@ -1105,7 +1133,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "calibration.jpeg"), 
        dpi = 300, width = 13.5, height = 7.25, units = "in")
 
-#---- Figure 5.XX: RMSE by race + HCAP calibration ----
+#---- Figure 5.14: RMSE by race + HCAP calibration ----
 y_limits <- plot_data %>% filter(!str_detect(prior_sample, "\\+")) %>% 
   ungroup() %>% summarize_at("RMSE", .funs = list(min, max))
 
@@ -1132,7 +1160,7 @@ for(race_subset in unique(plot_data$race)){
            nrow = 3, byrow = TRUE) + ggtitle(str_to_sentence(race_subset))
   
   ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                           "figure5.XX_impairment_class_RMSE_", race_subset, 
+                           "figure5.14_impairment_class_RMSE_", race_subset, 
                            "_HCAP_adjudication.jpeg"), 
          dpi = 300, width = 20, height = 7.50, units = "in")
 }
@@ -1168,7 +1196,7 @@ for(race_subset in unique(plot_data$race)){
          dpi = 300, width = 23, height = 7.50, units = "in")
 }
 
-#---- Figure 4.18 + 5.XX: dementia prevalence ----
+#---- Figure 4.18 + 5.15 + 5.XX: dementia prevalence ----
 #---- **plot data ----
 truth <- 
   data.frame("Race" = c("White", "Black", "Hispanic"), 
@@ -1236,7 +1264,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "figure4.18_mean_CI_dem_prev_no_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#---- **plot 5.XX: HCAP adjudication ----
+#---- **plot 5.15: HCAP adjudication ----
 ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
        aes(x = mean, y = HRS_sample_size, shape = prior_sample, 
            color = prior_sample)) + 
@@ -1259,7 +1287,7 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
          nrow = 3, byrow = TRUE)
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.XX_mean_CI_dem_prev_HCAP_adjudication.jpeg"), 
+                         "figure5.15_mean_CI_dem_prev_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 20, height = 11, units = "in")
 
 #---- **plot 5.XX: HCAP adjudication + ADAMS ----
@@ -1287,7 +1315,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/",
                          "figure5.XX_mean_CI_dem_prev_HCAP_adjudication_plus_HCAP.jpeg"), 
        dpi = 300, width = 23, height = 11, units = "in")
 
-#---- Figure 4.19 + 5.XX: 95% CI coverage dementia prevalence ----
+#---- Figure 4.19 + 5.16 + 5.XX: 95% CI coverage dementia prevalence ----
 #---- **plot data ----
 plot_data <- results %>% 
   group_by(prior_sample, HCAP_prop, HRS_sample_size, HCAP_sample_size) %>% 
@@ -1340,7 +1368,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "figure4.19_dem_prev_coverage_no_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in") 
 
-#---- **plot 5.XX: HCAP adjudication ----
+#---- **plot 5.16: HCAP adjudication ----
 ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
        aes(x = HRS_sample_size, y = dem, group = prior_sample, 
            color = prior_sample, shape = prior_sample)) + 
@@ -1362,7 +1390,7 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
          nrow = 3, byrow = FALSE)
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.XX_dem_prev_coverage_HCAP_adjudication.jpeg"), 
+                         "figure5.16_dem_prev_coverage_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 20, height = 8, units = "in") 
 
 #---- **plot 5.XX: HCAP adjudication + ADAMS ----
@@ -1389,7 +1417,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/",
                          "figure5.XX_dem_prev_coverage_HCAP_adjudication_plus_ADAMS.jpeg"), 
        dpi = 300, width = 23, height = 8, units = "in") 
 
-#---- Figure 4.20 + 5.XX: PR dementia ----
+#---- Figure 4.20 + 5.17 + 5.XX: PR dementia ----
 #---- **plot data ----
 truth <- 
   data.frame("Comparison" = c("Black vs. White", "Hispanic vs. White"), 
@@ -1455,7 +1483,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "figure4.20_mean_CI_PR_no_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#---- **plot 5.XX: HCAP adjudication ----
+#---- **plot 5.17: HCAP adjudication ----
 ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
        aes(y = HRS_sample_size, x = mean, group = prior_sample, 
            color = prior_sample, shape = prior_sample)) + 
@@ -1478,7 +1506,7 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
          nrow = 3, byrow = TRUE)
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.XX_mean_CI_PR_HCAP_adjudication.jpeg"), 
+                         "figure5.17_mean_CI_PR_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 20, height = 8, units = "in") 
 
 #---- **plot 5.XX: HCAP adjudication + ADAMS ----
@@ -1492,8 +1520,8 @@ ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")),
                 position = position_dodge(-0.95)) +
   scale_shape_manual(values = c(rep(1, 6))) +
   scale_color_manual(values = c(#green, pink, blue
-                                "#61bbb6", "#f35f5f","#288fb4",   
-                                "#449187", "#cc435f", "#1d556f")) +
+    "#61bbb6", "#f35f5f","#288fb4",   
+    "#449187", "#cc435f", "#1d556f")) +
   theme_bw() + xlab("Prevalence Ratio (PR)") + ylab("HRS Sample Size") +
   facet_grid(rows = vars(HCAP_prop), cols = vars(Comparison)) + 
   theme(text = element_text(size = 24), legend.position = "bottom") + 
@@ -1506,7 +1534,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/",
                          "figure5.XX_mean_CI_PR_HCAP_adjudication_plus_ADAMS.jpeg"), 
        dpi = 300, width = 23, height = 8, units = "in") 
 
-#---- Figure 4.21 + 5.XX: 95% CI coverage PR ----
+#---- Figure 4.21 + 5.18 + 5.XX: 95% CI coverage PR ----
 #---- **plot data ----
 plot_data <- results %>% 
   group_by(prior_sample, HCAP_prop, HRS_sample_size, HCAP_sample_size) %>% 
@@ -1559,7 +1587,7 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "figure4.21_PR_coverage_no_HCAP_adjudiation.jpeg"), 
        dpi = 300, width = 13.25, height = 6.25, units = "in")
 
-#---- **plot 5.XX: HCAP adjudication ----
+#---- **plot 5.18: HCAP adjudication ----
 ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
        aes(x = HRS_sample_size, y = PR, group = prior_sample, 
            color = prior_sample, shape = prior_sample)) + 
@@ -1580,7 +1608,7 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
          nrow = 3, byrow = TRUE)
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.XX_PR_coverage_HCAP_adjudication.jpeg"), 
+                         "figure5.18_PR_coverage_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 20, height = 8, units = "in") 
 
 #---- **plot 5.XX: HCAP adjudication + ADAMS ----
@@ -1591,8 +1619,8 @@ ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")),
   geom_point(size = 3) + 
   scale_shape_manual(values = c(rep(1, 6))) +
   scale_color_manual(values = c(#green, pink, blue
-                                "#61bbb6", "#f35f5f","#288fb4",   
-                                "#449187", "#cc435f", "#1d556f")) +
+    "#61bbb6", "#f35f5f","#288fb4",   
+    "#449187", "#cc435f", "#1d556f")) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
   theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
   facet_grid(rows = vars(HCAP_prop), cols = vars(Comparison)) + 
