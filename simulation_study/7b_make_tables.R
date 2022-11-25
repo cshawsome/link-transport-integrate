@@ -28,7 +28,7 @@ ADAMS_labels <-
 ADAMS %<>% rename_at(vars(ADAMS_labels$ADAMS), ~ ADAMS_labels$data_label)
 
 #---- ****HCAP ----
-HCAP <- read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean.csv"))
+HCAP <- read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_clean_for_sim.csv"))
 
 HCAP_labels <- 
   variable_labels[which(variable_labels$HCAP %in% colnames(HCAP)), ]
