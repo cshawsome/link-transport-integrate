@@ -519,7 +519,7 @@ posterior_predictive_checks <-
                                      calibration_sample_name, "/run_", 
                                      chain_num, "/continuous_vars/median/", 
                                      tolower(dem_group), "/", var_name, ".jpeg"), 
-                   width = 8, height = 10, units = "in")  
+                   width = 2.5, height = 2.5, units = "in")  
           }
         }
         
@@ -700,7 +700,7 @@ posterior_predictive_checks <-
                                      calibration_sample_name, "/run_", 
                                      chain_num, "/continuous_vars/skew/", 
                                      tolower(dem_group), "/", var_name, ".jpeg"), 
-                   width = 8, height = 10, units = "in")  
+                   width = 2.5, height = 2.5, units = "in")  
           }
         }
         
