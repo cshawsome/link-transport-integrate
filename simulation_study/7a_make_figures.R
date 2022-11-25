@@ -745,15 +745,13 @@ ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")),
   scale_x_discrete(name = "HRS Sample Size", 
                    breaks = unique(plot_data$HRS_sample_size)) + 
   theme(text = element_text(size = 24), legend.position = "bottom")  + 
-  guides(shape = guide_legend(title = "Prior", 
-                              nrow = 3, byrow = TRUE), 
-         color = guide_legend(title = "Prior"), 
-         nrow = 3, byrow = TRUE)
+  guides(shape = guide_legend(title = "Prior", nrow = 2, byrow = TRUE), 
+         color = guide_legend(title = "Prior", nrow = 2, byrow = TRUE))
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
                          "figure5.25a_impairment_class_bias_prop_HCAP_", 
                          "adjudication_plus_ADAMS.jpeg"), 
-       dpi = 300, width = 20, height = 7.50, units = "in")
+       dpi = 300, width = 25, height = 7.50, units = "in")
 
 #---- **plot 4.14b: percent bias + no HCAP calibration ----
 ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
@@ -817,15 +815,13 @@ ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")),
   scale_x_discrete(name = "HRS Sample Size", 
                    breaks = unique(plot_data$HRS_sample_size)) + 
   theme(text = element_text(size = 24), legend.position = "bottom")  + 
-  guides(shape = guide_legend(title = "Prior", 
-                              nrow = 2, byrow = TRUE), 
-         color = guide_legend(title = "Prior"), 
-         nrow = 2, byrow = TRUE)
+  guides(shape = guide_legend(title = "Prior", nrow = 2, byrow = TRUE), 
+         color = guide_legend(title = "Prior", nrow = 2, byrow = TRUE))
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
                          "figure5.25b_impairment_class_percent_bias_prop_HCAP_", 
                          "adjudication_plus_ADAMS.jpeg"), 
-       dpi = 300, width = 23, height = 7.50, units = "in")
+       dpi = 300, width = 25, height = 7.50, units = "in")
 
 #---- Figure 4.15: RMSE + no HCAP calibration ----
 ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
@@ -1107,10 +1103,9 @@ for(race_subset in unique(plot_data$race)){
     scale_x_discrete(name = "HRS Sample Size", 
                      breaks = unique(plot_data$HRS_sample_size)) + 
     theme(text = element_text(size = 24), legend.position = "bottom")  + 
-    guides(shape = guide_legend(title = "Prior", 
-                                nrow = 3, byrow = TRUE), 
-           color = guide_legend(title = "Prior"), 
-           nrow = 3, byrow = TRUE) + ggtitle(str_to_sentence(race_subset))
+    guides(shape = guide_legend(title = "Prior", nrow = 2, byrow = TRUE), 
+           color = guide_legend(title = "Prior"), nrow = 2, byrow = TRUE) + 
+    ggtitle(str_to_sentence(race_subset))
   
   ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
                            "figure5.27b_impairment_class_percent_bias_prop_", 
@@ -1387,10 +1382,8 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
   facet_grid(rows = vars(HCAP_prop), cols = vars(Race)) + 
   guides(color = guide_legend(title = "Race/Ethnicity")) + 
   theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Prior", 
-                              nrow = 3, byrow = FALSE), 
-         color = guide_legend(title = "Prior"), 
-         nrow = 3, byrow = FALSE)
+  guides(shape = guide_legend(title = "Prior", nrow = 3, byrow = TRUE), 
+         color = guide_legend(title = "Prior", nrow = 3, byrow = TRUE))
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
                          "figure5.16_dem_prev_coverage_HCAP_adjudication.jpeg"), 
@@ -1568,7 +1561,6 @@ ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")),
   scale_color_manual(values = c(#green, pink, blue
     "#61bbb6", "#f35f5f","#288fb4",   
     "#449187", "#cc435f", "#1d556f")) +
-  geom_hline(yintercept = 0, lty = "dashed") +
   theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") +
   facet_grid(rows = vars(HCAP_prop), cols = vars(race)) + 
   theme(text = element_text(size = 24), legend.position = "bottom") + 
@@ -1951,7 +1943,7 @@ ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")),
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
                          "figure5.36_RMSE_PR_HCAP_adjudication_plus_ADAMS.jpeg"), 
-       dpi = 300, width = 20, height = 8, units = "in")
+       dpi = 300, width = 23, height = 8, units = "in")
 
 #---- Sanity check ----
 test <- results %>% 
