@@ -30,7 +30,7 @@ prior_predictive_checks <-
     
     if(!dir.exists(paste0(path_to_output_folder, "continuous_vars/combined"))){
       dir.create(paste0(path_to_output_folder, "continuous_vars/combined"), 
-                        recursive = TRUE)
+                 recursive = TRUE)
     }
     
     if(!dir.exists(paste0(path_to_output_folder, "continuous_vars/error_set/",
@@ -46,6 +46,9 @@ prior_predictive_checks <-
       dir.create(paste0(path_to_output_folder, "continuous_vars/test_set/",
                         "combined"), recursive = TRUE)
     }
+    
+    #---- cell ID key ----
+    cell_ID_key <- read_csv(paste0(path_to_data, "data/cell_ID_key.csv"))
     
     #---- set prior data ----
     if(!calibration_sample){
@@ -102,9 +105,6 @@ prior_predictive_checks <-
       dementia_preds <- c("(Intercept)", selected_vars %>% 
                             filter(data_label != "Intercept" & Dementia != 0) %>% 
                             dplyr::select(data_label) %>% unlist())
-      
-      #---- cell ID key ----
-      cell_ID_key <- read_csv(paste0(path_to_data, "data/cell_ID_key.csv"))
       
       #---- calibration subset ----
       if(calibration_scenario == "calibration_100"){
