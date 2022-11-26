@@ -70,4 +70,64 @@ MI_results <- lapply(HCAP_imputed, function(x)
                                       "data/tuning/nu_0_matrix_HCAP.csv")),
                     num_synthetic = 1000))
 
-#---- plot results ----
+results <- do.call(rbind, MI_results) %>% as.data.frame()
+
+#save results
+write_csv(results, 
+          paste0(path_to_box, "analyses/HCAP/MI_prediction_results.csv"))
+
+#---- Rubin's Rules ----
+#---- **read in results ----
+results <- 
+  read_csv(paste0(path_to_box, "analyses/HCAP/MI_prediction_results.csv"))
+
+#---- **calculate within-SE ----
+for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+  results %<>%
+    mutate(!!sym(paste0("SE_", class)) :=
+             rowMeans(cbind(
+               abs(!!sym(paste0("mean_", class)) -
+                     !!sym(paste0("LCI_", class))),
+               abs(!!sym(paste0("mean_", class)) -
+                     !!sym(paste0("UCI_", class)))))/1.96)
+}
+
+within_vars <- 
+  colMeans(
+    (results[, paste0("SE_", c("Unimpaired", "MCI", "Dementia", "Other"))])^2)
+
+between_vars <- 
+  apply(results[, paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other"))], 
+        2, var)
+
+total_vars <- within_vars + between_vars + between_vars/nrow(results)
+
+#---- plot data ----
+plot_data <- 
+  data.frame("class" = c("Unimpaired", "MCI", "Dementia", "Other"), 
+             "mean" = NA, "LCI" = NA, "UCI" = NA, "Color" = NA)
+
+plot_data[, "mean"] <- colMeans(results[, paste0("mean_", plot_data$class)])
+plot_data[, "LCI"] <- plot_data$mean - 1.96*sqrt(total_vars)
+plot_data[, "UCI"] <- plot_data$mean + 1.96*sqrt(total_vars)
+plot_data[, "Color"] <- color_palette$Color
+
+#scale to proportions
+plot_data[, c("mean", "LCI", "UCI")] <- 
+  plot_data[, c("mean", "LCI", "UCI")]/nrow(HCAP_imputed[[1]])
+
+#---- plot ----
+plot_data$class <- 
+  factor(plot_data$class, levels = c("Unimpaired", "MCI", "Dementia", "Other"))
+
+ggplot(data = plot_data, aes(x = class, y = mean)) + theme_bw() + 
+  geom_errorbar(aes(ymin = LCI, ymax = UCI, color = class), width = 0.10) + 
+  geom_point(aes(size = 1, color = class)) +
+  xlab("") + ylab("Prevalence") + theme(legend.position = "none") + 
+  scale_color_manual(values = plot_data$Color[order(plot_data$class)]) + 
+  theme(text = element_text(size = 12))  
+
+ggsave(filename = 
+         paste0(path_to_box, "figures/chapter_6/", 
+                "figure6.4_algorithmic_dementia_classification.jpeg"), 
+       dpi = 300, width = 5, height = 3, units = "in")
