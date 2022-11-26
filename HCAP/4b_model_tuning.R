@@ -35,12 +35,17 @@ cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>%
 color_palette <- read_csv(paste0(path_to_box, "data/color_palette.csv")) 
 
 #---- define vars ----
+#---- **selected variables ----
+selected_vars <- 
+  read_csv(paste0(path_to_box, "data/variable_selection/", 
+                  "model_coefficients.csv"))
+
 #categorical vars (notation from Schafer 1997)
 W <- c("black", "hispanic", "stroke")
 
 #continuous vars (notation from Schafer 1997)
-all_vars <- colnames(HCAP_analytic)
-Z <- all_vars[str_detect(all_vars, "_Z")]
+Z <- selected_vars[str_detect(selected_vars$data_label, "_Z"), 
+                   "data_label"] %>% unlist() %>% as.vector()
 
 #---- **contrasts matrix ----
 A <- read_csv(paste0(path_to_box, "data/contrasts_matrix.csv")) %>% as.matrix()
@@ -53,15 +58,23 @@ nu_0_mat <- read_csv(paste0(path_to_box, "data/tuning/nu_0_matrix_HCAP.csv"))
 kappa_0_mat <- 
   read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix_HCAP.csv"))
 
+#---- **orig means and sds ----
+HCAP_means <- HCAP_analytic %>% dplyr::select(all_of(str_remove(Z, "_Z"))) %>% 
+  colMeans()
+
+HCAP_sds <- HCAP_analytic %>% dplyr::select(all_of(str_remove(Z, "_Z"))) %>% 
+  apply(., 2, sd)
+
 #---- generate datasets ----
 set.seed(20221116)
 start <- Sys.time()
 
 generate_synthetic(warm_up = 100, run_number = 1, 
                    starting_props = c(0.25, 0.25, 0.25, 0.25),
-                   dataset_to_copy = HCAP_analytic, calibration_sample = FALSE, 
+                   dataset_to_copy = HCAP_analytic, 
+                   orig_means = HCAP_means, orig_sds = HCAP_sds, 
+                   calibration_sample = FALSE, 
                    calibration_prop = NA, calibration_sample_name = NA, 
-                   path_to_raw_prior_sample = NA,
                    path_to_data = paste0(path_to_box,"data/"), 
                    path_to_analyses_folder = 
                      paste0(path_to_box, "analyses/HCAP/"), 
