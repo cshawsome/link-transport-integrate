@@ -260,6 +260,35 @@ posterior_predictive_checks <-
     for(chain_num in seq(1:num_chains)){
       subset <- synthetic_continuous %>% filter(chain == chain_num)
       
+      #---- ******by var ----
+      for(var_name in unique(subset$label)){
+        var_subset <- subset %>% filter(label == var_name)
+        
+        ggplot(data = var_subset , aes(x = value)) + 
+          geom_histogram(fill = "black", color = "black") + theme_bw() + 
+          xlab("Median") + ggtitle(var_name) + 
+          geom_vline(aes(xintercept = truth), color = "#f2caaa", 
+                     size = 1) + 
+          theme(text = element_text(size = 10)) 
+        
+        if(!calibration_sample){
+          ggsave(filename = paste0(path_to_figures_folder, 
+                                   "posterior_predictive_checks/", 
+                                   "ADAMS_prior/run_", 
+                                   chain_num, "/continuous_vars/median/", 
+                                   var_name, ".jpeg"), 
+                 width = 2.5, height = 2.5, units = "in")  
+        } else{
+          ggsave(filename = paste0(path_to_figures_folder, 
+                                   "posterior_predictive_checks/", 
+                                   calibration_sample_name, "/run_", 
+                                   chain_num, "/continuous_vars/median/", 
+                                   var_name, ".jpeg"), 
+                 width = 2.5, height = 2.5, units = "in")  
+        }
+      }
+      
+      #facet plot
       ggplot(data = subset , aes(x = value)) + 
         geom_histogram(fill = "black", color = "black") + theme_bw() + 
         xlab("Median") + 
@@ -323,6 +352,34 @@ posterior_predictive_checks <-
     #---- ****plot ----
     for(chain_num in seq(1:num_chains)){
       subset <- synthetic_continuous %>% filter(chain == chain_num)
+      
+      #---- ******by var ----
+      for(var_name in unique(subset$label)){
+        var_subset <- subset %>% filter(label == var_name)
+        
+        ggplot(data = var_subset , aes(x = value)) + 
+          geom_histogram(fill = "black", color = "black") + theme_bw() + 
+          xlab("Skew") + ggtitle(var_name) + 
+          geom_vline(aes(xintercept = truth), color = "#f2caaa", 
+                     size = 1) + 
+          theme(text = element_text(size = 10)) 
+        
+        if(!calibration_sample){
+          ggsave(filename = paste0(path_to_figures_folder, 
+                                   "posterior_predictive_checks/", 
+                                   "ADAMS_prior/run_", 
+                                   chain_num, "/continuous_vars/skew/", 
+                                   var_name, ".jpeg"), 
+                 width = 2.5, height = 2.5, units = "in")  
+        } else{
+          ggsave(filename = paste0(path_to_figures_folder, 
+                                   "posterior_predictive_checks/", 
+                                   calibration_sample_name, "/run_", 
+                                   chain_num, "/continuous_vars/skew/", 
+                                   var_name, ".jpeg"), 
+                 width = 2.5, height = 2.5, units = "in")  
+        }
+      }
       
       ggplot(data = subset , aes(x = value)) + 
         geom_histogram(fill = "black", color = "black") + theme_bw() + 
@@ -500,18 +557,18 @@ posterior_predictive_checks <-
     }
   }
 
-# #---- test function ----
-# dataset_to_copy = HCAP_analytic
-# calibration_sample = FALSE
-# calibration_prop = NA
-# calibration_sample_name = NA
-# categorical_covariates = W
-# continuous_covariates = Z
-# contrasts_matrix = A
-# cell_ID_key = cell_ID_key
-# variable_labels = variable_labels
-# color_palette = color_palette
-# path_to_analyses_folder =
-#   paste0(path_to_box, "analyses/HCAP/")
-# path_to_figures_folder =
-#   paste0(path_to_box,"figures/chapter_6/")
+#---- test function ----
+dataset_to_copy = HCAP_analytic
+calibration_sample = FALSE
+calibration_prop = NA
+calibration_sample_name = NA
+categorical_covariates = W
+continuous_covariates = Z
+contrasts_matrix = A
+cell_ID_key = cell_ID_key
+variable_labels = variable_labels
+color_palette = color_palette
+path_to_analyses_folder =
+  paste0(path_to_box, "analyses/HCAP/")
+path_to_figures_folder =
+  paste0(path_to_box,"figures/chapter_6/")
