@@ -54,68 +54,30 @@ posterior_predictive_checks <-
     num_chains <- max(synthetic_sample$chain)
     num_samples <- max(synthetic_sample$sample)
     
-    if(!calibration_sample){
-      #---- create directories for results ----
-      for(chain in 1:num_chains){
-        for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-          if(!dir.exists(paste0(path_to_figures_folder, 
-                                "posterior_predictive_checks/", 
-                                "ADAMS_prior/run_", chain, 
-                                "/cell_counts/"))){
-            dir.create(paste0(path_to_figures_folder, 
+    #---- create directories for results ----
+    for(chain in 1:num_chains){
+      if(!dir.exists(paste0(path_to_figures_folder, 
+                            "posterior_predictive_checks/", 
+                            "ADAMS_prior/run_", chain, 
+                            "/cell_counts/"))){
+        dir.create(paste0(path_to_figures_folder, 
+                          "posterior_predictive_checks/", 
+                          "ADAMS_prior/run_", chain, 
+                          "/cell_counts/"), recursive = TRUE)
+      }
+    }
+    
+    for(chain in 1:num_chains){
+      for(metric in c("median", "skew")){
+        if(!dir.exists(paste0(path_to_figures_folder, 
                               "posterior_predictive_checks/", 
                               "ADAMS_prior/run_", chain, 
-                              "/cell_counts/"), recursive = TRUE)
-          }
-        }
-      }
-      
-      for(chain in 1:num_chains){
-        for(metric in c("median", "skew")){
-          for(group in c("unimpaired", "mci", "dementia", "other")){
-            if(!dir.exists(paste0(path_to_figures_folder, 
-                                  "posterior_predictive_checks/", 
-                                  "ADAMS_prior/run_", chain, 
-                                  "/continuous_vars/", metric, "/", group, "/"))){
-              dir.create(paste0(path_to_figures_folder, 
-                                "posterior_predictive_checks/", 
-                                "ADAMS_prior/run_", chain, 
-                                "/continuous_vars/", metric, "/", group, "/"), 
-                         recursive = TRUE)
-            }
-          }
-        }
-      }
-    } else{
-      #---- create directories for results ----
-      for(chain in 1:num_chains){
-        for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-          if(!dir.exists(paste0(path_to_figures_folder, 
-                                "posterior_predictive_checks/", 
-                                calibration_sample_name, "/run_", chain, 
-                                "/cell_counts/"))){
-            dir.create(paste0(path_to_figures_folder, 
-                              "posterior_predictive_checks/", 
-                              calibration_sample_name, "/run_", chain, 
-                              "/cell_counts/"), recursive = TRUE)
-          }
-        }
-      }
-      
-      for(chain in 1:num_chains){
-        for(metric in c("median", "skew")){
-          for(group in c("unimpaired", "mci", "dementia", "other")){
-            if(!dir.exists(paste0(path_to_figures_folder, 
-                                  "posterior_predictive_checks/", 
-                                  calibration_sample_name, "/run_", chain, 
-                                  "/continuous_vars/", metric, "/", group, "/"))){
-              dir.create(paste0(path_to_figures_folder, 
-                                "posterior_predictive_checks/", 
-                                calibration_sample_name, "/run_", chain, 
-                                "/continuous_vars/", metric, "/", group, "/"), 
-                         recursive = TRUE)
-            }
-          }
+                              "/continuous_vars/", metric, "/"))){
+          dir.create(paste0(path_to_figures_folder, 
+                            "posterior_predictive_checks/", 
+                            "ADAMS_prior/run_", chain, 
+                            "/continuous_vars/", metric, "/"), 
+                     recursive = TRUE)
         }
       }
     }
@@ -131,17 +93,7 @@ posterior_predictive_checks <-
       group_membership <- 
         lapply(file_paths, function(x) 
           read_csv(paste0(x, "/latent_class_data.csv")))
-    } else{
-      #---- **read in data ----
-      file_paths <- 
-        list.dirs(path = paste0(path_to_analyses_folder, "diagnostics_data/", 
-                                calibration_sample_name), 
-                  full.names = TRUE, recursive = FALSE)
-      
-      group_membership <- 
-        lapply(file_paths, function(x) 
-          read_csv(paste0(x, "/latent_class_data.csv")))
-    }
+    } 
     
     #---- **formatting ----
     #add chain number
@@ -260,113 +212,6 @@ posterior_predictive_checks <-
       }
     }
     
-    #---- **race/ethnicity x stroke x group ----
-    #---- ****pre-allocate results matrix ----
-    #---- ****synthetic counts ----
-    synthetic_counts <- 
-      matrix(0, nrow = nrow(contrasts_matrix)*4*num_chains, 
-             ncol = (num_samples + 3)) %>% as.data.frame() %>% 
-      set_colnames(c(seq(1, num_samples), "group", "cell", "chain"))
-    
-    synthetic_counts[, "group"] <- 
-      rep(rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
-              each = nrow(contrasts_matrix)), num_chains)
-    
-    cells <- contrasts_matrix[, -1] %>% as.data.frame() %>% 
-      unite("cell_ID", sep = "") %>% left_join(cell_ID_key, by = "cell_ID")
-    
-    synthetic_counts[, "cell"] <- rep(rep(cells$cell_name, 4), num_chains)
-    
-    synthetic_counts[, "chain"] <- rep(seq(1, num_chains), 
-                                       each = nrow(contrasts_matrix)*4) 
-    
-    for(chain_num in unique(synthetic_sample$chain)){
-      #counts from synthetic datasets
-      for(num in 1:num_samples){
-        subsample <- synthetic_sample %>% 
-          filter(chain == chain_num & sample == num) 
-        
-        for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-          counts <- subsample %>% filter(!!sym(group) == 1)
-          
-          if(nrow(counts) == 0){
-            synthetic_counts[
-              which(synthetic_counts$group == group & 
-                      synthetic_counts$chain == chain_num & 
-                      synthetic_counts$cell %in% counts$cell_name), num] <- 0
-          } else{
-            counts %<>%
-              dplyr::select(all_of(categorical_covariates)) %>% 
-              unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-              set_colnames(c("cell_ID", "Freq")) %>% 
-              left_join(cell_ID_key, ., by = "cell_ID")
-            
-            counts[which(is.na(counts$Freq)), "Freq"] <- 0
-            
-            synthetic_counts[
-              which(synthetic_counts$group == group & 
-                      synthetic_counts$chain == chain_num & 
-                      synthetic_counts$cell %in% counts$cell_name), num] <- 
-              counts$Freq
-          }
-        }
-      }
-    }
-    
-    synthetic_count_plot_data <- synthetic_counts %>% mutate("truth" = 0) 
-    
-    #true counts
-    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      counts <- dataset_to_copy %>% filter(!!as.symbol(group) == 1) %>% 
-        dplyr::select(all_of(categorical_covariates)) %>% 
-        unite("cell_ID", sep = "") %>% table() %>% as.data.frame() %>% 
-        set_colnames(c("cell_ID", "Freq")) %>% 
-        left_join(cell_ID_key, ., by = "cell_ID")
-      
-      counts[which(is.na(counts$Freq)), "Freq"] <- 0
-      
-      synthetic_count_plot_data[
-        which(synthetic_count_plot_data$group == group & 
-                synthetic_count_plot_data$cell %in% counts$cell_name), 
-        "truth"] <- counts$Freq
-    }
-    
-    synthetic_count_plot_data %<>% 
-      pivot_longer(-c("group", "cell", "chain", "truth")) %>% 
-      left_join(color_palette, by = c("group" = "Group"))
-    
-    #---- ****plot ----
-    for(chain in 1:num_chains){
-      for(dem_group in unique(synthetic_count_plot_data$group)){
-        subset <- synthetic_count_plot_data %>% 
-          filter(group == dem_group & chain == chain)
-        ggplot(data = subset , aes(x = value)) + 
-          geom_histogram(fill = "black", color = "black") + theme_bw() + 
-          xlab("Contingency Cell Count") + ylab("") + 
-          facet_wrap(facets = vars(cell), ncol = 2, scales = "free") +
-          geom_vline(aes(xintercept = truth), color = unique(subset$Color),
-                     size = 1) +
-          theme(text = element_text(size = 6), 
-                strip.text = element_text(size = 6))  
-        
-        if(!calibration_sample){
-          ggsave(filename = paste0(path_to_figures_folder, 
-                                   "posterior_predictive_checks/", 
-                                   "ADAMS_prior/run_", chain, 
-                                   "/cell_counts/", tolower(dem_group), 
-                                   "_count.jpeg"), 
-                 width = 3, height = 4, units = "in")
-        } else{
-          ggsave(filename = paste0(path_to_figures_folder, 
-                                   "posterior_predictive_checks/", 
-                                   calibration_sample_name, "/run_", chain, 
-                                   "/cell_counts/", tolower(dem_group), 
-                                   "_count.jpeg"), 
-                 width = 3, height = 4, units = "in")
-        }
-      }
-    }
-    
     #---- continuous checks ----
     #do these on the original scale
     continuous_covariates <- str_remove(continuous_covariates, "_Z")
@@ -436,122 +281,6 @@ posterior_predictive_checks <-
       }
     }
     
-    #---- ****by class ----
-    synthetic_continuous <- 
-      matrix(0, nrow = length(continuous_covariates)*4*num_chains, 
-             ncol = (num_samples + 3)) %>% 
-      as.data.frame() %>% 
-      set_colnames(c(seq(1, num_samples), "group", "var", "chain"))
-    synthetic_continuous[, "group"] <- 
-      rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
-          each = length(continuous_covariates))
-    synthetic_continuous[, "var"] <- rep(continuous_covariates, 4)
-    synthetic_continuous[, "chain"] <- rep(seq(1, num_chains), 
-                                           each = length(Z)*4)
-    
-    #medians from synthetic datasets
-    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      subsample <- synthetic_sample %>% filter(!!sym(group) == 1)
-      
-      for(var in continuous_covariates){
-        subset <- subsample %>% 
-          dplyr::select(!!as.symbol(var), "sample", "chain") 
-        
-        synthetic_continuous[which(synthetic_continuous$group == group & 
-                                     synthetic_continuous$var == var & 
-                                     synthetic_continuous$chain %in% 
-                                     seq(1, num_chains)), 
-                             seq(1, num_samples)] <- 
-          matrix(subset %>% group_by(chain, sample) %>%
-                   summarize_all(median) %>% ungroup() %>%
-                   dplyr::select(all_of(var)) %>% unlist(),
-                 nrow = num_chains, ncol = num_samples, byrow = TRUE)
-      }
-    }
-    
-    synthetic_continuous %<>% 
-      mutate("truth" = 0, 
-             "label" = 
-               rep(unlist(variable_labels[
-                 which(unique(variable_labels$data_label) %in% 
-                         continuous_covariates), 
-                 "figure_label"]), num_chains*4)) %>% 
-      left_join(color_palette, by = c("group" = "Group"))
-    
-    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      subsample <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
-      for(var in continuous_covariates){
-        synthetic_continuous[which(synthetic_continuous$group == group & 
-                                     synthetic_continuous$var == var), 
-                             "truth"] <- median(unlist(subsample[, var]))
-      }
-    }
-    
-    synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
-    
-    #---- ****plot ----
-    for(chain_num in 1:num_chains){
-      for(dem_group in c("Unimpaired", "MCI", "Dementia", "Other")){
-        subset <- synthetic_continuous %>% 
-          filter(group == dem_group & chain == chain_num)
-        
-        #---- ******by var ----
-        for(var_name in unique(subset$label)){
-          var_subset <- subset %>% filter(label == var_name)
-          
-          ggplot(data = var_subset , aes(x = value)) + 
-            geom_histogram(fill = "black", color = "black") + theme_bw() + 
-            xlab("Median") + ggtitle(var_name) + 
-            geom_vline(aes(xintercept = truth), color = unique(subset$Color), 
-                       size = 1) + 
-            theme(text = element_text(size = 10)) 
-          
-          if(!calibration_sample){
-            ggsave(filename = paste0(path_to_figures_folder, 
-                                     "posterior_predictive_checks/", 
-                                     "ADAMS_prior/run_", 
-                                     chain_num, "/continuous_vars/median/", 
-                                     tolower(dem_group), "/", var_name, ".jpeg"), 
-                   width = 2.5, height = 2.5, units = "in")  
-          } else{
-            ggsave(filename = paste0(path_to_figures_folder, 
-                                     "posterior_predictive_checks/", 
-                                     calibration_sample_name, "/run_", 
-                                     chain_num, "/continuous_vars/median/", 
-                                     tolower(dem_group), "/", var_name, ".jpeg"), 
-                   width = 2.5, height = 2.5, units = "in")  
-          }
-        }
-        
-        #---- ******facet plot ----
-        ggplot(data = subset , aes(x = value)) + 
-          geom_histogram(fill = "black", color = "black") + theme_bw() + 
-          xlab("Median") + ggtitle(dem_group) + 
-          facet_wrap(facets = vars(label), ncol = 2, scales = "free") +
-          geom_vline(aes(xintercept = truth), color = unique(subset$Color), 
-                     size = 1) + 
-          theme(plot.title = element_text(hjust = 0.5, face = "bold",
-                                          color = unique(subset$Color)), 
-                text = element_text(size = 10)) 
-        
-        if(!calibration_sample){
-          ggsave(filename = paste0(path_to_figures_folder, 
-                                   "posterior_predictive_checks/", 
-                                   "ADAMS_prior/run_", 
-                                   chain_num, "/continuous_vars/median/", 
-                                   tolower(dem_group), ".jpeg"), 
-                 width = 8, height = 10, units = "in")  
-        } else{
-          ggsave(filename = paste0(path_to_figures_folder, 
-                                   "posterior_predictive_checks/", 
-                                   calibration_sample_name, "/run_", 
-                                   chain_num, "/continuous_vars/median/", 
-                                   tolower(dem_group), ".jpeg"), 
-                 width = 8, height = 10, units = "in")  
-        }
-      }
-    }
-    
     #---- **skew ----
     #---- ****overall ----
     synthetic_continuous <- 
@@ -616,173 +345,19 @@ posterior_predictive_checks <-
       }
     }
     
-    #---- ****by class ----
-    synthetic_continuous <- 
-      matrix(0, nrow = length(continuous_covariates)*4*num_chains, 
-             ncol = (num_samples + 3)) %>% 
-      as.data.frame() %>% 
-      set_colnames(c(seq(1, num_samples), "group", "var", "chain"))
-    synthetic_continuous[, "group"] <- 
-      rep(c("Unimpaired", "MCI", "Dementia", "Other"), 
-          each = length(continuous_covariates))
-    synthetic_continuous[, "var"] <- rep(continuous_covariates, 4)
-    synthetic_continuous[, "chain"] <- rep(seq(1, num_chains), 
-                                           each = length(Z)*4)
-    
-    #skewness from synthetic datasets
-    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      subsample <- synthetic_sample %>% filter(!!sym(group) == 1)  
-      
-      for(var in continuous_covariates){
-        subset <- subsample %>% 
-          dplyr::select(!!as.symbol(var), "sample", "chain") 
-        
-        synthetic_continuous[which(synthetic_continuous$group == group & 
-                                     synthetic_continuous$var == var & 
-                                     synthetic_continuous$chain %in% 
-                                     seq(1, num_chains)), 
-                             seq(1, num_samples)] <- 
-          matrix(subset %>% group_by(chain, sample) %>%
-                   summarize_all(skewness) %>% ungroup() %>%
-                   dplyr::select(all_of(var)) %>% unlist(),
-                 nrow = num_chains, ncol = num_samples, byrow = TRUE)
-      }
-    }
-    
-    synthetic_continuous %<>% 
-      mutate("truth" = 0, 
-             "label" = 
-               rep(unlist(variable_labels[
-                 which(unique(variable_labels$data_label) %in% 
-                         continuous_covariates), 
-                 "figure_label"]), num_chains*4)) %>% 
-      left_join(color_palette, by = c("group" = "Group"))
-    
-    for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
-      subsample <- dataset_to_copy %>% filter(!!as.symbol(group) == 1)
-      
-      for(var in continuous_covariates){
-        synthetic_continuous[which(synthetic_continuous$group == group & 
-                                     synthetic_continuous$var == var), 
-                             "truth"] <- skewness(unlist(subsample[, var]))
-      }
-    }
-    
-    synthetic_continuous %<>% pivot_longer(seq(1:num_samples))
-    
-    #---- ****plot ----
-    for(chain_num in 1:num_chains){
-      for(dem_group in c("Unimpaired", "MCI", "Dementia", "Other")){
-        subset <- synthetic_continuous %>% 
-          filter(group == dem_group & chain == chain_num)
-        
-        #---- ******by var ----
-        for(var_name in unique(subset$label)){
-          var_subset <- subset %>% filter(label == var_name)
-          
-          ggplot(data = var_subset , aes(x = value)) + 
-            geom_histogram(fill = "black", color = "black") + theme_bw() + 
-            xlab("Skew") + ggtitle(var_name) + 
-            geom_vline(aes(xintercept = truth), color = unique(subset$Color), 
-                       size = 1) + 
-            theme(text = element_text(size = 10)) 
-          
-          if(!calibration_sample){
-            ggsave(filename = paste0(path_to_figures_folder, 
-                                     "posterior_predictive_checks/", 
-                                     "ADAMS_prior/run_", 
-                                     chain_num, "/continuous_vars/skew/", 
-                                     tolower(dem_group), "/", var_name, ".jpeg"), 
-                   width = 2.5, height = 2.5, units = "in")  
-          } else{
-            ggsave(filename = paste0(path_to_figures_folder, 
-                                     "posterior_predictive_checks/", 
-                                     calibration_sample_name, "/run_", 
-                                     chain_num, "/continuous_vars/skew/", 
-                                     tolower(dem_group), "/", var_name, ".jpeg"), 
-                   width = 2.5, height = 2.5, units = "in")  
-          }
-        }
-        
-        #---- ******facet plot ----
-        ggplot(data = subset , aes(x = value)) + 
-          geom_histogram(fill = "black", color = "black") + theme_bw() + 
-          xlab("Skew") + ggtitle(dem_group) + 
-          facet_wrap(facets = vars(label), ncol = 2, scales = "free") +
-          geom_vline(aes(xintercept = truth), color = unique(subset$Color), 
-                     size = 1) + 
-          theme(plot.title = element_text(hjust = 0.5, face = "bold",
-                                          color = unique(subset$Color)), 
-                text = element_text(size = 10)) 
-        
-        if(!calibration_sample){
-          ggsave(filename = paste0(path_to_figures_folder, 
-                                   "posterior_predictive_checks/", 
-                                   "ADAMS_prior/run_", 
-                                   chain_num, "/continuous_vars/skew/", 
-                                   tolower(dem_group), ".jpeg"), 
-                 width = 8, height = 10, units = "in")  
-        } else{
-          ggsave(filename = paste0(path_to_figures_folder, 
-                                   "posterior_predictive_checks/", 
-                                   calibration_sample_name, "/run_", 
-                                   chain_num, "/continuous_vars/skew/", 
-                                   tolower(dem_group), ".jpeg"), 
-                 width = 8, height = 10, units = "in")
-        }
-      }
-    }
-    
     #---- impairment classification ----
-    #truth
-    dementia_plot_data <- 
-      colSums(dataset_to_copy[, c("Unimpaired", "MCI", "Dementia", "Other")]) %>%
-      as.data.frame() %>% set_colnames("truth") %>% rownames_to_column("Group")
-    
     #synthetic
     synthetic_dementia_plot_data <- 
-      synthetic_sample[, c("Unimpaired", "MCI", "Dementia", "Other", 
-                           "sample", "chain")]  %>% 
+      synthetic_sample[, c("Group", "sample", "chain")]  %>% 
+      mutate("Unimpaired" = ifelse(Group == "Unimpaired", 1, 0), 
+             "MCI" = ifelse(Group == "MCI", 1, 0), 
+             "Dementia" = ifelse(Group == "Dementia", 1, 0), 
+             "Other" = ifelse(Group == "Other", 1, 0)) %>%
       dplyr::count(chain, sample, Unimpaired, MCI, Dementia, Other) %>% 
       pivot_longer(c("Unimpaired", "MCI", "Dementia", "Other"), 
                    names_to = "Group") %>% filter(value == 1) %>%
       group_by(chain, sample) %>%
       mutate_at("sample", as.numeric) 
-    
-    # #test variance estimates for Unimpaired
-    # Unimpaired <- synthetic_dementia_plot_data %>% filter(Group == "Unimpaired")
-    # mean(Unimpaired$n)
-    # quantile(Unimpaired$n, probs = 0.025)
-    # quantile(Unimpaired$n, probs = 0.975)
-    # plotrix::std.error(Unimpaired$n)
-    # sd(Unimpaired$n)
-    # 
-    # within_var <- synthetic_sample %>% filter(p_unimpaired != 0) %>%
-    #   group_by(sample) %>%
-    #   summarize_at(c("p_unimpaired", "p_mci", "p_dementia", "p_other"),
-    #                function(x) sum(x*(1-x))) %>% colMeans()
-    # 
-    # between_var = var(Unimpaired$n)
-    # 
-    # var_total <- within_var["p_unimpaired"] + between_var + between_var/1000
-    # 
-    # #old intervals
-    # mean(Unimpaired$n)
-    # mean(Unimpaired$n) - 1.96*sd(Unimpaired$n)
-    # mean(Unimpaired$n) + 1.96*sd(Unimpaired$n)
-    # 
-    # mean(Unimpaired$n)/sum(dementia_plot_data$truth)
-    # (mean(Unimpaired$n) - 1.96*sd(Unimpaired$n))/sum(dementia_plot_data$truth)
-    # (mean(Unimpaired$n) + 1.96*sd(Unimpaired$n))/sum(dementia_plot_data$truth)
-    # 
-    # #new intervals
-    # mean(Unimpaired$n)
-    # mean(Unimpaired$n) - 1.96*sqrt(var_total)
-    # mean(Unimpaired$n) + 1.96*sqrt(var_total)
-    # 
-    # mean(Unimpaired$n)/sum(dementia_plot_data$truth)
-    # (mean(Unimpaired$n) - 1.96*sqrt(var_total))/sum(dementia_plot_data$truth)
-    # (mean(Unimpaired$n) + 1.96*sqrt(var_total))/sum(dementia_plot_data$truth)
     
     #---- **combined plot ----
     combined_plot_data <- synthetic_dementia_plot_data %>% ungroup() %>% 
@@ -790,12 +365,8 @@ posterior_predictive_checks <-
       summarize_at("n", list("mean" = mean, 
                              "lower" = ~ quantile(.x, probs = 0.025), 
                              "upper" = ~ quantile(.x, probs = 0.975))) %>% 
-      left_join(dementia_plot_data, by = "Group") %>% 
       left_join(color_palette, by = "Group") %>%
       mutate("chain" = paste0("Chain ", chain))
-    
-    # combined_plot_data[, c("mean", "lower", "upper", "truth")] <- 
-    #   combined_plot_data[, c("mean", "lower", "upper", "truth")]/4000
     
     combined_plot_data$Group <- 
       factor(combined_plot_data$Group, 
@@ -807,8 +378,6 @@ posterior_predictive_checks <-
       geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
                     width = 0.10) + 
       geom_point(aes(size = 1, color = Group)) +
-      geom_point(aes(x = Group, y = truth, size = 1), color = "black",
-                 shape = 18, alpha = 1) + 
       xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
       scale_color_manual(
         values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
@@ -833,14 +402,12 @@ posterior_predictive_checks <-
     
     #---- ****prop ----
     ggplot(data = combined_plot_data %>% 
-             mutate_at(c("mean", "lower", "upper", "truth"), 
+             mutate_at(c("mean", "lower", "upper"), 
                        function(x) x/nrow(dataset_to_copy)), 
            aes(x = Group, y = mean)) + theme_bw() + 
       geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
                     width = 0.10) + 
       geom_point(aes(size = 1, color = Group)) +
-      geom_point(aes(x = Group, y = truth, size = 1), color = "black",
-                 shape = 18, alpha = 1) + 
       xlab("") + ylab("Mean Proportion") + theme(legend.position = "none") + 
       scale_color_manual(
         values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
@@ -873,8 +440,6 @@ posterior_predictive_checks <-
                       width = 0.10) + 
         geom_point(aes(size = 1, color = Group)) + 
         theme_minimal() + 
-        geom_point(aes(x = Group, y = truth, size = 1), shape = 18, 
-                   color = "black") + 
         xlab("") + ylab("Count") + 
         theme(text = element_text(size = 10), legend.title = element_blank(), 
               legend.position = "none", 
@@ -902,15 +467,13 @@ posterior_predictive_checks <-
       #---- ****prop ----
       ggplot(data = combined_plot_data %>% 
                filter(chain == paste0("Chain ", chain_num)) %>% 
-               mutate_at(c("mean", "lower", "upper", "truth"), 
+               mutate_at(c("mean", "lower", "upper"), 
                          function(x) x/nrow(dataset_to_copy)), 
              aes(x = Group, y = mean)) + 
         geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
                       width = 0.10) + 
         geom_point(aes(size = 1, color = Group)) + 
         theme_minimal() + 
-        geom_point(aes(x = Group, y = truth, size = 1), shape = 18, 
-                   color = "black") + 
         xlab("") + ylab("Count") + 
         theme(text = element_text(size = 10), legend.title = element_blank(), 
               legend.position = "none", 
@@ -938,11 +501,10 @@ posterior_predictive_checks <-
   }
 
 # #---- test function ----
-# dataset_to_copy = synthetic_HCAP_list[[6]]
+# dataset_to_copy = HCAP_analytic
 # calibration_sample = FALSE
-# calibration_prop =
-#   as.numeric(str_remove(calibration_scenario, "HCAP_"))/100
-# calibration_sample_name = calibration_scenario
+# calibration_prop = NA
+# calibration_sample_name = NA
 # categorical_covariates = W
 # continuous_covariates = Z
 # contrasts_matrix = A
@@ -950,8 +512,6 @@ posterior_predictive_checks <-
 # variable_labels = variable_labels
 # color_palette = color_palette
 # path_to_analyses_folder =
-#   paste0(path_to_box, "analyses/simulation_study/HCAP_",
-#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+#   paste0(path_to_box, "analyses/HCAP/")
 # path_to_figures_folder =
-#   paste0(path_to_box,"figures/chapter_4/simulation_study/HCAP_",
-#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+#   paste0(path_to_box,"figures/chapter_6/")
