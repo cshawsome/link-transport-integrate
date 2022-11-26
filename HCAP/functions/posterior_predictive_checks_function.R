@@ -405,11 +405,8 @@ posterior_predictive_checks <-
     #---- impairment classification ----
     #synthetic
     synthetic_dementia_plot_data <- 
-      synthetic_sample[, c("Group", "sample", "chain")]  %>% 
-      mutate("Unimpaired" = ifelse(Group == "Unimpaired", 1, 0), 
-             "MCI" = ifelse(Group == "MCI", 1, 0), 
-             "Dementia" = ifelse(Group == "Dementia", 1, 0), 
-             "Other" = ifelse(Group == "Other", 1, 0)) %>%
+      synthetic_sample[, c("Unimpaired", "MCI", "Dementia", "Other", "sample", 
+                           "chain")]  %>% 
       dplyr::count(chain, sample, Unimpaired, MCI, Dementia, Other) %>% 
       pivot_longer(c("Unimpaired", "MCI", "Dementia", "Other"), 
                    names_to = "Group") %>% filter(value == 1) %>%
@@ -531,7 +528,7 @@ posterior_predictive_checks <-
                       width = 0.10) + 
         geom_point(aes(size = 1, color = Group)) + 
         theme_minimal() + 
-        xlab("") + ylab("Count") + 
+        xlab("") + ylab("Prevalence") + 
         theme(text = element_text(size = 10), legend.title = element_blank(), 
               legend.position = "none", 
               plot.title = element_text(size = 10)) +
@@ -557,18 +554,18 @@ posterior_predictive_checks <-
     }
   }
 
-#---- test function ----
-dataset_to_copy = HCAP_analytic
-calibration_sample = FALSE
-calibration_prop = NA
-calibration_sample_name = NA
-categorical_covariates = W
-continuous_covariates = Z
-contrasts_matrix = A
-cell_ID_key = cell_ID_key
-variable_labels = variable_labels
-color_palette = color_palette
-path_to_analyses_folder =
-  paste0(path_to_box, "analyses/HCAP/")
-path_to_figures_folder =
-  paste0(path_to_box,"figures/chapter_6/")
+# #---- test function ----
+# dataset_to_copy = HCAP_analytic
+# calibration_sample = FALSE
+# calibration_prop = NA
+# calibration_sample_name = NA
+# categorical_covariates = W
+# continuous_covariates = Z
+# contrasts_matrix = A
+# cell_ID_key = cell_ID_key
+# variable_labels = variable_labels
+# color_palette = color_palette
+# path_to_analyses_folder =
+#   paste0(path_to_box, "analyses/HCAP/")
+# path_to_figures_folder =
+#   paste0(path_to_box,"figures/chapter_6/")
