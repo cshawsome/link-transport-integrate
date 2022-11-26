@@ -65,7 +65,6 @@ start <- Sys.time()
 prior_predictive_checks(dataset_to_copy = HCAP_analytic, 
                         calibration_sample = FALSE, 
                         calibration_prop = NA, calibration_sample_name = NA,
-                        path_to_raw_prior_sample = NA, 
                         path_to_data = path_to_box, 
                         path_to_output_folder =
                           paste0(path_to_box,
@@ -76,6 +75,7 @@ prior_predictive_checks(dataset_to_copy = HCAP_analytic,
                         categorical_vars = W, continuous_vars = Z,
                         variable_labels = variable_labels, 
                         color_palette = color_palette, contrasts_matrix = A,
+                        weights_matrix = NA, 
                         kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
                         num_synthetic = 1000)
 end <- Sys.time() - start
