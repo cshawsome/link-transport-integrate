@@ -60,10 +60,10 @@ kappa_0_mat <-
 
 #---- **orig means and sds ----
 HCAP_means <- HCAP_analytic %>% dplyr::select(all_of(str_remove(Z, "_Z"))) %>% 
-  colMeans()
+  colMeans() %>% t() %>% as.data.frame() 
 
 HCAP_sds <- HCAP_analytic %>% dplyr::select(all_of(str_remove(Z, "_Z"))) %>% 
-  apply(., 2, sd)
+  apply(., 2, sd) %>% t() %>% as.data.frame()
 
 #---- generate datasets ----
 set.seed(20221116)
