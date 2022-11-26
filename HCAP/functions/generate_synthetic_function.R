@@ -87,6 +87,8 @@ generate_synthetic <-
         readRDS(paste0(path_to_data, "prior_data/priors_V_inv"))  
       prior_Sigma <- 
         readRDS(paste0(path_to_data, "prior_data/priors_Sigma")) 
+      
+      calibration_sample_name = "ADAMS_prior"
     } else{
       #---- selected vars ----
       selected_vars <- 
@@ -124,8 +126,7 @@ generate_synthetic <-
     }
     
     #---- select variables ----
-    vars <- unique(c(unimpaired_preds, other_preds, mci_preds, dementia_preds, 
-                     "Unimpaired", "MCI", "Dementia", "Other"))
+    vars <- unique(c(unimpaired_preds, other_preds, mci_preds, dementia_preds))
     
     #---- count contingency cells ----
     cross_class_label <- dataset_to_copy[, categorical_vars] %>%
@@ -192,13 +193,9 @@ generate_synthetic <-
     }
     
     #---- nu_0 and kappa_0 hyperparameters ----
-    kappa_0 <- 
-      kappa_0_mat[which(kappa_0_mat$dataset_name == 
-                          unlist(unique(dataset_to_copy[, "dataset_name"]))), ]
+    kappa_0 <- kappa_0_mat[1, ]
     
-    nu_0 <- 
-      nu_0_mat[which(nu_0_mat$dataset_name == 
-                       unlist(unique(dataset_to_copy[, "dataset_name"]))), ]  
+    nu_0 <- nu_0_mat[1, ]  
     
     # #---- initiate synthetic sample ----
     # synthetic_sample <- dataset_to_copy %>%
@@ -1016,31 +1013,28 @@ generate_synthetic <-
   }
 
 # #---- test function ----
-# set.seed(20220329)
 # warm_up = 100
-# run_number = 1
+# run_number = 1 
 # starting_props = c(0.25, 0.25, 0.25, 0.25)
-# dataset_to_copy = synthetic_HCAP_list[[6]]
-# orig_means = means
-# orig_sds = sds
-# calibration_sample = !(calibration_scenario == "ADAMS_prior")
-# calibration_prop = suppressWarnings(parse_number(calibration_scenario)/100)
-# calibration_sample_name = calibration_scenario
-# path_to_data = paste0(path_to_box,"data/")
-# path_to_analyses_folder =
-#   paste0(path_to_box, "analyses/simulation_study/HCAP_",
-#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
-# path_to_figures_folder =
-#   paste0(path_to_box, "figures/chapter_4/simulation_study/HCAP_",
-#          unique(dataset_to_copy[, "dataset_name_stem"]), "/")
+# dataset_to_copy = HCAP_analytic 
+# orig_means = HCAP_means
+# orig_sds = HCAP_sds 
+# calibration_sample = FALSE
+# calibration_prop = NA
+# calibration_sample_name = NA 
+# path_to_data = paste0(path_to_box,"data/") 
+# path_to_analyses_folder = 
+#   paste0(path_to_box, "analyses/HCAP/") 
+# path_to_figures_folder = 
+#   paste0(path_to_box, "figures/chapter_6/") 
 # categorical_vars = W
-# continuous_vars = Z
+# continuous_vars = Z 
 # id_var = "HHIDPN"
-# variable_labels = variable_labels
+# variable_labels = variable_labels 
 # cell_ID_key = cell_ID_key
-# color_palette = color_palette
-# contrasts_matrix = A
-# kappa_0_mat = kappa_0_mat
+# color_palette = color_palette 
+# contrasts_matrix = A 
+# kappa_0_mat = kappa_0_mat 
 # nu_0_mat = nu_0_mat
 # num_synthetic = 1000
 # data_only = FALSE
