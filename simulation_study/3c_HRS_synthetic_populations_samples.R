@@ -253,13 +253,13 @@ for(race in c("white", "black", "hispanic")){
 # agesex_standardized$hispanic_dem_risk*agesex_standardized$superpop_imputed_count
 
 #---- ******estimates ----
-#hotdeck: 0.24
+#hotdeck: 0.241
 white_risk <- 
   sum(agesex_standardized$expected_white_dem_count)/nrow(superpop_imputed)
-#hotdeck: 0.33
+#hotdeck: 0.331
 black_risk <- 
   sum(agesex_standardized$expected_black_dem_count)/nrow(superpop_imputed)
-#hotdeck: 0.30
+#hotdeck: 0.302
 hispanic_risk <- 
   sum(agesex_standardized$expected_hispanic_dem_count)/nrow(superpop_imputed)
 
