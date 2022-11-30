@@ -47,26 +47,26 @@ results %<>%
           mutate_all(.funs = log) %>% 
           set_colnames(str_replace(PR_cols, "_PR_", "_log_PR_")))
 
-#---- **SEs ----
+#---- **squared SEs ----
 #on the count scale
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
   for(race in c("overall", "white", "black", "hispanic"))
     if(race == "overall"){
       results %<>%
         mutate(!!sym(paste0("SE_", class)) :=
-                 rowMeans(cbind(
+                 (rowMeans(cbind(
                    abs(!!sym(paste0("mean_", class)) -
                          !!sym(paste0("LCI_", class))),
                    abs(!!sym(paste0("mean_", class)) -
-                         !!sym(paste0("UCI_", class)))))/1.96)
+                         !!sym(paste0("UCI_", class)))))/1.96)^2)
     } else{
       results %<>%
         mutate(!!sym(paste0("SE_", class, "_", race)) :=
-                 rowMeans(cbind(
+                 (rowMeans(cbind(
                    abs(!!sym(paste0("mean_", class, "_", race)) -
                          !!sym(paste0("LCI_", class, "_", race))),
                    abs(!!sym(paste0("mean_", class, "_", race)) -
-                         !!sym(paste0("UCI_", class, "_", race)))))/1.96)
+                         !!sym(paste0("UCI_", class, "_", race)))))/1.96)^2)
     }
 }
 
@@ -76,11 +76,11 @@ for(measure in c("dem_prev", "log_PR")){
     
     results %<>%
       mutate(!!sym(paste0("SE_", measure, "_", race)) :=
-               rowMeans(cbind(
+               (rowMeans(cbind(
                  abs(!!sym(paste0("mean_", measure, "_", race)) -
                        !!sym(paste0("LCI_", measure, "_", race))),
                  abs(!!sym(paste0("mean_", measure, "_", race)) -
-                       !!sym(paste0("UCI_", measure, "_", race)))))/1.96)
+                       !!sym(paste0("UCI_", measure, "_", race)))))/1.96)^2)
   }
 }
 
@@ -523,7 +523,7 @@ ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")),
 ggsave(filename = 
          paste0(path_to_box, "figures/chapter_5/simulation_study/", 
                 "figure5.23_mean_CI_impairment_class_HCAP_adjudication_plus_ADAMS.jpeg"), 
-       dpi = 300, width = 20, height = 10, units = "in")
+       dpi = 300, width = 23, height = 10, units = "in")
 
 #---- Figure 4.13 + 5.10 + 5.24: 95% CI coverage impairment classes ----
 #---- **read in data ----
