@@ -116,16 +116,34 @@ plot_data[, "Color"] <- color_palette$Color
 plot_data[, c("mean", "LCI", "UCI")] <- 
   plot_data[, c("mean", "LCI", "UCI")]/nrow(HCAP_imputed[[1]])
 
+#study
+plot_data %<>% mutate("Algorithm" = "Bayesian Latent Class\nMixture Model")
+
+#HCAP data 
+HCAP_results <- 
+  data.frame("class" = c("Unimpaired", "MCI", "Dementia", "Other"), 
+             "mean" = c(NA, 0.231028037, .1375700935, NA), 
+             "LCI" = c(NA, .1846242991, .1034616822, NA), 
+             "UCI" = c(NA, .2638429907, .1733345794, NA), 
+             "Color" = plot_data$Color, 
+             "Algorithm" = "HCAP")
+
+plot_data %<>% rbind(HCAP_results)
+
 #---- plot ----
 plot_data$class <- 
-  factor(plot_data$class, levels = c("Unimpaired", "MCI", "Dementia", "Other"))
+  factor(plot_data$class, 
+         levels = rev(c("Unimpaired", "MCI", "Dementia", "Other")))
 
-ggplot(data = plot_data, aes(x = class, y = mean)) + theme_bw() + 
-  geom_errorbar(aes(ymin = LCI, ymax = UCI, color = class), width = 0.10) + 
-  geom_point(aes(size = 1, color = class)) +
+ggplot(data = plot_data, 
+       aes(y = class, x = mean, color = class, shape = Algorithm)) + theme_bw() + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.10) + 
+  geom_point(size = 3) +
   xlab("") + ylab("Prevalence") + theme(legend.position = "none") + 
-  scale_color_manual(values = plot_data$Color[order(plot_data$class)]) + 
-  theme(text = element_text(size = 12))  
+  scale_color_manual(values = unique(plot_data$Color[order(plot_data$class)])) + 
+  theme(text = element_text(size = 12)) + 
+  guides(shape = guide_legend(title = "Algorithm"))
+  
 
 ggsave(filename = 
          paste0(path_to_box, "figures/chapter_6/", 
