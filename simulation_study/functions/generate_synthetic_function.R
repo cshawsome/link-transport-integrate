@@ -591,7 +591,15 @@ generate_synthetic <-
               dplyr::select(all_of(continuous_vars)) %>% as.matrix()
             
             V_0_inv <- t(contrasts_matrix) %*% prior_UtU %*% contrasts_matrix
-            V_0 <- solve(V_0_inv)
+            
+            redraws = 0
+            while(is.character(tryCatch(V_0 <- solve(V_0_inv), 
+                                        error = function(e) "error")) & 
+                  redraws <= 100){
+              
+              V_0_inv = V_0_inv + 0.001
+              redraws = redraws + 1
+            }
             
             beta_0 <- V_0 %*% t(contrasts_matrix) %*% t(prior_U) %*% 
               prior_continuous_covariates
