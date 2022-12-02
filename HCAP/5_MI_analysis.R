@@ -165,9 +165,33 @@ rubin_rules <- function(data, var, impairment_class){
                 , round(exp(pt_est + 1.96*sqrt(total_var)), 2), ")"))
 }
 
-#---- **increased dementia risk with 5-year age increase ----
+#---- **dementia risk with 5-year age increase ----
 rubin_rules(results, "age5", "dementia")
 
-#---- **increased mci risk with 5-year age increase ----
+#---- **mci risk with 5-year age increase ----
 rubin_rules(results, "age5", "mci")
+
+#---- **female dementia risk ----
+rubin_rules(results, "female", "dementia")
+
+#---- **female mci risk ----
+rubin_rules(results, "female", "mci")
+
+#---- **black dementia risk ----
+rubin_rules(results, "black", "dementia")
+
+#---- **black mci risk ----
+rubin_rules(results, "black", "mci")
+
+#---- **hispanic dementia risk ----
+rubin_rules(results, "hispanic", "dementia")
+
+#---- **hispanic mci risk ----
+rubin_rules(results, "hispanic", "mci")
+
+#---- **edyrs dementia risk ----
+rubin_rules(results, "edu", "dementia")
+
+#---- **edyrs mci risk ----
+rubin_rules(results, "edu", "mci")
 
