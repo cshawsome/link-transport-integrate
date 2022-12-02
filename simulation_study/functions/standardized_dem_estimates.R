@@ -62,8 +62,13 @@ standardized_dem_estimates <- function(synthetic_data, standard_data){
   PR_black <- black_risk/white_risk
   PR_hispanic <- hispanic_risk/white_risk
   
+  #PD compared to white
+  PD_black <- black_risk-white_risk
+  PD_hispanic <- hispanic_risk-white_risk
+  
   #---- return values ----
   return(c("white_risk" = white_risk, "black_risk" = black_risk, 
            "hispanic_risk" = hispanic_risk, "PR_black" = PR_black, 
-           "PR_hispanic" = PR_hispanic))
+           "PR_hispanic" = PR_hispanic, "PD_black" = PD_black, 
+           "PD_hispanic" = PD_hispanic))
 }
