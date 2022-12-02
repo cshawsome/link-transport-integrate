@@ -76,12 +76,14 @@ results <- do.call(rbind, MI_results) %>% as.data.frame()
 write_csv(results, 
           paste0(path_to_box, "analyses/HCAP/MI_prediction_results.csv"))
 
-#---- Rubin's Rules ----
-#---- **read in results ----
+#---- compare results with HCAP ----
+#---- **proportions of cognitive impairment classes ----
+#---- ****read in results ----
 results <- 
   read_csv(paste0(path_to_box, "analyses/HCAP/MI_prediction_results.csv"))
 
-#---- **calculate within-SE ----
+#---- ****Rubin's Rules ----
+#---- ******calculate within-SE ----
 for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
   results %<>%
     mutate(!!sym(paste0("SE_", class)) :=
@@ -102,7 +104,7 @@ between_vars <-
 
 total_vars <- within_vars + between_vars + between_vars/nrow(results)
 
-#---- plot data ----
+#---- ****plot data ----
 plot_data <- 
   data.frame("class" = c("Unimpaired", "MCI", "Dementia", "Other"), 
              "mean" = NA, "LCI" = NA, "UCI" = NA, "Color" = NA)
@@ -130,7 +132,7 @@ HCAP_results <-
 
 plot_data %<>% rbind(HCAP_results)
 
-#---- plot ----
+#---- ****plot ----
 plot_data$class <- 
   factor(plot_data$class, 
          levels = rev(c("Unimpaired", "MCI", "Dementia", "Other")))
@@ -149,3 +151,23 @@ ggsave(filename =
          paste0(path_to_box, "figures/chapter_6/", 
                 "figure6.4_algorithmic_dementia_classification.jpeg"), 
        dpi = 300, width = 5, height = 3, units = "in")
+
+#---- Rubin's rules function ----
+rubin_rules <- function(data, var, impairment_class){
+  pt_est <- mean(unlist(results[, paste0(impairment_class, "_logOR_", var)]))
+  within_var <- mean(unlist(results[, paste0(impairment_class, "_SE_", var)]^2))
+  between_var <- var(results[, paste0(impairment_class, "_logOR_", var)])
+  total_var <- within_var + between_var + between_var/nrow(data)
+  
+  return(paste0(var, " ", impairment_class, ": ", 
+                round(exp(pt_est), 2), 
+                " (", round(exp(pt_est - 1.96*sqrt(total_var)), 2), ", " 
+                , round(exp(pt_est + 1.96*sqrt(total_var)), 2), ")"))
+}
+
+#---- **increased dementia risk with 5-year age increase ----
+rubin_rules(results, "age5", "dementia")
+
+#---- **increased mci risk with 5-year age increase ----
+rubin_rules(results, "age5", "mci")
+

@@ -9,7 +9,17 @@ analysis_function <-
     result_names <- 
       c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other",
         "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other",
-        "UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other")
+        "UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other", 
+        "dementia_logOR_age5", "dementia_SE_age5", 
+        "mci_logOR_age5", "mci_SE_age5",
+        "dementia_logOR_edu", "dementia_SE_edu",
+        "mci_logOR_edu", "mci_SE_edu",
+        "dementia_logOR_female", "dementia_SE_female",
+        "mci_logOR_female", "mci_SE_female",
+        "dementia_logOR_black", "dementia_SE_black", 
+        "dementia_logOR_hispanic", "dementia_SE_hispanic", 
+        "mci_logOR_black", "mci_SE_black", 
+        "mci_logOR_hispanic", "mci_SE_hispanic")
     
     results <- matrix(ncol = length(result_names), nrow = 1) %>% 
       set_colnames(all_of(result_names))
@@ -79,6 +89,99 @@ analysis_function <-
     results[, paste0("UCI_", colnames(counts))] <- 
       apply(counts, 2, function(x) quantile(x, 0.975))
     
+    #---- age associations ----
+    #---- **create 5-year age bands ----
+    synthetic_HCAP %<>% lapply(., function(data) 
+      data %<>% mutate("age5" = age/5))
+    
+    #---- **fit models ----
+    dementia_results_list <- lapply(synthetic_HCAP, function(x){
+      model <- glm(Dementia ~ age5, family = binomial(link = "logit"), data = x)
+      return(summary(model)$coefficients["age5", c("Estimate", "Std. Error")])
+    })
+    
+    mci_results_list <- lapply(synthetic_HCAP, function(x){
+      model <- glm(MCI ~ age5, family = binomial(link = "logit"), data = x)
+      return(summary(model)$coefficients["age5", c("Estimate", "Std. Error")])
+    })
+    
+    #---- **summarize results ----
+    results[, c("dementia_logOR_age5", "dementia_SE_age5")] <- 
+      do.call(rbind, dementia_results_list) %>% colMeans()
+    
+    results[, c("mci_logOR_age5", "mci_SE_age5")] <- 
+      do.call(rbind, mci_results_list) %>% colMeans()
+    
+    #---- education associations ----
+    #---- **fit models ----
+    dementia_results_list <- lapply(synthetic_HCAP, function(x){
+      model <- glm(Dementia ~ edyrs, family = binomial(link = "logit"), data = x)
+      return(summary(model)$coefficients["edyrs", c("Estimate", "Std. Error")])
+    })
+    
+    mci_results_list <- lapply(synthetic_HCAP, function(x){
+      model <- glm(MCI ~ edyrs, family = binomial(link = "logit"), data = x)
+      return(summary(model)$coefficients["edyrs", c("Estimate", "Std. Error")])
+    })
+    
+    #---- **summarize results ----
+    results[, c("dementia_logOR_edu", "dementia_SE_edu")] <- 
+      do.call(rbind, dementia_results_list) %>% colMeans()
+    
+    results[, c("mci_logOR_edu", "mci_SE_edu")] <- 
+      do.call(rbind, mci_results_list) %>% colMeans()
+    
+    #---- race/ethnicity associations ----
+    #---- **fit models ----
+    dementia_results_list <- lapply(synthetic_HCAP, function(x){
+      model <- 
+        glm(Dementia ~ black + hispanic, family = binomial(link = "logit"), 
+            data = x)
+      return(
+        c(summary(model)$coefficients["black", c("Estimate", "Std. Error")], 
+          summary(model)$coefficients["hispanic", c("Estimate", "Std. Error")]) %>% 
+          set_names(c("black", "black_stderror", "hispanic", "hispanic_stderror")))
+    })
+    
+    mci_results_list <- lapply(synthetic_HCAP, function(x){
+      model <- 
+        glm(MCI ~ black + hispanic, family = binomial(link = "logit"), 
+            data = x)
+      return(
+        c(summary(model)$coefficients["black", c("Estimate", "Std. Error")], 
+          summary(model)$coefficients["hispanic", c("Estimate", "Std. Error")]) %>% 
+          set_names(c("black", "black_stderror", "hispanic", "hispanic_stderror")))
+    })
+    
+    #---- **summarize results ----
+    results[, c("dementia_logOR_black", "dementia_SE_black", 
+                "dementia_logOR_hispanic", "dementia_SE_hispanic")] <- 
+      do.call(rbind, dementia_results_list) %>% colMeans()
+    
+    results[, c("mci_logOR_black", "mci_SE_black", 
+                "mci_logOR_hispanic", "mci_SE_hispanic")] <- 
+      do.call(rbind, mci_results_list) %>% colMeans()
+    
+    #---- sex/gender associations ----
+    #---- **fit models ----
+    dementia_results_list <- lapply(synthetic_HCAP, function(x){
+      model <- glm(Dementia ~ female, family = binomial(link = "logit"), data = x)
+      return(summary(model)$coefficients["female", c("Estimate", "Std. Error")])
+    })
+    
+    mci_results_list <- lapply(synthetic_HCAP, function(x){
+      model <- glm(MCI ~ female, family = binomial(link = "logit"), data = x)
+      return(summary(model)$coefficients["female", c("Estimate", "Std. Error")])
+    })
+    
+    #---- **summarize results ----
+    results[, c("dementia_logOR_female", "dementia_SE_female")] <- 
+      do.call(rbind, dementia_results_list) %>% colMeans()
+    
+    results[, c("mci_logOR_female", "mci_SE_female")] <- 
+      do.call(rbind, mci_results_list) %>% colMeans()
+    
+    #---- return results ----
     return(results)
   }
 
@@ -86,10 +189,10 @@ analysis_function <-
 # warm_up = 100
 # run_number = 1
 # starting_props = c(0.25, 0.25, 0.25, 0.25)
-# dataset_to_copy = HCAP_analytic
-# orig_means = HCAP_analytic %>% dplyr::select(all_of(str_remove(Z, "_Z"))) %>%
+# dataset_to_copy = HCAP_imputed[[1]]
+# orig_means = dataset_to_copy %>% dplyr::select(all_of(str_remove(Z, "_Z"))) %>%
 #   colMeans() %>% t() %>% as.data.frame()
-# orig_sds = HCAP_analytic %>% dplyr::select(all_of(str_remove(Z, "_Z"))) %>%
+# orig_sds = dataset_to_copy %>% dplyr::select(all_of(str_remove(Z, "_Z"))) %>%
 #   apply(., 2, sd) %>% t() %>% as.data.frame()
 # calibration_sample = FALSE
 # calibration_prop = NA
