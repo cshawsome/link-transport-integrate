@@ -32,11 +32,11 @@ read_results <- function(path, skip = 0){
     # } else{
     
     data <- data.table::fread(path, fill = TRUE, skip = skip) %>% 
-      na.omit() 
+      na.omit("time")
     
     if(str_detect(unique(data$dataset_name), "ADAMS_prior")){
       data %<>% mutate("dataset_name" = paste0(dataset_name, "_NA_NA"))
-    }
+    } 
     
     if(str_detect(unique(data$dataset_name), "SRS") & 
        !str_detect(unique(data$dataset_name), "race")){
