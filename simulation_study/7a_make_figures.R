@@ -17,6 +17,7 @@ results_paths <-
   list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
              full.names = TRUE, pattern = "*.csv")
 
+
 results <- do.call(rbind, lapply(results_paths, read_results)) %>% 
   group_by(dataset_name) %>% slice_head(n = 1000) %>% 
   mutate("HRS_sample_size" = sample_size) %>% 
