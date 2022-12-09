@@ -1117,6 +1117,39 @@ for(race_subset in unique(plot_data$race)){
          dpi = 300, width = 20, height = 7.50, units = "in")
 }
 
+#---- **defense plot 5.13b v1: percent bias by race + HCAP calibration ----
+y_limits <- plot_data %>% filter(!str_detect(prior_sample, "\\+")) %>% 
+  ungroup() %>% summarize_at("percent_bias", .funs = list(min, max))
+
+for(race_subset in unique(plot_data$race)){
+  ggplot(data = plot_data %>% filter(race == race_subset) %>% 
+           filter(!str_detect(prior_sample, "\\+")), 
+         aes(x = HRS_sample_size, y = percent_bias, color = prior_sample, 
+             group = prior_sample, shape = prior_sample)) + 
+    geom_line(size = 1.5) + geom_point(size = 3) + 
+    ylim(c(y_limits[[1]], y_limits[[2]])) +
+    scale_shape_manual(values = c(1, rep(19, 6))) +
+    scale_color_manual(values = c("black",
+                                  #green, pink, blue
+                                  "#61bbb6", "#f35f5f","#288fb4",   
+                                  "#449187", "#cc435f", "#1d556f")) +
+    geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
+    ylab("Percent bias") + 
+    facet_grid(rows = vars(HCAP_prop), cols = vars(class), scales = "free_x") + 
+    scale_x_discrete(name = "HRS Sample Size", 
+                     breaks = unique(plot_data$HRS_sample_size)) + 
+    theme(text = element_text(size = 24), legend.position = "bottom")  + 
+    guides(shape = guide_legend(title = "Prior", 
+                                nrow = 3, byrow = TRUE), 
+           color = guide_legend(title = "Prior"), 
+           nrow = 3, byrow = TRUE) + ggtitle(str_to_sentence(race_subset))
+  
+  ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
+                           "figure5.13b_impairment_class_percent_bias_prop_", 
+                           race_subset, "_HCAP_adjudication.jpeg"), 
+         dpi = 300, width = 20, height = 7.50, units = "in")
+}
+
 #---- **plot 5.27b: percent by race + HCAP calibration + ADAMS ----
 y_limits <- plot_data %>% filter(str_detect(prior_sample, "\\+")) %>% 
   ungroup() %>% summarize_at("percent_bias", .funs = list(min, max))
