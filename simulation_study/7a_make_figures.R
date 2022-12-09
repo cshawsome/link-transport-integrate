@@ -526,6 +526,25 @@ ggsave(filename =
                 "figure5.23_mean_CI_impairment_class_HCAP_adjudication_plus_ADAMS.jpeg"), 
        dpi = 300, width = 23, height = 10, units = "in")
 
+#---- **defense plot 5.9 v1 ----
+ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
+       aes(x = mean, y = HRS_sample_size, color = prior_sample, 
+           shape = prior_sample)) +
+  geom_vline(data = superpop_impairment_props, aes(xintercept = prop), 
+             size = 1.5) +
+  geom_point(size = 4, position = position_dodge(-0.95)) + 
+  scale_shape_manual(values = c(1)) + scale_color_manual(values = c("black")) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.2, size = 1, 
+                position = position_dodge(-0.95)) + theme_bw() + 
+  facet_grid(cols = vars(Group), rows = vars(HCAP_prop), scales = "free_y") + 
+  scale_x_continuous(breaks = seq(0.00, 0.70, by = 0.10)) +
+  xlab("Impairment class proportion") + ylab("HRS sample size") + 
+  theme(text = element_text(size = 32), legend.position = "none") 
+
+ggsave(filename = 
+         paste0(path_to_box, "presentations/Defense/figures/figure5.9_v1.jpeg"), 
+       dpi = 300, width = 20, height = 10, units = "in")
+
 #---- Figure 4.13 + 5.10 + 5.24: 95% CI coverage impairment classes ----
 #---- **read in data ----
 #---- ****color palette ----
