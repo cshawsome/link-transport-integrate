@@ -1040,18 +1040,45 @@ group_colors <- color_palette$Color
 names(group_colors) <- color_palette$Group
 
 #---- **plot data ----
-cols_by_race <- expand_grid(c("mean", "true"), 
-                            c("Unimpaired", "MCI", "Dementia", "Other"), 
-                            c("white", "black", "hispanic")) %>% 
+cols_by_race <- 
+  expand_grid(c("mean", "true"), 
+              c("Unimpaired", "MCI", "Dementia", "Other"), 
+              c("white", "black", "hispanic")) %>% 
   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
 
 plot_data <- results %>% ungroup() %>%
   dplyr::select("prior_sample", "HCAP_prop", "HRS_sample_size", 
-                "HCAP_sample_size",  all_of(cols_by_race)) %>%
-  pivot_longer(all_of(cols_by_race),
+                "HCAP_sample_size", all_of(cols_by_race))
+
+for(race in c("white", "black", "hispanic")){
+  plot_data %<>% mutate(!!paste0("mean_total_", race) := 
+                          !!sym(paste0("mean_Unimpaired_", race)) + 
+                          !!sym(paste0("mean_MCI_", race)) + 
+                          !!sym(paste0("mean_Dementia_", race)) + 
+                          !!sym(paste0("mean_Other_", race)))
+  
+  plot_data %<>% mutate(!!paste0("true_total_", race) := 
+                          !!sym(paste0("true_Unimpaired_", race)) + 
+                          !!sym(paste0("true_MCI_", race)) + 
+                          !!sym(paste0("true_Dementia_", race)) + 
+                          !!sym(paste0("true_Other_", race)))
+}
+
+for(race in c("white", "black", "hispanic")){
+  for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+    for(measure in c("mean", "true")){
+      plot_data %<>% 
+        mutate(!!paste(measure, class, race, sep = "_") := 
+                 !!sym(paste(measure, class, race, sep = "_"))/
+                 !!sym(paste(measure, "total", race, sep = "_")))
+    }
+  }  
+}
+
+plot_data %<>%
+  pivot_longer(c(all_of(cols_by_race)),
                names_to = c(".value", "class", "race"), 
-               names_sep = "_") %>% 
-  mutate("mean" = mean/HCAP_sample_size, "true" = true/HCAP_sample_size) %>%
+               names_sep = "_") %>%
   mutate("error" = mean - true) %>%
   mutate("percent_error" = error/true*100) %>%
   mutate("squared_error" = error^2) %>%
@@ -1224,7 +1251,7 @@ for(race_subset in unique(plot_data$race)){
          dpi = 300, width = 20, height = 7.50, units = "in")
 }
 
-#---- **defense plot 5.13a v1: percent bias by race + HCAP calibration ----
+#---- **defense plot 5.13a v1: bias by race + HCAP calibration ----
 y_limits <- plot_data %>% 
   filter(prior_sample == "ADAMS" & 
            HCAP_prop == "HCAP Proportion\n50% of HRS") %>% 
