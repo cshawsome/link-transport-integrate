@@ -142,3 +142,5 @@ for(group in c("Unimpaired", "MCI", "Dementia", "Other")){
 saveRDS(normal_parameter_list, paste0(path_to_box, "analyses/simulation_study/", 
                                       "continuous_distribution_parameters/", 
                                       "normal_parameters_raw_data"))
+
+#test push
