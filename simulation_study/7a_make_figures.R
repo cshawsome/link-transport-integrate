@@ -2276,8 +2276,9 @@ ggsave(filename = paste0(path_to_box, "presentations/Defense/figures/",
                          "figure5.19b_v3.jpeg"), 
        dpi = 300, width = 18, height = 7.25, units = "in")
 
-#---- **plot 5.33: HCAP adjudication + ADAMS ----
-ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")), 
+#---- **plot 5.33a: PR HCAP adjudication + ADAMS ----
+ggplot(data = plot_data %>% 
+         filter(str_detect(prior_sample, "\\+") & measure == "PR"), 
        aes(y = HRS_sample_size, x = mean, group = prior_sample, 
            color = prior_sample, shape = prior_sample)) + 
   geom_vline(aes(xintercept = PR), data = truth, size = 2) +
@@ -2296,8 +2297,32 @@ ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")),
          color = guide_legend(title = "Prior", nrow = 2, byrow = TRUE))
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.33_mean_CI_PR_HCAP_adjudication_plus_ADAMS.jpeg"), 
-       dpi = 300, width = 23, height = 8, units = "in") 
+                         "figure5.33a_mean_CI_PR_HCAP_adjudication_plus_ADAMS.jpeg"), 
+       dpi = 300, width = 23, height = 8, units = "in")
+
+#---- **plot 5.33b: PD HCAP adjudication + ADAMS ----
+ggplot(data = plot_data %>% 
+         filter(str_detect(prior_sample, "\\+") & measure == "PD"), 
+       aes(y = HRS_sample_size, x = mean, group = prior_sample, 
+           color = prior_sample, shape = prior_sample)) + 
+  geom_vline(aes(xintercept = PD), data = truth, size = 2) +
+  geom_vline(aes(xintercept = 0), color = "black", lty = "dashed") +
+  geom_point(size = 3, position = position_dodge(-0.95)) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
+                position = position_dodge(-0.95)) +
+  scale_shape_manual(values = c(rep(1, 6))) +
+  scale_color_manual(values = c(#green, pink, blue
+    "#61bbb6", "#f35f5f","#288fb4",   
+    "#449187", "#cc435f", "#1d556f")) +
+  theme_bw() + xlab("Prevalence Difference (PD)") + ylab("HRS Sample Size") +
+  facet_grid(rows = vars(HCAP_prop), cols = vars(Comparison)) + 
+  theme(text = element_text(size = 24), legend.position = "bottom") + 
+  guides(shape = guide_legend(title = "Prior", nrow = 2, byrow = TRUE), 
+         color = guide_legend(title = "Prior", nrow = 2, byrow = TRUE))
+
+ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
+                         "figure5.33b_mean_CI_PD_HCAP_adjudication_plus_ADAMS.jpeg"), 
+       dpi = 300, width = 23, height = 8, units = "in")
 
 #---- Figure 4.23 + 5.20 + 5.34: 95% CI coverage PR ----
 #---- **plot data ----
@@ -2369,9 +2394,10 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "figure4.23b_PD_coverage_no_HCAP_adjudiation.jpeg"), 
        dpi = 300, width = 13.25, height = 6.25, units = "in")
 
-#---- **plot 5.20: HCAP adjudication ----
-ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
-       aes(x = HRS_sample_size, y = PR, group = prior_sample, 
+#---- **plot 5.20a: PR HCAP adjudication ----
+ggplot(data = plot_data %>% 
+         filter(!str_detect(prior_sample, "\\+") & measure == "PR"), 
+       aes(x = HRS_sample_size, y = coverage, group = prior_sample, 
            color = prior_sample, shape = prior_sample)) + 
   geom_line(size = 1.5) + 
   geom_point(size = 3) + 
@@ -2390,7 +2416,32 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
          nrow = 3, byrow = TRUE)
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.20_PR_coverage_HCAP_adjudication.jpeg"), 
+                         "figure5.20a_PR_coverage_HCAP_adjudication.jpeg"), 
+       dpi = 300, width = 20, height = 8, units = "in") 
+
+#---- **plot 5.20b: PD HCAP adjudication ----
+ggplot(data = plot_data %>% 
+         filter(!str_detect(prior_sample, "\\+") & measure == "PD"), 
+       aes(x = HRS_sample_size, y = coverage, group = prior_sample, 
+           color = prior_sample, shape = prior_sample)) + 
+  geom_line(size = 1.5) + 
+  geom_point(size = 3) + 
+  scale_shape_manual(values = c(1, rep(19, 6))) +
+  scale_color_manual(values = c("black", 
+                                #green, pink, blue
+                                "#61bbb6", "#f35f5f","#288fb4",   
+                                "#449187", "#cc435f", "#1d556f")) +
+  geom_hline(yintercept = 0.95, lty = "dashed") +
+  theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
+  facet_grid(rows = vars(HCAP_prop), cols = vars(Comparison)) + 
+  theme(text = element_text(size = 24), legend.position = "bottom") + 
+  guides(shape = guide_legend(title = "Prior", 
+                              nrow = 3, byrow = TRUE), 
+         color = guide_legend(title = "Prior"), 
+         nrow = 3, byrow = TRUE)
+
+ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
+                         "figure5.20b_PD_coverage_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 20, height = 8, units = "in") 
 
 #---- **plot 5.34: HCAP adjudication + ADAMS ----
@@ -2495,8 +2546,9 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "figure4.24b_PD_bias_no_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in") 
 
-#---- **plot 5.21 ----
-ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
+#---- **plot 5.21a: PR bias ----
+ggplot(data = plot_data %>% 
+         filter(!str_detect(prior_sample, "\\+") & measure == "PR"), 
        aes(x = HRS_sample_size, y = bias, group = prior_sample, 
            color = prior_sample, shape = prior_sample)) + 
   geom_line(size = 1.5) + geom_point(size = 3) + 
@@ -2513,7 +2565,29 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
          color = guide_legend(title = "Prior"), nrow = 3, byrow = TRUE)
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.21_bias_PR_HCAP_adjudication.jpeg"), 
+                         "figure5.21a_bias_PR_HCAP_adjudication.jpeg"), 
+       dpi = 300, width = 20, height = 8, units = "in")
+
+#---- **plot 5.21b: PD bias ----
+ggplot(data = plot_data %>% 
+         filter(!str_detect(prior_sample, "\\+") & measure == "PD"), 
+       aes(x = HRS_sample_size, y = bias, group = prior_sample, 
+           color = prior_sample, shape = prior_sample)) + 
+  geom_line(size = 1.5) + geom_point(size = 3) + 
+  scale_shape_manual(values = c(1, rep(19, 6))) +
+  scale_color_manual(values = c("black", 
+                                #green, pink, blue
+                                "#61bbb6", "#f35f5f","#288fb4",   
+                                "#449187", "#cc435f", "#1d556f")) +
+  geom_hline(yintercept = 0, lty = "dashed") +
+  theme_bw() + ylab("Bias") + xlab("HRS Sample Size") +
+  facet_grid(rows = vars(HCAP_prop), cols = vars(Comparison)) + 
+  theme(text = element_text(size = 24), legend.position = "bottom") + 
+  guides(shape = guide_legend(title = "Prior", nrow = 3, byrow = TRUE), 
+         color = guide_legend(title = "Prior"), nrow = 3, byrow = TRUE)
+
+ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
+                         "figure5.21b_bias_PD_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 20, height = 8, units = "in")
 
 #---- **plot 5.35 ----
@@ -2568,8 +2642,9 @@ ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/",
                          "figure4.25b_PD_RMSE_no_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in") 
 
-#---- Figure 5.22: PR RMSE HCAP adjudication----
-ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
+#---- Figure 5.22a: PR RMSE HCAP adjudication----
+ggplot(data = plot_data %>% 
+         filter(!str_detect(prior_sample, "\\+") & measure == "PR"), 
        aes(x = HRS_sample_size, y = RMSE, group = prior_sample, 
            color = prior_sample, shape = prior_sample)) + 
   geom_line(size = 1.5) + geom_point(size = 3) + 
@@ -2585,7 +2660,28 @@ ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")),
          color = guide_legend(title = "Prior"), nrow = 3, byrow = TRUE)
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.22_RMSE_PR_HCAP_adjudication.jpeg"), 
+                         "figure5.22a_RMSE_PR_HCAP_adjudication.jpeg"), 
+       dpi = 300, width = 20, height = 8, units = "in")
+
+#---- Figure 5.22b: PD RMSE HCAP adjudication----
+ggplot(data = plot_data %>% 
+         filter(!str_detect(prior_sample, "\\+") & measure == "PD"), 
+       aes(x = HRS_sample_size, y = RMSE, group = prior_sample, 
+           color = prior_sample, shape = prior_sample)) + 
+  geom_line(size = 1.5) + geom_point(size = 3) + 
+  scale_shape_manual(values = c(1, rep(19, 6))) +
+  scale_color_manual(values = c("black", 
+                                #green, pink, blue
+                                "#61bbb6", "#f35f5f","#288fb4",   
+                                "#449187", "#cc435f", "#1d556f")) +
+  theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") +
+  facet_grid(rows = vars(HCAP_prop), cols = vars(Comparison)) + 
+  theme(text = element_text(size = 24), legend.position = "bottom") + 
+  guides(shape = guide_legend(title = "Prior", nrow = 3, byrow = TRUE), 
+         color = guide_legend(title = "Prior"), nrow = 3, byrow = TRUE)
+
+ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
+                         "figure5.22b_RMSE_PD_HCAP_adjudication.jpeg"), 
        dpi = 300, width = 20, height = 8, units = "in")
 
 #---- Figure 5.36: PR RMSE HCAP adjudication----
