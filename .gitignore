@@ -2,3 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
+
+#can't store this info on github
+priors/*
+
+#Idk why this popped up
+.DS_Store
