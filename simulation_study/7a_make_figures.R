@@ -40,329 +40,327 @@ superpop_impairment_props$Group <-
   factor(superpop_impairment_props$Group, 
          levels = c("Unimpaired", "MCI", "Dementia", "Other"))
 
-
-
-#---- extra calcs ----
-#---- **log PR measures ----
-PR_cols <- 
-  expand_grid(c("mean", "LCI", "UCI"), "PR",
-              c("black", "hispanic")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
-
-results %<>% 
-  cbind(., results %>% ungroup() %>% dplyr::select(all_of(PR_cols)) %>% 
-          mutate_all(.funs = log) %>% 
-          set_colnames(str_replace(PR_cols, "_PR_", "_log_PR_")))
-
-#---- **squared SEs ----
-#on the count scale
-for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-  for(race in c("overall", "white", "black", "hispanic"))
-    if(race == "overall"){
-      results %<>%
-        mutate(!!sym(paste0("SE_", class)) :=
-                 (rowMeans(cbind(
-                   abs(!!sym(paste0("mean_", class)) -
-                         !!sym(paste0("LCI_", class))),
-                   abs(!!sym(paste0("mean_", class)) -
-                         !!sym(paste0("UCI_", class)))))/1.96)^2)
-    } else{
-      results %<>%
-        mutate(!!sym(paste0("SE_", class, "_", race)) :=
-                 (rowMeans(cbind(
-                   abs(!!sym(paste0("mean_", class, "_", race)) -
-                         !!sym(paste0("LCI_", class, "_", race))),
-                   abs(!!sym(paste0("mean_", class, "_", race)) -
-                         !!sym(paste0("UCI_", class, "_", race)))))/1.96)^2)
-    }
-}
-
-for(measure in c("dem_prev", "log_PR")){
-  for(race in c("white", "black", "hispanic")){
-    if(measure == "log_PR" & race == "white"){next}
-    
-    results %<>%
-      mutate(!!sym(paste0("SE_", measure, "_", race)) :=
-               (rowMeans(cbind(
-                 abs(!!sym(paste0("mean_", measure, "_", race)) -
-                       !!sym(paste0("LCI_", measure, "_", race))),
-                 abs(!!sym(paste0("mean_", measure, "_", race)) -
-                       !!sym(paste0("UCI_", measure, "_", race)))))/1.96)^2)
-  }
-}
-
-#---- format data ----
-results %<>% 
-  mutate("prior_sample" = 
-           case_when(calibration_sampling == "NA" ~ "ADAMS", 
-                     calibration_sampling == "SRS" & 
-                       calibration == "calibration_50" & 
-                       sampling_strata == "NA" ~ 
-                       "HCAP 50% SRS Adjudication",
-                     calibration_sampling == "SRS" & 
-                       calibration == "calibration_50" & 
-                       sampling_strata == "race" ~ 
-                       "HCAP 50% Race-stratified SRS Adjudication",
-                     calibration_sampling == "SRS" & 
-                       calibration == "calibration_35" & 
-                       sampling_strata == "NA" ~ 
-                       "HCAP 35% SRS Adjudication", 
-                     calibration_sampling == "SRS" & 
-                       calibration == "calibration_35" & 
-                       sampling_strata == "race" ~ 
-                       "HCAP 35% Race-stratified SRS Adjudication", 
-                     calibration_sampling == "SRS" & 
-                       calibration == "calibration_20" & 
-                       sampling_strata == "NA" ~ 
-                       "HCAP 20% SRS Adjudication", 
-                     calibration_sampling == "SRS" & 
-                       calibration == "calibration_20" & 
-                       sampling_strata == "race" ~ 
-                       "HCAP 20% Race-stratified SRS Adjudication"))
-
-#---- match ADAMS data ----
-# like a cbind but making sure correct rows are matched
-#create place-holder columns
-overall_impairment_cols <- 
-  expand_grid(c("mean", "LCI", "UCI"),
-              c("Unimpaired", "MCI", "Dementia", "Other")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
-
-by_race_impairment_cols <- 
-  expand_grid(c("mean", "LCI", "UCI"),
-              c("Unimpaired", "MCI", "Dementia", "Other"),
-              c("white", "black", "hispanic")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
-
-dem_prev_cols <- 
-  expand_grid(c("mean"), "dem_prev", c("white", "black", "hispanic")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
-
-PR_cols <- 
-  expand_grid(c("mean"), "log_PR", c("black", "hispanic")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
-
-impairment_SE_cols <- 
-  expand_grid(c("SE"),
-              c("Unimpaired", "MCI", "Dementia", "Other")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
-
-impairment_SE_by_race_cols <- 
-  expand_grid(c("SE"),
-              c("Unimpaired", "MCI", "Dementia", "Other"),
-              c("white", "black", "hispanic")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
-
-dem_prev_SE_cols <- 
-  expand_grid(c("SE"), c("dem_prev"),
-              c("white", "black", "hispanic")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
-
-PR_SE_cols <- 
-  expand_grid(c("SE"), c("log_PR"),
-              c("black", "hispanic")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
-
-pt_est_cols_cores <- c(overall_impairment_cols, by_race_impairment_cols, 
-                       dem_prev_cols, PR_cols)
-SE_cols_cores <- c(impairment_SE_cols, impairment_SE_by_race_cols, 
-                   dem_prev_SE_cols, PR_SE_cols)
-
-for(prior_group in unique(results$prior_sample)[-which(
-  unique(results$prior_sample) == "ADAMS")]){
-  for(HRS_n in unique(results$HRS_sample_size)){
-    for(sample_prop in unique(results$HCAP_prop)){
-      rows <-
-        which(results$prior_sample == prior_group &
-                results$HRS_sample_size == HRS_n &
-                results$HCAP_prop == sample_prop)
-      
-      results[rows, c(paste0("ADAMS_", all_of(pt_est_cols_cores)), 
-                      paste0("ADAMS_", all_of(SE_cols_cores)))] <- 
-        results %>% filter(prior_sample == "ADAMS" & HRS_sample_size == HRS_n & 
-                             HCAP_prop == sample_prop) %>%
-        slice_head(n = length(rows)) %>% ungroup() %>%
-        dplyr::select(c(all_of(pt_est_cols_cores), 
-                        all_of(SE_cols_cores)))
-    }
-  }
-}
-
-#---- **combined estimates ----
-combined_results <- results %>% filter(!prior_sample == "ADAMS")
-
-#---- ****impairment classes ----
-for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
-  for(race in c("overall", "white", "black", "hispanic")){
-    if(race == "overall"){
-      #---- ******mean estimates ----
-      combined_results %<>%
-        mutate(!!sym(paste0("combined_mean_", class)) :=
-                 rowMeans(cbind(!!sym(paste0("mean_", class)),
-                                !!sym(paste0("ADAMS_mean_", class)))))
-      
-      #---- ******within variance ----
-      combined_results %<>%
-        mutate(!!sym(paste0("within_var_", class)) :=
-                 rowMeans(cbind(!!sym(paste0("SE_", class)),
-                                !!sym(paste0("ADAMS_SE_", class)))))
-      
-      #---- ******between variance ----
-      combined_results %<>%
-        mutate(!!sym(paste0("between_var_", class)) :=
-                 apply(cbind(!!sym(paste0("mean_", class)),
-                             !!sym(paste0("ADAMS_mean_", class))),
-                       1, var))
-      
-      #---- ******LCIs ----
-      combined_results %<>%
-        mutate(!!sym(paste0("combined_LCI_", class)) :=
-                 !!sym(paste0("combined_mean_", class)) -
-                 1.96*sqrt(!!sym(paste0("within_var_", class)) +
-                             !!sym(paste0("between_var_", class)) +
-                             !!sym(paste0("between_var_", class))/2))
-      
-      #---- ******UCIs ----
-      combined_results %<>%
-        mutate(!!sym(paste0("combined_UCI_", class)) :=
-                 !!sym(paste0("combined_mean_", class)) +
-                 1.96*sqrt(!!sym(paste0("within_var_", class)) +
-                             !!sym(paste0("between_var_", class)) +
-                             !!sym(paste0("between_var_", class))/2))
-      
-      #---- ******coverage ----
-      combined_results %<>%
-        mutate(!!sym(paste0("combined_", class, "_coverage")) :=
-                 (!!sym(paste0("true_", class)) >=
-                    !!sym(paste0("combined_LCI_", class)))*
-                 (!!sym(paste0("true_", class)) <=
-                    !!sym(paste0("combined_UCI_", class))))
-    } else{
-      #---- ******mean estimates ----
-      combined_results %<>%
-        mutate(!!sym(paste0("combined_mean_", class, "_", race)) :=
-                 rowMeans(cbind(
-                   !!sym(paste0("mean_", class, "_", race)),
-                   !!sym(paste0("ADAMS_mean_", class, "_", race)))))
-      
-      #---- ******within variance ----
-      combined_results %<>%
-        mutate(!!sym(paste0("within_var_", class, "_", race)) :=
-                 rowMeans(cbind(!!sym(paste0("SE_", class, "_", race)),
-                                !!sym(paste0("ADAMS_SE_", class, "_", race)))))
-      
-      #---- ******between variance ----
-      combined_results %<>%
-        mutate(!!sym(paste0("between_var_", class, "_", race)) :=
-                 apply(cbind(!!sym(paste0("mean_", class, "_", race)),
-                             !!sym(paste0("ADAMS_mean_", class, "_", race))), 1,
-                       var))
-      
-      #---- ******LCIs ----
-      combined_results %<>%
-        mutate(!!sym(paste0("combined_LCI_", class, "_", race)) :=
-                 !!sym(paste0("combined_mean_", class, "_", race)) -
-                 1.96*sqrt(!!sym(paste0("within_var_", class, "_", race)) +
-                             !!sym(paste0("between_var_", class, "_", race)) +
-                             !!sym(paste0("between_var_", class, "_", race))/2))
-      
-      #---- ******UCIs ----
-      combined_results %<>%
-        mutate(!!sym(paste0("combined_UCI_", class, "_", race)) :=
-                 !!sym(paste0("combined_mean_", class, "_", race)) +
-                 1.96*sqrt(!!sym(paste0("within_var_", class, "_", race)) +
-                             !!sym(paste0("between_var_", class, "_", race)) +
-                             !!sym(paste0("between_var_", class, "_", race))/2))
-      
-      #---- ******coverage ----
-      combined_results %<>%
-        mutate(!!sym(paste0("combined_", class, "_coverage", "_", race)) :=
-                 (!!sym(paste0("true_", class, "_", race)) >=
-                    !!sym(paste0("combined_LCI_", class, "_", race)))*
-                 (!!sym(paste0("true_", class, "_", race)) <=
-                    !!sym(paste0("combined_UCI_", class, "_", race))))
-    }
-  }
-}
-
-#---- ****dementia prevalence + PR ----
-for(measure in c("dem_prev", "log_PR")){
-  for(race in c("white", "black", "hispanic")){
-    if(measure == "log_PR" & race == "white"){next}
-    
-    #---- ******mean estimates ----
-    combined_results %<>%
-      mutate(!!sym(paste0("combined_mean_", measure, "_", race)) :=
-               rowMeans(cbind(
-                 !!sym(paste0("mean_", measure, "_", race)),
-                 !!sym(paste0("ADAMS_mean_", measure, "_", race)))))
-    
-    #---- ******within variance ----
-    combined_results %<>%
-      mutate(!!sym(paste0("within_var_", measure, "_", race)) :=
-               rowMeans(cbind(!!sym(paste0("SE_", measure, "_", race)),
-                              !!sym(paste0("ADAMS_SE_", measure, "_", race)))))
-    
-    #---- ******between variance ----
-    combined_results %<>%
-      mutate(!!sym(paste0("between_var_", measure, "_", race)) :=
-               apply(cbind(!!sym(paste0("mean_", measure, "_", race)),
-                           !!sym(paste0("ADAMS_mean_", measure, "_", race))), 1,
-                     var))
-    
-    #---- ******LCIs ----
-    combined_results %<>%
-      mutate(!!sym(paste0("combined_LCI_", measure, "_", race)) :=
-               !!sym(paste0("combined_mean_", measure, "_", race)) -
-               1.96*sqrt(!!sym(paste0("within_var_", measure, "_", race)) +
-                           !!sym(paste0("between_var_", measure, "_", race)) +
-                           !!sym(paste0("between_var_", measure, "_", race))/2))
-    
-    #---- ******UCIs ----
-    combined_results %<>%
-      mutate(!!sym(paste0("combined_UCI_", measure, "_", race)) :=
-               !!sym(paste0("combined_mean_", measure, "_", race)) +
-               1.96*sqrt(!!sym(paste0("within_var_", measure, "_", race)) +
-                           !!sym(paste0("between_var_", measure, "_", race)) +
-                           !!sym(paste0("between_var_", measure, "_", race))/2))
-  }
-}
-
-#---- ******convert back to PR ----
-cols_to_convert <- 
-  expand_grid(c("combined"), c("mean", "LCI", "UCI"), c("log_PR"),
-              c("black", "hispanic")) %>%
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
-
-combined_results %<>% 
-  cbind(., combined_results %>% ungroup() %>% 
-          dplyr::select(all_of(cols_to_convert)) %>% mutate_all(.funs = exp) %>% 
-          set_colnames(str_replace(cols_to_convert, "_log_PR_", "_PR_")))
-
-#---- ******coverage ----
-for(measure in c("dem_prev", "PR")){
-  for(race in c("white", "black", "hispanic")){
-    if(measure == "PR" & race == "white"){next}
-    combined_results %<>%
-      mutate(!!sym(paste0("combined_", measure, "_coverage", "_", race)) :=
-               (!!sym(paste0("true_", measure, "_", race)) >=
-                  !!sym(paste0("combined_LCI_", measure, "_", race)))*
-               (!!sym(paste0("true_", measure, "_", race)) <=
-                  !!sym(paste0("combined_UCI_", measure, "_", race))))
-  }
-}
-
-#----- ****bind results ----
-combined_results %<>% 
-  mutate("prior_sample" = paste0(prior_sample, " + ADAMS")) %>% 
-  dplyr::select(contains("combined"), contains("true"), "prior_sample", 
-                "dataset_name", "HCAP_prop", "HRS_sample_size", 
-                "HCAP_sample_size") 
-
-combined_results %<>% 
-  set_colnames(str_remove(colnames(combined_results), "combined_"))
-
-results %<>% plyr::rbind.fill(., combined_results)
+# #---- extra calcs ----
+# #---- **log PR measures ----
+# PR_cols <- 
+#   expand_grid(c("mean", "LCI", "UCI"), "PR",
+#               c("black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+# 
+# results %<>% 
+#   cbind(., results %>% ungroup() %>% dplyr::select(all_of(PR_cols)) %>% 
+#           mutate_all(.funs = log) %>% 
+#           set_colnames(str_replace(PR_cols, "_PR_", "_log_PR_")))
+# 
+# #---- **squared SEs ----
+# #on the count scale
+# for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+#   for(race in c("overall", "white", "black", "hispanic"))
+#     if(race == "overall"){
+#       results %<>%
+#         mutate(!!sym(paste0("SE_", class)) :=
+#                  (rowMeans(cbind(
+#                    abs(!!sym(paste0("mean_", class)) -
+#                          !!sym(paste0("LCI_", class))),
+#                    abs(!!sym(paste0("mean_", class)) -
+#                          !!sym(paste0("UCI_", class)))))/1.96)^2)
+#     } else{
+#       results %<>%
+#         mutate(!!sym(paste0("SE_", class, "_", race)) :=
+#                  (rowMeans(cbind(
+#                    abs(!!sym(paste0("mean_", class, "_", race)) -
+#                          !!sym(paste0("LCI_", class, "_", race))),
+#                    abs(!!sym(paste0("mean_", class, "_", race)) -
+#                          !!sym(paste0("UCI_", class, "_", race)))))/1.96)^2)
+#     }
+# }
+# 
+# for(measure in c("dem_prev", "log_PR")){
+#   for(race in c("white", "black", "hispanic")){
+#     if(measure == "log_PR" & race == "white"){next}
+#     
+#     results %<>%
+#       mutate(!!sym(paste0("SE_", measure, "_", race)) :=
+#                (rowMeans(cbind(
+#                  abs(!!sym(paste0("mean_", measure, "_", race)) -
+#                        !!sym(paste0("LCI_", measure, "_", race))),
+#                  abs(!!sym(paste0("mean_", measure, "_", race)) -
+#                        !!sym(paste0("UCI_", measure, "_", race)))))/1.96)^2)
+#   }
+# }
+# 
+# #---- format data ----
+# results %<>% 
+#   mutate("prior_sample" = 
+#            case_when(calibration_sampling == "NA" ~ "ADAMS", 
+#                      calibration_sampling == "SRS" & 
+#                        calibration == "calibration_50" & 
+#                        sampling_strata == "NA" ~ 
+#                        "HCAP 50% SRS Adjudication",
+#                      calibration_sampling == "SRS" & 
+#                        calibration == "calibration_50" & 
+#                        sampling_strata == "race" ~ 
+#                        "HCAP 50% Race-stratified SRS Adjudication",
+#                      calibration_sampling == "SRS" & 
+#                        calibration == "calibration_35" & 
+#                        sampling_strata == "NA" ~ 
+#                        "HCAP 35% SRS Adjudication", 
+#                      calibration_sampling == "SRS" & 
+#                        calibration == "calibration_35" & 
+#                        sampling_strata == "race" ~ 
+#                        "HCAP 35% Race-stratified SRS Adjudication", 
+#                      calibration_sampling == "SRS" & 
+#                        calibration == "calibration_20" & 
+#                        sampling_strata == "NA" ~ 
+#                        "HCAP 20% SRS Adjudication", 
+#                      calibration_sampling == "SRS" & 
+#                        calibration == "calibration_20" & 
+#                        sampling_strata == "race" ~ 
+#                        "HCAP 20% Race-stratified SRS Adjudication"))
+# 
+# #---- match ADAMS data ----
+# # like a cbind but making sure correct rows are matched
+# #create place-holder columns
+# overall_impairment_cols <- 
+#   expand_grid(c("mean", "LCI", "UCI"),
+#               c("Unimpaired", "MCI", "Dementia", "Other")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+# 
+# by_race_impairment_cols <- 
+#   expand_grid(c("mean", "LCI", "UCI"),
+#               c("Unimpaired", "MCI", "Dementia", "Other"),
+#               c("white", "black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+# 
+# dem_prev_cols <- 
+#   expand_grid(c("mean"), "dem_prev", c("white", "black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+# 
+# PR_cols <- 
+#   expand_grid(c("mean"), "log_PR", c("black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+# 
+# impairment_SE_cols <- 
+#   expand_grid(c("SE"),
+#               c("Unimpaired", "MCI", "Dementia", "Other")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+# 
+# impairment_SE_by_race_cols <- 
+#   expand_grid(c("SE"),
+#               c("Unimpaired", "MCI", "Dementia", "Other"),
+#               c("white", "black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
+# 
+# dem_prev_SE_cols <- 
+#   expand_grid(c("SE"), c("dem_prev"),
+#               c("white", "black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
+# 
+# PR_SE_cols <- 
+#   expand_grid(c("SE"), c("log_PR"),
+#               c("black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
+# 
+# pt_est_cols_cores <- c(overall_impairment_cols, by_race_impairment_cols, 
+#                        dem_prev_cols, PR_cols)
+# SE_cols_cores <- c(impairment_SE_cols, impairment_SE_by_race_cols, 
+#                    dem_prev_SE_cols, PR_SE_cols)
+# 
+# for(prior_group in unique(results$prior_sample)[-which(
+#   unique(results$prior_sample) == "ADAMS")]){
+#   for(HRS_n in unique(results$HRS_sample_size)){
+#     for(sample_prop in unique(results$HCAP_prop)){
+#       rows <-
+#         which(results$prior_sample == prior_group &
+#                 results$HRS_sample_size == HRS_n &
+#                 results$HCAP_prop == sample_prop)
+#       
+#       results[rows, c(paste0("ADAMS_", all_of(pt_est_cols_cores)), 
+#                       paste0("ADAMS_", all_of(SE_cols_cores)))] <- 
+#         results %>% filter(prior_sample == "ADAMS" & HRS_sample_size == HRS_n & 
+#                              HCAP_prop == sample_prop) %>%
+#         slice_head(n = length(rows)) %>% ungroup() %>%
+#         dplyr::select(c(all_of(pt_est_cols_cores), 
+#                         all_of(SE_cols_cores)))
+#     }
+#   }
+# }
+# 
+# #---- **combined estimates ----
+# combined_results <- results %>% filter(!prior_sample == "ADAMS")
+# 
+# #---- ****impairment classes ----
+# for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+#   for(race in c("overall", "white", "black", "hispanic")){
+#     if(race == "overall"){
+#       #---- ******mean estimates ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_mean_", class)) :=
+#                  rowMeans(cbind(!!sym(paste0("mean_", class)),
+#                                 !!sym(paste0("ADAMS_mean_", class)))))
+#       
+#       #---- ******within variance ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("within_var_", class)) :=
+#                  rowMeans(cbind(!!sym(paste0("SE_", class)),
+#                                 !!sym(paste0("ADAMS_SE_", class)))))
+#       
+#       #---- ******between variance ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("between_var_", class)) :=
+#                  apply(cbind(!!sym(paste0("mean_", class)),
+#                              !!sym(paste0("ADAMS_mean_", class))),
+#                        1, var))
+#       
+#       #---- ******LCIs ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_LCI_", class)) :=
+#                  !!sym(paste0("combined_mean_", class)) -
+#                  1.96*sqrt(!!sym(paste0("within_var_", class)) +
+#                              !!sym(paste0("between_var_", class)) +
+#                              !!sym(paste0("between_var_", class))/2))
+#       
+#       #---- ******UCIs ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_UCI_", class)) :=
+#                  !!sym(paste0("combined_mean_", class)) +
+#                  1.96*sqrt(!!sym(paste0("within_var_", class)) +
+#                              !!sym(paste0("between_var_", class)) +
+#                              !!sym(paste0("between_var_", class))/2))
+#       
+#       #---- ******coverage ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_", class, "_coverage")) :=
+#                  (!!sym(paste0("true_", class)) >=
+#                     !!sym(paste0("combined_LCI_", class)))*
+#                  (!!sym(paste0("true_", class)) <=
+#                     !!sym(paste0("combined_UCI_", class))))
+#     } else{
+#       #---- ******mean estimates ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_mean_", class, "_", race)) :=
+#                  rowMeans(cbind(
+#                    !!sym(paste0("mean_", class, "_", race)),
+#                    !!sym(paste0("ADAMS_mean_", class, "_", race)))))
+#       
+#       #---- ******within variance ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("within_var_", class, "_", race)) :=
+#                  rowMeans(cbind(!!sym(paste0("SE_", class, "_", race)),
+#                                 !!sym(paste0("ADAMS_SE_", class, "_", race)))))
+#       
+#       #---- ******between variance ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("between_var_", class, "_", race)) :=
+#                  apply(cbind(!!sym(paste0("mean_", class, "_", race)),
+#                              !!sym(paste0("ADAMS_mean_", class, "_", race))), 1,
+#                        var))
+#       
+#       #---- ******LCIs ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_LCI_", class, "_", race)) :=
+#                  !!sym(paste0("combined_mean_", class, "_", race)) -
+#                  1.96*sqrt(!!sym(paste0("within_var_", class, "_", race)) +
+#                              !!sym(paste0("between_var_", class, "_", race)) +
+#                              !!sym(paste0("between_var_", class, "_", race))/2))
+#       
+#       #---- ******UCIs ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_UCI_", class, "_", race)) :=
+#                  !!sym(paste0("combined_mean_", class, "_", race)) +
+#                  1.96*sqrt(!!sym(paste0("within_var_", class, "_", race)) +
+#                              !!sym(paste0("between_var_", class, "_", race)) +
+#                              !!sym(paste0("between_var_", class, "_", race))/2))
+#       
+#       #---- ******coverage ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_", class, "_coverage", "_", race)) :=
+#                  (!!sym(paste0("true_", class, "_", race)) >=
+#                     !!sym(paste0("combined_LCI_", class, "_", race)))*
+#                  (!!sym(paste0("true_", class, "_", race)) <=
+#                     !!sym(paste0("combined_UCI_", class, "_", race))))
+#     }
+#   }
+# }
+# 
+# #---- ****dementia prevalence + PR ----
+# for(measure in c("dem_prev", "log_PR")){
+#   for(race in c("white", "black", "hispanic")){
+#     if(measure == "log_PR" & race == "white"){next}
+#     
+#     #---- ******mean estimates ----
+#     combined_results %<>%
+#       mutate(!!sym(paste0("combined_mean_", measure, "_", race)) :=
+#                rowMeans(cbind(
+#                  !!sym(paste0("mean_", measure, "_", race)),
+#                  !!sym(paste0("ADAMS_mean_", measure, "_", race)))))
+#     
+#     #---- ******within variance ----
+#     combined_results %<>%
+#       mutate(!!sym(paste0("within_var_", measure, "_", race)) :=
+#                rowMeans(cbind(!!sym(paste0("SE_", measure, "_", race)),
+#                               !!sym(paste0("ADAMS_SE_", measure, "_", race)))))
+#     
+#     #---- ******between variance ----
+#     combined_results %<>%
+#       mutate(!!sym(paste0("between_var_", measure, "_", race)) :=
+#                apply(cbind(!!sym(paste0("mean_", measure, "_", race)),
+#                            !!sym(paste0("ADAMS_mean_", measure, "_", race))), 1,
+#                      var))
+#     
+#     #---- ******LCIs ----
+#     combined_results %<>%
+#       mutate(!!sym(paste0("combined_LCI_", measure, "_", race)) :=
+#                !!sym(paste0("combined_mean_", measure, "_", race)) -
+#                1.96*sqrt(!!sym(paste0("within_var_", measure, "_", race)) +
+#                            !!sym(paste0("between_var_", measure, "_", race)) +
+#                            !!sym(paste0("between_var_", measure, "_", race))/2))
+#     
+#     #---- ******UCIs ----
+#     combined_results %<>%
+#       mutate(!!sym(paste0("combined_UCI_", measure, "_", race)) :=
+#                !!sym(paste0("combined_mean_", measure, "_", race)) +
+#                1.96*sqrt(!!sym(paste0("within_var_", measure, "_", race)) +
+#                            !!sym(paste0("between_var_", measure, "_", race)) +
+#                            !!sym(paste0("between_var_", measure, "_", race))/2))
+#   }
+# }
+# 
+# #---- ******convert back to PR ----
+# cols_to_convert <- 
+#   expand_grid(c("combined"), c("mean", "LCI", "UCI"), c("log_PR"),
+#               c("black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
+# 
+# combined_results %<>% 
+#   cbind(., combined_results %>% ungroup() %>% 
+#           dplyr::select(all_of(cols_to_convert)) %>% mutate_all(.funs = exp) %>% 
+#           set_colnames(str_replace(cols_to_convert, "_log_PR_", "_PR_")))
+# 
+# #---- ******coverage ----
+# for(measure in c("dem_prev", "PR")){
+#   for(race in c("white", "black", "hispanic")){
+#     if(measure == "PR" & race == "white"){next}
+#     combined_results %<>%
+#       mutate(!!sym(paste0("combined_", measure, "_coverage", "_", race)) :=
+#                (!!sym(paste0("true_", measure, "_", race)) >=
+#                   !!sym(paste0("combined_LCI_", measure, "_", race)))*
+#                (!!sym(paste0("true_", measure, "_", race)) <=
+#                   !!sym(paste0("combined_UCI_", measure, "_", race))))
+#   }
+# }
+# 
+# #----- ****bind results ----
+# combined_results %<>% 
+#   mutate("prior_sample" = paste0(prior_sample, " + ADAMS")) %>% 
+#   dplyr::select(contains("combined"), contains("true"), "prior_sample", 
+#                 "dataset_name", "HCAP_prop", "HRS_sample_size", 
+#                 "HCAP_sample_size") 
+# 
+# combined_results %<>% 
+#   set_colnames(str_remove(colnames(combined_results), "combined_"))
+# 
+# results %<>% plyr::rbind.fill(., combined_results)
 
 #---- **proportions ----
 results %<>% 
