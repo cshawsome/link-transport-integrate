@@ -3,8 +3,11 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "wesanderson", "devtools", "here", "meta")
-install_github("thomasp85/patchwork")
+p_load("tidyverse", "magrittr", "wesanderson", "here")
+#see if I actually need these
+  #devtools
+  #meta
+  #install_github("thomasp85/patchwork")
 
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
