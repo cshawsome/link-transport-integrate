@@ -469,68 +469,6 @@ ggsave(filename =
                 "figureXX_impairment_class_coverage.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#---- **plot 5.10: HCAP calibration ----
-ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
-       aes(x = HRS_sample_size, y = value, group = prior_sample, 
-           color = prior_sample, shape = prior_sample)) + 
-  geom_line(size = 1.5) + geom_point(size = 3) + 
-  scale_shape_manual(values = c(1, rep(19, 6))) +
-  scale_color_manual(values = c("black",
-                                #green, pink, blue
-                                "#61bbb6", "#f35f5f","#288fb4",   
-                                "#449187", "#cc435f", "#1d556f")) + 
-  geom_hline(yintercept = 0.95, lty = "dashed") +
-  theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop), cols = vars(class)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Prior", 
-                              nrow = 3, byrow = TRUE), 
-         color = guide_legend(title = "Prior"), 
-         nrow = 3, byrow = TRUE)
-
-ggsave(filename = 
-         paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                "figure5.10_impairment_class_coverage_HCAP_adjudication.jpeg"), 
-       dpi = 300, height = 7.5, width = 20, units = "in")
-
-#---- **plot 5.24: HCAP calibration + ADAMS ----
-ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")), 
-       aes(x = HRS_sample_size, y = value, group = prior_sample, 
-           color = prior_sample, shape = prior_sample)) + 
-  geom_line(size = 1.5) + geom_point(size = 3) + 
-  scale_shape_manual(values = c(rep(1, 6))) +
-  scale_color_manual(values = c(#green, pink, blue
-    "#61bbb6", "#f35f5f","#288fb4",   
-    "#449187", "#cc435f", "#1d556f")) + 
-  geom_hline(yintercept = 0.95, lty = "dashed") +
-  theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop), cols = vars(class)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Prior", 
-                              nrow = 2, byrow = TRUE), 
-         color = guide_legend(title = "Prior"), 
-         nrow = 2, byrow = TRUE)
-
-ggsave(filename = 
-         paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                "figure5.24_impairment_class_coverage_HCAP_adjudication_plus_ADAMS.jpeg"), 
-       dpi = 300, height = 7.5, width = 23, units = "in")
-
-#---- **defense plot 5.10 v1 ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
-       aes(x = HRS_sample_size, y = value, group = prior_sample, 
-           color = prior_sample, shape = prior_sample)) + 
-  geom_line(size = 1.5) + geom_point(size = 3) + 
-  scale_shape_manual(values = c(1)) + scale_color_manual(values = c("black")) + 
-  geom_hline(yintercept = 0.95, lty = "dashed") +
-  theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop), cols = vars(class)) + 
-  theme(text = element_text(size = 32), legend.position = "none") 
-
-ggsave(filename = 
-         paste0(path_to_box, "presentations/Defense/figures/figure5.10_v1.jpeg"), 
-       dpi = 300, height = 7.5, width = 20, units = "in")
-
 #----- Figure 4.14a-b + 5.11a-b + 5.25a-b: bias, percent bias ----
 #---- **read in data ----
 #---- ****color palette ----
