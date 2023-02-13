@@ -471,6 +471,14 @@ ggsave(filename =
 
 #----- Figure XX: percent bias ----
 #---- **plot data ----
+cols_by_race <- 
+  c(paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other")), 
+    paste0("true_", c("Unimpaired", "MCI", "Dementia", "Other")), 
+    expand_grid(c("mean", "true"), 
+              c("Unimpaired", "MCI", "Dementia", "Other"), 
+              c("white", "black", "hispanic")) %>% 
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname())
+
 plot_data <- results %>% ungroup() %>%
   dplyr::select("HCAP_sample_size", "HRS_sample_size", 
                 paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other")), 
@@ -530,12 +538,6 @@ ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/",
 
 #---- Figure 4.16a-b + 5.13a-b + 5.27a-b: race-stratified bias, percent bias----
 #---- **read in data ----
-#---- ****color palette ----
-color_palette <- read_csv(here::here("color_palette.csv"))
-
-group_colors <- color_palette$Color
-names(group_colors) <- color_palette$Group
-
 #---- **plot data ----
 cols_by_race <- 
   expand_grid(c("mean", "true"), 
