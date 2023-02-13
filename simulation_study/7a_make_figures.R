@@ -469,18 +469,10 @@ ggsave(filename =
                 "figureXX_impairment_class_coverage.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#----- Figure 4.14a-b + 5.11a-b + 5.25a-b: bias, percent bias ----
-#---- **read in data ----
-#---- ****color palette ----
-color_palette <- read_csv(here::here("color_palette.csv"))
-
-group_colors <- color_palette$Color
-names(group_colors) <- color_palette$Group
-
+#----- Figure XX: percent bias ----
 #---- **plot data ----
 plot_data <- results %>% ungroup() %>%
-  dplyr::select("prior_sample", "HCAP_prop", "HCAP_sample_size", 
-                "HRS_sample_size", 
+  dplyr::select("HCAP_sample_size", "HRS_sample_size", 
                 paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other")), 
                 paste0("true_", c("Unimpaired", "MCI", "Dementia", "Other"))) %>%
   pivot_longer(c(paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other")), 
@@ -494,117 +486,24 @@ plot_data <- results %>% ungroup() %>%
   mutate_at("class", function(x) 
     factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
   mutate_at("HRS_sample_size", as.factor) %>% 
-  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ 
-                                   "HCAP Proportion\n25% of HRS", 
-                                 HCAP_prop == 50 ~ 
-                                   "HCAP Proportion\n50% of HRS")) %>% 
-  mutate_at("HCAP_prop", function(x) 
-    factor(x, levels = c("HCAP Proportion\n50% of HRS", 
-                         "HCAP Proportion\n25% of HRS"))) %>%
-  group_by(prior_sample, HRS_sample_size, HCAP_prop, class) %>% 
+  group_by(HRS_sample_size, class) %>% 
   summarize_at(c("error", "percent_error", "squared_error"), mean) %>% 
   rename(c("bias" = "error", "percent_bias" = "percent_error")) %>% 
   mutate("RMSE" = sqrt(squared_error))
 
-plot_data$prior_sample <- 
-  factor(plot_data$prior_sample, 
-         levels = c("HCAP 100% Adjudication", "ADAMS", 
-                    "HCAP 50% SRS Adjudication", "HCAP 35% SRS Adjudication", 
-                    "HCAP 20% SRS Adjudication",
-                    "HCAP 50% Race-stratified SRS Adjudication", 
-                    "HCAP 35% Race-stratified SRS Adjudication", 
-                    "HCAP 20% Race-stratified SRS Adjudication", 
-                    "HCAP 50% SRS Adjudication + ADAMS",
-                    "HCAP 35% SRS Adjudication + ADAMS",
-                    "HCAP 20% SRS Adjudication + ADAMS",
-                    "HCAP 50% Race-stratified SRS Adjudication + ADAMS",
-                    "HCAP 35% Race-stratified SRS Adjudication + ADAMS",
-                    "HCAP 20% Race-stratified SRS Adjudication + ADAMS"))
-
-#---- **plot 4.14a: bias + no HCAP calibration ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
-       aes(x = HRS_sample_size, y = bias, group = class, color = class)) + 
-  geom_line(size = 1.5) + 
-  geom_point(size = 3, shape = 1) + 
-  scale_color_manual(values = group_colors) +
-  geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + ylab("Bias") + 
-  facet_grid(rows = vars(HCAP_prop), scales = "free_x") + 
-  scale_x_discrete(name = "HRS Sample Size", 
-                   breaks = unique(plot_data$HRS_sample_size)) + 
-  theme(text = element_text(size = 24)) + 
-  guides(color = guide_legend(title = "Group")) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")     
-
-ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "figure4.14a_impairment_class_bias_prop_no_HCAP_", 
-                         "adjudication.jpeg"), 
-       dpi = 300, width = 13.5, height = 6.25, units = "in")
-
-#---- **plot 5.11a: bias + HCAP calibration ----
-ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
-       aes(x = HRS_sample_size, y = bias, color = prior_sample, 
-           group = prior_sample, shape = prior_sample)) + 
-  geom_line(size = 1.5) + 
-  geom_point(size = 3) + 
-  scale_shape_manual(values = c(1, rep(19, 6))) +
-  scale_color_manual(values = c("black",
-                                #green, pink, blue
-                                "#61bbb6", "#f35f5f","#288fb4",   
-                                "#449187", "#cc435f", "#1d556f")) +
-  geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
-  ylab("Bias") + 
-  facet_grid(rows = vars(HCAP_prop), cols = vars(class), scales = "free_x") + 
-  scale_x_discrete(name = "HRS Sample Size", 
-                   breaks = unique(plot_data$HRS_sample_size)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")  + 
-  guides(shape = guide_legend(title = "Prior", 
-                              nrow = 3, byrow = TRUE), 
-         color = guide_legend(title = "Prior"), 
-         nrow = 3, byrow = TRUE)
-
-ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.11a_impairment_class_bias_prop_HCAP_", 
-                         "adjudication.jpeg"), 
-       dpi = 300, width = 20, height = 7.50, units = "in")
-
-#---- **plot 5.25a: bias + HCAP calibration + ADAMS ----
-ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")), 
-       aes(x = HRS_sample_size, y = bias, color = prior_sample, 
-           group = prior_sample, shape = prior_sample)) + 
-  geom_line(size = 1.5) + 
-  geom_point(size = 3) + 
-  scale_shape_manual(values = c(rep(1, 6))) +
-  scale_color_manual(values = c(#green, pink, blue
-    "#61bbb6", "#f35f5f","#288fb4",   
-    "#449187", "#cc435f", "#1d556f")) +
-  geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
-  ylab("Bias") + 
-  facet_grid(rows = vars(HCAP_prop), cols = vars(class), scales = "free_x") + 
-  scale_x_discrete(name = "HRS Sample Size", 
-                   breaks = unique(plot_data$HRS_sample_size)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")  + 
-  guides(shape = guide_legend(title = "Prior", nrow = 2, byrow = TRUE), 
-         color = guide_legend(title = "Prior", nrow = 2, byrow = TRUE))
-
-ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.25a_impairment_class_bias_prop_HCAP_", 
-                         "adjudication_plus_ADAMS.jpeg"), 
-       dpi = 300, width = 25, height = 7.50, units = "in")
-
-#---- **plot 4.14b: percent bias + no HCAP calibration ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
+#---- **plot: percent bias ----
+ggplot(data = plot_data, 
        aes(x = HRS_sample_size, y = percent_bias, group = class, 
-           color = class)) + 
-  geom_line(size = 1.5) + 
-  geom_point(size = 3, shape = 1) + 
-  scale_color_manual(values = group_colors) +
+           shape = class)) + 
+  geom_line(size = 1, aes(linetype = class)) + geom_point(size = 3) + 
   geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
   ylab("Percent bias") + 
-  facet_grid(rows = vars(HCAP_prop), scales = "free_x") + 
   scale_x_discrete(name = "HRS Sample Size", 
                    breaks = unique(plot_data$HRS_sample_size)) + 
+  scale_linetype_manual(values = c(1, 2, 3, 4)) +
+  scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
   theme(text = element_text(size = 24)) + 
-  guides(color = guide_legend(title = "Group")) + 
+  labs(linetype = "Impairment Class", shape = "Impairment Class") +
   theme(text = element_text(size = 24), legend.position = "bottom")  
 
 ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
