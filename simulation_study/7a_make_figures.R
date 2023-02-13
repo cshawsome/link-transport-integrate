@@ -5,9 +5,9 @@ if (!require("pacman")){
 
 p_load("tidyverse", "magrittr", "wesanderson", "here")
 #see if I actually need these
-  #devtools
-  #meta
-  #install_github("thomasp85/patchwork")
+#devtools
+#meta
+#install_github("thomasp85/patchwork")
 
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
@@ -40,7 +40,7 @@ superpop_impairment_props$Group <-
   factor(superpop_impairment_props$Group, 
          levels = c("Unimpaired", "MCI", "Dementia", "Other"))
 
-# #---- extra calcs ----
+#---- extra calcs ----
 # #---- **log PR measures ----
 # PR_cols <- 
 #   expand_grid(c("mean", "LCI", "UCI"), "PR",
@@ -377,6 +377,30 @@ results %<>%
            as.numeric(superpop_impairment_props[
              superpop_impairment_props$Group == "Other", "prop"]))
 
+#defining column names
+overall_impairment_cols <-
+  expand_grid(c("mean", "LCI", "UCI"),
+              c("Unimpaired", "MCI", "Dementia", "Other")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+by_race_impairment_cols <-
+  expand_grid(c("mean", "LCI", "UCI"),
+              c("Unimpaired", "MCI", "Dementia", "Other"),
+              c("white", "black", "hispanic")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+dem_prev_cols <-
+  expand_grid(c("mean"), "dem_prev", c("white", "black", "hispanic")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+PR_cols <-
+  expand_grid(c("mean"), "log_PR", c("black", "hispanic")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+pt_est_cols_cores <- c(overall_impairment_cols, by_race_impairment_cols, 
+                       dem_prev_cols, PR_cols)
+
+#selecting correct columns
 calc_props <- 
   pt_est_cols_cores[-c(which(str_detect(pt_est_cols_cores, "dem_prev")), 
                        which(str_detect(pt_est_cols_cores, "log_PR")))]
@@ -385,13 +409,6 @@ results[, paste0(calc_props, "_prop")] <-
   results[, calc_props]/results$HCAP_sample_size
 
 #---- Figure 4.12 + 5.9 + 5.23: mean and 95% CI impairment class proportions ----
-#---- **read in data ----
-#---- ****color palette ----
-color_palette <- read_csv(here::here("color_palette.csv"))
-
-group_colors <- color_palette$Color
-names(group_colors) <- color_palette$Group
-
 #---- **plot data ----
 plot_data <- results %>% 
   group_by(prior_sample, HCAP_prop, HCAP_sample_size, HRS_sample_size) %>% 
