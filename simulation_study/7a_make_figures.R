@@ -510,71 +510,23 @@ ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/",
                 "figureXX_impairment_class_percent_bias.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#---- Figure 4.15: RMSE + no HCAP calibration ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
-       aes(x = HRS_sample_size, y = RMSE, group = class, color = class)) + 
-  geom_line(size = 1.5) + 
-  geom_point(size = 3, shape = 1) + theme_bw() + 
-  scale_color_manual(values = group_colors) +
+#---- Figure XX: RMSE ----
+ggplot(data = plot_data, 
+       aes(x = HRS_sample_size, y = RMSE, group = class, shape = class)) + 
+  geom_line(size = 1, aes(linetype = class)) + geom_point(size = 3) + 
+  theme_bw() + 
   ylab("RMSE") + 
-  facet_grid(rows = vars(HCAP_prop), scales = "free_x") + 
   scale_x_discrete(name = "HRS Sample Size", 
-                   breaks = unique(plot_data$HRS_sample_size)) + 
+                   breaks = unique(plot_data$HRS_sample_size)) +
+  scale_linetype_manual(values = c(1, 2, 3, 4)) +
+  scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
   theme(text = element_text(size = 24)) + 
-  guides(color = guide_legend(title = "Group")) + 
+  labs(linetype = "Impairment Class", shape = "Impairment Class") +
   theme(text = element_text(size = 24), legend.position = "bottom")   
 
-ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "figure4.15_impairment_class_RMSE_prop_no_HCAP_", 
-                         "adjudication.jpeg"), 
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXX_impairment_class_RMSE.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
-
-#---- Figure 5.12: RMSE + HCAP calibration ----
-ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
-       aes(x = HRS_sample_size, y = RMSE, color = prior_sample, 
-           group = prior_sample, shape = prior_sample)) + 
-  geom_line(size = 1.5) + geom_point(size = 3) + 
-  scale_shape_manual(values = c(1, rep(19, 6))) +
-  scale_color_manual(values = c("black",
-                                #green, pink, blue
-                                "#61bbb6", "#f35f5f","#288fb4",   
-                                "#449187", "#cc435f", "#1d556f")) + theme_bw() + 
-  ylab("RMSE") + 
-  facet_grid(rows = vars(HCAP_prop), cols = vars(class), scales = "free_x") + 
-  scale_x_discrete(name = "HRS Sample Size", 
-                   breaks = unique(plot_data$HRS_sample_size)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")  + 
-  guides(shape = guide_legend(title = "Prior", 
-                              nrow = 3, byrow = TRUE), 
-         color = guide_legend(title = "Prior"), 
-         nrow = 3, byrow = TRUE)
-
-ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.12_RMSE_bias_prop_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 20, height = 7.50, units = "in")
-
-#---- Figure 5.26: RMSE + HCAP calibration + ADAMS ----
-ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")), 
-       aes(x = HRS_sample_size, y = RMSE, color = prior_sample, 
-           group = prior_sample, shape = prior_sample)) + 
-  geom_line(size = 1.5) + geom_point(size = 3) + 
-  scale_shape_manual(values = c(rep(1, 6))) +
-  scale_color_manual(values = c(#green, pink, blue
-    "#61bbb6", "#f35f5f","#288fb4",   
-    "#449187", "#cc435f", "#1d556f")) + theme_bw() + 
-  ylab("RMSE") + 
-  facet_grid(rows = vars(HCAP_prop), cols = vars(class), scales = "free_x") + 
-  scale_x_discrete(name = "HRS Sample Size", 
-                   breaks = unique(plot_data$HRS_sample_size)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")  + 
-  guides(shape = guide_legend(title = "Prior", 
-                              nrow = 2, byrow = TRUE), 
-         color = guide_legend(title = "Prior"), 
-         nrow = 2, byrow = TRUE)
-
-ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.26_RMSE_bias_prop_HCAP_adjudication_plus_ADAMS.jpeg"), 
-       dpi = 300, width = 23, height = 7.50, units = "in")
 
 #---- Figure 4.16a-b + 5.13a-b + 5.27a-b: race-stratified bias, percent bias----
 #---- **read in data ----
