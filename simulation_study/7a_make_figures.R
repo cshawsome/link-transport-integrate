@@ -20,24 +20,27 @@ results_paths <-
   list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
              full.names = TRUE, pattern = "*.csv")
 
-
 results <- do.call(rbind, lapply(results_paths, read_results)) %>% 
   group_by(dataset_name) %>% slice_head(n = 1000) %>% 
   mutate("HRS_sample_size" = sample_size) %>% 
   mutate("HCAP_sample_size" = HCAP_prop/100*HRS_sample_size) %>% 
-  dplyr::select(-one_of("sample_size"))
+  dplyr::select(-one_of("sample_size")) %>% 
+  filter(calibration == "ADAMS_prior" & HCAP_prop == 50)
+
+#---- ******check number of simulation runs ----
+#there should be 1000 runs of each scenario
+table(results$dataset_name, useNA = "ifany")
 
 #---- ****superpop ----
 superpop_impairment_props <- 
   read_csv(paste0(path_to_box, 
                   "data/superpopulations/impairment_class_props.csv"))
+
 superpop_impairment_props$Group <- 
   factor(superpop_impairment_props$Group, 
          levels = c("Unimpaired", "MCI", "Dementia", "Other"))
 
-#---- check number of simulation runs ----
-#Number of missing runs noted in simulation study log
-table(results$dataset_name, useNA = "ifany")
+
 
 #---- extra calcs ----
 #---- **log PR measures ----
