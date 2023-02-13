@@ -408,10 +408,9 @@ calc_props <-
 results[, paste0(calc_props, "_prop")] <- 
   results[, calc_props]/results$HCAP_sample_size
 
-#---- Figure 4.12 + 5.9 + 5.23: mean and 95% CI impairment class proportions ----
+#---- Figure XX: mean and 95% CI impairment class proportions ----
 #---- **plot data ----
-plot_data <- results %>% 
-  group_by(prior_sample, HCAP_prop, HCAP_sample_size, HRS_sample_size) %>% 
+plot_data <- results %>% group_by(HRS_sample_size) %>% 
   summarise_at(paste0(
     c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other", 
       "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other", 
@@ -425,31 +424,22 @@ plot_data <- results %>%
   mutate_at("Group", function(x) str_remove(x, "_prop")) %>% 
   mutate_at("HRS_sample_size", as.factor) %>% 
   mutate_at("Group", function(x) 
-    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
-  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ 
-                                   "HCAP Proportion\n25% of HRS", 
-                                 HCAP_prop == 50 ~ 
-                                   "HCAP Proportion\n50% of HRS")) %>% 
-  mutate_at("HCAP_prop", function(x)
-    factor(x, levels = c("HCAP Proportion\n50% of HRS", 
-                         "HCAP Proportion\n25% of HRS")))
+    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) 
 
-#---- **plot 4.12: no HCAP calibration ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
-       aes(x = mean, y = factor(HRS_sample_size))) +
-  geom_vline(data = superpop_impairment_props, aes(xintercept = prop), 
-             size = 2, color = rep(color_palette$Color, 2)) +
-  geom_point(size = 4, shape = 1) + 
+#---- **plot ----
+ggplot(data = plot_data, aes(x = mean, y = factor(HRS_sample_size))) +
+  geom_vline(data = superpop_impairment_props, aes(xintercept = prop), size = 2) +
+  geom_point(size = 4, shape = rep(c(19, 15, 17, 18), 3)) + 
   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.3, size = 1) + theme_bw() + 
-  facet_grid(cols = vars(Group), rows = vars(HCAP_prop), scales = "free_y") + 
+  facet_grid(cols = vars(Group)) + 
   scale_x_continuous(breaks = seq(0.10, 0.40, by = 0.05)) +
   xlab("Impairment class proportion") + ylab("HRS sample size") + 
   theme(text = element_text(size = 24))  
 
 ggsave(filename = 
-         paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                "figure4.12_mean_CI_impairment_class_no_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 14.75, height = 6.5, units = "in")
+         paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                "figureXX_mean_CI_impairment_class.jpeg"), 
+       dpi = 300, width = 14.75, height = 3.25, units = "in")
 
 #---- **plot 5.9: HCAP calibration ----
 #add data for 100% adjudication
