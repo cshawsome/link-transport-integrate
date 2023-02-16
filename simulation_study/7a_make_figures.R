@@ -584,7 +584,7 @@ truth <-
             function(x) factor(x, levels = c("White", "Black", "Hispanic")))
 
 plot_data <- results %>% 
-  group_by(prior_sample, HCAP_prop, HRS_sample_size, HCAP_sample_size) %>% 
+  group_by(HRS_sample_size) %>% 
   summarise_at(
     c("mean_dem_prev_white", "mean_dem_prev_black", "mean_dem_prev_hispanic", 
       "LCI_dem_prev_white", "LCI_dem_prev_black", "LCI_dem_prev_hispanic", 
@@ -599,46 +599,21 @@ plot_data <- results %>%
   mutate_at("Race", str_to_sentence) %>%
   mutate_at("HRS_sample_size", as.factor) %>% 
   mutate_at("Race", function(x) 
-    factor(x, levels = c("White", "Black", "Hispanic"))) %>% 
-  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ 
-                                   "HCAP Proportion\n25% of HRS", 
-                                 HCAP_prop == 50 ~ 
-                                   "HCAP Proportion\n50% of HRS")) %>% 
-  mutate_at("HCAP_prop", function(x)
-    factor(x, levels = c("HCAP Proportion\n50% of HRS", 
-                         "HCAP Proportion\n25% of HRS")))
-
-plot_data$LCI[plot_data$LCI < 0] <- 0
-
-plot_data$prior_sample <- 
-  factor(plot_data$prior_sample, 
-         levels = c("HCAP 100% Adjudication", "ADAMS", 
-                    "HCAP 50% SRS Adjudication", "HCAP 35% SRS Adjudication", 
-                    "HCAP 20% SRS Adjudication",
-                    "HCAP 50% Race-stratified SRS Adjudication", 
-                    "HCAP 35% Race-stratified SRS Adjudication", 
-                    "HCAP 20% Race-stratified SRS Adjudication", 
-                    "HCAP 50% SRS Adjudication + ADAMS",
-                    "HCAP 35% SRS Adjudication + ADAMS",
-                    "HCAP 20% SRS Adjudication + ADAMS",
-                    "HCAP 50% Race-stratified SRS Adjudication + ADAMS",
-                    "HCAP 35% Race-stratified SRS Adjudication + ADAMS",
-                    "HCAP 20% Race-stratified SRS Adjudication + ADAMS"))
+    factor(x, levels = c("White", "Black", "Hispanic"))) 
 
 #---- **plot 4.18: no HCAP adjudication ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
-       aes(x = mean, y = HRS_sample_size)) + 
-  geom_vline(aes(xintercept = prev), data = truth, color = "#ff0000", size = 2) +
-  geom_point(size = 3, shape = 1) + 
+ggplot(data = plot_data, aes(x = mean, y = HRS_sample_size)) + 
+  geom_vline(aes(xintercept = prev), data = truth) +
+  geom_point(size = 3) + 
   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1) +
-  facet_grid(cols = vars(Race), rows = vars(HCAP_prop)) + theme_bw() + 
+  facet_grid(cols = vars(Race)) + theme_bw() + 
   xlab("Prevalence of dementia") + ylab("HRS sample size") + 
   scale_x_continuous(breaks = seq(0.0, 0.5, by = 0.10)) + 
   theme(text = element_text(size = 24))  
 
-ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "figure4.18_mean_CI_dem_prev_no_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 13.5, height = 6.25, units = "in")
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXX_mean_CI_dem_prev.jpeg"), 
+       dpi = 300, width = 13.5, height = 4, units = "in")
 
 #---- **plot 5.15: HCAP adjudication ----
 ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
