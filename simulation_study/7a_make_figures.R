@@ -536,7 +536,7 @@ plot_data %<>%
   rename(c("bias" = "error", "percent_bias" = "percent_error")) %>% 
   mutate("RMSE" = sqrt(squared_error)) 
 
-#---- **plot: percent bias overall + by race ----
+#---- **plot ----
 ggplot(data = plot_data, 
        aes(x = HRS_sample_size, y = percent_bias, group = class, 
            shape = class)) + 
@@ -553,7 +553,24 @@ ggplot(data = plot_data,
 
 ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
                          "figureXX_impairment_class_percent_bias.jpeg"), 
-       dpi = 300, width = 13.5, height = 6.25, units = "in")
+       dpi = 300, width = 13.5, height = 4.5, units = "in")
+
+#---- Figure XX: RMSE overall + race-stratified ----
+ggplot(data = plot_data, 
+       aes(x = HRS_sample_size, y = RMSE, group = class, shape = class)) + 
+  geom_line(size = 1, aes(linetype = class)) + geom_point(size = 3) + 
+  theme_bw() + ylab("RMSE") + 
+  facet_grid(cols = vars(race)) + 
+  scale_linetype_manual(values = c(1, 2, 3, 4)) +
+  scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
+  scale_x_discrete(name = "HRS Sample Size", 
+                   breaks = unique(plot_data$HRS_sample_size)) + 
+  labs(linetype = "Impairment Class", shape = "Impairment Class") +
+  theme(text = element_text(size = 24), legend.position = "bottom")
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXX_impairment_class_RMSE.jpeg"), 
+       dpi = 300, width = 13.5, height = 4.5, units = "in")
 
 #---- Figure XX: RMSE ----
 ggplot(data = plot_data, 
@@ -572,7 +589,6 @@ ggplot(data = plot_data,
 ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
                          "figureXX_impairment_class_RMSE.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
-
 
 #---- Figure 4.17: RMSE by race + no HCAP calibration ----
 ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
