@@ -572,7 +572,7 @@ ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/",
                          "figureXX_impairment_class_RMSE.jpeg"), 
        dpi = 300, width = 13.5, height = 4.5, units = "in")
 
-#---- Figure 4.18 + 5.15 + 5.29: dementia prevalence ----
+#---- Figure XX: dementia prevalence ----
 #---- **plot data ----
 truth <- 
   data.frame("Race" = c("White", "Black", "Hispanic"), 
@@ -601,7 +601,7 @@ plot_data <- results %>%
   mutate_at("Race", function(x) 
     factor(x, levels = c("White", "Black", "Hispanic"))) 
 
-#---- **plot 4.18: no HCAP adjudication ----
+#---- **plot ----
 ggplot(data = plot_data, aes(x = mean, y = HRS_sample_size)) + 
   geom_vline(aes(xintercept = prev), data = truth) +
   geom_point(size = 3) + 
@@ -615,123 +615,7 @@ ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/",
                          "figureXX_mean_CI_dem_prev.jpeg"), 
        dpi = 300, width = 13.5, height = 4, units = "in")
 
-#---- **plot 5.15: HCAP adjudication ----
-ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
-       aes(x = mean, y = HRS_sample_size, shape = prior_sample, 
-           color = prior_sample)) + 
-  geom_vline(aes(xintercept = prev), data = truth, size = 2) +
-  geom_point(size = 3, position = position_dodge(-0.95)) + 
-  scale_shape_manual(values = c(1, rep(19, 6))) +
-  scale_color_manual(values = c("black",
-                                #green, pink, blue
-                                "#61bbb6", "#f35f5f","#288fb4",   
-                                "#449187", "#cc435f", "#1d556f")) +
-  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
-                position = position_dodge(-0.95)) +
-  facet_grid(cols = vars(Race), rows = vars(HCAP_prop)) + theme_bw() + 
-  xlab("Prevalence of dementia") + ylab("HRS sample size") + 
-  scale_x_continuous(breaks = seq(0.0, 0.9, by = 0.10)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Prior", 
-                              nrow = 3, byrow = TRUE), 
-         color = guide_legend(title = "Prior"), 
-         nrow = 3, byrow = TRUE)
-
-ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.15_mean_CI_dem_prev_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 20, height = 11, units = "in")
-
-#---- **defense plot 5.15 v1: HCAP adjudication ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
-       aes(x = mean, y = HRS_sample_size, shape = prior_sample, 
-           color = prior_sample)) + 
-  geom_vline(aes(xintercept = prev), data = truth, size = 2) +
-  geom_point(size = 4, position = position_dodge(-0.95)) + 
-  scale_shape_manual(values = c(1)) +
-  scale_color_manual(values = c("black")) +
-  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.2, size = 1, 
-                position = position_dodge(-0.95)) +
-  facet_grid(cols = vars(Race), rows = vars(HCAP_prop)) + theme_bw() + 
-  xlab("Prevalence of dementia") + ylab("HRS sample size") + 
-  scale_x_continuous(breaks = seq(0.0, 0.9, by = 0.10)) + 
-  theme(text = element_text(size = 32), legend.position = "none")  
-
-ggsave(filename = paste0(path_to_box, "presentations/Defense/figures/", 
-                         "figure5.15_v1.jpeg"), 
-       dpi = 300, width = 18, height = 7.25, units = "in")
-
-#---- **defense plot 5.15 v2: HCAP adjudication ----
-ggplot(data = plot_data %>% 
-         filter(prior_sample %in% 
-                  c("ADAMS", 
-                    "HCAP 20% SRS Adjudication", "HCAP 35% SRS Adjudication", 
-                    "HCAP 50% SRS Adjudication")), 
-       aes(x = mean, y = HRS_sample_size, shape = prior_sample, 
-           color = prior_sample)) + 
-  geom_vline(aes(xintercept = prev), data = truth, size = 2) +
-  geom_point(size = 4, position = position_dodge(-0.95)) + 
-  scale_shape_manual(values = c(1, rep(19, 3))) +
-  scale_color_manual(values = c("black", 
-                                "#61bbb6", "#f35f5f","#288fb4")) +
-  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.2, size = 1, 
-                position = position_dodge(-0.95)) +
-  facet_grid(cols = vars(Race), rows = vars(HCAP_prop)) + theme_bw() + 
-  xlab("Prevalence of dementia") + ylab("HRS sample size") + 
-  scale_x_continuous(breaks = seq(0.0, 0.9, by = 0.10)) + 
-  theme(text = element_text(size = 32), legend.position = "none")  
-
-ggsave(filename = paste0(path_to_box, "presentations/Defense/figures/", 
-                         "figure5.15_v2.jpeg"), 
-       dpi = 300, width = 18, height = 7.25, units = "in")
-
-#---- **defense plot 5.15 v3: HCAP adjudication ----
-ggplot(data = plot_data %>% 
-         filter(!str_detect(prior_sample, "\\+")), 
-       aes(x = mean, y = HRS_sample_size, shape = prior_sample, 
-           color = prior_sample)) + 
-  geom_vline(aes(xintercept = prev), data = truth, size = 2) +
-  geom_point(size = 4, position = position_dodge(-0.95)) + 
-  scale_shape_manual(values = c(1, rep(19, 6))) +
-  scale_color_manual(values = c("black", 
-                                "#61bbb6", "#f35f5f","#288fb4", 
-                                "#449187", "#cc435f", "#1d556f")) +
-  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.2, size = 1, 
-                position = position_dodge(-0.95)) +
-  facet_grid(cols = vars(Race), rows = vars(HCAP_prop)) + theme_bw() + 
-  xlab("Prevalence of dementia") + ylab("HRS sample size") + 
-  scale_x_continuous(breaks = seq(0.0, 0.9, by = 0.10)) + 
-  theme(text = element_text(size = 32), legend.position = "none")  
-
-ggsave(filename = paste0(path_to_box, "presentations/Defense/figures/", 
-                         "figure5.15_v3.jpeg"), 
-       dpi = 300, width = 18, height = 8, units = "in")
-
-#---- **plot 5.29: HCAP adjudication + ADAMS ----
-ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")), 
-       aes(x = mean, y = HRS_sample_size, shape = prior_sample, 
-           color = prior_sample)) + 
-  geom_vline(aes(xintercept = prev), data = truth, size = 2) +
-  geom_point(size = 3, position = position_dodge(-0.95)) + 
-  scale_shape_manual(values = c(rep(1, 6))) +
-  scale_color_manual(values = c(#green, pink, blue
-    "#61bbb6", "#f35f5f","#288fb4",   
-    "#449187", "#cc435f", "#1d556f")) +
-  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
-                position = position_dodge(-0.95)) +
-  facet_grid(cols = vars(Race), rows = vars(HCAP_prop)) + theme_bw() + 
-  xlab("Prevalence of dementia") + ylab("HRS sample size") + 
-  scale_x_continuous(breaks = seq(0.0, 0.9, by = 0.10)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Prior", 
-                              nrow = 2, byrow = TRUE), 
-         color = guide_legend(title = "Prior"), 
-         nrow = 2, byrow = TRUE)
-
-ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.29_mean_CI_dem_prev_HCAP_adjudication_plus_HCAP.jpeg"), 
-       dpi = 300, width = 23, height = 11, units = "in")
-
-#---- Figure 4.19 + 5.16 + 5.30: 95% CI coverage dementia prevalence ----
+#---- Figure XX: 95% CI coverage dementia prevalence ----
 #---- **plot data ----
 plot_data <- results %>% 
   group_by(prior_sample, HCAP_prop, HRS_sample_size, HCAP_sample_size) %>% 
