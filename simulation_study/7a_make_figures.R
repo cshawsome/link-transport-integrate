@@ -469,74 +469,7 @@ ggsave(filename =
                 "figureXX_impairment_class_coverage.jpeg"), 
        dpi = 300, width = 13.5, height = 6.25, units = "in")
 
-#----- Figure XX: percent bias ----
-#---- **plot data ----
-cols_by_race <- 
-  c(paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other")), 
-    paste0("true_", c("Unimpaired", "MCI", "Dementia", "Other")), 
-    expand_grid(c("mean", "true"), 
-                c("Unimpaired", "MCI", "Dementia", "Other"), 
-                c("white", "black", "hispanic")) %>% 
-      unite("names", everything(), sep = "_") %>% unlist() %>% unname())
-
-plot_data <- results %>% ungroup() %>%
-  dplyr::select("HCAP_sample_size", "HRS_sample_size", 
-                paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other")), 
-                paste0("true_", c("Unimpaired", "MCI", "Dementia", "Other"))) %>%
-  pivot_longer(c(paste0("mean_", c("Unimpaired", "MCI", "Dementia", "Other")), 
-                 paste0("true_", c("Unimpaired", "MCI", "Dementia", "Other"))),
-               names_to = c(".value", "class"), 
-               names_sep = "_") %>% 
-  mutate("mean" = mean/HCAP_sample_size, "true" = true/HCAP_sample_size) %>%
-  mutate("error" = mean - true) %>% 
-  mutate("squared_error" = error^2) %>%
-  mutate("percent_error" = error/true*100) %>%
-  mutate_at("class", function(x) 
-    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
-  mutate_at("HRS_sample_size", as.factor) %>% 
-  group_by(HRS_sample_size, class) %>% 
-  summarize_at(c("error", "percent_error", "squared_error"), mean) %>% 
-  rename(c("bias" = "error", "percent_bias" = "percent_error")) %>% 
-  mutate("RMSE" = sqrt(squared_error))
-
-#---- **plot: percent bias ----
-ggplot(data = plot_data, 
-       aes(x = HRS_sample_size, y = percent_bias, group = class, 
-           shape = class)) + 
-  geom_line(size = 1, aes(linetype = class)) + geom_point(size = 3) + 
-  geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
-  ylab("Percent bias") + 
-  scale_x_discrete(name = "HRS Sample Size", 
-                   breaks = unique(plot_data$HRS_sample_size)) + 
-  scale_linetype_manual(values = c(1, 2, 3, 4)) +
-  scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
-  theme(text = element_text(size = 24)) + 
-  labs(linetype = "Impairment Class", shape = "Impairment Class") +
-  theme(text = element_text(size = 24), legend.position = "bottom")  
-
-ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
-                         "figureXX_impairment_class_percent_bias.jpeg"), 
-       dpi = 300, width = 13.5, height = 6.25, units = "in")
-
-#---- Figure XX: RMSE ----
-ggplot(data = plot_data, 
-       aes(x = HRS_sample_size, y = RMSE, group = class, shape = class)) + 
-  geom_line(size = 1, aes(linetype = class)) + geom_point(size = 3) + 
-  theme_bw() + 
-  ylab("RMSE") + 
-  scale_x_discrete(name = "HRS Sample Size", 
-                   breaks = unique(plot_data$HRS_sample_size)) +
-  scale_linetype_manual(values = c(1, 2, 3, 4)) +
-  scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
-  theme(text = element_text(size = 24)) + 
-  labs(linetype = "Impairment Class", shape = "Impairment Class") +
-  theme(text = element_text(size = 24), legend.position = "bottom")   
-
-ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
-                         "figureXX_impairment_class_RMSE.jpeg"), 
-       dpi = 300, width = 13.5, height = 6.25, units = "in")
-
-#---- Figure XX: overall + race-stratified percent bias----
+#----- Figure XX: percent bias overall + race-stratified ----
 #---- **read in data ----
 #---- **plot data ----
 #pull the correct columns
@@ -545,9 +478,11 @@ by_race_cols <- expand_grid(c("mean", "true"),
                             c("white", "black", "hispanic")) %>% 
   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
 
-overall_cols <- paste0(expand_grid(c("mean", "true"), 
-                            c("Unimpaired", "MCI", "Dementia", "Other")) %>% 
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname(), "_overall")
+overall_cols <- 
+  paste0(expand_grid(c("mean", "true"), 
+                     c("Unimpaired", "MCI", "Dementia", "Other")) %>% 
+           unite("names", everything(), sep = "_") %>% unlist() %>% unname(), 
+         "_overall")
 
 cols <- c(overall_cols, by_race_cols)
 
@@ -557,7 +492,6 @@ plot_data <- results %>% ungroup() %>%
                 all_of(str_remove(cols, "_overall"))) %>% 
   #rename the overall cols
   set_colnames(c("HRS_sample_size", "HCAP_sample_size", cols))
-
 
 for(race in c("white", "black", "hispanic", "overall")){
   plot_data %<>% mutate(!!paste0("mean_total_", race) := 
@@ -604,21 +538,43 @@ plot_data %<>%
 
 #---- **plot: percent bias overall + by race ----
 ggplot(data = plot_data, 
-       aes(x = HRS_sample_size, y = percent_bias, color = class, group = class)) + 
-  geom_line(size = 1.5) + 
-  geom_point(size = 3, shape = 1) + 
+       aes(x = HRS_sample_size, y = percent_bias, group = class, 
+           shape = class)) + 
+  geom_line(size = 1, aes(linetype = class)) + geom_point(size = 3) + 
   geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
   ylab("Percent bias") + 
   facet_grid(cols = vars(race)) + 
-  guides(color = guide_legend(title = "Group")) + 
+  scale_linetype_manual(values = c(1, 2, 3, 4)) +
+  scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
   scale_x_discrete(name = "HRS Sample Size", 
                    breaks = unique(plot_data$HRS_sample_size)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")    
+  labs(linetype = "Impairment Class", shape = "Impairment Class") +
+  theme(text = element_text(size = 24), legend.position = "bottom")
 
-ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "figure4.16b_impairment_class_percent_bias_prop_by_",
-                         "race_no_HCAP_calibration.jpeg"), 
-       dpi = 300, width = 13.5, height = 7.25, units = "in")
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXX_impairment_class_percent_bias.jpeg"), 
+       dpi = 300, width = 13.5, height = 6.25, units = "in")
+
+#---- Figure XX: RMSE ----
+ggplot(data = plot_data, 
+       aes(x = HRS_sample_size, y = RMSE, group = class, shape = class)) + 
+  geom_line(size = 1, aes(linetype = class)) + geom_point(size = 3) + 
+  theme_bw() + 
+  ylab("RMSE") + 
+  scale_x_discrete(name = "HRS Sample Size", 
+                   breaks = unique(plot_data$HRS_sample_size)) +
+  scale_linetype_manual(values = c(1, 2, 3, 4)) +
+  scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
+  theme(text = element_text(size = 24)) + 
+  labs(linetype = "Impairment Class", shape = "Impairment Class") +
+  theme(text = element_text(size = 24), legend.position = "bottom")   
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXX_impairment_class_RMSE.jpeg"), 
+       dpi = 300, width = 13.5, height = 6.25, units = "in")
+
+#---- Figure XX: overall + race-stratified percent bias----
+
 
 #---- **plot 5.13b: percent by race + HCAP calibration ----
 y_limits <- plot_data %>% filter(!str_detect(prior_sample, "\\+")) %>% 
