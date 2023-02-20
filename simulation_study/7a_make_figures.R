@@ -555,6 +555,7 @@ ggplot(data = plot_data,
   scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
   scale_x_discrete(name = "HRS Sample Size", 
                    breaks = unique(plot_data$HRS_sample_size)) + 
+  scale_y_continuous(limits = c(-30, 30), breaks = seq(-30, 30, by = 10)) +
   labs(linetype = "Impairment Class", shape = "Impairment Class") +
   theme(text = element_text(size = 24), legend.position = "bottom")
 
