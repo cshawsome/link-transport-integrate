@@ -633,21 +633,22 @@ plot_data <- results %>%
   mutate_at("Race", str_to_sentence) %>%
   mutate_at("Race", function(x) 
     factor(x, levels = c("White", "Black", "Hispanic"))) %>%
-  mutate_at("HRS_sample_size", as.factor) 
+  mutate_at("HRS_sample_size", as.factor) %>% 
+  mutate("coverage_percent" = dem*100)
 
-#---- **plot 4.19: no HCAP adjudication ----
-ggplot(data = plot_data, aes(x = HRS_sample_size, y = dem, group = Race)) + 
-  geom_line(aes(color = Race), size = 1.5) + 
-  geom_point(aes(color = Race), size = 3, shape = 1) + 
-  scale_color_manual(values = c("#006d9e", "#e09a3b", "#9ddfdf")) +
-  geom_hline(yintercept = 0.95, lty = "dashed") +
-  theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
-  guides(color = guide_legend(title = "Race/Ethnicity")) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")      
+#---- **plot ----
+ggplot(data = plot_data, 
+       aes(x = HRS_sample_size, y = coverage_percent, group = Race)) + 
+  geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Race)) +
+  geom_hline(yintercept = 95, lty = "dashed") +
+  scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) + 
+  scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
+  theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
+  theme(text = element_text(size = 24))      
 
-ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "figure4.19_dem_prev_coverage_no_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 13.5, height = 6.25, units = "in") 
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXX_dem_prev_coverage.jpeg"), 
+       dpi = 300, width = 13.5, height = 4, units = "in") 
 
 #---- **plot 5.16: HCAP adjudication ----
 ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
