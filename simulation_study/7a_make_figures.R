@@ -613,7 +613,7 @@ ggplot(data = plot_data, aes(x = mean, y = HRS_sample_size)) +
   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1) +
   facet_grid(cols = vars(Race)) + theme_bw() + 
   xlab("Prevalence of dementia") + ylab("HRS sample size") + 
-  scale_x_continuous(breaks = seq(0.0, 0.5, by = 0.10)) + 
+  scale_x_continuous(limits = c(0, 0.45), breaks = seq(0.0, 0.45, by = 0.1)) + 
   theme(text = element_text(size = 24))  
 
 ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
