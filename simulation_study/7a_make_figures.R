@@ -650,52 +650,6 @@ ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/",
                          "figureXX_dem_prev_coverage.jpeg"), 
        dpi = 300, width = 13.5, height = 4, units = "in") 
 
-#---- **plot 5.16: HCAP adjudication ----
-ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
-       aes(x = HRS_sample_size, y = dem, group = prior_sample, 
-           color = prior_sample, shape = prior_sample)) + 
-  geom_line(size = 1.5) + geom_point(size = 3) + 
-  scale_shape_manual(values = c(1, rep(19, 6))) +
-  scale_color_manual(values = c("black",
-                                #green, pink, blue
-                                "#61bbb6", "#f35f5f","#288fb4",   
-                                "#449187", "#cc435f", "#1d556f")) +
-  geom_hline(yintercept = 0.95, lty = "dashed") +
-  theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop), cols = vars(Race)) + 
-  guides(color = guide_legend(title = "Race/Ethnicity")) + 
-  theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Prior", nrow = 3, byrow = TRUE), 
-         color = guide_legend(title = "Prior", nrow = 3, byrow = TRUE))
-
-ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.16_dem_prev_coverage_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 20, height = 8, units = "in") 
-
-#---- **plot 5.30: HCAP adjudication + ADAMS ----
-ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")), 
-       aes(x = HRS_sample_size, y = dem, group = prior_sample, 
-           color = prior_sample, shape = prior_sample)) + 
-  geom_line(size = 1.5) + 
-  geom_point(size = 3) + 
-  scale_shape_manual(values = c(rep(1, 6))) +
-  scale_color_manual(values = c(#green, pink, blue
-    "#61bbb6", "#f35f5f","#288fb4",   
-    "#449187", "#cc435f", "#1d556f")) +
-  geom_hline(yintercept = 0.95, lty = "dashed") +
-  theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop), cols = vars(Race)) + 
-  guides(color = guide_legend(title = "Race/Ethnicity")) + 
-  theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Prior", 
-                              nrow = 2, byrow = FALSE), 
-         color = guide_legend(title = "Prior"), 
-         nrow = 2, byrow = FALSE)
-
-ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.30_dem_prev_coverage_HCAP_adjudication_plus_ADAMS.jpeg"), 
-       dpi = 300, width = 23, height = 8, units = "in") 
-
 #---- Figure 4.20 + 5.17 + 5.31: bias dementia prevalence ----
 #---- **plot data ----
 cols_by_race <- expand_grid(c("mean", "true"), 
