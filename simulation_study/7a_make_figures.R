@@ -455,16 +455,13 @@ plot_data <- results %>% group_by(HRS_sample_size) %>%
   mutate("value_percent" = value*100)
 
 #---- **plot ----
-scaleFUN <- function(x) sprintf("%.1f", x)
-
 ggplot(data = plot_data, 
        aes(x = as.factor(HRS_sample_size), y = value_percent, group = class, 
            shape = class)) + 
   geom_line(size = 1, aes(linetype = class)) + geom_point(size = 3) + 
   geom_hline(yintercept = 95, lty = "dashed") +
   scale_linetype_manual(values = c(1, 2, 3, 4)) +
-  scale_y_continuous(labels = scaleFUN, limits = c(0, 100), 
-                     breaks = c(0, seq(90, 100, by = 5))) + 
+  scale_y_continuous(limits = c(0, 100), breaks = c(0, seq(90, 100, by = 2))) + 
   scale_y_cut(breaks = c(89), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
   scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
   theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
