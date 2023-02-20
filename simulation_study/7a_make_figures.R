@@ -623,7 +623,7 @@ ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/",
 #---- Figure XX: 95% CI coverage dementia prevalence ----
 #---- **plot data ----
 plot_data <- results %>% 
-  group_by(prior_sample, HCAP_prop, HRS_sample_size, HCAP_sample_size) %>% 
+  group_by(HRS_sample_size, HCAP_sample_size) %>% 
   summarise_at(paste0("dem_prev_coverage_", c("white", "black", "hispanic")), 
                mean) %>% 
   pivot_longer(paste0("dem_prev_coverage_", c("white", "black", "hispanic")),
@@ -633,39 +633,15 @@ plot_data <- results %>%
   mutate_at("Race", str_to_sentence) %>%
   mutate_at("Race", function(x) 
     factor(x, levels = c("White", "Black", "Hispanic"))) %>%
-  mutate_at("HRS_sample_size", as.factor) %>% 
-  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ 
-                                   "HCAP Proportion\n25% of HRS", 
-                                 HCAP_prop == 50 ~ 
-                                   "HCAP Proportion\n50% of HRS")) %>% 
-  mutate_at("HCAP_prop", 
-            function(x) factor(x, levels = c("HCAP Proportion\n50% of HRS", 
-                                             "HCAP Proportion\n25% of HRS")))
-
-plot_data$prior_sample <- 
-  factor(plot_data$prior_sample, 
-         levels = c("HCAP 100% Adjudication", "ADAMS", 
-                    "HCAP 50% SRS Adjudication", "HCAP 35% SRS Adjudication", 
-                    "HCAP 20% SRS Adjudication",
-                    "HCAP 50% Race-stratified SRS Adjudication", 
-                    "HCAP 35% Race-stratified SRS Adjudication", 
-                    "HCAP 20% Race-stratified SRS Adjudication", 
-                    "HCAP 50% SRS Adjudication + ADAMS",
-                    "HCAP 35% SRS Adjudication + ADAMS",
-                    "HCAP 20% SRS Adjudication + ADAMS",
-                    "HCAP 50% Race-stratified SRS Adjudication + ADAMS",
-                    "HCAP 35% Race-stratified SRS Adjudication + ADAMS",
-                    "HCAP 20% Race-stratified SRS Adjudication + ADAMS"))
+  mutate_at("HRS_sample_size", as.factor) 
 
 #---- **plot 4.19: no HCAP adjudication ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
-       aes(x = HRS_sample_size, y = dem, group = Race)) + 
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = dem, group = Race)) + 
   geom_line(aes(color = Race), size = 1.5) + 
   geom_point(aes(color = Race), size = 3, shape = 1) + 
   scale_color_manual(values = c("#006d9e", "#e09a3b", "#9ddfdf")) +
   geom_hline(yintercept = 0.95, lty = "dashed") +
   theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop)) + 
   guides(color = guide_legend(title = "Race/Ethnicity")) + 
   theme(text = element_text(size = 24), legend.position = "bottom")      
 
