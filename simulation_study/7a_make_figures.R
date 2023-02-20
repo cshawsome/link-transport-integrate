@@ -3,7 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "wesanderson", "here")
+p_load("tidyverse", "magrittr", "wesanderson", "here", "ggbreak")
 #see if I actually need these
 #devtools
 #meta
@@ -449,16 +449,23 @@ plot_data <- results %>% group_by(HRS_sample_size) %>%
   pivot_longer(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"),
                names_to = c("class", "coverage"), names_sep = "_") %>% 
   mutate_at("HRS_sample_size", as.factor) %>% 
-  mutate(class = factor(class, 
-                        levels = c("Unimpaired", "MCI", "Dementia", "Other")))
+  mutate(class = 
+           factor(class, 
+                  levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>%
+  mutate("value_percent" = value*100)
 
 #---- **plot ----
+scaleFUN <- function(x) sprintf("%.1f", x)
+
 ggplot(data = plot_data, 
-       aes(x = as.factor(HRS_sample_size), y = value, group = class, 
+       aes(x = as.factor(HRS_sample_size), y = value_percent, group = class, 
            shape = class)) + 
   geom_line(size = 1, aes(linetype = class)) + geom_point(size = 3) + 
-  geom_hline(yintercept = 0.95, lty = "dashed") +
+  geom_hline(yintercept = 95, lty = "dashed") +
   scale_linetype_manual(values = c(1, 2, 3, 4)) +
+  scale_y_continuous(labels = scaleFUN, limits = c(0, 100), 
+                     breaks = c(0, seq(90, 100, by = 5))) + 
+  scale_y_cut(breaks = c(89), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
   scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
   theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
   labs(linetype = "Impairment Class", shape = "Impairment Class") +
