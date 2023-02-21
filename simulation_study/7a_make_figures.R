@@ -821,8 +821,7 @@ cols_by_race <- expand_grid(c("mean", "true"),
   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
 
 plot_data <- results %>% ungroup() %>%
-  dplyr::select("prior_sample", "HCAP_prop", "HRS_sample_size", 
-                "HCAP_sample_size",  all_of(cols_by_race)) %>%
+  dplyr::select("HRS_sample_size", "HCAP_sample_size",  all_of(cols_by_race)) %>%
   pivot_longer(all_of(cols_by_race),
                names_to = c(".value", "measure", "race"), 
                names_sep = "_") %>% 
@@ -834,65 +833,26 @@ plot_data <- results %>% ungroup() %>%
                                   race == "Hispanic" ~ "Hispanic vs. White")) %>%
   mutate_at("Comparison", function(x) 
     factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
-  mutate_at("HRS_sample_size", as.factor) %>% 
-  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ 
-                                   "HCAP Proportion\n25% of HRS", 
-                                 HCAP_prop == 50 ~ 
-                                   "HCAP Proportion\n50% of HRS")) %>%
-  group_by(prior_sample, HCAP_prop, HRS_sample_size, Comparison, measure) %>% 
+  mutate_at("HRS_sample_size", as.factor) %>%
+  group_by(HRS_sample_size, Comparison, measure) %>% 
   summarize_at(c("error", "squared_error"), mean) %>% 
   rename(c("bias" = "error")) %>% 
   mutate("RMSE" = sqrt(squared_error)) %>% 
-  mutate_at("HCAP_prop", function(x) 
-    factor(x, levels = c("HCAP Proportion\n50% of HRS", 
-                         "HCAP Proportion\n25% of HRS")))
+  mutate_at("measure", function(x) 
+    factor(x, levels = c("PR", "PD"))) 
 
-plot_data$prior_sample <- 
-  factor(plot_data$prior_sample, 
-         levels = c("HCAP 100% Adjudication", "ADAMS", 
-                    "HCAP 50% SRS Adjudication", "HCAP 35% SRS Adjudication", 
-                    "HCAP 20% SRS Adjudication",
-                    "HCAP 50% Race-stratified SRS Adjudication", 
-                    "HCAP 35% Race-stratified SRS Adjudication", 
-                    "HCAP 20% Race-stratified SRS Adjudication", 
-                    "HCAP 50% SRS Adjudication + ADAMS",
-                    "HCAP 35% SRS Adjudication + ADAMS",
-                    "HCAP 20% SRS Adjudication + ADAMS",
-                    "HCAP 50% Race-stratified SRS Adjudication + ADAMS",
-                    "HCAP 35% Race-stratified SRS Adjudication + ADAMS",
-                    "HCAP 20% Race-stratified SRS Adjudication + ADAMS"))
-
-#---- **plot 4.24a: PR bias ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS" & measure == "PR"), 
-       aes(x = HRS_sample_size, y = bias, group = Comparison)) + 
-  geom_line(aes(color = Comparison), size = 1.5) + 
-  geom_point(aes(color = Comparison), size = 3, shape = 1) + 
-  scale_color_manual(values = c("#e09a3b", "#9ddfdf")) +
+#---- **plot ----
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Comparison)) + 
+  geom_line(size = 1) + geom_point(size = 3) + 
   geom_hline(yintercept = 0, lty = "dashed") +
-  theme_bw() + ylab("Bias") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop)) + 
-  guides(color = guide_legend(title = "Comparison")) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")      
+  theme_bw() + ylab("Bias") + xlab("HRS Sample Size") + ylim(c(-0.21, 0.01)) +
+  facet_grid(rows = vars(measure), cols = vars(Comparison)) + 
+  theme(text = element_text(size = 24))      
 
-ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "figure4.24a_PR_bias_no_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 13.5, height = 6.25, units = "in") 
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "appendix_figureXX_PR_PD_bias.jpeg"), 
+       dpi = 300, width = 13.5, height = 4.5, units = "in") 
 
-#---- **plot 4.24b: PD bias ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS" & measure == "PD"), 
-       aes(x = HRS_sample_size, y = bias, group = Comparison)) + 
-  geom_line(aes(color = Comparison), size = 1.5) + 
-  geom_point(aes(color = Comparison), size = 3, shape = 1) + 
-  scale_color_manual(values = c("#e09a3b", "#9ddfdf")) +
-  geom_hline(yintercept = 0, lty = "dashed") +
-  theme_bw() + ylab("Bias") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop)) + 
-  guides(color = guide_legend(title = "Comparison")) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")      
-
-ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "figure4.24b_PD_bias_no_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 13.5, height = 6.25, units = "in") 
 
 #---- **plot 5.21a: PR bias ----
 ggplot(data = plot_data %>% 
