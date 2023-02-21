@@ -679,27 +679,22 @@ ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = race)) +
   geom_hline(yintercept = 0, lty = "dashed") +
   theme_bw() + ylab("Bias") + xlab("HRS Sample Size") +
   facet_grid(cols = vars(race)) +
-  guides(color = guide_legend(title = "Race/Ethnicity")) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")      
+  theme(text = element_text(size = 24))      
 
 ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
                          "appendix_figureXX_dem_prev_bias.jpeg"), 
        dpi = 300, width = 13.5, height = 4, units = "in")
 
 #---- Figure 4.21: RMSE dementia prevalence no HCAP adjudication ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
-       aes(x = HRS_sample_size, y = RMSE, group = race)) + 
-  geom_line(aes(color = race), size = 1.5) + 
-  geom_point(aes(color = race), size = 3, shape = 1) + 
-  scale_color_manual(values = c("#006d9e", "#e09a3b", "#9ddfdf")) +
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = RMSE, group = race)) + 
+  geom_line() + geom_point(size = 3) + 
   theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop)) + 
-  guides(color = guide_legend(title = "Race/Ethnicity")) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")      
+  facet_grid(cols = vars(race)) + ylim(0, 0.08) +
+  theme(text = element_text(size = 24))      
 
-ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "figure4.21_dem_prev_RMSE_no_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 13.5, height = 6.25, units = "in") 
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "appendix_figureXX_dem_prev_rmse.jpeg"), 
+       dpi = 300, width = 13.5, height = 4, units = "in") 
 
 #---- Figure 5.18: RMSE dementia prevalence HCAP adjudication ----
 ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
