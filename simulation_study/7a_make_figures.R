@@ -650,7 +650,7 @@ ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/",
                          "figureXX_dem_prev_coverage.jpeg"), 
        dpi = 300, width = 13.5, height = 4, units = "in") 
 
-#---- Figure 4.20 + 5.17 + 5.31: bias dementia prevalence ----
+#---- Appendix Figure XX: bias dementia prevalence ----
 #---- **plot data ----
 cols_by_race <- expand_grid(c("mean", "true"), 
                             c("dem_prev"), 
@@ -658,8 +658,7 @@ cols_by_race <- expand_grid(c("mean", "true"),
   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
 
 plot_data <- results %>% ungroup() %>%
-  dplyr::select("prior_sample", "HCAP_prop", "HRS_sample_size", 
-                "HCAP_sample_size",  all_of(cols_by_race)) %>%
+  dplyr::select("HRS_sample_size", "HCAP_sample_size",  all_of(cols_by_race)) %>%
   pivot_longer(all_of(cols_by_race),
                names_to = c(".value", "measure1", "measure2", "race"), 
                names_sep = "_") %>% 
@@ -668,43 +667,18 @@ plot_data <- results %>% ungroup() %>%
   mutate_at("HRS_sample_size", as.factor) %>%
   mutate_at("race", function(x) str_to_sentence(x)) %>%
   mutate_at("race", function(x) 
-    factor(x, levels = c("White", "Black", "Hispanic"))) %>% 
-  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ 
-                                   "HCAP Proportion\n25% of HRS", 
-                                 HCAP_prop == 50 ~ 
-                                   "HCAP Proportion\n50% of HRS")) %>% 
-  group_by(prior_sample, HCAP_prop, HRS_sample_size, race) %>% 
+    factor(x, levels = c("White", "Black", "Hispanic"))) %>%
+  group_by(HRS_sample_size, race) %>% 
   summarize_at(c("error", "squared_error"), mean) %>% 
   rename(c("bias" = "error")) %>% 
-  mutate("RMSE" = sqrt(squared_error)) %>% 
-  mutate_at("HCAP_prop", function(x) 
-    factor(x, levels = c("HCAP Proportion\n50% of HRS", 
-                         "HCAP Proportion\n25% of HRS")))
+  mutate("RMSE" = sqrt(squared_error)) 
 
-plot_data$prior_sample <- 
-  factor(plot_data$prior_sample, 
-         levels = c("HCAP 100% Adjudication", "ADAMS", 
-                    "HCAP 50% SRS Adjudication", "HCAP 35% SRS Adjudication", 
-                    "HCAP 20% SRS Adjudication",
-                    "HCAP 50% Race-stratified SRS Adjudication", 
-                    "HCAP 35% Race-stratified SRS Adjudication", 
-                    "HCAP 20% Race-stratified SRS Adjudication", 
-                    "HCAP 50% SRS Adjudication + ADAMS",
-                    "HCAP 35% SRS Adjudication + ADAMS",
-                    "HCAP 20% SRS Adjudication + ADAMS",
-                    "HCAP 50% Race-stratified SRS Adjudication + ADAMS",
-                    "HCAP 35% Race-stratified SRS Adjudication + ADAMS",
-                    "HCAP 20% Race-stratified SRS Adjudication + ADAMS"))
-
-#---- **plot 4.20 ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS"), 
-       aes(x = HRS_sample_size, y = bias, group = race)) + 
-  geom_line(aes(color = race), size = 1.5) + 
-  geom_point(aes(color = race), size = 3, shape = 1) + 
-  scale_color_manual(values = c("#006d9e", "#e09a3b", "#9ddfdf")) +
+#---- **plot ----
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = race)) + 
+  geom_line() + geom_point(size = 3) + 
   geom_hline(yintercept = 0, lty = "dashed") +
   theme_bw() + ylab("Bias") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop)) + 
+  facet_grid(cols = vars(race)) +
   guides(color = guide_legend(title = "Race/Ethnicity")) + 
   theme(text = element_text(size = 24), legend.position = "bottom")      
 
