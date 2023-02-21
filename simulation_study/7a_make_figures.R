@@ -765,7 +765,7 @@ ggplot(data = plot_data %>% filter(measure == "PD"),
   theme(text = element_text(size = 24))  
 
 ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
-                         "figureXXa_PD.jpeg"), 
+                         "figureXXb_PD.jpeg"), 
        dpi = 300, width = 13.5, height = 4, units = "in")
 
 #---- Figure XXa-b: 95% CI coverage PR + PD ----
@@ -783,44 +783,35 @@ plot_data <- results %>%
   mutate_at("Comparison", function(x) 
     factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
   mutate_at("HRS_sample_size", as.factor) %>% 
-  mutate("HCAP_prop" = case_when(HCAP_prop == 25 ~ 
-                                   "HCAP Proportion\n25% of HRS", 
-                                 HCAP_prop == 50 ~ 
-                                   "HCAP Proportion\n50% of HRS")) %>%
-  mutate_at("HCAP_prop", 
-            function(x) factor(x, levels = c("HCAP Proportion\n50% of HRS", 
-                                             "HCAP Proportion\n25% of HRS")))
+  mutate("coverage_percent" = coverage*100)
 
-plot_data$prior_sample <- 
-  factor(plot_data$prior_sample, 
-         levels = c("HCAP 100% Adjudication", "ADAMS", 
-                    "HCAP 50% SRS Adjudication", "HCAP 35% SRS Adjudication", 
-                    "HCAP 20% SRS Adjudication",
-                    "HCAP 50% Race-stratified SRS Adjudication", 
-                    "HCAP 35% Race-stratified SRS Adjudication", 
-                    "HCAP 20% Race-stratified SRS Adjudication", 
-                    "HCAP 50% SRS Adjudication + ADAMS",
-                    "HCAP 35% SRS Adjudication + ADAMS",
-                    "HCAP 20% SRS Adjudication + ADAMS",
-                    "HCAP 50% Race-stratified SRS Adjudication + ADAMS",
-                    "HCAP 35% Race-stratified SRS Adjudication + ADAMS",
-                    "HCAP 20% Race-stratified SRS Adjudication + ADAMS"))
+#---- **PR plot ----
+ggplot(data = plot_data %>% filter(measure == "PR"), 
+       aes(x = HRS_sample_size, y = coverage_percent, group = Comparison)) + 
+  geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Comparison)) + 
+  geom_hline(yintercept = 95, lty = "dashed") +
+  scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) + 
+  scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
+  theme_bw() + ylab("95% interval coverage\n(PR)") + xlab("HRS Sample Size") +
+  theme(text = element_text(size = 24))      
 
-#---- **plot 4.23a: PR no HCAP adjudication ----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS" & measure == "PR"), 
-       aes(x = HRS_sample_size, y = coverage, group = Comparison, color = Comparison)) + 
-  geom_line(size = 1.5) + 
-  geom_point(size = 3, shape = 1) + 
-  scale_color_manual(values = c("#e09a3b", "#9ddfdf")) +
-  geom_hline(yintercept = 0.95, lty = "dashed") +
-  theme_bw() + ylab("95% CI Coverage") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop)) + 
-  guides(color = guide_legend(title = "Comparison")) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")      
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXXa_PR_coverage.jpeg"), 
+       dpi = 300, width = 13.25, height = 4, units = "in")
 
-ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "figure4.23a_PR_coverage_no_HCAP_adjudiation.jpeg"), 
-       dpi = 300, width = 13.25, height = 6.25, units = "in")
+#---- **PD plot ----
+ggplot(data = plot_data %>% filter(measure == "PD"), 
+       aes(x = HRS_sample_size, y = coverage_percent, group = Comparison)) + 
+  geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Comparison)) + 
+  geom_hline(yintercept = 95, lty = "dashed") +
+  scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) + 
+  scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
+  theme_bw() + ylab("95% interval coverage\n(PD)") + xlab("HRS Sample Size") +
+  theme(text = element_text(size = 24))      
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXXb_PD_coverage.jpeg"), 
+       dpi = 300, width = 13.25, height = 4, units = "in")
 
 #---- **plot 4.23b: PD no HCAP adjudication ----
 ggplot(data = plot_data %>% filter(prior_sample == "ADAMS" & measure == "PD"), 
