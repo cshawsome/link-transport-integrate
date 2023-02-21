@@ -696,46 +696,6 @@ ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/",
                          "appendix_figureXX_dem_prev_rmse.jpeg"), 
        dpi = 300, width = 13.5, height = 4, units = "in") 
 
-#---- Figure 5.18: RMSE dementia prevalence HCAP adjudication ----
-ggplot(data = plot_data %>% filter(!str_detect(prior_sample, "\\+")), 
-       aes(x = HRS_sample_size, y = RMSE, group = prior_sample, 
-           color = prior_sample, shape = prior_sample)) + 
-  geom_line(size = 1.5) + geom_point(size = 3) + 
-  scale_shape_manual(values = c(1, rep(19, 6))) +
-  scale_color_manual(values = c("black",
-                                #green, pink, blue
-                                "#61bbb6", "#f35f5f","#288fb4",   
-                                "#449187", "#cc435f", "#1d556f")) +
-  geom_hline(yintercept = 0, lty = "dashed") +
-  theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop), cols = vars(race)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Prior", nrow = 3, byrow = TRUE), 
-         color = guide_legend(title = "Prior"), nrow = 3, byrow = TRUE)
-
-ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.18_dem_prev_RMSE_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 20, height = 7, units = "in")
-
-#---- Figure 5.32: RMSE dementia prevalence HCAP adjudication + ADAMS ----
-ggplot(data = plot_data %>% filter(str_detect(prior_sample, "\\+")), 
-       aes(x = HRS_sample_size, y = RMSE, group = prior_sample, 
-           color = prior_sample, shape = prior_sample)) + 
-  geom_line(size = 1.5) + geom_point(size = 3) + 
-  scale_shape_manual(values = c(rep(1, 6))) +
-  scale_color_manual(values = c(#green, pink, blue
-    "#61bbb6", "#f35f5f","#288fb4",   
-    "#449187", "#cc435f", "#1d556f")) +
-  theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop), cols = vars(race)) + 
-  theme(text = element_text(size = 24), legend.position = "bottom") + 
-  guides(shape = guide_legend(title = "Prior", nrow = 2, byrow = TRUE), 
-         color = guide_legend(title = "Prior"), nrow = 2, byrow = TRUE)
-
-ggsave(filename = paste0(path_to_box, "figures/chapter_5/simulation_study/", 
-                         "figure5.32_dem_prev_RMSE_HCAP_adjudication_plus_ADAMS.jpeg"), 
-       dpi = 300, width = 23, height = 7, units = "in")
-
 #---- Figure 4.22 + 5.19 + 5.33: PR dementia ----
 #---- **plot data ----
 truth <- 
