@@ -853,21 +853,16 @@ ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/",
                          "appendix_figureXX_PR_PD_bias.jpeg"), 
        dpi = 300, width = 13.5, height = 4.5, units = "in") 
 
-#---- Figure 4.25a: PR RMSE no HCAP adjudication----
-ggplot(data = plot_data %>% filter(prior_sample == "ADAMS" & measure == "PR"), 
-       aes(x = HRS_sample_size, y = RMSE, group = Comparison)) + 
-  geom_line(aes(color = Comparison), size = 1.5) + 
-  geom_point(aes(color = Comparison), size = 3, shape = 1) + 
-  scale_color_manual(values = c("#e09a3b", "#9ddfdf")) +
-  geom_hline(yintercept = 0, lty = "dashed") +
-  theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") +
-  facet_grid(rows = vars(HCAP_prop)) + 
-  guides(color = guide_legend(title = "Comparison")) + 
-  theme(text = element_text(size = 24), legend.position = "bottom")      
+#---- Appendix Figure XX: PR + PD RMSE ----
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = RMSE, group = Comparison)) + 
+  geom_line() + geom_point(size = 3) + 
+  theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") + ylim(c(0, 0.25)) +
+  facet_grid(rows = vars(measure), cols = vars(Comparison)) + 
+  theme(text = element_text(size = 24))      
 
-ggsave(filename = paste0(path_to_box, "figures/chapter_4/simulation_study/", 
-                         "figure4.25a_PR_RMSE_no_HCAP_adjudication.jpeg"), 
-       dpi = 300, width = 13.5, height = 6.25, units = "in") 
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "appendix_figureXX_PR_PD_rmse.jpeg"), 
+       dpi = 300, width = 13.5, height = 4.5, units = "in") 
 
 #---- Figure 4.25b: PD RMSE no HCAP adjudication----
 ggplot(data = plot_data %>% filter(prior_sample == "ADAMS" & measure == "PD"), 
