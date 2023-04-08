@@ -5,4 +5,5 @@ This branch contains all the code to reproduced analyses, summaries, and figures
 [citation pending]
 
 ## Code structure
-Scripts are to be run in numerical order
+Scripts for the simulation study are in the simulation_study folder and are to be run in numerical order. <br>
+The functions folder houses general purpose functions for simulation study scripts 
