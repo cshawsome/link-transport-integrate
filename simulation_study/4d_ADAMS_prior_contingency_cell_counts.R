@@ -35,6 +35,22 @@ get_props <- function(data, W){
 imputation_props <- lapply(prior_imputed_clean, get_props, W) %>%
   saveRDS(paste0(path_to_box, "data/prior_data/imputation_cell_props"))
 
+# JZ: check for one copy
+# counts <- prior_imputed_clean[[1]] %>%
+#   unite("cell_ID", all_of(W), sep = "", remove = FALSE) %>%
+#   dplyr::select("cell_ID", "Unimpaired", "MCI", "Dementia", "Other") %>%
+#   pivot_longer(-c("cell_ID")) %>%
+#   filter(value == 1) %>% group_by(name) %>%
+#   table() %>% as.data.frame() %>% dplyr::select(-"value")
+# counts %>%
+#   left_join(., counts %>% group_by(name) %>% summarize_at("Freq", sum),
+#             by = "name") %>%
+# # this is the same as group_by and then mutate
+#   mutate("props" = Freq.x/Freq.y) %>%
+#   dplyr::select(-contains("Freq")) %>% group_by(name) %>% group_split() %>%
+#   set_names(c("Dementia", "MCI", "Other", "Unimpaired"))
+
+
 # #---- NEEDS TO BE REFACTORED ----
 # #---- plots ----
 # #---- **read in data ----

@@ -15,6 +15,10 @@ prior_imputed_clean <-
   readRDS(paste0(path_to_box, "data/prior_data/MI/MI_datasets_cleaned")) %>%
   lapply(function(x) mutate_at(x, "HHIDPN", as.numeric)) 
 
+# JZ: check dimension
+length(prior_imputed_clean)
+dim(prior_imputed_clean[[1]])
+
 #---- **selected variables ----
 selected_vars <- 
   read_csv(paste0(path_to_box, "data/variable_selection/model_coefficients.csv")) 
@@ -41,6 +45,11 @@ dementia_preds <- selected_vars %>%
   dplyr::select(data_label) %>% unlist()
 
 #---- models ----
+# JZ -- for my own understanding: 
+# fit the glm model on each imputed copy of the dataset (10000 copies in total)
+# for each Dx (4 Dx's) based on the variables determined in the 
+# variable selection process, and then collect coef and vcov to use as prior
+
 model_function <- 
   function(data, unimpaired_preds, other_preds, mci_preds, dementia_preds){
     for(group in c("Unimpaired", "Other", "MCI", "Dementia")){
