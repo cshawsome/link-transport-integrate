@@ -9,7 +9,8 @@ p_load("here", "tidyverse", "haven", "labelled", "magrittr", "NormPsy")
 source(here("functions", "read_da_dct.R"))
 
 #---- read data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+# path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+path_to_box <- "~/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **ADAMS tracker ----
 ADAMS_tracker_data_path <- 
@@ -26,6 +27,7 @@ ADAMS_tracker <- read_da_dct(ADAMS_tracker_data_path, ADAMS_tracker_dict_path,
                 "AAGE", "ETHNIC", "EDYRS", "AACURRWK") %>%
   #N = 1170
   #filter to those who completed Wave A assessment (N = 856; dropped n = 314)
+  # JZ: I got 1770 and 856 after filtering, might just be a typo
   filter(AASSESS == 1) %>% 
   mutate_at("HHIDPN", as.numeric) %>% 
   mutate_at("HHIDPN", as.character)
@@ -528,6 +530,11 @@ ADAMS %<>%
   mutate_at(.vars = all_of(bwc_vars), 
             #Correct on 2nd try = correct
             function(x) ifelse(x == 2, 1, x))
+
+# JZ: I get a warning message here: 
+# "Using `all_of()` outside of a selecting function was deprecated in 
+# tidyselect 1.2.0."
+# Code still runs.
 
 # #Sanity check
 # table(ADAMS$r5bwc20, useNA = "ifany")

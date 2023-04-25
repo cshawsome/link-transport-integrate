@@ -6,7 +6,8 @@ if (!require("pacman")){
 p_load("tidyverse", "broom", "sjPlot", "gridExtra", "magrittr", "glmnet")
 
 #---- read in data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+# path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+path_to_box <- "~/Library/CloudStorage/Box-Box/Dissertation/"
 
 ADAMS_imputed_clean <- 
   readRDS(paste0(path_to_box, "data/ADAMS/cleaned/MI/chunk_1/", 

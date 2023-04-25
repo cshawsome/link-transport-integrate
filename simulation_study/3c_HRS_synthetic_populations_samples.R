@@ -34,6 +34,8 @@ HCAP <-
 # #Sanity check: there should be no missing data
 # colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
 
+# JZ: I'm a little confused -- should I expect to see missingness in these variables? 
+
 #---- **ADAMS variable selection results ----
 selected_vars_mat <- 
   read_csv(paste0(path_to_box, 
@@ -82,6 +84,9 @@ Z_score <- function(data, vars){
 
 superpop_imputed %<>% Z_score(., standardize_vars)
 
+# JZ: Warning message about deprecated use of 'all_of()' outside of 
+# a selecting function -- not a big problem
+
 #---- **store superpop means and variances ----
 orig_mean_sd <- superpop_imputed %>% 
   summarize_at(standardize_vars, .funs = c("mean" = mean, "sd" = sd))
@@ -93,6 +98,7 @@ sds <- orig_mean_sd %>% dplyr::select(contains("sd")) %>%
   set_colnames(standardize_vars)
 
 # #Sanity check
+# JZ: this sanity check cannot be run 
 # test_subset <- head(superpop[, paste0(standardize_vars, "_Z")])
 # test_subset*
 #   matrix(rep(as.numeric(sds), nrow(test_subset)), nrow = nrow(test_subset),
@@ -179,6 +185,7 @@ mean(superpop_imputed[superpop_imputed$female == 0, "Dementia"])
 
 #More dementia among racial/ethnic minorities?  
 # hotdeck: Yes (w: 24.3%, b: 33.1%, h: 29.6%)
+# JZ: b should be 32.1%
 mean(superpop_imputed[superpop_imputed$White == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$black == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$hispanic == 1, "Dementia"])
@@ -313,6 +320,7 @@ saveRDS(synthetic_HRS_list,
 set.seed(20220507)
 
 sample_props <- c(0.25, 0.50)
+# JZ: in the diagram (Fig 3), are we only doing the version with sample prop of 0.5? 
 
 for(sample_prop in sample_props){
   if(exists("synthetic_HCAP_list")){

@@ -54,13 +54,25 @@ for(var in check_vars){
   print(table(HRS[, var]))
 }
 
+# JZ: I don't get the same cut points for hrs_cog_superpop_cat between HCAP and HRS.
+#     HCAP has a cut at 21 while HRS has a cut at 22.
+# Also I believe the following code is trying to unify labels at the extreme ends
+# between HCAP and HRS, but I don't think the new labels in HRS are correct: 
+# e.g. for age_cat, HCAP originally has [70,85) [85,101] and HRS has [70,85) [85,107]. 
+# the label in HRS is later fixed to be [70,85) [85,103], still not matching HCAP. 
+# hrs_cog_superpop_cat has the same problem with (25,34] before and (25,33] after 
+# in HRS but in HCAP it's (25,35].
+# If we are confident that the values are correct in the dataset, maybe just 
+# supply the same arbitrarily large value as the upper bound? 
+# Does having incorrect labels matter? 
+
 #---- **correct some labels ----
 HRS %<>% 
   mutate_at(c("age_cat", "hrs_cog_superpop_cat"), as.character)
 
-HRS[which(HRS$age_cat == "[85,107]"), "age_cat"] <- "[85,103]"
+HRS[which(HRS$age_cat == "[85,107]"), "age_cat"] <- "[85,103]" 
 HRS[which(HRS$hrs_cog_superpop_cat == "(25,35]"), "hrs_cog_superpop_cat"] <- 
-  "(25,33]"
+  "(25,33]" 
 
 #Sanity check bins: do these match now?
 check_vars <- c("age_cat", "hrs_cog_superpop_cat")
@@ -69,6 +81,8 @@ for(var in check_vars){
   print(table(HCAP[, var]))
   print(table(HRS[, var]))
 }
+
+# JZ: refer to comments above
 
 #---- save dataset ----
 HRS %>% write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
