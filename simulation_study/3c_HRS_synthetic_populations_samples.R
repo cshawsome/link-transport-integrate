@@ -31,7 +31,7 @@ HCAP <-
   read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv")) %>% 
   rename("no_drinking" = "r13no_drinking")
 
-# #Sanity check: there should be no missing data
+# #Sanity check: there should be no missing data except pool variables
 # colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
 
 # JZ: I'm a little confused -- should I expect to see missingness in these variables? 
@@ -356,6 +356,8 @@ for(sample_prop in sample_props){
   }
 }
 
+# JZ: the following section is for Manuscript 2; could be moved
+
 #---- **flag calibration subsamples ----
 #---- ****SRS calibration ----
 for(i in 1:length(synthetic_HCAP_list)){
@@ -432,6 +434,7 @@ for(i in 1:length(synthetic_HCAP_list)){
 # lapply(synthetic_HCAP_list, function(x)
 #   colMeans(x[, paste0("calibration_", c(20, 35, 50),"_SRS_race")]))
 
+# JZ: discussed - to be removed
 # #---- ****design calibration ----
 # for(i in 1:length(synthetic_HCAP_list)){
 # 

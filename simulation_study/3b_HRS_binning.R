@@ -49,9 +49,13 @@ HRS %<>%
 check_vars <- c("age_cat", "edyrs_cat", "immrc_cat", "delrc_cat", "ser7_cat",
                 "hrs_cog_superpop_cat")
 
+# JZ: check the HRS analytic data saved 
+# HRS_read <- read_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
+
 for(var in check_vars){
   print(table(HCAP[, var]))
   print(table(HRS[, var]))
+  # print(table(HRS_read[, var]))
 }
 
 # JZ: I don't get the same cut points for hrs_cog_superpop_cat between HCAP and HRS.
@@ -65,6 +69,9 @@ for(var in check_vars){
 # If we are confident that the values are correct in the dataset, maybe just 
 # supply the same arbitrarily large value as the upper bound? 
 # Does having incorrect labels matter? 
+# After meeting on April 25: we found that these two variables are not included 
+# in the hot deck imputation matrix. They might be excluded because of this 
+# discrepancy, but we decided not to alter anything. 
 
 #---- **correct some labels ----
 HRS %<>% 
@@ -86,4 +93,6 @@ for(var in check_vars){
 
 #---- save dataset ----
 HRS %>% write_csv(paste0(path_to_box, "data/HRS/cleaned/HRS_analytic.csv"))
+
+
 
