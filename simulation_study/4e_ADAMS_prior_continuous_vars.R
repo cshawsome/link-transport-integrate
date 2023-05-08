@@ -38,6 +38,8 @@ cells <- A %>% as.data.frame() %>% unite("cells", -1, sep = "") %>%
 
 #---- estimates ----
 estimate_cont_priors <- function(data, W, Z, A, cells){
+  # test 
+  # data <- prior_imputed_clean[[1]]
   #---- **pre-allocate ----
   priors_V_inv <- 
     as.data.frame(matrix(nrow = (ncol(A)*4), ncol = ncol(A))) %>%
@@ -55,13 +57,15 @@ estimate_cont_priors <- function(data, W, Z, A, cells){
                          each = length(Z))) 
   
   for(class in c("Unimpaired", "MCI", "Other", "Dementia")){
+    # test
+    # class <- "Unimpaired"
     #---- **filter data ----
     subset <- data %>% filter(!!sym(class) == 1) 
     
     #---- **U (contingency cell) ----
     contingency_table_temp <- subset %>% 
       unite("cell_ID", all_of(W), sep = "") %>% dplyr::select(cell_ID) %>% 
-      table() %>% as.data.frame() %>% set_colnames(c("cells", "Freq")) 
+      table() %>% as.data.frame() %>% set_colnames(c("cells", "Freq"))
     
     if(nrow(contingency_table_temp) < 6){
       contingency_table <- data.frame("cells" = cells$cell) %>% 
