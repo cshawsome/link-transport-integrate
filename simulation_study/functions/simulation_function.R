@@ -5,6 +5,32 @@ simulation_function <-
            contrasts_matrix, kappa_0_mat, nu_0_mat, truth, seed, path_to_data, 
            path_to_results){
     
+    # JZ: added for testing 
+    # warm_up = 100
+    # starting_props = rep(0.25, 4)
+    # categorical_vars = W
+    # continuous_vars = Z
+    # id_var = "HHIDPN"
+    # variable_labels = variable_labels
+    # scenario = scenario_num
+    # superpopulation = superpop
+    # orig_means = means
+    # orig_sds = sds
+    # all_scenarios_list = all_sim_scenarios
+    # cell_ID_key = cell_ID_key
+    # color_palette = color_palette
+    # num_synthetic = 1000
+    # contrasts_matrix = A
+    # kappa_0_mat = kappa_0_mat
+    # nu_0_mat = nu_0_mat
+    # truth = truth 
+    # seed = seed
+    # path_to_data = path_to_data
+    # path_to_results =
+    #   paste0("/u/home/c/cshaw343/",
+    #          "link_transport_integrate/results/")
+    
+    
     #---- pre-allocated results ----
     result_names <- 
       c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other",

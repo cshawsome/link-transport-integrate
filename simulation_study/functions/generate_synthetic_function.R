@@ -6,7 +6,7 @@ generate_synthetic <-
            variable_labels, cell_ID_key, color_palette, contrasts_matrix, 
            kappa_0_mat, nu_0_mat, num_synthetic, data_only = FALSE){
     
-    # testing 
+    # JZ: added for testing 
     # warm_up = 100
     # run_number = 1
     # starting_props = c(0.25, 0.25, 0.25, 0.25)
