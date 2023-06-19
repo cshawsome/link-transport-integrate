@@ -46,7 +46,7 @@ HRS_core <- read_da_dct(HRS_core_data_path, HRS_core_dict_path,
   mutate_at("HHIDPN", as.character)
 
 #---- **RAND variables ----
-hurd_waves <- c(11, 12)
+hurd_waves <- 12
 rand_waves <- 13
 
 rand_variables <- 
@@ -76,7 +76,8 @@ rand_variables <-
     paste0("r", rand_waves, "diabe"), paste0("r", rand_waves, "hearte"), 
     paste0("r", rand_waves, "hibpe"), paste0("r", rand_waves, "smoken"), 
     paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"), 
-    paste0("r", rand_waves, "adla"), paste0("r", rand_waves, "iadla"), 
+    paste0("r", c(hurd_waves, rand_waves), "adla"), 
+    paste0("r", rand_waves, "iadla"), 
     paste0("r", c(hurd_waves, rand_waves), "iadlza"),
     paste0("r", rand_waves, "bmi"), paste0("r", rand_waves, "proxy"))
 
@@ -112,11 +113,11 @@ HRS %<>% filter(PAGE >= 70)
 HRS %<>% 
   mutate("PAGE_cat" = 
            cut(PAGE, breaks = c(min(HRS$PAGE), 75, 80, 85, 90, max(HRS$PAGE)), 
-                          include.lowest = TRUE, right = FALSE))
+               include.lowest = TRUE, right = FALSE))
 
 # #Sanity check
 # table(HRS$PAGE_cat, useNA = "ifany")
-           
+
 #---- **2016 couple status ----
 # table(HRS$PCOUPLE, useNA = "ifany")
 
@@ -256,6 +257,7 @@ HRS %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0),
 # table(HRS$r13bwc20, useNA = "ifany")
 
 #Hurd model: raw score
+HRS %<>% mutate("r12bwc20_raw" = r12bwc20)
 HRS %<>% mutate("r13bwc20_raw" = r13bwc20)
 
 #count corrects on second try as correct
@@ -317,8 +319,7 @@ HRS %<>% drop_na(all_of(health_vars))
 # colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
 
 #---- **summarize missingness on any cognitive assessment ----
-#There are 573 participants missing at least one cognitive assessment in HRS
-# and 570 missing total cognition... it's not worth recovering the 3 with hotdecking
+#There are 752 participants missing at least one cognitive assessment in HRS
 subset <- names(colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)])
 remove_vars <- c("r13drinkd", "r13pstmem", "memimp16", "RACE_label", 
                  "RACE_White", "RACE_Black", "RACE_Other", "drinks_per_week")
@@ -331,6 +332,55 @@ HRS %<>% drop_na(all_of(cog_vars))
 
 # #Sanity check
 # colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
+
+#---- Hurd analysis vars ----
+#---- **date summary ----
+for(wave in c(12, 13)){
+  HRS %<>% 
+    mutate(!!paste0("r", wave, "date_recall") := 
+             rowSums(across(!!paste0("r", wave, c("mo", "dy", "yr", "dw")))))
+}
+
+# #Sanity Check
+# head(HRS$r12dw + HRS$r12dy + HRS$r12yr + HRS$r12mo)
+# head(HRS$r12date_recall)
+# 
+# head(HRS$r13dw + HRS$r13dy + HRS$r13yr + HRS$r13mo)
+# head(HRS$r13date_recall)
+
+#---- **change scores ----
+change_score_vars <- c("adla", "iadlza", "date_recall", "bwc20_raw", "ser7", 
+                       "scis", "cact", "pres", "imrc", "dlrc")
+
+for (var in change_score_vars){
+  HRS %<>% mutate(!!paste0(var, "_change") := 
+                    !!sym(paste0("r13", var)) - !!sym(paste0("r12", var)))
+}
+
+# #Sanity check
+# table(HRS$r13adla - HRS$r12adla)
+# table(HRS$adla_change)
+# 
+# table(HRS$r13bwc20_raw - HRS$r12bwc20_raw)
+# table(HRS$bwc20_raw_change)
+
+#---- algorithms ----
+#---- **LKW ----
+#LWK sum score
+HRS %<>% 
+  mutate("LKW_sum_score" =  
+           rowSums(across(paste0("r13", c("imrc", "dlrc", "ser7", "bwc20_raw")))))
+
+# #Sanity check
+# table(HRS$r13imrc + HRS$r13dlrc + HRS$r13ser7 + HRS$r13bwc20_raw)
+# table(HRS$LKW_sum_score)
+
+#LWK classification
+HRS %<>% mutate("dem_LKW" = ifelse(LKW_sum_score <= 6, 1, 0))
+
+# #Sanity check
+# sum(HRS$LKW_sum_score <= 6)
+# table(HRS$dem_LKW)
 
 #---- rename columns ----
 variable_labels <- 
