@@ -3,7 +3,8 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "haven", "labelled", "magrittr", "tidyr")
+p_load("here", "tidyverse", "haven", "labelled", "magrittr", "tidyr", 
+       "fastDummies")
 
 #---- source scripts ----
 source(here("functions", "read_da_dct.R"))
@@ -118,6 +119,9 @@ HRS %<>%
 # #Sanity check
 # table(HRS$PAGE_cat, useNA = "ifany")
 
+#create dummy vars
+HRS %<>% dummy_cols(select_columns = "PAGE_cat", remove_first_dummy  = TRUE)
+
 #---- **2016 couple status ----
 # table(HRS$PCOUPLE, useNA = "ifany")
 
@@ -208,6 +212,9 @@ HRS %<>%
 # table(HRS$SCHLYRS)
 # sum(HRS$SCHLYRS > 12)
 # sum(HRS$SCHLYRS < 12)
+
+#create dummy vars
+HRS %<>% dummy_cols(select_columns = "edu_cat", remove_first_dummy  = TRUE)
 
 #---- **employment status ----
 #table(HRS$PJ005M1, useNA = "ifany")
@@ -381,6 +388,9 @@ HRS %<>% mutate("dem_LKW" = ifelse(LKW_sum_score <= 6, 1, 0))
 # #Sanity check
 # sum(HRS$LKW_sum_score <= 6)
 # table(HRS$dem_LKW)
+
+#---- **hurd ----
+
 
 #---- rename columns ----
 variable_labels <- 
