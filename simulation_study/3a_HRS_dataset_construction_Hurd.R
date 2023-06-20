@@ -93,6 +93,9 @@ val_labels(RAND) <- NULL
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
 
+#---- **Hurd coefficients ----
+hurd_betas <- read_csv(paste0(path_to_box, "data/hurd_coefficients.csv")) 
+
 #---- join data ----
 HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>% 
   left_join(., RAND, by = "HHIDPN")
@@ -390,6 +393,28 @@ HRS %<>% mutate("dem_LKW" = ifelse(LKW_sum_score <= 6, 1, 0))
 # table(HRS$dem_LKW)
 
 #---- **hurd ----
+#cutoff from Hurd MD, Martorell P, Delavande A, Mullen KJ, Langa KM. Monetary 
+# costs of dementia in the United States. N Engl J Med 2013;368:1326-34. 
+# DOI: 10.1056/NEJMsa1204629
+cut_1 <- -7.673
+  
+z <- cut_1 - as.matrix(HRS[, hurd_betas$variable]) %*% hurd_betas$hurd
+HRS %<>% mutate("p_dem_hurd" = pnorm(z, mean = 0, sd = 1, lower.tail = TRUE))
+
+# #Sanity check
+# sum(as.numeric(HRS[1, hurd_betas$variable])*hurd_betas$hurd)
+# head(as.matrix(HRS[, hurd_betas$variable]) %*% hurd_betas$hurd)
+
+#---- **modified hurd ----
+#cutoff from [insert citation]
+cut_1 <- 0.274
+
+z <- cut_1 - as.matrix(HRS[, hurd_betas$variable]) %*% hurd_betas$mod_hurd
+HRS %<>% mutate("p_dem_mod_hurd" = pnorm(z, mean = 0, sd = 1, lower.tail = TRUE))
+
+#Sanity check
+sum(as.numeric(HRS[1, hurd_betas$variable])*hurd_betas$hurd)
+head(as.matrix(HRS[, hurd_betas$variable]) %*% hurd_betas$hurd)
 
 
 #---- rename columns ----
