@@ -290,6 +290,26 @@ superpop_imputed %<>% mutate("dem_LKW" = ifelse(LKW_sum_score <= 6, 1, 0))
 # sum(HRS$LKW_sum_score <= 6)
 # table(HRS$dem_LKW)
 
+#---- **** estimates ----
+#overall dementia: 6.6%
+mean(superpop_imputed$dem_LKW)
+
+#LKW white risk: 0.04
+#LKW black risk: 0.141
+#LKW hispanic risk: 0.142
+lkw_risk <- superpop_imputed %>% group_by(White, black, hispanic) %>% 
+  summarize_at("dem_LKW", mean)
+
+#PR compared to white
+#LKW: 3.25
+LKW_PR_black <- as.numeric(lkw_risk[which(lkw_risk$black == 1), "dem_LKW"])/ 
+  as.numeric(lkw_risk[which(lkw_risk$White == 1), "dem_LKW"])
+
+#LKW: 3.27
+LKW_PR_hispanic <- as.numeric(lkw_risk[which(lkw_risk$hispanic == 1), "dem_LKW"])/ 
+  as.numeric(lkw_risk[which(lkw_risk$White == 1), "dem_LKW"])
+
+
 # #---- **hurd ----
 # #cutoff from Hurd MD, Martorell P, Delavande A, Mullen KJ, Langa KM. Monetary 
 # # costs of dementia in the United States. N Engl J Med 2013;368:1326-34. 
@@ -327,6 +347,27 @@ superpop_imputed %<>%
 # #Sanity check
 # sum(as.numeric(superpop_imputed[1, hurd_betas$variable])*hurd_betas$hurd)
 # head(as.matrix(superpop_imputed[, hurd_betas$variable]) %*% hurd_betas$hurd)
+
+#---- **** estimates ----
+#overall dementia: 19.3%
+mean(superpop_imputed$dem_mod_hurd)
+
+#LKW white risk: 0.183
+#LKW black risk: 0.230
+#LKW hispanic risk: 0.214
+mod_hurd_risk <- superpop_imputed %>% group_by(White, black, hispanic) %>% 
+  summarize_at("dem_mod_hurd", mean)
+
+#PR compared to white
+#mod hurd: 1.26
+mod_hurd_PR_black <- as.numeric(mod_hurd_risk[which(mod_hurd_risk$black == 1), 
+                                              "dem_mod_hurd"])/ 
+  as.numeric(mod_hurd_risk[which(mod_hurd_risk$White == 1), "dem_mod_hurd"])
+
+#LKW: 1.17
+mod_hurd_PR_hispanic <- as.numeric(mod_hurd_risk[which(mod_hurd_risk$hispanic == 1), 
+                                                 "dem_mod_hurd"])/ 
+  as.numeric(mod_hurd_risk[which(mod_hurd_risk$White == 1), "dem_mod_hurd"])
 
 #---- save data ----
 #---- **save superpop_imputed data ----
