@@ -39,12 +39,11 @@ selected_vars_mat <-
   read_csv(paste0(path_to_box, 
                   "data/variable_selection/model_coefficients.csv"))
 
-#---- source functions ----
-source(here::here("simulation_study", "functions", "hotdeck_function.R"))
-
-#---- source data ----
 #---- **Hurd coefficients ----
 hurd_betas <- read_csv(paste0(path_to_box, "data/hurd_coefficients.csv"))
+
+#---- source functions ----
+source(here::here("simulation_study", "functions", "hotdeck_function.R"))
 
 #---- draw synthetic superpopulation ----
 set.seed(20220905)
@@ -276,16 +275,16 @@ PR_hispanic <- hispanic_risk/white_risk
 #---- algorithms ----
 #---- **LKW ----
 #LWK sum score
-HRS %<>% 
+superpop_imputed %<>% 
   mutate("LKW_sum_score" =  
-           rowSums(across(paste0("r13", c("imrc", "dlrc", "ser7", "bwc20_raw")))))
+           rowSums(across(c("immrc", "delrc", "ser7", "r13bwc20_raw"))))
 
 # #Sanity check
 # table(HRS$r13imrc + HRS$r13dlrc + HRS$r13ser7 + HRS$r13bwc20_raw)
 # table(HRS$LKW_sum_score)
 
 #LWK classification
-HRS %<>% mutate("dem_LKW" = ifelse(LKW_sum_score <= 6, 1, 0))
+superpop_imputed %<>% mutate("dem_LKW" = ifelse(LKW_sum_score <= 6, 1, 0))
 
 # #Sanity check
 # sum(HRS$LKW_sum_score <= 6)
@@ -305,15 +304,29 @@ HRS %<>% mutate("dem_LKW" = ifelse(LKW_sum_score <= 6, 1, 0))
 # # head(as.matrix(HRS[, hurd_betas$variable]) %*% hurd_betas$hurd)
 
 #---- **modified hurd ----
-#cutoff from [insert citation]
+#cutoff from Gianattasio KZ, Ciarleglio A, Power MC. Development of Algorithmic 
+# Dementia Ascertainment for Racial/Ethnic Disparities Research in the US Health 
+# and Retirement Study. Epidemiology. 2020 Jan;31(1):126-133. 
+# doi: 10.1097/EDE.0000000000001101. PMID: 31567393; PMCID: PMC6888863.
+
 cut_1 <- 0.274
 
-z <- cut_1 - as.matrix(HRS[, hurd_betas$variable]) %*% hurd_betas$mod_hurd
-HRS %<>% mutate("p_dem_mod_hurd" = pnorm(z, mean = 0, sd = 1, lower.tail = TRUE))
+z <- cut_1 - 
+  as.matrix(superpop_imputed[, hurd_betas$variable]) %*% hurd_betas$mod_hurd
 
-#Sanity check
-sum(as.numeric(HRS[1, hurd_betas$variable])*hurd_betas$hurd)
-head(as.matrix(HRS[, hurd_betas$variable]) %*% hurd_betas$hurd)
+superpop_imputed %<>% 
+  mutate("p_dem_mod_hurd" = 
+           as.numeric(pnorm(z, mean = 0, sd = 1, lower.tail = TRUE)))
+
+superpop_imputed %<>% 
+  mutate("dem_mod_hurd" = case_when(White == 1 & p_dem_mod_hurd >= 0.19 ~ 1, 
+                                    black == 1 & p_dem_mod_hurd >= 0.25 ~ 1, 
+                                    hispanic == 1 & p_dem_mod_hurd >= 0.27 ~ 1, 
+                                    TRUE ~ 0))
+
+# #Sanity check
+# sum(as.numeric(superpop_imputed[1, hurd_betas$variable])*hurd_betas$hurd)
+# head(as.matrix(superpop_imputed[, hurd_betas$variable]) %*% hurd_betas$hurd)
 
 #---- save data ----
 #---- **save superpop_imputed data ----
