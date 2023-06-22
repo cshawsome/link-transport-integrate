@@ -352,9 +352,9 @@ superpop_imputed %<>%
 #overall dementia: 19.3%
 mean(superpop_imputed$dem_mod_hurd)
 
-#LKW white risk: 0.183
-#LKW black risk: 0.230
-#LKW hispanic risk: 0.214
+#mod hurd white risk: 0.183
+#mod hurd black risk: 0.230
+#mod hurd hispanic risk: 0.214
 mod_hurd_risk <- superpop_imputed %>% group_by(White, black, hispanic) %>% 
   summarize_at("dem_mod_hurd", mean)
 
@@ -364,7 +364,7 @@ mod_hurd_PR_black <- as.numeric(mod_hurd_risk[which(mod_hurd_risk$black == 1),
                                               "dem_mod_hurd"])/ 
   as.numeric(mod_hurd_risk[which(mod_hurd_risk$White == 1), "dem_mod_hurd"])
 
-#LKW: 1.17
+#mod hurd: 1.17
 mod_hurd_PR_hispanic <- as.numeric(mod_hurd_risk[which(mod_hurd_risk$hispanic == 1), 
                                                  "dem_mod_hurd"])/ 
   as.numeric(mod_hurd_risk[which(mod_hurd_risk$White == 1), "dem_mod_hurd"])
