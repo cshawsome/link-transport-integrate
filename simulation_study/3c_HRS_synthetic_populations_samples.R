@@ -41,6 +41,9 @@ selected_vars_mat <-
   read_csv(paste0(path_to_box, 
                   "data/variable_selection/model_coefficients.csv"))
 
+#---- **Hurd coefficients ----
+hurd_betas <- read_csv(paste0(path_to_box, "data/hurd_coefficients.csv"))
+
 #---- source functions ----
 source(here::here("simulation_study", "functions", "hotdeck_function.R"))
 
@@ -276,6 +279,104 @@ PR_black <- black_risk/white_risk
 #hotdeck: 1.25
 PR_hispanic <- hispanic_risk/white_risk
 
+#---- algorithms ----
+#---- **LKW ----
+#LWK sum score
+superpop_imputed %<>% 
+  mutate("LKW_sum_score" =  
+           rowSums(across(c("immrc", "delrc", "ser7", "r13bwc20_raw"))))
+
+# #Sanity check
+# table(HRS$r13imrc + HRS$r13dlrc + HRS$r13ser7 + HRS$r13bwc20_raw)
+# table(HRS$LKW_sum_score)
+
+#LWK classification
+superpop_imputed %<>% mutate("dem_LKW" = ifelse(LKW_sum_score <= 6, 1, 0))
+
+# #Sanity check
+# sum(HRS$LKW_sum_score <= 6)
+# table(HRS$dem_LKW)
+
+#---- **** estimates ----
+#overall dementia: 6.6%
+mean(superpop_imputed$dem_LKW)
+
+#LKW white risk: 0.04
+#LKW black risk: 0.141
+#LKW hispanic risk: 0.142
+lkw_risk <- superpop_imputed %>% group_by(White, black, hispanic) %>% 
+  summarize_at("dem_LKW", mean)
+
+#PR compared to white
+#LKW: 3.25
+LKW_PR_black <- as.numeric(lkw_risk[which(lkw_risk$black == 1), "dem_LKW"])/ 
+  as.numeric(lkw_risk[which(lkw_risk$White == 1), "dem_LKW"])
+
+#LKW: 3.27
+LKW_PR_hispanic <- as.numeric(lkw_risk[which(lkw_risk$hispanic == 1), "dem_LKW"])/ 
+  as.numeric(lkw_risk[which(lkw_risk$White == 1), "dem_LKW"])
+
+
+# #---- **hurd ----
+# #cutoff from Hurd MD, Martorell P, Delavande A, Mullen KJ, Langa KM. Monetary 
+# # costs of dementia in the United States. N Engl J Med 2013;368:1326-34. 
+# # DOI: 10.1056/NEJMsa1204629
+# cut_1 <- -7.673
+#   
+# z <- cut_1 - as.matrix(HRS[, hurd_betas$variable]) %*% hurd_betas$hurd
+# HRS %<>% mutate("p_dem_hurd" = pnorm(z, mean = 0, sd = 1, lower.tail = TRUE))
+# 
+# # #Sanity check
+# # sum(as.numeric(HRS[1, hurd_betas$variable])*hurd_betas$hurd)
+# # head(as.matrix(HRS[, hurd_betas$variable]) %*% hurd_betas$hurd)
+
+#---- **modified hurd ----
+#cutoff from Gianattasio KZ, Ciarleglio A, Power MC. Development of Algorithmic 
+# Dementia Ascertainment for Racial/Ethnic Disparities Research in the US Health 
+# and Retirement Study. Epidemiology. 2020 Jan;31(1):126-133. 
+# doi: 10.1097/EDE.0000000000001101. PMID: 31567393; PMCID: PMC6888863.
+
+cut_1 <- 0.274
+
+z <- cut_1 - 
+  as.matrix(superpop_imputed[, hurd_betas$variable]) %*% hurd_betas$mod_hurd
+
+superpop_imputed %<>% 
+  mutate("p_dem_mod_hurd" = 
+           as.numeric(pnorm(z, mean = 0, sd = 1, lower.tail = TRUE)))
+
+superpop_imputed %<>% 
+  mutate("dem_mod_hurd" = case_when(White == 1 & p_dem_mod_hurd >= 0.19 ~ 1, 
+                                    black == 1 & p_dem_mod_hurd >= 0.25 ~ 1, 
+                                    hispanic == 1 & p_dem_mod_hurd >= 0.27 ~ 1, 
+                                    TRUE ~ 0))
+
+# #Sanity check
+# sum(as.numeric(superpop_imputed[1, hurd_betas$variable])*hurd_betas$hurd)
+# head(as.matrix(superpop_imputed[, hurd_betas$variable]) %*% hurd_betas$hurd)
+
+#---- **** estimates ----
+#overall dementia: 19.3%
+mean(superpop_imputed$dem_mod_hurd)
+
+#mod hurd white risk: 0.183
+#mod hurd black risk: 0.230
+#mod hurd hispanic risk: 0.214
+mod_hurd_risk <- superpop_imputed %>% group_by(White, black, hispanic) %>% 
+  summarize_at("dem_mod_hurd", mean)
+
+#PR compared to white
+#mod hurd: 1.26
+mod_hurd_PR_black <- as.numeric(mod_hurd_risk[which(mod_hurd_risk$black == 1), 
+                                              "dem_mod_hurd"])/ 
+  as.numeric(mod_hurd_risk[which(mod_hurd_risk$White == 1), "dem_mod_hurd"])
+
+#mod hurd: 1.17
+mod_hurd_PR_hispanic <- as.numeric(mod_hurd_risk[which(mod_hurd_risk$hispanic == 1), 
+                                                 "dem_mod_hurd"])/ 
+  as.numeric(mod_hurd_risk[which(mod_hurd_risk$White == 1), "dem_mod_hurd"])
+
+#---- save data ----
 #---- **save superpop_imputed data ----
 write_csv(superpop_imputed, 
           paste0(path_to_box, "data/superpopulations/superpop_1000000.csv"))
