@@ -8,7 +8,8 @@ p_load("here", "tidyverse", "magrittr", "vroom", "locfit", "miceFast", "ggforce"
 options(scipen = 999)
 
 #---- read in data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+# path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+path_to_box <- "~/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **cell ID key ----
 cell_ID_key <- read_csv(paste0(path_to_box, "data/cell_ID_key.csv")) %>% 
@@ -35,6 +36,7 @@ HCAP <-
 # colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
 
 # JZ: I'm a little confused -- should I expect to see missingness in these variables? 
+# CS: the pool variables are to be imputed next
 
 #---- **ADAMS variable selection results ----
 selected_vars_mat <- 
@@ -177,6 +179,8 @@ superpop_imputed %<>%
 # table(superpop_imputed$num_classes)
 
 #---- **QC superpop_imputed ----
+# JZ: these summary estimates have changed (very slightly) since the superpopulation has? 
+
 #---- ****overall summaries ----
 #hotdeck: U: 37.3%, M: 16.4%, D: 26.0%, O: 20.4%
 colMeans(superpop_imputed[, c("Unimpaired", "MCI", "Dementia", "Other")])
@@ -290,12 +294,21 @@ superpop_imputed %<>%
 # table(HRS$r13imrc + HRS$r13dlrc + HRS$r13ser7 + HRS$r13bwc20_raw)
 # table(HRS$LKW_sum_score)
 
+# JZ: Can't run this sanity check; the HRS data loaded in this script
+# does not have r13imrc, r13dlrc, r13ser7
+# visual check:
+# superpop_imputed %>% 
+#   select(all_of(c("immrc", "delrc", "ser7", "r13bwc20_raw")), LKW_sum_score) %>% 
+#   View()
+
 #LWK classification
 superpop_imputed %<>% mutate("dem_LKW" = ifelse(LKW_sum_score <= 6, 1, 0))
 
 # #Sanity check
 # sum(HRS$LKW_sum_score <= 6)
 # table(HRS$dem_LKW)
+# sum(superpop_imputed$LKW_sum_score <= 6)
+# table(superpop_imputed$dem_LKW)
 
 #---- **** estimates ----
 #overall dementia: 6.6%
@@ -356,6 +369,9 @@ superpop_imputed %<>%
 # head(as.matrix(superpop_imputed[, hurd_betas$variable]) %*% hurd_betas$hurd)
 
 #---- **** estimates ----
+
+# JZ: these estimates seems to be very different from the Power (2020) paper?
+
 #overall dementia: 19.3%
 mean(superpop_imputed$dem_mod_hurd)
 

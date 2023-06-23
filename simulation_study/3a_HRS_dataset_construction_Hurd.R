@@ -97,6 +97,11 @@ variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv"))
 HRS <- left_join(HRS_tracker, HRS_core, by = "HHIDPN") %>% 
   left_join(., RAND, by = "HHIDPN")
 
+# code review check: 
+# why are there two subjects in HRS_core but not in HRS_tracker?
+HRS_core$HHIDPN[!HRS_core$HHIDPN %in% HRS_tracker$HHIDPN]
+
+
 #---- clean data ----
 #---- **HCAP selection ----
 # table(HRS$HCAP_SELECT, useNA = "ifany")
