@@ -283,7 +283,7 @@ superpop_imputed %<>%
 # table(HRS$r13imrc + HRS$r13dlrc + HRS$r13ser7 + HRS$r13bwc20_raw)
 # table(HRS$LKW_sum_score)
 
-#LWK classification
+#LKW classification
 superpop_imputed %<>% mutate("dem_LKW" = ifelse(LKW_sum_score <= 6, 1, 0))
 
 # #Sanity check
