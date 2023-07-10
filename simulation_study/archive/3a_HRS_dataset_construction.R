@@ -3,8 +3,7 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("here", "tidyverse", "haven", "labelled", "magrittr", "tidyr", 
-       "fastDummies")
+p_load("here", "tidyverse", "haven", "labelled", "magrittr", "tidyr")
 
 #---- source scripts ----
 source(here("functions", "read_da_dct.R"))
@@ -47,39 +46,27 @@ HRS_core <- read_da_dct(HRS_core_data_path, HRS_core_dict_path,
   mutate_at("HHIDPN", as.character)
 
 #---- **RAND variables ----
-hurd_waves <- 12
 rand_waves <- 13
 
 rand_variables <- 
   c("hhidpn",
     #Cognition (immediate word recall, delayed word recall, serial 7s, 
     # backwards count (20), object naming (scissors and cactus), 
-    # president naming, subjective cognitive decline, date recall (day, month, 
-    # year, day of the week))
+    # president naming, subjective cognitive decline)
     #Health and health behaviors (ever/never stroke, ever/never diabetes, 
     # ever/never CVD, ever/never hypertension, smokes now, 
-    # drinking days per week, number of drinks per day, adl, iadl, iadlz, bmi)
+    # drinking days per week, number of drinks per day, adl, iadl, bmi)
     #Proxy indicator-- this is always 1 when cognitive test items are missing
-    paste0("r", c(hurd_waves, rand_waves), "imrc"), 
-    paste0("r", c(hurd_waves, rand_waves), "dlrc"), 
-    paste0("r", c(hurd_waves, rand_waves), "ser7"), 
-    paste0("r", c(hurd_waves, rand_waves), "bwc20"), 
-    paste0("r", rand_waves, "cogtot"), 
-    paste0("r", c(hurd_waves, rand_waves), "cact"), 
-    paste0("r", c(hurd_waves, rand_waves), "scis"), 
-    paste0("r", c(hurd_waves, rand_waves), "pres"), 
+    paste0("r", c(rand_waves), "imrc"), paste0("r", c(rand_waves), "dlrc"), 
+    paste0("r", c(rand_waves), "ser7"), paste0("r", c(rand_waves), "bwc20"), 
+    paste0("r", rand_waves, "cogtot"), paste0("r", c(rand_waves), "cact"), 
+    paste0("r", c(rand_waves), "scis"), paste0("r", c(rand_waves), "pres"), 
     paste0("r", rand_waves, "pstmem"), 
-    paste0("r", c(hurd_waves, rand_waves), "dy"),
-    paste0("r", c(hurd_waves, rand_waves), "mo"),
-    paste0("r", c(hurd_waves, rand_waves), "yr"),
-    paste0("r", c(hurd_waves, rand_waves), "dw"),
     paste0("r", rand_waves, "stroke"), 
     paste0("r", rand_waves, "diabe"), paste0("r", rand_waves, "hearte"), 
     paste0("r", rand_waves, "hibpe"), paste0("r", rand_waves, "smoken"), 
     paste0("r", rand_waves, "drinkd"), paste0("r", rand_waves, "drinkn"), 
-    paste0("r", c(hurd_waves, rand_waves), "adla"), 
-    paste0("r", rand_waves, "iadla"), 
-    paste0("r", c(hurd_waves, rand_waves), "iadlza"),
+    paste0("r", rand_waves, "adla"), paste0("r", rand_waves, "iadla"), 
     paste0("r", rand_waves, "bmi"), paste0("r", rand_waves, "proxy"))
 
 RAND <- read_dta(paste0(path_to_box, "data/HRS/RAND_longitudinal/STATA/", 
@@ -114,18 +101,6 @@ HRS %<>% mutate_at(.vars = "HCAP_SELECT", function(x) ifelse(x == 2, 0, 1))
 
 #restrict to 70+ (N = 7337, dropped n = 13,574)
 HRS %<>% filter(PAGE >= 70)
-
-#Hurd model: create age categories
-HRS %<>% 
-  mutate("PAGE_cat" = 
-           cut(PAGE, breaks = c(min(HRS$PAGE), 75, 80, 85, 90, max(HRS$PAGE)), 
-               include.lowest = TRUE, right = FALSE))
-
-# #Sanity check
-# table(HRS$PAGE_cat, useNA = "ifany")
-
-#create dummy vars
-HRS %<>% dummy_cols(select_columns = "PAGE_cat", remove_first_dummy  = TRUE)
 
 #---- **2016 couple status ----
 # table(HRS$PCOUPLE, useNA = "ifany")
@@ -205,22 +180,6 @@ HRS %<>% mutate("SCHLYRS" = ifelse(SCHLYRS > 17, NA, SCHLYRS))
 #drop people missing education data (N = 7162, dropped n = 4)
 HRS %<>% drop_na(SCHLYRS)
 
-#education categories
-HRS %<>% 
-  mutate("edu_cat" = 
-           cut(SCHLYRS, breaks = c(min(HRS$SCHLYRS), 11, 12, max(HRS$SCHLYRS)), 
-               include.lowest = TRUE, right = TRUE, 
-               labels = c("LTHS", "HSGED", "GTHS")))
-
-# #Sanity Check
-# table(HRS$edu_cat)
-# table(HRS$SCHLYRS)
-# sum(HRS$SCHLYRS > 12)
-# sum(HRS$SCHLYRS < 12)
-
-#create dummy vars
-HRS %<>% dummy_cols(select_columns = "edu_cat", remove_first_dummy  = TRUE)
-
 #---- **employment status ----
 #table(HRS$PJ005M1, useNA = "ifany")
 HRS %<>% 
@@ -268,15 +227,8 @@ HRS %<>% mutate("subj_cog_better" = ifelse(r13pstmem == 1, 1, 0),
 #---- **backwards count 20 ----
 # table(HRS$r13bwc20, useNA = "ifany")
 
-#Hurd model: raw score
-HRS %<>% mutate("r12bwc20_raw" = r12bwc20)
-HRS %<>% mutate("r13bwc20_raw" = r13bwc20)
-
 #count corrects on second try as correct
 HRS %<>% mutate_at(.vars = "r13bwc20", function(x) ifelse(x >= 1, 1, 0))
-
-# #Sanity check
-# table(HRS$r13bwc20_raw)
 
 #---- **total cognition ----
 # table(HRS$r13cogtot, useNA = "ifany")
@@ -331,7 +283,8 @@ HRS %<>% drop_na(all_of(health_vars))
 # colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
 
 #---- **summarize missingness on any cognitive assessment ----
-#There are 752 participants missing at least one cognitive assessment in HRS
+#There are 573 participants missing at least one cognitive assessment in HRS
+# and 570 missing total cognition... it's not worth recovering the 3 with hotdecking
 subset <- names(colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)])
 remove_vars <- c("r13drinkd", "r13pstmem", "memimp16", "RACE_label", 
                  "RACE_White", "RACE_Black", "RACE_Other", "drinks_per_week")
@@ -344,37 +297,6 @@ HRS %<>% drop_na(all_of(cog_vars))
 
 # #Sanity check
 # colMeans(is.na(HRS))[which(colMeans(is.na(HRS)) > 0)]
-
-#---- Hurd analysis vars ----
-#---- **date summary ----
-for(wave in c(12, 13)){
-  HRS %<>% 
-    mutate(!!paste0("r", wave, "date_recall") := 
-             rowSums(across(!!paste0("r", wave, c("mo", "dy", "yr", "dw")))))
-}
-
-# #Sanity Check
-# head(HRS$r12dw + HRS$r12dy + HRS$r12yr + HRS$r12mo)
-# head(HRS$r12date_recall)
-# 
-# head(HRS$r13dw + HRS$r13dy + HRS$r13yr + HRS$r13mo)
-# head(HRS$r13date_recall)
-
-#---- **change scores ----
-change_score_vars <- c("adla", "iadlza", "date_recall", "bwc20_raw", "ser7", 
-                       "scis", "cact", "pres", "imrc", "dlrc")
-
-for (var in change_score_vars){
-  HRS %<>% mutate(!!paste0(var, "_change") := 
-                    !!sym(paste0("r13", var)) - !!sym(paste0("r12", var)))
-}
-
-# #Sanity check
-# table(HRS$r13adla - HRS$r12adla)
-# table(HRS$adla_change)
-# 
-# table(HRS$r13bwc20_raw - HRS$r12bwc20_raw)
-# table(HRS$bwc20_raw_change)
 
 #---- rename columns ----
 variable_labels <- 

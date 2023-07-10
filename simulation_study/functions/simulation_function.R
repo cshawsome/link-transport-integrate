@@ -33,6 +33,7 @@ simulation_function <-
     
     #---- pre-allocated results ----
     result_names <- 
+      #truth
       c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other",
         paste0(c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other"), 
                "_white"),
@@ -40,6 +41,8 @@ simulation_function <-
                "_black"),
         paste0(c("true_Unimpaired", "true_MCI", "true_Dementia", "true_Other"), 
                "_hispanic"),
+        
+        #BLMM estimates
         "mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other",
         paste0(c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other"), 
                "_white"), 
@@ -47,6 +50,8 @@ simulation_function <-
                "_black"), 
         paste0(c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other"), 
                "_hispanic"),
+        
+        #BLMM assessment metrics
         "bias_Unimpaired", "bias_MCI", "bias_Dementia", "bias_Other",
         paste0(c("bias_Unimpaired", "bias_MCI", "bias_Dementia", "bias_Other"), 
                "_white"), 
@@ -76,22 +81,44 @@ simulation_function <-
                  "Other_coverage"), "_black"),
         paste0(c("Unimpaired_coverage", "MCI_coverage", "Dementia_coverage", 
                  "Other_coverage"), "_hispanic"),
+        
+        #dem prev
         paste0("true_dem_prev_", c("white", "black", "hispanic")),
-        paste0("mean_dem_prev_", c("white", "black", "hispanic")),
-        paste0("LCI_dem_prev_", c("white", "black", "hispanic")),
-        paste0("UCI_dem_prev_", c("white", "black", "hispanic")),
-        paste0("dem_prev_coverage_", c("white", "black", "hispanic")),
+        levels(interaction("mean_dem_prev", c("white", "black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        levels(interaction("LCI_dem_prev", c("white", "black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        levels(interaction("UCI_dem_prev", c("white", "black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        levels(interaction("dem_prev_coverage", c("white", "black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        
+        #prevalence ratio
         paste0("true_PR_", c("black", "hispanic")),
-        paste0("mean_PR_", c("black", "hispanic")),
-        paste0("LCI_PR_", c("black", "hispanic")),
-        paste0("UCI_PR_", c("black", "hispanic")),
-        paste0("PR_coverage_", c("black", "hispanic")),
+        levels(interaction("mean_PR", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        levels(interaction("LCI_PR", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        levels(interaction("UCI_PR", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        levels(interaction("PR_coverage", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        
+        
+        #prevalence difference
         paste0("true_PD_", c("black", "hispanic")),
-        paste0("mean_PD_", c("black", "hispanic")),
-        paste0("LCI_PD_", c("black", "hispanic")),
-        paste0("UCI_PD_", c("black", "hispanic")),
-        paste0("PD_coverage_", c("black", "hispanic")),
+        levels(interaction("mean_PD", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        levels(interaction("LCI_PD", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        levels(interaction("UCI_PD", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        levels(interaction("PD_coverage", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        
         paste0("calibration_", c("white", "black", "hispanic")),
+        
+        #sim data
         "time", "seed", "dataset_name")
     
     results <- matrix(ncol = length(result_names), nrow = 1) %>% 
@@ -104,7 +131,7 @@ simulation_function <-
       as.character(unite(
         all_sim_scenarios[all_sim_scenarios$job == scenario_num, 
                           c("sample_size", "sample_text", "HCAP_prop", 
-                                      "calibration")], 
+                            "calibration")], 
         col = "name", sep = "_"))
     
     #---- start time ----
@@ -338,25 +365,57 @@ simulation_function <-
       nrow(superpop)
     
     #---- **mean dem prevs ----
-    results[, paste0("mean_dem_prev_", c("white", "black", "hispanic"))] <- 
+    results[, paste0("mean_dem_prev_", c("white", "black", "hispanic"), "_BLMM")] <- 
       colMeans(dem_estimates[, paste0(c("white", "black", "hispanic"), "_risk")])
     
     #---- **prev CI ----
-    results[, paste0("LCI_dem_prev_", c("white", "black", "hispanic"))] <- 
+    results[, paste0("LCI_dem_prev_", c("white", "black", "hispanic"), "_BLMM")] <- 
       apply(dem_estimates[, paste0(c("white", "black", "hispanic"), "_risk")], 2, 
             function(x) quantile(x, 0.025))
     
-    results[, paste0("UCI_dem_prev_", c("white", "black", "hispanic"))] <- 
+    results[, paste0("UCI_dem_prev_", c("white", "black", "hispanic"), "_BLMM")] <- 
       apply(dem_estimates[, paste0(c("white", "black", "hispanic"), "_risk")], 2, 
             function(x) quantile(x, 0.975))
     
+    #---- ***algorithms ----
+    for(algorithm in c("LKW", "hurd", "mod_hurd")){
+      for(race in c("White", "black", "hispanic")){
+        
+        subset <- synthetic_HRS %>% filter(!!sym(race) == 1) 
+        
+        test_results <- 
+          prop.test(subset %>% summarize_at(paste0("dem_", algorithm), sum) %>% 
+                      as.numeric(), nrow(subset), correct = FALSE)
+        
+        renamed_algorithm = case_when(algorithm == "hurd" ~ "Hurd", 
+                                      algorithm == "mod_hurd" ~ "ModHurd", 
+                                      TRUE ~ algorithm)
+        
+        results[, paste0("mean_dem_prev_", tolower(race), "_", 
+                         renamed_algorithm)] <- test_results$estimate
+        
+        results[, paste0("LCI_dem_prev_", tolower(race), "_", 
+                         renamed_algorithm)] <- test_results$conf.int[1]
+        
+        results[, paste0("UCI_dem_prev_", tolower(race), "_", 
+                         renamed_algorithm)] <- test_results$conf.int[2]
+      }
+    }
+    
     #---- **prev coverage ----
-    for(race in c("white", "black", "hispanic")){
-      results[, paste0("dem_prev_coverage_", race)] <- 
-        (results[, paste0("true_dem_prev_", race)] >= 
-           results[, paste0("LCI_dem_prev_", race)])*
-        (results[, paste0("true_dem_prev_", race)] <= 
-           results[, paste0("UCI_dem_prev_", race)])
+    for(algorithm in c("BLMM", "LKW", "hurd", "mod_hurd")){
+      for(race in c("white", "black", "hispanic")){
+        
+        renamed_algorithm = case_when(algorithm == "hurd" ~ "Hurd", 
+                                      algorithm == "mod_hurd" ~ "ModHurd", 
+                                      TRUE ~ algorithm)
+        
+        results[, paste0("dem_prev_coverage_", race, "_", renamed_algorithm)] <- 
+          (results[, paste0("true_dem_prev_", race)] >= 
+             results[, paste0("LCI_dem_prev_", race, "_", renamed_algorithm)])*
+          (results[, paste0("true_dem_prev_", race)] <= 
+             results[, paste0("UCI_dem_prev_", race, "_", renamed_algorithm)])
+      }
     }
     
     #---- **true PR ----
@@ -365,25 +424,76 @@ simulation_function <-
         results[, "true_dem_prev_hispanic"]/results[, "true_dem_prev_white"])
     
     #---- **mean PR ----
-    results[, paste0("mean_PR_", c("black", "hispanic"))] <- 
+    results[, paste0("mean_PR_", c("black", "hispanic"), "_BLMM")] <- 
       colMeans(dem_estimates[, paste0("PR_", c("black", "hispanic"))])
     
     #---- **PR CI ----
-    results[, paste0("LCI_PR_", c("black", "hispanic"))] <- 
+    results[, paste0("LCI_PR_", c("black", "hispanic"), "_BLMM")] <- 
       apply(dem_estimates[, paste0("PR_", c("black", "hispanic"))], 2, 
             function(x) quantile(x, 0.025))
     
-    results[, paste0("UCI_PR_", c("black", "hispanic"))] <- 
+    results[, paste0("UCI_PR_", c("black", "hispanic"), "_BLMM")] <- 
       apply(dem_estimates[, paste0("PR_", c("black", "hispanic"))], 2, 
             function(x) quantile(x, 0.975))
     
+    #---- ***algorithms ----
+    for(algorithm in c("LKW", "hurd", "mod_hurd")){
+      for(race in c("black", "hispanic")){
+        
+        renamed_algorithm = case_when(algorithm == "hurd" ~ "Hurd", 
+                                      algorithm == "mod_hurd" ~ "ModHurd", 
+                                      TRUE ~ algorithm)
+
+        pt_est <- 
+          as.numeric(results[, paste0("mean_dem_prev_", race, "_", 
+                                      renamed_algorithm)])/
+          as.numeric(results[, paste0("mean_dem_prev_white_", 
+                                      renamed_algorithm)])
+        
+        race_count <- synthetic_HRS %>% filter(!!sym(race) == 1) %>% nrow()
+        race_with_dem_count <- 
+          synthetic_HRS %>% filter(!!sym(race) == 1 & 
+                                     !!sym(paste0("dem_", algorithm)) == 1) %>% 
+          nrow()
+        
+        white_count <- synthetic_HRS %>% filter(White == 1) %>% nrow()
+        white_with_dem_count <- 
+          synthetic_HRS %>% filter(White == 1 & 
+                                     !!sym(paste0("dem_", algorithm)) == 1) %>% 
+          nrow()
+        
+        LCI <- exp(log(pt_est) - 
+                     1.96*sqrt((race_count - race_with_dem_count)/
+                                 (race_with_dem_count*race_count) + 
+                                 (white_count - white_with_dem_count)/
+                                 (white_with_dem_count*white_count)))
+        
+        UCI <- exp(log(pt_est) + 
+                     1.96*sqrt((race_count - race_with_dem_count)/
+                                 (race_with_dem_count*race_count) + 
+                                 (white_count - white_with_dem_count)/
+                                 (white_with_dem_count*white_count)))
+        
+        results[, paste0("mean_PR_", race, "_", renamed_algorithm)] <- pt_est
+        results[, paste0("LCI_PR_", race, "_", renamed_algorithm)] <- LCI
+        results[, paste0("UCI_PR_", race, "_", renamed_algorithm)] <- UCI
+      }
+    }
+    
     #---- **PR coverage ----
-    for(race in c("black", "hispanic")){
-      results[, paste0("PR_coverage_", race)] <- 
-        (results[, paste0("true_PR_", race)] >= 
-           results[, paste0("LCI_PR_", race)])*
-        (results[, paste0("true_PR_", race)] <= 
-           results[, paste0("UCI_PR_", race)])
+    for(algorithm in c("BLMM", "LKW", "hurd", "mod_hurd")){
+      for(race in c("black", "hispanic")){
+        
+        renamed_algorithm = case_when(algorithm == "hurd" ~ "Hurd", 
+                                      algorithm == "mod_hurd" ~ "ModHurd", 
+                                      TRUE ~ algorithm)
+        
+        results[, paste0("PR_coverage_", race, "_", renamed_algorithm)] <- 
+          (results[, paste0("true_PR_", race)] >= 
+             results[, paste0("LCI_PR_", race, "_", renamed_algorithm)])*
+          (results[, paste0("true_PR_", race)] <= 
+             results[, paste0("UCI_PR_", race, "_", renamed_algorithm)])
+      }
     }
     
     #---- **true PD ----
@@ -392,25 +502,76 @@ simulation_function <-
         results[, "true_dem_prev_hispanic"]-results[, "true_dem_prev_white"])
     
     #---- **mean PD ----
-    results[, paste0("mean_PD_", c("black", "hispanic"))] <- 
+    results[, paste0("mean_PD_", c("black", "hispanic"), "_BLMM")] <- 
       colMeans(dem_estimates[, paste0("PD_", c("black", "hispanic"))])
     
     #---- **PD CI ----
-    results[, paste0("LCI_PD_", c("black", "hispanic"))] <- 
+    results[, paste0("LCI_PD_", c("black", "hispanic"), "_BLMM")] <- 
       apply(dem_estimates[, paste0("PD_", c("black", "hispanic"))], 2, 
             function(x) quantile(x, 0.025))
     
-    results[, paste0("UCI_PD_", c("black", "hispanic"))] <- 
+    results[, paste0("UCI_PD_", c("black", "hispanic"), "_BLMM")] <- 
       apply(dem_estimates[, paste0("PD_", c("black", "hispanic"))], 2, 
             function(x) quantile(x, 0.975))
     
+    #---- ***algorithms ----
+    for(algorithm in c("LKW", "hurd", "mod_hurd")){
+      for(race in c("black", "hispanic")){
+        
+        renamed_algorithm = case_when(algorithm == "hurd" ~ "Hurd", 
+                                      algorithm == "mod_hurd" ~ "ModHurd", 
+                                      TRUE ~ algorithm)
+        
+        pt_est <- 
+          as.numeric(results[, paste0("mean_dem_prev_", race, "_", 
+                                      renamed_algorithm)]) - 
+          as.numeric(results[, paste0("mean_dem_prev_white_", 
+                                      renamed_algorithm)])
+        
+        race_count <- synthetic_HRS %>% filter(!!sym(race) == 1) %>% nrow()
+        race_with_dem_prop <- 
+          synthetic_HRS %>% filter(!!sym(race) == 1 & 
+                                     !!sym(paste0("dem_", algorithm)) == 1) %>% 
+          nrow()/race_count
+        
+        white_count <- synthetic_HRS %>% filter(White == 1) %>% nrow()
+        white_with_dem_prop <- 
+          synthetic_HRS %>% filter(White == 1 & 
+                                     !!sym(paste0("dem_", algorithm)) == 1) %>% 
+          nrow()/white_count
+        
+        LCI <- pt_est - 
+                     1.96*sqrt((race_with_dem_prop*(1 - race_with_dem_prop))/
+                                 race_count + 
+                                 (white_with_dem_prop*(1 - white_with_dem_prop))/
+                                 white_count)
+        
+        UCI <- pt_est + 
+          1.96*sqrt((race_with_dem_prop*(1 - race_with_dem_prop))/
+                      race_count + 
+                      (white_with_dem_prop*(1 - white_with_dem_prop))/
+                      white_count)
+        
+        results[, paste0("mean_PD_", race, "_", renamed_algorithm)] <- pt_est
+        results[, paste0("LCI_PD_", race, "_", renamed_algorithm)] <- LCI
+        results[, paste0("UCI_PD_", race, "_", renamed_algorithm)] <- UCI
+      }
+    }
+    
     #---- **PD coverage ----
-    for(race in c("black", "hispanic")){
-      results[, paste0("PD_coverage_", race)] <- 
-        (results[, paste0("true_PD_", race)] >= 
-           results[, paste0("LCI_PD_", race)])*
-        (results[, paste0("true_PD_", race)] <= 
-           results[, paste0("UCI_PD_", race)])
+    for(algorithm in c("BLMM", "LKW", "hurd", "mod_hurd")){
+      for(race in c("black", "hispanic")){
+        
+        renamed_algorithm = case_when(algorithm == "hurd" ~ "Hurd", 
+                                      algorithm == "mod_hurd" ~ "ModHurd", 
+                                      TRUE ~ algorithm)
+        
+        results[, paste0("PD_coverage_", race, "_", renamed_algorithm)] <- 
+          (results[, paste0("true_PD_", race)] >= 
+             results[, paste0("LCI_PD_", race, "_", renamed_algorithm)])*
+          (results[, paste0("true_PD_", race)] <= 
+             results[, paste0("UCI_PD_", race, "_", renamed_algorithm)])
+      }
     }
     
     #---- end time ----
@@ -433,78 +594,78 @@ simulation_function <-
     }
   }
 
-# #---- test function ----
-# library("tidyverse")
-# library("DirichletReg")
-# library("magrittr")
-# library("MCMCpack")
-# library("locfit")
-# library("vroom")
-# library("mvnfast")
-# library("mice")
-# library("LaplacesDemon")
-# 
-# path_to_RScripts <- here::here("simulation_study", "functions", "/")
-# source(here::here("functions", "read_results.R"))
-# source(paste0(path_to_RScripts, "generate_synthetic_function.R"))
-# source(paste0(path_to_RScripts, "standardized_dem_estimates.R"))
-# 
-# path_to_data <- paste0("/Users/crystalshaw/Library/CloudStorage/Box-Box/",
-#                        "Dissertation/data/")
-# superpop <-
-#   read_results(paste0(path_to_data, "superpopulations/superpop_1000000.csv"))
-# truth <- read_csv(paste0(path_to_data,
-#                          "superpopulations/agesex_standardized_prevs.csv"))
-# variable_labels <-
-#   read_csv(paste0(path_to_data, "variable_crosswalk.csv"))
-# cell_ID_key <- read_csv(paste0(path_to_data, "cell_ID_key.csv")) %>%
-#   mutate_at("cell_ID", as.character)
-# color_palette <- read_csv(paste0(path_to_data, "color_palette.csv"))
-# #all_sim_scenarios <- read_csv(paste0(path_to_data, "sim_study_scenarios.csv"))
-# all_sim_scenarios <- 
-#   read_csv(paste0(path_to_data, "sim_study_scenarios_missing_runs.csv"))
-# 
-# warm_up = 100
-# starting_props = rep(0.25, 4)
-# categorical_vars = W = c("black", "hispanic", "stroke")
-# continuous_vars = Z = colnames(superpop)[str_detect(colnames(superpop), "_Z")]
-# id_var = "HHIDPN"
-# scenario = scenario_num = 1 #ADAMS_prior, HRS sample size 2000, HCAP prop 25
-# path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
-# superpopulation <- superpop
-# orig_means = means <-
-#   read_csv(paste0(path_to_box, "data/superpopulations/superpop_means.csv"))
-# orig_sds = sds <-
-#   read_csv(paste0(path_to_box, "data/superpopulations/superpop_sds.csv"))
-# 
-# all_scenarios_list = all_sim_scenarios
-# 
-# num_synthetic = 1000
-# nu_0_mat <- read_csv(paste0(path_to_data, "tuning/nu_0_matrix.csv"))
-# kappa_0_mat <- read_csv(paste0(path_to_data, "tuning/kappa_0_matrix.csv"))
-# contrasts_matrix = A =
-#   read_csv(paste0(path_to_data, "contrasts_matrix.csv")) %>% as.matrix()
-# path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
-# seed = 1
-# 
-# set.seed(20220512)
-# 
-# replicate(2,
-#           simulation_function(warm_up = 100, starting_props = rep(0.25, 4),
-#                               categorical_vars = W, continuous_vars = Z,
-#                               id_var = "HHIDPN",
-#                               variable_labels = variable_labels,
-#                               scenario = scenario_num,
-#                               superpopulation = superpop, orig_means = means,
-#                               orig_sds = sds,
-#                               all_scenarios_list = all_sim_scenarios,
-#                               cell_ID_key = cell_ID_key,
-#                               color_palette = color_palette,
-#                               num_synthetic = 1000, contrasts_matrix = A,
-#                               kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
-#                               truth = truth, seed = seed,
-#                               path_to_data = path_to_data,
-#                               path_to_results =
-#                                 paste0(path_to_box,
-#                                        "analyses/simulation_study/results/", 
-#                                        "test_results/")))
+#---- test function ----
+library("tidyverse")
+library("DirichletReg")
+library("magrittr")
+library("MCMCpack")
+library("locfit")
+library("vroom")
+library("mvnfast")
+library("mice")
+library("LaplacesDemon")
+
+path_to_RScripts <- here::here("simulation_study", "functions", "/")
+source(here::here("functions", "read_results.R"))
+source(paste0(path_to_RScripts, "generate_synthetic_function.R"))
+source(paste0(path_to_RScripts, "standardized_dem_estimates.R"))
+
+path_to_data <- paste0("/Users/crystalshaw/Library/CloudStorage/Box-Box/",
+                       "Dissertation/data/")
+superpop <-
+  read_results(paste0(path_to_data, "superpopulations/superpop_1000000.csv"))
+truth <- read_csv(paste0(path_to_data,
+                         "superpopulations/agesex_standardized_prevs.csv"))
+variable_labels <-
+  read_csv(paste0(path_to_data, "variable_crosswalk.csv"))
+cell_ID_key <- read_csv(paste0(path_to_data, "cell_ID_key.csv")) %>%
+  mutate_at("cell_ID", as.character)
+color_palette <- read_csv(paste0(path_to_data, "color_palette.csv"))
+#all_sim_scenarios <- read_csv(paste0(path_to_data, "sim_study_scenarios.csv"))
+all_sim_scenarios <-
+  read_csv(paste0(path_to_data, "sim_study_scenarios_missing_runs.csv"))
+
+warm_up = 100
+starting_props = rep(0.25, 4)
+categorical_vars = W = c("black", "hispanic", "stroke")
+continuous_vars = Z = colnames(superpop)[str_detect(colnames(superpop), "_Z")]
+id_var = "HHIDPN"
+scenario = scenario_num = 1 #ADAMS_prior, HRS sample size 2000, HCAP prop 25
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+superpopulation <- superpop
+orig_means = means <-
+  read_csv(paste0(path_to_box, "data/superpopulations/superpop_means.csv"))
+orig_sds = sds <-
+  read_csv(paste0(path_to_box, "data/superpopulations/superpop_sds.csv"))
+
+all_scenarios_list = all_sim_scenarios
+
+num_synthetic = 1000
+nu_0_mat <- read_csv(paste0(path_to_data, "tuning/nu_0_matrix.csv"))
+kappa_0_mat <- read_csv(paste0(path_to_data, "tuning/kappa_0_matrix.csv"))
+contrasts_matrix = A =
+  read_csv(paste0(path_to_data, "contrasts_matrix.csv")) %>% as.matrix()
+path_to_results <- paste0(path_to_box, "analyses/simulation_study/results/")
+seed = 1
+
+set.seed(20220512)
+
+replicate(2,
+          simulation_function(warm_up = 100, starting_props = rep(0.25, 4),
+                              categorical_vars = W, continuous_vars = Z,
+                              id_var = "HHIDPN",
+                              variable_labels = variable_labels,
+                              scenario = scenario_num,
+                              superpopulation = superpop, orig_means = means,
+                              orig_sds = sds,
+                              all_scenarios_list = all_sim_scenarios,
+                              cell_ID_key = cell_ID_key,
+                              color_palette = color_palette,
+                              num_synthetic = 1000, contrasts_matrix = A,
+                              kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
+                              truth = truth, seed = seed,
+                              path_to_data = path_to_data,
+                              path_to_results =
+                                paste0(path_to_box,
+                                       "analyses/simulation_study/results/",
+                                       "test_results/")))

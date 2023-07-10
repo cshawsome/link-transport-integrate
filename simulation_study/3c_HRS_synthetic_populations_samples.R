@@ -32,7 +32,11 @@ HCAP <-
   read_csv(paste0(path_to_box, "data/HCAP/cleaned/HCAP_analytic_for_sim.csv")) %>% 
   rename("no_drinking" = "r13no_drinking")
 
+<<<<<<< HEAD
 # #Sanity check: there should be no missing data except pool variables
+=======
+# #Sanity check: should only be missing data in _pool vars
+>>>>>>> model_method
 # colMeans(is.na(HCAP))[which(colMeans(is.na(HCAP)) > 0)]
 
 # JZ: I'm a little confused -- should I expect to see missingness in these variables? 
@@ -182,17 +186,21 @@ superpop_imputed %<>%
 # JZ: these summary estimates have changed (very slightly) since the superpopulation has? 
 
 #---- ****overall summaries ----
-#hotdeck: U: 37.3%, M: 16.4%, D: 26.0%, O: 20.4%
+#hotdeck: U: 37.3%, M: 16.3%, D: 25.9%, O: 20.4%
 colMeans(superpop_imputed[, c("Unimpaired", "MCI", "Dementia", "Other")])
 
 #More dementia among women? 
-#hotdeck: Yes (M: 24.5%, W: 26.9%)
+#hotdeck: Yes (M: 24.5%, W: 26.8%)
 mean(superpop_imputed[superpop_imputed$female == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$female == 0, "Dementia"])
 
 #More dementia among racial/ethnic minorities?  
+<<<<<<< HEAD
 # hotdeck: Yes (w: 24.3%, b: 33.1%, h: 29.6%)
 # JZ: b should be 32.1%
+=======
+# hotdeck: Yes (w: 24.3%, b: 32.2%, h: 29.4%)
+>>>>>>> model_method
 mean(superpop_imputed[superpop_imputed$White == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$black == 1, "Dementia"])
 mean(superpop_imputed[superpop_imputed$hispanic == 1, "Dementia"])
@@ -209,7 +217,7 @@ exp(coefficients(glm(Dementia ~ edyrs, data = superpop_imputed,
 exp(coefficients(glm(Dementia ~ stroke, data = superpop_imputed, 
                      family = "poisson")))
 
-#Diabetes: no increased risk for yes vs. no (hotdeck: PR = 1.03)
+#Diabetes: no increased risk for yes vs. no (hotdeck: PR = 1.02)
 exp(coefficients(glm(Dementia ~ diabe, data = superpop_imputed, 
                      family = "poisson")))
 
@@ -270,17 +278,17 @@ for(race in c("white", "black", "hispanic")){
 #hotdeck: 0.241
 white_risk <- 
   sum(agesex_standardized$expected_white_dem_count)/nrow(superpop_imputed)
-#hotdeck: 0.331
+#hotdeck: 0.332
 black_risk <- 
   sum(agesex_standardized$expected_black_dem_count)/nrow(superpop_imputed)
-#hotdeck: 0.302
+#hotdeck: 0.300
 hispanic_risk <- 
   sum(agesex_standardized$expected_hispanic_dem_count)/nrow(superpop_imputed)
 
 #PR compared to white
-#hotdeck: 1.37
+#hotdeck: 1.38
 PR_black <- black_risk/white_risk
-#hotdeck: 1.25
+#hotdeck: 1.24
 PR_hispanic <- hispanic_risk/white_risk
 
 #---- algorithms ----
@@ -291,9 +299,11 @@ superpop_imputed %<>%
            rowSums(across(c("immrc", "delrc", "ser7", "r13bwc20_raw"))))
 
 # #Sanity check
-# table(HRS$r13imrc + HRS$r13dlrc + HRS$r13ser7 + HRS$r13bwc20_raw)
-# table(HRS$LKW_sum_score)
+# table(superpop_imputed$immrc + superpop_imputed$delrc + superpop_imputed$ser7 +
+#         superpop_imputed$r13bwc20_raw)
+# table(superpop_imputed$LKW_sum_score)
 
+<<<<<<< HEAD
 # JZ: Can't run this sanity check; the HRS data loaded in this script
 # does not have r13imrc, r13dlrc, r13ser7
 # visual check:
@@ -307,6 +317,12 @@ superpop_imputed %<>% mutate("dem_LKW" = ifelse(LKW_sum_score <= 6, 1, 0))
 # #Sanity check
 # sum(HRS$LKW_sum_score <= 6)
 # table(HRS$dem_LKW)
+=======
+#LKW classification
+superpop_imputed %<>% mutate("dem_LKW" = ifelse(LKW_sum_score <= 6, 1, 0))
+
+# #Sanity check
+>>>>>>> model_method
 # sum(superpop_imputed$LKW_sum_score <= 6)
 # table(superpop_imputed$dem_LKW)
 
@@ -329,25 +345,13 @@ LKW_PR_black <- as.numeric(lkw_risk[which(lkw_risk$black == 1), "dem_LKW"])/
 LKW_PR_hispanic <- as.numeric(lkw_risk[which(lkw_risk$hispanic == 1), "dem_LKW"])/ 
   as.numeric(lkw_risk[which(lkw_risk$White == 1), "dem_LKW"])
 
-
-# #---- **hurd ----
-# #cutoff from Hurd MD, Martorell P, Delavande A, Mullen KJ, Langa KM. Monetary 
-# # costs of dementia in the United States. N Engl J Med 2013;368:1326-34. 
-# # DOI: 10.1056/NEJMsa1204629
-# cut_1 <- -7.673
-#   
-# z <- cut_1 - as.matrix(HRS[, hurd_betas$variable]) %*% hurd_betas$hurd
-# HRS %<>% mutate("p_dem_hurd" = pnorm(z, mean = 0, sd = 1, lower.tail = TRUE))
-# 
-# # #Sanity check
-# # sum(as.numeric(HRS[1, hurd_betas$variable])*hurd_betas$hurd)
-# # head(as.matrix(HRS[, hurd_betas$variable]) %*% hurd_betas$hurd)
-
-#---- **modified hurd ----
+#---- **hurd + modified hurd ----
 #cutoff from Gianattasio KZ, Ciarleglio A, Power MC. Development of Algorithmic 
 # Dementia Ascertainment for Racial/Ethnic Disparities Research in the US Health 
 # and Retirement Study. Epidemiology. 2020 Jan;31(1):126-133. 
 # doi: 10.1097/EDE.0000000000001101. PMID: 31567393; PMCID: PMC6888863.
+
+# hurd cutoffs not provided in original Hurd paper
 
 cut_1 <- 0.274
 
@@ -355,13 +359,14 @@ z <- cut_1 -
   as.matrix(superpop_imputed[, hurd_betas$variable]) %*% hurd_betas$mod_hurd
 
 superpop_imputed %<>% 
-  mutate("p_dem_mod_hurd" = 
+  mutate("p_dem_hurd" = 
            as.numeric(pnorm(z, mean = 0, sd = 1, lower.tail = TRUE)))
 
 superpop_imputed %<>% 
-  mutate("dem_mod_hurd" = case_when(White == 1 & p_dem_mod_hurd >= 0.19 ~ 1, 
-                                    black == 1 & p_dem_mod_hurd >= 0.25 ~ 1, 
-                                    hispanic == 1 & p_dem_mod_hurd >= 0.27 ~ 1, 
+  mutate("dem_hurd" = ifelse(p_dem_hurd >= 0.5, 1, 0)) %>%
+  mutate("dem_mod_hurd" = case_when(White == 1 & p_dem_hurd >= 0.19 ~ 1, 
+                                    black == 1 & p_dem_hurd >= 0.25 ~ 1, 
+                                    hispanic == 1 & p_dem_hurd >= 0.27 ~ 1, 
                                     TRUE ~ 0))
 
 # #Sanity check
@@ -369,25 +374,45 @@ superpop_imputed %<>%
 # head(as.matrix(superpop_imputed[, hurd_betas$variable]) %*% hurd_betas$hurd)
 
 #---- **** estimates ----
+<<<<<<< HEAD
 
 # JZ: these estimates seems to be very different from the Power (2020) paper?
 
 #overall dementia: 19.3%
+=======
+#hurd overall dementia: 7.2%
+#mod hurd overall dementia: 19.3%
+mean(superpop_imputed$dem_hurd)
+>>>>>>> model_method
 mean(superpop_imputed$dem_mod_hurd)
+
+#hurd white risk: 0.063
+#hurd black risk: 0.100
+#hurd hispanic risk: 0.105
 
 #mod hurd white risk: 0.183
 #mod hurd black risk: 0.230
 #mod hurd hispanic risk: 0.214
+hurd_risk <- superpop_imputed %>% group_by(White, black, hispanic) %>% 
+  summarize_at("dem_hurd", mean)
 mod_hurd_risk <- superpop_imputed %>% group_by(White, black, hispanic) %>% 
   summarize_at("dem_mod_hurd", mean)
 
 #PR compared to white
+#hurd: 1.58
 #mod hurd: 1.26
+hurd_PR_black <- as.numeric(hurd_risk[which(hurd_risk$black == 1), 
+                                      "dem_hurd"])/ 
+  as.numeric(hurd_risk[which(hurd_risk$White == 1), "dem_hurd"])
 mod_hurd_PR_black <- as.numeric(mod_hurd_risk[which(mod_hurd_risk$black == 1), 
                                               "dem_mod_hurd"])/ 
   as.numeric(mod_hurd_risk[which(mod_hurd_risk$White == 1), "dem_mod_hurd"])
 
+#hurd: 1.67
 #mod hurd: 1.17
+hurd_PR_hispanic <- as.numeric(hurd_risk[which(hurd_risk$hispanic == 1), 
+                                         "dem_hurd"])/ 
+  as.numeric(hurd_risk[which(hurd_risk$White == 1), "dem_hurd"])
 mod_hurd_PR_hispanic <- as.numeric(mod_hurd_risk[which(mod_hurd_risk$hispanic == 1), 
                                                  "dem_mod_hurd"])/ 
   as.numeric(mod_hurd_risk[which(mod_hurd_risk$White == 1), "dem_mod_hurd"])
