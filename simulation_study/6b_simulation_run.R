@@ -53,7 +53,7 @@ path_to_data <- "/u/home/c/cshaw343/link_transport_integrate/data/"
 
 #---- **data paths ----
 superpop <-
-  read_results(paste0(path_to_data, "superpopulations/superpop_1000000.csv"))
+  read_csv(paste0(path_to_data, "superpopulations/superpop_1000000.csv"))
 
 #---- **truth table ----
 truth <- read_csv(paste0(path_to_data,
