@@ -84,37 +84,41 @@ simulation_function <-
         
         #dem prev
         paste0("true_dem_prev_", c("white", "black", "hispanic")),
-        levels(interaction("mean_dem_prev", c("white", "black", "hispanic"), 
-                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
-        levels(interaction("LCI_dem_prev", c("white", "black", "hispanic"), 
-                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
-        levels(interaction("UCI_dem_prev", c("white", "black", "hispanic"), 
-                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
-        levels(interaction("dem_prev_coverage", c("white", "black", "hispanic"), 
-                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        suppressWarnings(levels(interaction("mean_dem_prev", 
+                                            c("white", "black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_"))),
+        suppressWarnings(levels(interaction("LCI_dem_prev", 
+                                            c("white", "black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_"))),
+        suppressWarnings(levels(interaction("UCI_dem_prev", 
+                                            c("white", "black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_"))),
+        suppressWarnings(levels(interaction("dem_prev_coverage", 
+                                            c("white", "black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_"))),
         
         #prevalence ratio
         paste0("true_PR_", c("black", "hispanic")),
-        levels(interaction("mean_PR", c("black", "hispanic"), 
-                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
-        levels(interaction("LCI_PR", c("black", "hispanic"), 
-                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
-        levels(interaction("UCI_PR", c("black", "hispanic"), 
-                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
-        levels(interaction("PR_coverage", c("black", "hispanic"), 
-                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        suppressWarnings(levels(interaction("mean_PR", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_"))),
+        suppressWarnings(levels(interaction("LCI_PR", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_"))),
+        suppressWarnings(levels(interaction("UCI_PR", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_"))),
+        suppressWarnings(levels(interaction("PR_coverage", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_"))),
         
         
         #prevalence difference
         paste0("true_PD_", c("black", "hispanic")),
-        levels(interaction("mean_PD", c("black", "hispanic"), 
-                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
-        levels(interaction("LCI_PD", c("black", "hispanic"), 
-                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
-        levels(interaction("UCI_PD", c("black", "hispanic"), 
-                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
-        levels(interaction("PD_coverage", c("black", "hispanic"), 
-                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_")),
+        suppressWarnings(levels(interaction("mean_PD", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_"))),
+        suppressWarnings(levels(interaction("LCI_PD", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_"))),
+        suppressWarnings(levels(interaction("UCI_PD", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_"))),
+        suppressWarnings(levels(interaction("PD_coverage", c("black", "hispanic"), 
+                           c("BLMM", "LKW", "Hurd", "ModHurd"), sep = "_"))),
         
         paste0("calibration_", c("white", "black", "hispanic")),
         
@@ -621,16 +625,16 @@ variable_labels <-
 cell_ID_key <- read_csv(paste0(path_to_data, "cell_ID_key.csv")) %>%
   mutate_at("cell_ID", as.character)
 color_palette <- read_csv(paste0(path_to_data, "color_palette.csv"))
-#all_sim_scenarios <- read_csv(paste0(path_to_data, "sim_study_scenarios.csv"))
-all_sim_scenarios <-
-  read_csv(paste0(path_to_data, "sim_study_scenarios_missing_runs.csv"))
+all_sim_scenarios <- read_csv(paste0(path_to_data, "sim_study_scenarios.csv"))
+# all_sim_scenarios <-
+#   read_csv(paste0(path_to_data, "sim_study_scenarios_missing_runs.csv"))
 
 warm_up = 100
 starting_props = rep(0.25, 4)
 categorical_vars = W = c("black", "hispanic", "stroke")
 continuous_vars = Z = colnames(superpop)[str_detect(colnames(superpop), "_Z")]
 id_var = "HHIDPN"
-scenario = scenario_num = 1 #ADAMS_prior, HRS sample size 2000, HCAP prop 25
+scenario = scenario_num = 1 #ADAMS_prior, HRS sample size 2000, HCAP prop 50
 path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
 superpopulation <- superpop
 orig_means = means <-
@@ -650,8 +654,8 @@ seed = 1
 
 set.seed(20220512)
 
-replicate(2,
-          simulation_function(warm_up = 100, starting_props = rep(0.25, 4),
+replicate(1,
+          simulation_function(warm_up = 10, starting_props = rep(0.25, 4),
                               categorical_vars = W, continuous_vars = Z,
                               id_var = "HHIDPN",
                               variable_labels = variable_labels,
@@ -661,7 +665,7 @@ replicate(2,
                               all_scenarios_list = all_sim_scenarios,
                               cell_ID_key = cell_ID_key,
                               color_palette = color_palette,
-                              num_synthetic = 1000, contrasts_matrix = A,
+                              num_synthetic = 100, contrasts_matrix = A,
                               kappa_0_mat = kappa_0_mat, nu_0_mat = nu_0_mat,
                               truth = truth, seed = seed,
                               path_to_data = path_to_data,
