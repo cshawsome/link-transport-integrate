@@ -103,8 +103,8 @@ plot_data <- results %>%
   group_by(HRS_sample_size) %>% 
   summarise_at(colnames, mean) %>% 
   pivot_longer(all_of(colnames),
-    names_to = c(".value", "Race"), 
-    names_pattern = "(.*?)_(.*)") %>% 
+               names_to = c(".value", "Race"), 
+               names_pattern = "(.*?)_(.*)") %>% 
   mutate_at("Race", function(x) str_remove(x, "dem_prev_")) %>% 
   separate(Race, into = c("Race", "Algorithm"), sep = "_") %>%
   mutate_at("Race", str_to_sentence) %>%
@@ -133,31 +133,40 @@ ggsave(filename = paste0(path_to_box,
 
 #---- Figure XX: 95% CI coverage dementia prevalence ----
 #---- **plot data ----
+#columns to select
+colnames <- expand_grid(c("dem_prev_coverage"), 
+                        c("white", "black", "hispanic"), 
+                        c("BLMM", "LKW", "Hurd", "ModHurd")) %>% 
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
 plot_data <- results %>% 
   group_by(HRS_sample_size, HCAP_sample_size) %>% 
-  summarise_at(paste0("dem_prev_coverage_", c("white", "black", "hispanic")), 
-               mean) %>% 
-  pivot_longer(paste0("dem_prev_coverage_", c("white", "black", "hispanic")),
-               names_to = c(".value", "Race"), 
+  summarise_at(colnames, mean) %>% 
+  pivot_longer(all_of(colnames), names_to = c(".value", "Race"), 
                names_pattern = "(.*?)_(.*)") %>%
   mutate_at("Race", function(x) str_remove(x, "prev_coverage_")) %>% 
+  separate(Race, into = c("Race", "Algorithm"), sep = "_") %>%
   mutate_at("Race", str_to_sentence) %>%
   mutate_at("Race", function(x) 
     factor(x, levels = c("White", "Black", "Hispanic"))) %>%
+  mutate_at("Algorithm", function(x) 
+    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW"))) %>%
   mutate_at("HRS_sample_size", as.factor) %>% 
   mutate("coverage_percent" = dem*100)
 
 #---- **plot ----
 ggplot(data = plot_data, 
-       aes(x = HRS_sample_size, y = coverage_percent, group = Race)) + 
+       aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
+           color = Algorithm, shape = Algorithm)) + 
   geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Race)) +
   geom_hline(yintercept = 95, lty = "dashed") +
-  scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) + 
-  scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
+  # scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) +
+  # scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 1.75)) +
   theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
   theme(text = element_text(size = 24))      
 
-ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+ggsave(filename = paste0(path_to_box, 
+                         "papers/paper2_model_comparison_ADAMS_prior/figures/", 
                          "figureXX_dem_prev_coverage.jpeg"), 
        dpi = 300, width = 13.5, height = 4, units = "in") 
 
