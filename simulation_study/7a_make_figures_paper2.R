@@ -170,58 +170,12 @@ ggsave(filename = paste0(path_to_box,
                          "figureXX_dem_prev_coverage.jpeg"), 
        dpi = 300, width = 13.5, height = 4, units = "in") 
 
-#---- Appendix Figure XX: bias dementia prevalence ----
-#---- **plot data ----
-cols_by_race <- expand_grid(c("mean", "true"), 
-                            c("dem_prev"), 
-                            c("white", "black", "hispanic")) %>% 
-  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
-
-plot_data <- results %>% ungroup() %>%
-  dplyr::select("HRS_sample_size", "HCAP_sample_size",  all_of(cols_by_race)) %>%
-  pivot_longer(all_of(cols_by_race),
-               names_to = c(".value", "measure1", "measure2", "race"), 
-               names_sep = "_") %>% 
-  mutate("error" = mean - true) %>%
-  mutate("squared_error" = error^2) %>%
-  mutate_at("HRS_sample_size", as.factor) %>%
-  mutate_at("race", function(x) str_to_sentence(x)) %>%
-  mutate_at("race", function(x) 
-    factor(x, levels = c("White", "Black", "Hispanic"))) %>%
-  group_by(HRS_sample_size, race) %>% 
-  summarize_at(c("error", "squared_error"), mean) %>% 
-  rename(c("bias" = "error")) %>% 
-  mutate("RMSE" = sqrt(squared_error)) 
-
-#---- **plot ----
-ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = race)) + 
-  geom_line() + geom_point(size = 3) + 
-  geom_hline(yintercept = 0, lty = "dashed") +
-  theme_bw() + ylab("Bias") + xlab("HRS Sample Size") +
-  facet_grid(cols = vars(race)) +
-  theme(text = element_text(size = 24))      
-
-ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
-                         "appendix_figureXX_dem_prev_bias.jpeg"), 
-       dpi = 300, width = 13.5, height = 4, units = "in")
-
-#---- Appendix Figure XX: RMSE dementia prevalence no HCAP adjudication ----
-ggplot(data = plot_data, aes(x = HRS_sample_size, y = RMSE, group = race)) + 
-  geom_line() + geom_point(size = 3) + 
-  theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") +
-  facet_grid(cols = vars(race)) + ylim(0, 0.08) +
-  theme(text = element_text(size = 24))      
-
-ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
-                         "appendix_figureXX_dem_prev_rmse.jpeg"), 
-       dpi = 300, width = 13.5, height = 4, units = "in") 
-
 #---- Figure XXa-b: PR + PD dementia ----
 #---- **plot data ----
 truth <- 
   data.frame("Comparison" = c("Black vs. White", "Hispanic vs. White"), 
-             "PR" = c(na.omit(unique(results$true_dem_prev_black)/
-                                unique(results$true_dem_prev_white)), 
+             "PR" = c(na.omit(round(unique(results$true_dem_prev_black)/
+                                unique(results$true_dem_prev_white), 2)), 
                       na.omit(unique(results$true_dem_prev_hispanic)/
                                 unique(results$true_dem_prev_white))), 
              "PD" = c(na.omit(unique(results$true_dem_prev_black)-
@@ -235,19 +189,18 @@ truth <-
   pivot_longer(c("PR", "PD"), names_to = "measure") %>% 
   mutate("null" = ifelse(measure == "PR", 1, 0))
 
+#columns to select
+colnames <- expand_grid(c("mean", "LCI", "UCI"), 
+                        c("PR", "PD"), 
+                        c("black", "hispanic"), 
+                        c("BLMM", "LKW", "Hurd", "ModHurd")) %>% 
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
 plot_data <- results %>% 
   group_by(HRS_sample_size, HCAP_sample_size) %>% 
-  summarise_at(
-    c("mean_PR_black", "mean_PR_hispanic", "LCI_PR_black", "LCI_PR_hispanic", 
-      "UCI_PR_black", "UCI_PR_hispanic", 
-      "mean_PD_black", "mean_PD_hispanic", "LCI_PD_black", "LCI_PD_hispanic", 
-      "UCI_PD_black", "UCI_PD_hispanic"), mean) %>% 
-  pivot_longer(
-    c("mean_PR_black", "mean_PR_hispanic", "LCI_PR_black", "LCI_PR_hispanic", 
-      "UCI_PR_black", "UCI_PR_hispanic", 
-      "mean_PD_black", "mean_PD_hispanic", "LCI_PD_black", "LCI_PD_hispanic", 
-      "UCI_PD_black", "UCI_PD_hispanic"),
-    names_to = c(".value", "measure", "Race"), names_sep = "_") %>%
+  summarise_at(colnames, mean) %>% 
+  pivot_longer(all_of(colnames),
+    names_to = c(".value", "measure", "Race", "Algorithm"), names_sep = "_") %>%
   mutate("Comparison" = case_when(Race == "black" ~ "Black vs. White", 
                                   Race == "hispanic" ~ "Hispanic vs. White")) %>%
   mutate_at("HRS_sample_size", as.factor) %>% 
@@ -256,13 +209,14 @@ plot_data <- results %>%
 
 #---- **PR plot ----
 ggplot(data = plot_data %>% filter(measure == "PR"), 
-       aes(x = mean, y = HRS_sample_size)) + 
+       aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
   geom_vline(aes(xintercept = value), 
              data = truth %>% filter(measure == "PR")) +
   geom_vline(aes(xintercept = null), 
              data = truth %>% filter(measure == "PR"), lty = "dashed") +
-  geom_point(size = 3) + 
-  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1) +
+  geom_point(size = 3, position = position_dodge(-0.8)) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
+                position = position_dodge(-0.8)) +
   facet_grid(cols = vars(Comparison)) + theme_bw() +
   xlab("Prevalence Ratio (PR)") + ylab("HRS sample size") + 
   theme(text = element_text(size = 24))  
@@ -332,6 +286,53 @@ ggplot(data = plot_data %>% filter(measure == "PD"),
 ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
                          "figureXXb_PD_coverage.jpeg"), 
        dpi = 300, width = 13.25, height = 4, units = "in")
+
+#---- Appendix Figure XX: bias dementia prevalence ----
+#---- **plot data ----
+cols_by_race <- expand_grid(c("mean", "true"), 
+                            c("dem_prev"), 
+                            c("white", "black", "hispanic"), 
+                            c("BLMM", "ModHurd", "Hurd", "LKW")) %>% 
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+plot_data <- results %>% ungroup() %>%
+  dplyr::select("HRS_sample_size", "HCAP_sample_size",  all_of(cols_by_race)) %>%
+  pivot_longer(all_of(cols_by_race),
+               names_to = c(".value", "measure1", "measure2", "race"), 
+               names_sep = "_") %>% 
+  mutate("error" = mean - true) %>%
+  mutate("squared_error" = error^2) %>%
+  mutate_at("HRS_sample_size", as.factor) %>%
+  mutate_at("race", function(x) str_to_sentence(x)) %>%
+  mutate_at("race", function(x) 
+    factor(x, levels = c("White", "Black", "Hispanic"))) %>%
+  group_by(HRS_sample_size, race) %>% 
+  summarize_at(c("error", "squared_error"), mean) %>% 
+  rename(c("bias" = "error")) %>% 
+  mutate("RMSE" = sqrt(squared_error)) 
+
+#---- **plot ----
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = race)) + 
+  geom_line() + geom_point(size = 3) + 
+  geom_hline(yintercept = 0, lty = "dashed") +
+  theme_bw() + ylab("Bias") + xlab("HRS Sample Size") +
+  facet_grid(cols = vars(race)) +
+  theme(text = element_text(size = 24))      
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "appendix_figureXX_dem_prev_bias.jpeg"), 
+       dpi = 300, width = 13.5, height = 4, units = "in")
+
+#---- Appendix Figure XX: RMSE dementia prevalence no HCAP adjudication ----
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = RMSE, group = race)) + 
+  geom_line() + geom_point(size = 3) + 
+  theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") +
+  facet_grid(cols = vars(race)) + ylim(0, 0.08) +
+  theme(text = element_text(size = 24))      
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "appendix_figureXX_dem_prev_rmse.jpeg"), 
+       dpi = 300, width = 13.5, height = 4, units = "in") 
 
 #---- Appendix Figure XX: PR + PD bias ----
 #---- **plot data ----
