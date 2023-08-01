@@ -1,0 +1,865 @@
+#---- Package loading + options ----
+if (!require("pacman")){
+  install.packages("pacman", repos='http://cran.us.r-project.org')
+}
+
+p_load("tidyverse", "magrittr", "wesanderson", "here", "ggbreak")
+#see if I actually need these
+#devtools
+#meta
+#install_github("thomasp85/patchwork")
+
+#---- source functions ----
+source(here::here("functions", "read_results.R"))
+
+#---- **read in data ----
+path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+
+#---- ****results ----
+results_paths <- 
+  list.files(path = paste0(path_to_box, "analyses/simulation_study/results"), 
+             full.names = TRUE, pattern = "*.csv")
+
+results <- do.call(rbind, lapply(results_paths, read_results)) %>% 
+  group_by(dataset_name) %>% slice_head(n = 1000) %>% 
+  mutate("HRS_sample_size" = sample_size) %>% 
+  mutate("HCAP_sample_size" = HCAP_prop/100*HRS_sample_size) %>% 
+  dplyr::select(-one_of("sample_size")) %>% 
+  filter(calibration == "ADAMS_prior" & HCAP_prop == 50)
+
+#---- ******check number of simulation runs ----
+#there should be 1000 runs of each scenario
+table(results$dataset_name, useNA = "ifany")
+
+#---- ****superpop ----
+superpop_impairment_props <- 
+  read_csv(paste0(path_to_box, 
+                  "data/superpopulations/impairment_class_props.csv"))
+
+superpop_impairment_props$Group <- 
+  factor(superpop_impairment_props$Group, 
+         levels = c("Unimpaired", "MCI", "Dementia", "Other"))
+
+#---- extra calcs ----
+# #---- **log PR measures ----
+# PR_cols <- 
+#   expand_grid(c("mean", "LCI", "UCI"), "PR",
+#               c("black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+# 
+# results %<>% 
+#   cbind(., results %>% ungroup() %>% dplyr::select(all_of(PR_cols)) %>% 
+#           mutate_all(.funs = log) %>% 
+#           set_colnames(str_replace(PR_cols, "_PR_", "_log_PR_")))
+# 
+# #---- **squared SEs ----
+# #on the count scale
+# for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+#   for(race in c("overall", "white", "black", "hispanic"))
+#     if(race == "overall"){
+#       results %<>%
+#         mutate(!!sym(paste0("SE_", class)) :=
+#                  (rowMeans(cbind(
+#                    abs(!!sym(paste0("mean_", class)) -
+#                          !!sym(paste0("LCI_", class))),
+#                    abs(!!sym(paste0("mean_", class)) -
+#                          !!sym(paste0("UCI_", class)))))/1.96)^2)
+#     } else{
+#       results %<>%
+#         mutate(!!sym(paste0("SE_", class, "_", race)) :=
+#                  (rowMeans(cbind(
+#                    abs(!!sym(paste0("mean_", class, "_", race)) -
+#                          !!sym(paste0("LCI_", class, "_", race))),
+#                    abs(!!sym(paste0("mean_", class, "_", race)) -
+#                          !!sym(paste0("UCI_", class, "_", race)))))/1.96)^2)
+#     }
+# }
+# 
+# for(measure in c("dem_prev", "log_PR")){
+#   for(race in c("white", "black", "hispanic")){
+#     if(measure == "log_PR" & race == "white"){next}
+#     
+#     results %<>%
+#       mutate(!!sym(paste0("SE_", measure, "_", race)) :=
+#                (rowMeans(cbind(
+#                  abs(!!sym(paste0("mean_", measure, "_", race)) -
+#                        !!sym(paste0("LCI_", measure, "_", race))),
+#                  abs(!!sym(paste0("mean_", measure, "_", race)) -
+#                        !!sym(paste0("UCI_", measure, "_", race)))))/1.96)^2)
+#   }
+# }
+# 
+# #---- format data ----
+# results %<>% 
+#   mutate("prior_sample" = 
+#            case_when(calibration_sampling == "NA" ~ "ADAMS", 
+#                      calibration_sampling == "SRS" & 
+#                        calibration == "calibration_50" & 
+#                        sampling_strata == "NA" ~ 
+#                        "HCAP 50% SRS Adjudication",
+#                      calibration_sampling == "SRS" & 
+#                        calibration == "calibration_50" & 
+#                        sampling_strata == "race" ~ 
+#                        "HCAP 50% Race-stratified SRS Adjudication",
+#                      calibration_sampling == "SRS" & 
+#                        calibration == "calibration_35" & 
+#                        sampling_strata == "NA" ~ 
+#                        "HCAP 35% SRS Adjudication", 
+#                      calibration_sampling == "SRS" & 
+#                        calibration == "calibration_35" & 
+#                        sampling_strata == "race" ~ 
+#                        "HCAP 35% Race-stratified SRS Adjudication", 
+#                      calibration_sampling == "SRS" & 
+#                        calibration == "calibration_20" & 
+#                        sampling_strata == "NA" ~ 
+#                        "HCAP 20% SRS Adjudication", 
+#                      calibration_sampling == "SRS" & 
+#                        calibration == "calibration_20" & 
+#                        sampling_strata == "race" ~ 
+#                        "HCAP 20% Race-stratified SRS Adjudication"))
+# 
+# #---- match ADAMS data ----
+# # like a cbind but making sure correct rows are matched
+# #create place-holder columns
+# overall_impairment_cols <- 
+#   expand_grid(c("mean", "LCI", "UCI"),
+#               c("Unimpaired", "MCI", "Dementia", "Other")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+# 
+# by_race_impairment_cols <- 
+#   expand_grid(c("mean", "LCI", "UCI"),
+#               c("Unimpaired", "MCI", "Dementia", "Other"),
+#               c("white", "black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+# 
+# dem_prev_cols <- 
+#   expand_grid(c("mean"), "dem_prev", c("white", "black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+# 
+# PR_cols <- 
+#   expand_grid(c("mean"), "log_PR", c("black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+# 
+# impairment_SE_cols <- 
+#   expand_grid(c("SE"),
+#               c("Unimpaired", "MCI", "Dementia", "Other")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+# 
+# impairment_SE_by_race_cols <- 
+#   expand_grid(c("SE"),
+#               c("Unimpaired", "MCI", "Dementia", "Other"),
+#               c("white", "black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
+# 
+# dem_prev_SE_cols <- 
+#   expand_grid(c("SE"), c("dem_prev"),
+#               c("white", "black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
+# 
+# PR_SE_cols <- 
+#   expand_grid(c("SE"), c("log_PR"),
+#               c("black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
+# 
+# pt_est_cols_cores <- c(overall_impairment_cols, by_race_impairment_cols, 
+#                        dem_prev_cols, PR_cols)
+# SE_cols_cores <- c(impairment_SE_cols, impairment_SE_by_race_cols, 
+#                    dem_prev_SE_cols, PR_SE_cols)
+# 
+# for(prior_group in unique(results$prior_sample)[-which(
+#   unique(results$prior_sample) == "ADAMS")]){
+#   for(HRS_n in unique(results$HRS_sample_size)){
+#     for(sample_prop in unique(results$HCAP_prop)){
+#       rows <-
+#         which(results$prior_sample == prior_group &
+#                 results$HRS_sample_size == HRS_n &
+#                 results$HCAP_prop == sample_prop)
+#       
+#       results[rows, c(paste0("ADAMS_", all_of(pt_est_cols_cores)), 
+#                       paste0("ADAMS_", all_of(SE_cols_cores)))] <- 
+#         results %>% filter(prior_sample == "ADAMS" & HRS_sample_size == HRS_n & 
+#                              HCAP_prop == sample_prop) %>%
+#         slice_head(n = length(rows)) %>% ungroup() %>%
+#         dplyr::select(c(all_of(pt_est_cols_cores), 
+#                         all_of(SE_cols_cores)))
+#     }
+#   }
+# }
+# 
+# #---- **combined estimates ----
+# combined_results <- results %>% filter(!prior_sample == "ADAMS")
+# 
+# #---- ****impairment classes ----
+# for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+#   for(race in c("overall", "white", "black", "hispanic")){
+#     if(race == "overall"){
+#       #---- ******mean estimates ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_mean_", class)) :=
+#                  rowMeans(cbind(!!sym(paste0("mean_", class)),
+#                                 !!sym(paste0("ADAMS_mean_", class)))))
+#       
+#       #---- ******within variance ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("within_var_", class)) :=
+#                  rowMeans(cbind(!!sym(paste0("SE_", class)),
+#                                 !!sym(paste0("ADAMS_SE_", class)))))
+#       
+#       #---- ******between variance ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("between_var_", class)) :=
+#                  apply(cbind(!!sym(paste0("mean_", class)),
+#                              !!sym(paste0("ADAMS_mean_", class))),
+#                        1, var))
+#       
+#       #---- ******LCIs ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_LCI_", class)) :=
+#                  !!sym(paste0("combined_mean_", class)) -
+#                  1.96*sqrt(!!sym(paste0("within_var_", class)) +
+#                              !!sym(paste0("between_var_", class)) +
+#                              !!sym(paste0("between_var_", class))/2))
+#       
+#       #---- ******UCIs ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_UCI_", class)) :=
+#                  !!sym(paste0("combined_mean_", class)) +
+#                  1.96*sqrt(!!sym(paste0("within_var_", class)) +
+#                              !!sym(paste0("between_var_", class)) +
+#                              !!sym(paste0("between_var_", class))/2))
+#       
+#       #---- ******coverage ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_", class, "_coverage")) :=
+#                  (!!sym(paste0("true_", class)) >=
+#                     !!sym(paste0("combined_LCI_", class)))*
+#                  (!!sym(paste0("true_", class)) <=
+#                     !!sym(paste0("combined_UCI_", class))))
+#     } else{
+#       #---- ******mean estimates ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_mean_", class, "_", race)) :=
+#                  rowMeans(cbind(
+#                    !!sym(paste0("mean_", class, "_", race)),
+#                    !!sym(paste0("ADAMS_mean_", class, "_", race)))))
+#       
+#       #---- ******within variance ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("within_var_", class, "_", race)) :=
+#                  rowMeans(cbind(!!sym(paste0("SE_", class, "_", race)),
+#                                 !!sym(paste0("ADAMS_SE_", class, "_", race)))))
+#       
+#       #---- ******between variance ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("between_var_", class, "_", race)) :=
+#                  apply(cbind(!!sym(paste0("mean_", class, "_", race)),
+#                              !!sym(paste0("ADAMS_mean_", class, "_", race))), 1,
+#                        var))
+#       
+#       #---- ******LCIs ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_LCI_", class, "_", race)) :=
+#                  !!sym(paste0("combined_mean_", class, "_", race)) -
+#                  1.96*sqrt(!!sym(paste0("within_var_", class, "_", race)) +
+#                              !!sym(paste0("between_var_", class, "_", race)) +
+#                              !!sym(paste0("between_var_", class, "_", race))/2))
+#       
+#       #---- ******UCIs ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_UCI_", class, "_", race)) :=
+#                  !!sym(paste0("combined_mean_", class, "_", race)) +
+#                  1.96*sqrt(!!sym(paste0("within_var_", class, "_", race)) +
+#                              !!sym(paste0("between_var_", class, "_", race)) +
+#                              !!sym(paste0("between_var_", class, "_", race))/2))
+#       
+#       #---- ******coverage ----
+#       combined_results %<>%
+#         mutate(!!sym(paste0("combined_", class, "_coverage", "_", race)) :=
+#                  (!!sym(paste0("true_", class, "_", race)) >=
+#                     !!sym(paste0("combined_LCI_", class, "_", race)))*
+#                  (!!sym(paste0("true_", class, "_", race)) <=
+#                     !!sym(paste0("combined_UCI_", class, "_", race))))
+#     }
+#   }
+# }
+# 
+# #---- ****dementia prevalence + PR ----
+# for(measure in c("dem_prev", "log_PR")){
+#   for(race in c("white", "black", "hispanic")){
+#     if(measure == "log_PR" & race == "white"){next}
+#     
+#     #---- ******mean estimates ----
+#     combined_results %<>%
+#       mutate(!!sym(paste0("combined_mean_", measure, "_", race)) :=
+#                rowMeans(cbind(
+#                  !!sym(paste0("mean_", measure, "_", race)),
+#                  !!sym(paste0("ADAMS_mean_", measure, "_", race)))))
+#     
+#     #---- ******within variance ----
+#     combined_results %<>%
+#       mutate(!!sym(paste0("within_var_", measure, "_", race)) :=
+#                rowMeans(cbind(!!sym(paste0("SE_", measure, "_", race)),
+#                               !!sym(paste0("ADAMS_SE_", measure, "_", race)))))
+#     
+#     #---- ******between variance ----
+#     combined_results %<>%
+#       mutate(!!sym(paste0("between_var_", measure, "_", race)) :=
+#                apply(cbind(!!sym(paste0("mean_", measure, "_", race)),
+#                            !!sym(paste0("ADAMS_mean_", measure, "_", race))), 1,
+#                      var))
+#     
+#     #---- ******LCIs ----
+#     combined_results %<>%
+#       mutate(!!sym(paste0("combined_LCI_", measure, "_", race)) :=
+#                !!sym(paste0("combined_mean_", measure, "_", race)) -
+#                1.96*sqrt(!!sym(paste0("within_var_", measure, "_", race)) +
+#                            !!sym(paste0("between_var_", measure, "_", race)) +
+#                            !!sym(paste0("between_var_", measure, "_", race))/2))
+#     
+#     #---- ******UCIs ----
+#     combined_results %<>%
+#       mutate(!!sym(paste0("combined_UCI_", measure, "_", race)) :=
+#                !!sym(paste0("combined_mean_", measure, "_", race)) +
+#                1.96*sqrt(!!sym(paste0("within_var_", measure, "_", race)) +
+#                            !!sym(paste0("between_var_", measure, "_", race)) +
+#                            !!sym(paste0("between_var_", measure, "_", race))/2))
+#   }
+# }
+# 
+# #---- ******convert back to PR ----
+# cols_to_convert <- 
+#   expand_grid(c("combined"), c("mean", "LCI", "UCI"), c("log_PR"),
+#               c("black", "hispanic")) %>%
+#   unite("names", everything(), sep = "_") %>% unlist() %>% unname() 
+# 
+# combined_results %<>% 
+#   cbind(., combined_results %>% ungroup() %>% 
+#           dplyr::select(all_of(cols_to_convert)) %>% mutate_all(.funs = exp) %>% 
+#           set_colnames(str_replace(cols_to_convert, "_log_PR_", "_PR_")))
+# 
+# #---- ******coverage ----
+# for(measure in c("dem_prev", "PR")){
+#   for(race in c("white", "black", "hispanic")){
+#     if(measure == "PR" & race == "white"){next}
+#     combined_results %<>%
+#       mutate(!!sym(paste0("combined_", measure, "_coverage", "_", race)) :=
+#                (!!sym(paste0("true_", measure, "_", race)) >=
+#                   !!sym(paste0("combined_LCI_", measure, "_", race)))*
+#                (!!sym(paste0("true_", measure, "_", race)) <=
+#                   !!sym(paste0("combined_UCI_", measure, "_", race))))
+#   }
+# }
+# 
+# #----- ****bind results ----
+# combined_results %<>% 
+#   mutate("prior_sample" = paste0(prior_sample, " + ADAMS")) %>% 
+#   dplyr::select(contains("combined"), contains("true"), "prior_sample", 
+#                 "dataset_name", "HCAP_prop", "HRS_sample_size", 
+#                 "HCAP_sample_size") 
+# 
+# combined_results %<>% 
+#   set_colnames(str_remove(colnames(combined_results), "combined_"))
+# 
+# results %<>% plyr::rbind.fill(., combined_results)
+
+#---- **proportions ----
+results %<>% 
+  mutate(true_Unimpaired_prop = 
+           as.numeric(superpop_impairment_props[
+             superpop_impairment_props$Group == "Unimpaired", "prop"]), 
+         true_MCI_prop = 
+           as.numeric(superpop_impairment_props[
+             superpop_impairment_props$Group == "MCI", "prop"]), 
+         true_Dementia_prop = 
+           as.numeric(superpop_impairment_props[
+             superpop_impairment_props$Group == "Dementia", "prop"]), 
+         true_Other_prop = 
+           as.numeric(superpop_impairment_props[
+             superpop_impairment_props$Group == "Other", "prop"]))
+
+#defining column names
+overall_impairment_cols <-
+  expand_grid(c("mean", "LCI", "UCI"),
+              c("Unimpaired", "MCI", "Dementia", "Other")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+by_race_impairment_cols <-
+  expand_grid(c("mean", "LCI", "UCI"),
+              c("Unimpaired", "MCI", "Dementia", "Other"),
+              c("white", "black", "hispanic")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+dem_prev_cols <-
+  expand_grid(c("mean"), "dem_prev", c("white", "black", "hispanic")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+PR_cols <-
+  expand_grid(c("mean"), "log_PR", c("black", "hispanic")) %>%
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+pt_est_cols_cores <- c(overall_impairment_cols, by_race_impairment_cols, 
+                       dem_prev_cols, PR_cols)
+
+#selecting correct columns
+calc_props <- 
+  pt_est_cols_cores[-c(which(str_detect(pt_est_cols_cores, "dem_prev")), 
+                       which(str_detect(pt_est_cols_cores, "log_PR")))]
+
+results[, paste0(calc_props, "_prop")] <- 
+  results[, calc_props]/results$HCAP_sample_size
+
+#---- Figure XX: mean and 95% CI impairment class proportions ----
+#---- **plot data ----
+plot_data <- results %>% group_by(HRS_sample_size) %>% 
+  summarise_at(paste0(
+    c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other", 
+      "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other", 
+      "UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other"), "_prop"), 
+    mean) %>% 
+  pivot_longer(paste0(
+    c("mean_Unimpaired", "mean_MCI", "mean_Dementia", "mean_Other", 
+      "LCI_Unimpaired", "LCI_MCI", "LCI_Dementia", "LCI_Other", 
+      "UCI_Unimpaired", "UCI_MCI", "UCI_Dementia", "UCI_Other"), "_prop"),
+    names_to = c(".value", "Group"), names_pattern = "(.*?)_(.*)") %>% 
+  mutate_at("Group", function(x) str_remove(x, "_prop")) %>% 
+  mutate_at("HRS_sample_size", as.factor) %>% 
+  mutate_at("Group", function(x) 
+    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) 
+
+#---- **plot ----
+ggplot(data = plot_data, aes(x = mean, y = factor(HRS_sample_size))) +
+  geom_vline(data = superpop_impairment_props, aes(xintercept = prop)) +
+  geom_point(size = 3, shape = rep(c(19, 15, 17, 18), 3)) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.3) + theme_bw() + 
+  facet_grid(cols = vars(Group)) + 
+  scale_x_continuous(breaks = seq(0.10, 0.40, by = 0.05)) +
+  xlab("Impairment class proportion") + ylab("HRS sample size") + 
+  theme(text = element_text(size = 24))  
+
+ggsave(filename = 
+         paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                "figureXX_mean_CI_impairment_class.jpeg"), 
+       dpi = 300, width = 14.75, height = 3.25, units = "in")
+
+#---- Figure XX: 95% CI coverage impairment classes ----
+#---- **plot data ----
+plot_data <- results %>% group_by(HRS_sample_size) %>% 
+  summarise_at(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"), 
+               mean) %>% 
+  pivot_longer(paste0(c("Unimpaired", "MCI", "Dementia", "Other"), "_coverage"),
+               names_to = c("class", "coverage"), names_sep = "_") %>% 
+  mutate_at("HRS_sample_size", as.factor) %>% 
+  mutate(class = 
+           factor(class, 
+                  levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>%
+  mutate("value_percent" = value*100)
+
+#---- **plot ----
+ggplot(data = plot_data, 
+       aes(x = as.factor(HRS_sample_size), y = value_percent, group = class, 
+           shape = class)) + 
+  geom_line(size = 1, aes(linetype = class)) + geom_point(size = 3) + 
+  geom_hline(yintercept = 95, lty = "dashed") +
+  scale_linetype_manual(values = c(1, 2, 3, 4)) +
+  scale_y_continuous(limits = c(0, 100), breaks = c(0, seq(90, 100, by = 2))) + 
+  scale_y_cut(breaks = c(89), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
+  scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
+  theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
+  labs(linetype = "Impairment Class", shape = "Impairment Class") +
+  theme(text = element_text(size = 24), legend.position = "bottom")      
+
+ggsave(filename = 
+         paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                "figureXX_impairment_class_coverage.jpeg"), 
+       dpi = 300, width = 13.5, height = 6.25, units = "in")
+
+#----- Figure XX: percent bias overall + race-stratified ----
+#---- **read in data ----
+#---- **plot data ----
+#pull the correct columns
+by_race_cols <- expand_grid(c("mean", "true"), 
+                            c("Unimpaired", "MCI", "Dementia", "Other"), 
+                            c("white", "black", "hispanic")) %>% 
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+overall_cols <- 
+  paste0(expand_grid(c("mean", "true"), 
+                     c("Unimpaired", "MCI", "Dementia", "Other")) %>% 
+           unite("names", everything(), sep = "_") %>% unlist() %>% unname(), 
+         "_overall")
+
+cols <- c(overall_cols, by_race_cols)
+
+plot_data <- results %>% ungroup() %>%
+  dplyr::select("HRS_sample_size", "HCAP_sample_size",
+                #"_overall" suffix is not in the results data
+                all_of(str_remove(cols, "_overall"))) %>% 
+  #rename the overall cols
+  set_colnames(c("HRS_sample_size", "HCAP_sample_size", cols))
+
+for(race in c("white", "black", "hispanic", "overall")){
+  plot_data %<>% mutate(!!paste0("mean_total_", race) := 
+                          !!sym(paste0("mean_Unimpaired_", race)) + 
+                          !!sym(paste0("mean_MCI_", race)) + 
+                          !!sym(paste0("mean_Dementia_", race)) + 
+                          !!sym(paste0("mean_Other_", race)))
+  
+  plot_data %<>% mutate(!!paste0("true_total_", race) := 
+                          !!sym(paste0("true_Unimpaired_", race)) + 
+                          !!sym(paste0("true_MCI_", race)) + 
+                          !!sym(paste0("true_Dementia_", race)) + 
+                          !!sym(paste0("true_Other_", race)))
+}
+
+for(race in c("white", "black", "hispanic", "overall")){
+  for(class in c("Unimpaired", "MCI", "Dementia", "Other")){
+    for(measure in c("mean", "true")){
+      plot_data %<>% 
+        mutate(!!paste(measure, class, race, sep = "_") := 
+                 !!sym(paste(measure, class, race, sep = "_"))/
+                 !!sym(paste(measure, "total", race, sep = "_")))
+    }
+  }  
+}
+
+plot_data %<>%
+  pivot_longer(c(all_of(cols)),
+               names_to = c(".value", "class", "race"), 
+               names_sep = "_") %>%
+  mutate("error" = mean - true) %>%
+  mutate("percent_error" = error/true*100) %>%
+  mutate("squared_error" = error^2) %>%
+  mutate_at("HRS_sample_size", as.factor) %>%
+  mutate_at("race", function(x) str_to_sentence(x)) %>%
+  mutate_at("class", function(x) 
+    factor(x, levels = c("Unimpaired", "MCI", "Dementia", "Other"))) %>% 
+  mutate_at("race", function(x) 
+    factor(x, levels = c("Overall", "White", "Black", "Hispanic"))) %>% 
+  group_by(HRS_sample_size, class, race) %>% 
+  summarize_at(c("error", "percent_error", "squared_error"), mean) %>% 
+  rename(c("bias" = "error", "percent_bias" = "percent_error")) %>% 
+  mutate("RMSE" = sqrt(squared_error)) 
+
+#---- **plot ----
+ggplot(data = plot_data, 
+       aes(x = HRS_sample_size, y = percent_bias, group = class, 
+           shape = class)) + 
+  geom_line(size = 1, aes(linetype = class)) + geom_point(size = 3) + 
+  geom_hline(yintercept = 0, lty = "dashed") + theme_bw() + 
+  ylab("Percent bias") + 
+  facet_grid(cols = vars(race)) + 
+  scale_linetype_manual(values = c(1, 2, 3, 4)) +
+  scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
+  scale_x_discrete(name = "HRS Sample Size", 
+                   breaks = unique(plot_data$HRS_sample_size)) + 
+  scale_y_continuous(limits = c(-30, 30), breaks = seq(-30, 30, by = 10)) +
+  labs(linetype = "Impairment Class", shape = "Impairment Class") +
+  theme(text = element_text(size = 24), legend.position = "bottom")
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXX_impairment_class_percent_bias.jpeg"), 
+       dpi = 300, width = 13.5, height = 4.5, units = "in")
+
+#---- Figure XX: RMSE overall + race-stratified ----
+ggplot(data = plot_data, 
+       aes(x = HRS_sample_size, y = RMSE, group = class, shape = class)) + 
+  geom_line(size = 1, aes(linetype = class)) + geom_point(size = 3) + 
+  theme_bw() + ylab("RMSE") + 
+  facet_grid(cols = vars(race)) + 
+  scale_linetype_manual(values = c(1, 2, 3, 4)) +
+  scale_shape_manual(values = rep(c(19, 15, 17, 18), 3)) +
+  scale_x_discrete(name = "HRS Sample Size", 
+                   breaks = unique(plot_data$HRS_sample_size)) + 
+  labs(linetype = "Impairment Class", shape = "Impairment Class") +
+  theme(text = element_text(size = 24), legend.position = "bottom")
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXX_impairment_class_RMSE.jpeg"), 
+       dpi = 300, width = 13.5, height = 4.5, units = "in")
+
+#---- Figure XX: dementia prevalence ----
+#---- **plot data ----
+truth <- 
+  data.frame("Race" = c("White", "Black", "Hispanic"), 
+             "prev" = c(unique(na.omit(results$true_dem_prev_white)), 
+                        unique(na.omit(results$true_dem_prev_black)), 
+                        unique(na.omit(results$true_dem_prev_hispanic)))) %>% 
+  mutate_at("prev", function(x) round(x, 2)) %>% 
+  mutate_at("Race", 
+            function(x) factor(x, levels = c("White", "Black", "Hispanic")))
+
+plot_data <- results %>% 
+  group_by(HRS_sample_size) %>% 
+  summarise_at(
+    c("mean_dem_prev_white", "mean_dem_prev_black", "mean_dem_prev_hispanic", 
+      "LCI_dem_prev_white", "LCI_dem_prev_black", "LCI_dem_prev_hispanic", 
+      "UCI_dem_prev_white", "UCI_dem_prev_black", "UCI_dem_prev_hispanic"), 
+    mean) %>% 
+  pivot_longer(
+    c("mean_dem_prev_white", "mean_dem_prev_black", "mean_dem_prev_hispanic", 
+      "LCI_dem_prev_white", "LCI_dem_prev_black", "LCI_dem_prev_hispanic", 
+      "UCI_dem_prev_white", "UCI_dem_prev_black", "UCI_dem_prev_hispanic"),
+    names_to = c(".value", "Race"), names_pattern = "(.*?)_(.*)") %>% 
+  mutate_at("Race", function(x) str_remove(x, "dem_prev_")) %>% 
+  mutate_at("Race", str_to_sentence) %>%
+  mutate_at("HRS_sample_size", as.factor) %>% 
+  mutate_at("Race", function(x) 
+    factor(x, levels = c("White", "Black", "Hispanic"))) 
+
+#---- **plot ----
+ggplot(data = plot_data, aes(x = mean, y = HRS_sample_size)) + 
+  geom_vline(aes(xintercept = prev), data = truth) +
+  geom_point(size = 3) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1) +
+  facet_grid(cols = vars(Race)) + theme_bw() + 
+  xlab("Prevalence of dementia") + ylab("HRS sample size") + 
+  scale_x_continuous(limits = c(0, 0.45), breaks = seq(0.0, 0.45, by = 0.1)) + 
+  theme(text = element_text(size = 24))  
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXX_mean_CI_dem_prev.jpeg"), 
+       dpi = 300, width = 13.5, height = 4, units = "in")
+
+#---- Figure XX: 95% CI coverage dementia prevalence ----
+#---- **plot data ----
+plot_data <- results %>% 
+  group_by(HRS_sample_size, HCAP_sample_size) %>% 
+  summarise_at(paste0("dem_prev_coverage_", c("white", "black", "hispanic")), 
+               mean) %>% 
+  pivot_longer(paste0("dem_prev_coverage_", c("white", "black", "hispanic")),
+               names_to = c(".value", "Race"), 
+               names_pattern = "(.*?)_(.*)") %>%
+  mutate_at("Race", function(x) str_remove(x, "prev_coverage_")) %>% 
+  mutate_at("Race", str_to_sentence) %>%
+  mutate_at("Race", function(x) 
+    factor(x, levels = c("White", "Black", "Hispanic"))) %>%
+  mutate_at("HRS_sample_size", as.factor) %>% 
+  mutate("coverage_percent" = dem*100)
+
+#---- **plot ----
+ggplot(data = plot_data, 
+       aes(x = HRS_sample_size, y = coverage_percent, group = Race)) + 
+  geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Race)) +
+  geom_hline(yintercept = 95, lty = "dashed") +
+  scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) + 
+  scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
+  theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
+  theme(text = element_text(size = 24))      
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXX_dem_prev_coverage.jpeg"), 
+       dpi = 300, width = 13.5, height = 4, units = "in") 
+
+#---- Appendix Figure XX: bias dementia prevalence ----
+#---- **plot data ----
+cols_by_race <- expand_grid(c("mean", "true"), 
+                            c("dem_prev"), 
+                            c("white", "black", "hispanic")) %>% 
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+plot_data <- results %>% ungroup() %>%
+  dplyr::select("HRS_sample_size", "HCAP_sample_size",  all_of(cols_by_race)) %>%
+  pivot_longer(all_of(cols_by_race),
+               names_to = c(".value", "measure1", "measure2", "race"), 
+               names_sep = "_") %>% 
+  mutate("error" = mean - true) %>%
+  mutate("squared_error" = error^2) %>%
+  mutate_at("HRS_sample_size", as.factor) %>%
+  mutate_at("race", function(x) str_to_sentence(x)) %>%
+  mutate_at("race", function(x) 
+    factor(x, levels = c("White", "Black", "Hispanic"))) %>%
+  group_by(HRS_sample_size, race) %>% 
+  summarize_at(c("error", "squared_error"), mean) %>% 
+  rename(c("bias" = "error")) %>% 
+  mutate("RMSE" = sqrt(squared_error)) 
+
+#---- **plot ----
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = race)) + 
+  geom_line() + geom_point(size = 3) + 
+  geom_hline(yintercept = 0, lty = "dashed") +
+  theme_bw() + ylab("Bias") + xlab("HRS Sample Size") +
+  facet_grid(cols = vars(race)) +
+  theme(text = element_text(size = 24))      
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "appendix_figureXX_dem_prev_bias.jpeg"), 
+       dpi = 300, width = 13.5, height = 4, units = "in")
+
+#---- Appendix Figure XX: RMSE dementia prevalence no HCAP adjudication ----
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = RMSE, group = race)) + 
+  geom_line() + geom_point(size = 3) + 
+  theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") +
+  facet_grid(cols = vars(race)) + ylim(0, 0.08) +
+  theme(text = element_text(size = 24))      
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "appendix_figureXX_dem_prev_rmse.jpeg"), 
+       dpi = 300, width = 13.5, height = 4, units = "in") 
+
+#---- Figure XXa-b: PR + PD dementia ----
+#---- **plot data ----
+truth <- 
+  data.frame("Comparison" = c("Black vs. White", "Hispanic vs. White"), 
+             "PR" = c(na.omit(unique(results$true_dem_prev_black)/
+                                unique(results$true_dem_prev_white)), 
+                      na.omit(unique(results$true_dem_prev_hispanic)/
+                                unique(results$true_dem_prev_white))), 
+             "PD" = c(na.omit(unique(results$true_dem_prev_black)-
+                                unique(results$true_dem_prev_white)), 
+                      na.omit(unique(results$true_dem_prev_hispanic)-
+                                unique(results$true_dem_prev_white)))) %>% 
+  mutate_at(c("PR", "PD"), function(x) round(x, 2)) %>% 
+  mutate_at("Comparison", 
+            function(x) 
+              factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
+  pivot_longer(c("PR", "PD"), names_to = "measure") %>% 
+  mutate("null" = ifelse(measure == "PR", 1, 0))
+
+plot_data <- results %>% 
+  group_by(HRS_sample_size, HCAP_sample_size) %>% 
+  summarise_at(
+    c("mean_PR_black", "mean_PR_hispanic", "LCI_PR_black", "LCI_PR_hispanic", 
+      "UCI_PR_black", "UCI_PR_hispanic", 
+      "mean_PD_black", "mean_PD_hispanic", "LCI_PD_black", "LCI_PD_hispanic", 
+      "UCI_PD_black", "UCI_PD_hispanic"), mean) %>% 
+  pivot_longer(
+    c("mean_PR_black", "mean_PR_hispanic", "LCI_PR_black", "LCI_PR_hispanic", 
+      "UCI_PR_black", "UCI_PR_hispanic", 
+      "mean_PD_black", "mean_PD_hispanic", "LCI_PD_black", "LCI_PD_hispanic", 
+      "UCI_PD_black", "UCI_PD_hispanic"),
+    names_to = c(".value", "measure", "Race"), names_sep = "_") %>%
+  mutate("Comparison" = case_when(Race == "black" ~ "Black vs. White", 
+                                  Race == "hispanic" ~ "Hispanic vs. White")) %>%
+  mutate_at("HRS_sample_size", as.factor) %>% 
+  mutate_at("Comparison", function(x) 
+    factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) 
+
+#---- **PR plot ----
+ggplot(data = plot_data %>% filter(measure == "PR"), 
+       aes(x = mean, y = HRS_sample_size)) + 
+  geom_vline(aes(xintercept = value), 
+             data = truth %>% filter(measure == "PR")) +
+  geom_vline(aes(xintercept = null), 
+             data = truth %>% filter(measure == "PR"), lty = "dashed") +
+  geom_point(size = 3) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1) +
+  facet_grid(cols = vars(Comparison)) + theme_bw() +
+  xlab("Prevalence Ratio (PR)") + ylab("HRS sample size") + 
+  theme(text = element_text(size = 24))  
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXXa_PR.jpeg"), 
+       dpi = 300, width = 13.5, height = 4, units = "in")
+
+#---- **PD plot ----
+ggplot(data = plot_data %>% filter(measure == "PD"), 
+       aes(x = mean, y = HRS_sample_size)) + 
+  geom_vline(aes(xintercept = value), 
+             data = truth %>% filter(measure == "PD")) +
+  geom_vline(aes(xintercept = null), 
+             data = truth %>% filter(measure == "PD"), lty = "dashed") +
+  geom_point(size = 3) + 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1) +
+  facet_grid(cols = vars(Comparison)) + theme_bw() +
+  xlab("Prevalence Difference (PD)") + ylab("HRS sample size") + 
+  theme(text = element_text(size = 24))  
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXXb_PD.jpeg"), 
+       dpi = 300, width = 13.5, height = 4, units = "in")
+
+#---- Figure XXa-b: 95% CI coverage PR + PD ----
+#---- **plot data ----
+plot_data <- results %>% 
+  group_by(HRS_sample_size, HCAP_sample_size) %>% 
+  summarise_at(c(paste0("PR_coverage_", c("black", "hispanic")), 
+                 paste0("PD_coverage_", c("black", "hispanic"))), mean) %>% 
+  pivot_longer(c(paste0("PR_coverage_", c("black", "hispanic")), 
+                 paste0("PD_coverage_", c("black", "hispanic"))),
+               names_to = c("measure", ".value", "Race"), 
+               names_sep = "_") %>%
+  mutate("Comparison" = case_when(Race == "black" ~ "Black vs. White", 
+                                  Race == "hispanic" ~ "Hispanic vs. White")) %>%
+  mutate_at("Comparison", function(x) 
+    factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
+  mutate_at("HRS_sample_size", as.factor) %>% 
+  mutate("coverage_percent" = coverage*100)
+
+#---- **PR plot ----
+ggplot(data = plot_data %>% filter(measure == "PR"), 
+       aes(x = HRS_sample_size, y = coverage_percent, group = Comparison)) + 
+  geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Comparison)) + 
+  geom_hline(yintercept = 95, lty = "dashed") +
+  scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) + 
+  scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
+  theme_bw() + ylab("95% interval coverage\n(PR)") + xlab("HRS Sample Size") +
+  theme(text = element_text(size = 24))      
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXXa_PR_coverage.jpeg"), 
+       dpi = 300, width = 13.25, height = 4, units = "in")
+
+#---- **PD plot ----
+ggplot(data = plot_data %>% filter(measure == "PD"), 
+       aes(x = HRS_sample_size, y = coverage_percent, group = Comparison)) + 
+  geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Comparison)) + 
+  geom_hline(yintercept = 95, lty = "dashed") +
+  scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) + 
+  scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
+  theme_bw() + ylab("95% interval coverage\n(PD)") + xlab("HRS Sample Size") +
+  theme(text = element_text(size = 24))      
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "figureXXb_PD_coverage.jpeg"), 
+       dpi = 300, width = 13.25, height = 4, units = "in")
+
+#---- Appendix Figure XX: PR + PD bias ----
+#---- **plot data ----
+cols_by_race <- expand_grid(c("mean", "true"), 
+                            c("PR", "PD"), 
+                            c("black", "hispanic")) %>% 
+  unite("names", everything(), sep = "_") %>% unlist() %>% unname()
+
+plot_data <- results %>% ungroup() %>%
+  dplyr::select("HRS_sample_size", "HCAP_sample_size",  all_of(cols_by_race)) %>%
+  pivot_longer(all_of(cols_by_race),
+               names_to = c(".value", "measure", "race"), 
+               names_sep = "_") %>% 
+  mutate("error" = mean - true) %>%
+  mutate("squared_error" = error^2) %>%
+  mutate_at("HRS_sample_size", as.factor) %>%
+  mutate_at("race", function(x) str_to_sentence(x)) %>% 
+  mutate("Comparison" = case_when(race == "Black" ~ "Black vs. White", 
+                                  race == "Hispanic" ~ "Hispanic vs. White")) %>%
+  mutate_at("Comparison", function(x) 
+    factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
+  mutate_at("HRS_sample_size", as.factor) %>%
+  group_by(HRS_sample_size, Comparison, measure) %>% 
+  summarize_at(c("error", "squared_error"), mean) %>% 
+  rename(c("bias" = "error")) %>% 
+  mutate("RMSE" = sqrt(squared_error)) %>% 
+  mutate_at("measure", function(x) 
+    factor(x, levels = c("PR", "PD"))) 
+
+#---- **plot ----
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Comparison)) + 
+  geom_line(size = 1) + geom_point(size = 3) + 
+  geom_hline(yintercept = 0, lty = "dashed") +
+  theme_bw() + ylab("Bias") + xlab("HRS Sample Size") + ylim(c(-0.21, 0.01)) +
+  facet_grid(rows = vars(measure), cols = vars(Comparison)) + 
+  theme(text = element_text(size = 24))      
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "appendix_figureXX_PR_PD_bias.jpeg"), 
+       dpi = 300, width = 13.5, height = 4.5, units = "in") 
+
+#---- Appendix Figure XX: PR + PD RMSE ----
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = RMSE, group = Comparison)) + 
+  geom_line() + geom_point(size = 3) + 
+  theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") + ylim(c(0, 0.25)) +
+  facet_grid(rows = vars(measure), cols = vars(Comparison)) + 
+  theme(text = element_text(size = 24))      
+
+ggsave(filename = paste0(path_to_box, "papers/paper1_model_methods/figures/", 
+                         "appendix_figureXX_PR_PD_rmse.jpeg"), 
+       dpi = 300, width = 13.5, height = 4.5, units = "in") 
