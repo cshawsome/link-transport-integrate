@@ -210,7 +210,9 @@ plot_data <- results %>%
                                   Race == "hispanic" ~ "Hispanic vs. White")) %>%
   mutate_at("HRS_sample_size", as.factor) %>% 
   mutate_at("Comparison", function(x) 
-    factor(x, levels = c("Black vs. White", "Hispanic vs. White")))
+    factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
+  mutate_at("Algorithm", function(x) 
+    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW")))
 
 ggplot(data = plot_data, 
        aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
@@ -241,7 +243,9 @@ plot_data <- results %>%
                                   Race == "hispanic" ~ "Hispanic vs. White")) %>%
   mutate_at("HRS_sample_size", as.factor) %>% 
   mutate_at("Comparison", function(x) 
-    factor(x, levels = c("Black vs. White", "Hispanic vs. White")))
+    factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
+  mutate_at("Algorithm", function(x) 
+    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW")))
 
 ggplot(data = plot_data, 
        aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
@@ -280,7 +284,9 @@ plot_data <- results %>%
   mutate_at("Comparison", function(x) 
     factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
   mutate_at("HRS_sample_size", as.factor) %>% 
-  mutate("coverage_percent" = coverage*100)
+  mutate("coverage_percent" = coverage*100) %>%
+  mutate_at("Algorithm", function(x) 
+    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW")))
 
 #---- **PR plot ----
 ggplot(data = plot_data %>% filter(measure == "PR"), 
@@ -343,7 +349,9 @@ plot_data <- results %>% ungroup() %>%
   group_by(HRS_sample_size, Race, Algorithm) %>% 
   summarize_at(c("error", "squared_error"), mean) %>% 
   rename(c("bias" = "error")) %>% 
-  mutate("RMSE" = sqrt(squared_error)) 
+  mutate("RMSE" = sqrt(squared_error)) %>%
+  mutate_at("Algorithm", function(x) 
+    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW")))
 
 #---- **plot ----
 ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Algorithm, 
@@ -412,7 +420,9 @@ plot_data <- results %>% ungroup() %>%
   rename(c("bias" = "error")) %>% 
   mutate("RMSE" = sqrt(squared_error)) %>% 
   mutate_at("measure", function(x) 
-    factor(x, levels = c("PR", "PD"))) 
+    factor(x, levels = c("PR", "PD"))) %>%
+  mutate_at("Algorithm", function(x) 
+    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW")))
 
 #---- **plot ----
 ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Algorithm, 
