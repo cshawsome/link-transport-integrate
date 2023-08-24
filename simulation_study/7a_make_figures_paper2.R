@@ -401,11 +401,23 @@ truth <-
                                              results$true_dem_prev_white, 2))))) %>% 
   pivot_longer(c("PR", "PD")) %>% rename("true" = "value")
 
+# JZ: the left_join(truth) line gives the following warning: 
+# Joining with `by = join_by(race)`
+# Warning in View :
+#   Detected an unexpected many-to-many relationship between `x` and `y`.
+# truth should be joined to the results by both race and PR/PD, not race alone
+truth <- truth %>% rename(measure = name)
+# After updating the code, the figure is different compared to before. 
+# I saved my updated figures named "appendix_figureXX_PR_PD_bias_JZ.jpeg" and
+# "appendix_figureXX_PR_PD_rmse_JZ.jpeg" in the same figures folder. 
+
 plot_data <- results %>% ungroup() %>%
   dplyr::select("HRS_sample_size", "HCAP_sample_size",  all_of(cols_by_race)) %>%
   pivot_longer(all_of(cols_by_race),
                names_to = c(".value", "measure", "race", "Algorithm"), 
-               names_sep = "_") %>% left_join(truth) %>%
+               names_sep = "_") %>% 
+  # left_join(truth) %>% # this gives the warning above
+  left_join(truth, by = c("race", "measure")) %>% # my update here
   mutate("error" = mean - true) %>%
   mutate("squared_error" = error^2) %>%
   mutate_at("HRS_sample_size", as.factor) %>%
