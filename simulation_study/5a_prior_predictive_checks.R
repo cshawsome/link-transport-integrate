@@ -13,11 +13,15 @@ install_github("thomasp85/gganimate")
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
 
-source(here::here("simulation_study", "functions", 
-                  "prior_predictive_checks_function.R"))
+# source(here::here("simulation_study", "functions", 
+#                   "prior_predictive_checks_function.R"))
+# JZ: this version of the function plots in black and white
+source(here::here("simulation_study", "functions",
+                  "prior_predictive_checks_function_bw.R"))
 
 #---- read in data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+# path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+path_to_box <- "~/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- **variable labels ----
 variable_labels <- read_csv(paste0(path_to_box, "data/variable_crosswalk.csv")) 
@@ -57,7 +61,9 @@ kappa_0_mat <- read_csv(paste0(path_to_box, "data/tuning/kappa_0_matrix.csv"))
 #calibration scenario options: "ADAMS_prior", 
 # "calibration_20_SRS", "calibration_35_SRS", "calibration_50_SRS", 
 # "calibration_20_SRS_race", "calibration_35_SRS_race", "calibration_50_SRS_race"
-calibration_scenario = "calibration_50_SRS_race" 
+# calibration_scenario = "calibration_50_SRS_race" 
+
+calibration_scenario = "ADAMS_prior"
 
 #HCAP sample prop options: 0.25, 0.50
 HCAP_sample_prop = 0.50
@@ -102,7 +108,10 @@ lapply(synthetic_HCAP_list[indices], function(x)
                             paste0(path_to_box,
                                    "figures/chapter_4/simulation_study/HCAP_",
                                    unique(x[, "dataset_name_stem"]),
-                                   "/prior_predictive_checks/"),
+                                   # "/prior_predictive_checks/"
+                                   "/prior_predictive_checks_bw/"
+                                   # JZ: new folder for black and white figures 
+                                   ),
                           continuous_check_test = TRUE,
                           continuous_check = c("Unimpaired", "MCI", "Dementia",
                                                "Other"),
