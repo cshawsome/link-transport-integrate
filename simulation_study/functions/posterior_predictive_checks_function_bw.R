@@ -831,14 +831,20 @@ posterior_predictive_checks <-
     #---- ****count ----
     ggplot(data = combined_plot_data, 
            aes(x = Group, y = mean)) + theme_bw() + 
-      geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
+      geom_errorbar(aes(ymin = lower, ymax = upper, 
+                        # color = Group
+                        ),
+                    color = "grey70", 
                     width = 0.10) + 
-      geom_point(aes(size = 1, color = Group)) +
+      geom_point(aes(size = 1, 
+                     # color = Group
+                     ), 
+                 color = "grey70") +
       geom_point(aes(x = Group, y = truth, size = 1), color = "black",
                  shape = 18, alpha = 1) + 
       xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
-      scale_color_manual(
-        values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
+      # scale_color_manual(
+      #   values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
       facet_wrap(facets = as.factor(combined_plot_data$chain), 
                  nrow = 2, ncol = 3) +
       ggtitle(paste0("95% Credible intervals from ", num_samples, 
@@ -863,14 +869,20 @@ posterior_predictive_checks <-
              mutate_at(c("mean", "lower", "upper", "truth"), 
                        function(x) x/nrow(dataset_to_copy)), 
            aes(x = Group, y = mean)) + theme_bw() + 
-      geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
+      geom_errorbar(aes(ymin = lower, ymax = upper, 
+                        #color = Group
+                        ), 
+                    color = "grey70",
                     width = 0.10) + 
-      geom_point(aes(size = 1, color = Group)) +
+      geom_point(aes(size = 1
+                     # , color = Group
+                     ), 
+                 color = "grey70") +
       geom_point(aes(x = Group, y = truth, size = 1), color = "black",
                  shape = 18, alpha = 1) + 
       xlab("") + ylab("Mean Proportion") + theme(legend.position = "none") + 
-      scale_color_manual(
-        values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
+      # scale_color_manual(
+      #   values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
       facet_wrap(facets = as.factor(combined_plot_data$chain), 
                  nrow = 2, ncol = 3) +
       ggtitle(paste0("95% Credible intervals from ", num_samples, 
@@ -896,9 +908,15 @@ posterior_predictive_checks <-
       ggplot(data = combined_plot_data %>% 
                filter(chain == paste0("Chain ", chain_num)), 
              aes(x = Group, y = mean)) + 
-        geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
+        geom_errorbar(aes(ymin = lower, ymax = upper
+                          # color = Group
+                          ), 
+                      color = "grey70",
                       width = 0.10) + 
-        geom_point(aes(size = 1, color = Group)) + 
+        geom_point(aes(size = 1
+                       # color = Group
+                       ),
+                   color = "grey70") + 
         theme_minimal() + 
         geom_point(aes(x = Group, y = truth, size = 1), shape = 18, 
                    color = "black") + 
@@ -906,8 +924,8 @@ posterior_predictive_checks <-
         theme(text = element_text(size = 10), legend.title = element_blank(), 
               legend.position = "none", 
               plot.title = element_text(size = 10)) +
-        scale_color_manual(
-          values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
+        # scale_color_manual(
+        #   values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
         ggtitle(paste0("95% Credible intervals from ", num_samples, 
                        " synthetic datasets")) + 
         guides(color = "none") 
@@ -932,9 +950,15 @@ posterior_predictive_checks <-
                mutate_at(c("mean", "lower", "upper", "truth"), 
                          function(x) x/nrow(dataset_to_copy)), 
              aes(x = Group, y = mean)) + 
-        geom_errorbar(aes(ymin = lower, ymax = upper, color = Group), 
+        geom_errorbar(aes(ymin = lower, ymax = upper
+                          # color = Group
+                          ), 
+                      color = "grey70",
                       width = 0.10) + 
-        geom_point(aes(size = 1, color = Group)) + 
+        geom_point(aes(size = 1
+                       # color = Group
+                       ),
+                   color = "grey70") + 
         theme_minimal() + 
         geom_point(aes(x = Group, y = truth, size = 1), shape = 18, 
                    color = "black") + 
@@ -942,8 +966,8 @@ posterior_predictive_checks <-
         theme(text = element_text(size = 10), legend.title = element_blank(), 
               legend.position = "none", 
               plot.title = element_text(size = 10)) +
-        scale_color_manual(
-          values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
+        # scale_color_manual(
+          # values = combined_plot_data$Color[order(combined_plot_data$Group)]) + 
         ggtitle(paste0("95% Credible intervals from ", num_samples, 
                        " synthetic datasets")) + 
         guides(color = "none") 
@@ -952,13 +976,13 @@ posterior_predictive_checks <-
         ggsave(filename = paste0(path_to_figures_folder, 
                                  "posterior_predictive_checks_bw/", 
                                  "ADAMS_prior/run_", chain_num,  
-                                 "/impairment_classes_prop.jpeg"), 
+                                 "/impairment_classes_prop.pdf"), 
                height = 4, width = 5.5, units = "in")
       } else{
         ggsave(filename = paste0(path_to_figures_folder, 
                                  "posterior_predictive_checks_bw/", 
                                  calibration_sample_name, "/run_", chain_num,  
-                                 "/impairment_classes_prop.jpeg"), 
+                                 "/impairment_classes_prop.pdf"), 
                height = 4, width = 5.5, units = "in")
       }
     }
