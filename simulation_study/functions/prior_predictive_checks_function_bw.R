@@ -801,11 +801,25 @@ prior_predictive_checks <-
       #---- **continuous ----
       for(class in continuous_check){
         
+        # original: 
+        # true_data <- dataset_to_copy %>% 
+        #   dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
+        #   filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
+        # 
+        # continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
+        
+        # density faceted by race and stroke
         true_data <- dataset_to_copy %>% 
-          dplyr::select(c(all_of(continuous_vars), all_of(class))) %>% 
+          dplyr::select(c(all_of(continuous_vars), all_of(class)),
+                        black, hispanic, stroke) %>% 
           filter(!!as.symbol(class) == 1) %>% mutate("Color" = "black")
         
-        continuous_list <- lapply(synthetic, "[[", paste0("Z_", tolower(class))) 
+        continuous_list <- lapply(
+          synthetic, 
+          function(x) 
+            cbind(x[[paste0("Z_", tolower(class))]] %>% dplyr::select(-Group), 
+                  x[[paste0("W_", tolower(class))]])
+        )
         
         for(i in 1:length(continuous_list)){
           continuous_list[[i]] <- continuous_list[[i]] %>% 
@@ -819,24 +833,52 @@ prior_predictive_checks <-
         continuous_list %<>% do.call(rbind, .) %>% as.data.frame() 
         
         for(var in continuous_vars){
-          data <- continuous_list[, c(var, "run", "Type", "Color")] 
+          
+          # data <- continuous_list[, c(var, "run", "Type", "Color")] 
+          data <- continuous_list[, c(var, "run", "Type", "Color", "black", "hispanic", "stroke")] 
+          
           
           if(is.na(sum(data[, var])) | continuous_check_test){
-            continuous_plot <- 
-              ggplot(data = data, aes(color = Type, fill = Type)) + 
-              geom_density(aes(x = data[, 1]), alpha = 0.5) + 
+            # original plot that is not faceted
+            # continuous_plot <- 
+            #   ggplot(data = data, aes(color = Type, fill = Type)) + 
+            #   geom_density(aes(x = data[, 1]), alpha = 0.5) + 
+            #   theme_minimal() + 
+            #   xlab(variable_labels[variable_labels$data_label == var, 
+            #                        "figure_label"]) + 
+            #   # scale_color_manual(values = rev(unique(data$Color))) + 
+            #   # scale_fill_manual(values = rev(unique(data$Color))) + 
+            #   scale_color_manual(values = c("Observed" = "black", 
+            #                                 "Synthetic" = "grey70")) + 
+            #   scale_fill_manual(values = c("Observed" = "black", 
+            #                                "Synthetic" = "grey70")) + 
+            #   theme(text = element_text(size = 12),
+            #         panel.grid.minor = element_blank(),
+            #         panel.grid.major = element_blank())
+            
+            continuous_plot <- data %>% 
+              mutate(
+                race = case_when(
+                  black == 1 ~ "Black", 
+                  hispanic == 1 ~ "Hispanic", 
+                  TRUE ~ "White"
+                ), 
+                facet_label = paste(race, "|", ifelse(stroke == 1, "Stroke", "No Stroke"))
+              ) %>% 
+              ggplot(aes(x = mmse_norm_Z, group = Type, color = Type, fill = Type)) + 
+              geom_density(alpha = 0.5) + 
               theme_minimal() + 
               xlab(variable_labels[variable_labels$data_label == var, 
                                    "figure_label"]) + 
-              # scale_color_manual(values = rev(unique(data$Color))) + 
-              # scale_fill_manual(values = rev(unique(data$Color))) + 
               scale_color_manual(values = c("Observed" = "black", 
                                             "Synthetic" = "grey70")) + 
               scale_fill_manual(values = c("Observed" = "black", 
-                                           "Synthetic" = "grey70")) + 
+                                           "Synthetic" = "grey70"))  + 
+              guides(color = "none", fill = "none") + 
               theme(text = element_text(size = 12),
                     panel.grid.minor = element_blank(),
-                    panel.grid.major = element_blank())
+                    panel.grid.major = element_blank()) +
+              facet_wrap(~facet_label, nrow = 3)
             
             if(continuous_check_test){
               ggsave(filename = paste0(path_to_output_folder, 
