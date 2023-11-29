@@ -6,7 +6,7 @@ Degree: PhD <br>
 Institution: UCLA Fielding School of Public Health, Department of Biostatistics <br>
 Funding: National Institute on Aging (Grant number: F31AG071191)
 
-Digital doc is accessible at: [link pending]
+Digital doc is accessible at: https://escholarship.org/uc/item/2tb603tb
 
 ## Repo Structure
 I've created branches for code specific to each dissertation paper vs. the entire dissertation document. Each branch contains its own README.md with details about each script included.
