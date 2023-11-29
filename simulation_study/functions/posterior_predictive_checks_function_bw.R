@@ -834,12 +834,12 @@ posterior_predictive_checks <-
       geom_errorbar(aes(ymin = lower, ymax = upper, 
                         # color = Group
                         ),
-                    color = "grey70", 
-                    width = 0.10) + 
+                    color = "grey65", 
+                    width = 0) + 
       geom_point(aes(size = 1, 
                      # color = Group
                      ), 
-                 color = "grey70") +
+                 color = "grey65") +
       geom_point(aes(x = Group, y = truth, size = 1), color = "black",
                  shape = 18, alpha = 1) + 
       xlab("") + ylab("Mean Count") + theme(legend.position = "none") + 
@@ -872,12 +872,12 @@ posterior_predictive_checks <-
       geom_errorbar(aes(ymin = lower, ymax = upper, 
                         #color = Group
                         ), 
-                    color = "grey70",
-                    width = 0.10) + 
+                    color = "grey65",
+                    width = 0) + 
       geom_point(aes(size = 1
                      # , color = Group
                      ), 
-                 color = "grey70") +
+                 color = "grey65") +
       geom_point(aes(x = Group, y = truth, size = 1), color = "black",
                  shape = 18, alpha = 1) + 
       xlab("") + ylab("Mean Proportion") + theme(legend.position = "none") + 
@@ -911,12 +911,12 @@ posterior_predictive_checks <-
         geom_errorbar(aes(ymin = lower, ymax = upper
                           # color = Group
                           ), 
-                      color = "grey70",
-                      width = 0.10) + 
+                      color = "grey65",
+                      width = 0.0) + 
         geom_point(aes(size = 1
                        # color = Group
                        ),
-                   color = "grey70") + 
+                   color = "grey65") + 
         theme_minimal() + 
         geom_point(aes(x = Group, y = truth, size = 1), shape = 18, 
                    color = "black") + 
@@ -953,12 +953,12 @@ posterior_predictive_checks <-
         geom_errorbar(aes(ymin = lower, ymax = upper
                           # color = Group
                           ), 
-                      color = "grey70",
-                      width = 0.10) + 
+                      color = "grey65",
+                      width = 0) + 
         geom_point(aes(size = 1
                        # color = Group
                        ),
-                   color = "grey70") + 
+                   color = "grey65") + 
         theme_minimal() + 
         geom_point(aes(x = Group, y = truth, size = 1), shape = 18, 
                    color = "black") + 

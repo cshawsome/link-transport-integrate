@@ -97,7 +97,7 @@ results %>% ungroup() %>%
     HRS_sample_size = factor(HRS_sample_size)
   ) %>% 
   ggplot(aes(x = HRS_sample_size)) + 
-  geom_hline(data = truth, aes(yintercept = prop), color = "grey70") + 
+  geom_hline(data = truth, aes(yintercept = prop)) + 
   geom_point(aes(y = mean), size = 1) + 
   geom_errorbar(aes(ymin = LCI, ymax = UCI, width = 0)) + 
   coord_flip() + 
@@ -179,7 +179,7 @@ results %>%
     HRS_sample_size = factor(HRS_sample_size)
   ) %>% 
   ggplot(aes(x = HRS_sample_size)) + 
-  geom_hline(data = truth, aes(yintercept = value), color = "grey70") +
+  geom_hline(data = truth, aes(yintercept = value)) +
   geom_point(aes(y = mean), size = 1) + 
   geom_errorbar(aes(ymin = LCI, ymax = UCI, width = 0)) + 
   coord_flip() + 
@@ -189,7 +189,7 @@ results %>%
   facet_wrap(~race, nrow = 1)
 
 ggsave(filename = paste0(path_to_box, "papers/paper1_bayes_framework/figures/", 
-                         "figureXXa_mean_CI_dem_prev_by_race.pdf"), 
+                         "figure6a_mean_CI_dem_prev_by_race.pdf"), 
        dpi = 300, width = 7, height = 2, units = "in")
 
 # Figure 6b ----
