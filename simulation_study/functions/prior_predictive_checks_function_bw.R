@@ -835,7 +835,16 @@ prior_predictive_checks <-
         for(var in continuous_vars){
           
           # data <- continuous_list[, c(var, "run", "Type", "Color")] 
-          data <- continuous_list[, c(var, "run", "Type", "Color", "black", "hispanic", "stroke")] 
+          data <- continuous_list[, c(var, "run", "Type", "Color", 
+                                      "black", "hispanic", "stroke")] %>% 
+            mutate(
+              race = case_when(
+                black == 1 ~ "Black", 
+                hispanic == 1 ~ "Hispanic", 
+                TRUE ~ "White"
+              ), 
+              facet_label = paste(race, "and", ifelse(stroke == 1, "Stroke", "No Stroke"))
+            )
           
           
           if(is.na(sum(data[, var])) | continuous_check_test){
@@ -857,16 +866,8 @@ prior_predictive_checks <-
             #         panel.grid.major = element_blank())
             
             continuous_plot <- data %>% 
-              mutate(
-                race = case_when(
-                  black == 1 ~ "Black", 
-                  hispanic == 1 ~ "Hispanic", 
-                  TRUE ~ "White"
-                ), 
-                facet_label = paste(race, "|", ifelse(stroke == 1, "Stroke", "No Stroke"))
-              ) %>% 
-              ggplot(aes(x = mmse_norm_Z, group = Type, color = Type, fill = Type)) + 
-              geom_density(alpha = 0.5) + 
+              ggplot(aes(x = get(var))) + 
+              geom_density(aes(group = Type, color = Type, fill = Type), alpha = 0.5) + 
               theme_minimal() + 
               xlab(variable_labels[variable_labels$data_label == var, 
                                    "figure_label"]) + 
