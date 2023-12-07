@@ -869,28 +869,37 @@ prior_predictive_checks <-
               ggplot(aes(x = get(var))) + 
               geom_density(aes(group = Type, color = Type, fill = Type), alpha = 0.5) + 
               theme_minimal() + 
-              xlab(variable_labels[variable_labels$data_label == var, 
-                                   "figure_label"]) + 
+              labs(
+                x = NULL, 
+                y = paste(variable_labels[variable_labels$data_label == var, 
+                                          "figure_label"], "Density"),
+                color = "", fill = ""
+              ) + 
               scale_color_manual(values = c("Observed" = "black", 
-                                            "Synthetic" = "grey70")) + 
+                                            "Synthetic" = "grey70"), 
+                                 labels = c("Observed", "Prior Distribution")) + 
               scale_fill_manual(values = c("Observed" = "black", 
-                                           "Synthetic" = "grey70"))  + 
-              guides(color = "none", fill = "none") + 
+                                           "Synthetic" = "grey70"),
+                                labels = c("Observed", "Prior Distribution")) + 
+              # guides(color = "none", fill = "none") +
               theme(text = element_text(size = 12),
                     panel.grid.minor = element_blank(),
-                    panel.grid.major = element_blank()) +
+                    panel.grid.major = element_blank(),
+                    legend.position = "bottom",
+                    panel.spacing.x = unit(2, "lines")
+                    ) +
               facet_wrap(~facet_label, nrow = 3)
             
             if(continuous_check_test){
               ggsave(filename = paste0(path_to_output_folder, 
                                        "continuous_vars/test_set/", 
                                        tolower(class), "/", var, ".pdf"), 
-                     height = 3, width = 5, units = "in")
+                     height = 4, width = 5, units = "in")
             } else{
               ggsave(filename = paste0(path_to_output_folder, 
                                        "continuous_vars/error_set/", 
                                        tolower(class), "/", var, ".pdf"), 
-                     height = 3, width = 5, units = "in")
+                     height = 4, width = 5, units = "in")
             }
             
           } else{
