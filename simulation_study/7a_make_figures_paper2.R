@@ -3,13 +3,14 @@ if (!require("pacman")){
   install.packages("pacman", repos='http://cran.us.r-project.org')
 }
 
-p_load("tidyverse", "magrittr", "wesanderson", "here", "ggbreak")
+p_load("tidyverse", "magrittr", "wesanderson", "here", "ggbreak", "ggh4x")
 
 #---- source functions ----
 source(here::here("functions", "read_results.R"))
 
 #---- **read in data ----
-path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+# path_to_box <- "/Users/crystalshaw/Library/CloudStorage/Box-Box/Dissertation/"
+path_to_box <- "~/Library/CloudStorage/Box-Box/Dissertation/"
 
 #---- ****results ----
 results_paths <- 
@@ -111,24 +112,62 @@ plot_data <- results %>%
   mutate_at("HRS_sample_size", as.factor) %>% 
   mutate_at("Race", function(x) 
     factor(x, levels = c("White", "Black", "Hispanic"))) %>% 
-  mutate_at("Algorithm", function(x) 
-    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW")))
+  mutate(
+    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
+      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+  )
 
 #---- **plot ----
+ptshp <- c("B-LCMM" = 21, "ModHurd" = 22, "Hurd" = 23, "LKW" = 24)
+
+# ggplot(data = plot_data,
+#        aes(x = mean, y = HRS_sample_size, color = Algorithm, shape = Algorithm)) +
+#   geom_vline(aes(xintercept = prev), data = truth) +
+#   geom_point(size = 3, position = position_dodge(-0.8)) +
+#   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, linewidth = 1,
+#                 position = position_dodge(-0.8)) +
+#   facet_grid(cols = vars(Race)) + theme_bw() +
+#   xlab("Prevalence of dementia") + ylab("HRS sample size") +
+#   scale_x_continuous(limits = c(0, 0.45), breaks = seq(0.0, 0.45, by = 0.1)) +
+#   theme(text = element_text(size = 24))
+
 ggplot(data = plot_data, 
-       aes(x = mean, y = HRS_sample_size, color = Algorithm, shape = Algorithm)) + 
+       aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
   geom_vline(aes(xintercept = prev), data = truth) +
-  geom_point(size = 3, position = position_dodge(-0.8)) + 
-  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0, linewidth = 0.8, 
                 position = position_dodge(-0.8)) +
+  geom_point(size = 3, position = position_dodge(-0.8), fill = "white") + 
   facet_grid(cols = vars(Race)) + theme_bw() + 
-  xlab("Prevalence of dementia") + ylab("HRS sample size") + 
-  scale_x_continuous(limits = c(0, 0.45), breaks = seq(0.0, 0.45, by = 0.1)) + 
-  theme(text = element_text(size = 24))  
+  xlab("Prevalence of dementia") + ylab('"HRS" sample size') + 
+  scale_x_continuous(limits = c(0, 0.45), breaks = seq(0.0, 0.45, by = 0.1)) +
+  scale_shape_manual(values = ptshp) + 
+  theme(text = element_text(size = 24), 
+        panel.grid = element_blank(),
+        legend.key.width = unit(2, "line"))  
 
 ggsave(filename = paste0(path_to_box, 
                          "papers/paper2_model_comparison_ADAMS_prior/figures/", 
-                         "figureXX_mean_CI_dem_prev.jpeg"), 
+                         "figureXX_mean_CI_dem_prev.pdf"), 
+       dpi = 300, width = 13.5, height = 4, units = "in")
+
+ggplot(data = plot_data, 
+       aes(x = mean, y = HRS_sample_size, shape = Algorithm)) + 
+  geom_vline(aes(xintercept = prev), data = truth) +
+  geom_errorbar(aes(xmin = LCI, xmax = UCI, linetype = Algorithm), width = 0, linewidth = 0.8,
+                position = position_dodge(-0.8)) +
+  geom_point(size = 3, position = position_dodge(-0.8), fill = "white") + 
+  facet_grid(cols = vars(Race)) + theme_bw() + 
+  xlab("Prevalence of dementia") + ylab('"HRS" sample size') + 
+  scale_x_continuous(limits = c(0, 0.45), breaks = seq(0.0, 0.45, by = 0.1)) +
+  scale_shape_manual(values = ptshp) + 
+  scale_linetype_manual(values = c("solid", "solid", "solid", "solid")) + 
+  theme(text = element_text(size = 24), 
+        panel.grid = element_blank(),
+        legend.key.width = unit(2, "line")) 
+
+ggsave(filename = paste0(path_to_box, 
+                         "papers/paper2_model_comparison_ADAMS_prior/figures/", 
+                         "figureXX_mean_CI_dem_prev_bw.pdf"), 
        dpi = 300, width = 13.5, height = 4, units = "in")
 
 #---- Figure XX: 95% CI coverage dementia prevalence ----
@@ -149,25 +188,58 @@ plot_data <- results %>%
   mutate_at("Race", str_to_sentence) %>%
   mutate_at("Race", function(x) 
     factor(x, levels = c("White", "Black", "Hispanic"))) %>%
-  mutate_at("Algorithm", function(x) 
-    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW"))) %>%
+  mutate(
+    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
+      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+  ) %>% 
   mutate_at("HRS_sample_size", as.factor) %>% 
   mutate("coverage_percent" = dem*100)
 
 #---- **plot ----
+# ggplot(data = plot_data, 
+#        aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
+#            color = Algorithm, shape = Algorithm)) + 
+#   geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Race)) +
+#   geom_hline(yintercept = 95, lty = "dashed") +
+#   # scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) +
+#   # scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 1.75)) +
+#   theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
+#   theme(text = element_text(size = 24))     
+
 ggplot(data = plot_data, 
        aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
            color = Algorithm, shape = Algorithm)) + 
-  geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Race)) +
-  geom_hline(yintercept = 95, lty = "dashed") +
-  # scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) +
-  # scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 1.75)) +
-  theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
-  theme(text = element_text(size = 24))      
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  facet_grid(cols = vars(Race)) +
+  geom_hline(yintercept = 95, lty = "dotted", linewidth = 0.8) +
+  theme_bw() + ylab("95% interval coverage") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
+  theme(text = element_text(size = 24), 
+        legend.key.width = unit(2, "line"))
 
 ggsave(filename = paste0(path_to_box, 
                          "papers/paper2_model_comparison_ADAMS_prior/figures/", 
-                         "figureXX_dem_prev_coverage.jpeg"), 
+                         "figureXX_dem_prev_coverage.pdf"), 
+       dpi = 300, width = 13.5, height = 4, units = "in") 
+
+
+ggplot(data = plot_data, 
+       aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
+           # color = Algorithm, 
+           shape = Algorithm)) + 
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  facet_grid(cols = vars(Race)) +
+  geom_hline(yintercept = 95, lty = "dotted", linewidth = 0.8) +
+  theme_bw() + ylab("95% interval coverage") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line"))     
+
+ggsave(filename = paste0(path_to_box, 
+                         "papers/paper2_model_comparison_ADAMS_prior/figures/", 
+                         "figureXX_dem_prev_coverage_bw.pdf"), 
        dpi = 300, width = 13.5, height = 4, units = "in") 
 
 #---- Figure XXa-b: PR + PD dementia ----
@@ -211,8 +283,24 @@ plot_data <- results %>%
   mutate_at("HRS_sample_size", as.factor) %>% 
   mutate_at("Comparison", function(x) 
     factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
-  mutate_at("Algorithm", function(x) 
-    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW")))
+  mutate(
+    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
+      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+  ) 
+
+# ggplot(data = plot_data, 
+#        aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
+#   geom_vline(aes(xintercept = value), 
+#              data = truth %>% filter(measure == "PR")) +
+#   geom_vline(aes(xintercept = null), 
+#              data = truth %>% filter(measure == "PR"), lty = "dashed") +
+#   geom_point(size = 3, position = position_dodge(-0.8)) + 
+#   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
+#                 position = position_dodge(-0.8)) +
+#   facet_grid(cols = vars(Comparison)) + theme_bw() +
+#   xlab("Prevalence Ratio (PR)") + ylab("HRS sample size") + 
+#   theme(text = element_text(size = 24))  
+
 
 ggplot(data = plot_data, 
        aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
@@ -220,17 +308,44 @@ ggplot(data = plot_data,
              data = truth %>% filter(measure == "PR")) +
   geom_vline(aes(xintercept = null), 
              data = truth %>% filter(measure == "PR"), lty = "dashed") +
-  geom_point(size = 3, position = position_dodge(-0.8)) + 
-  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0, linewidth = 0.8, 
                 position = position_dodge(-0.8)) +
+  geom_point(size = 3, position = position_dodge(-0.8), fill = "white") + 
+  scale_shape_manual(values = ptshp) + 
   facet_grid(cols = vars(Comparison)) + theme_bw() +
-  xlab("Prevalence Ratio (PR)") + ylab("HRS sample size") + 
-  theme(text = element_text(size = 24))  
+  xlab("Prevalence Ratio (PR)") + ylab('"HRS" sample size') + 
+  theme(text = element_text(size = 24), 
+        panel.grid = element_blank(), 
+        legend.key.width = unit(2, "line"))  
 
 ggsave(filename = paste0(path_to_box, 
                          "papers/paper2_model_comparison_ADAMS_prior/figures/", 
-                         "figureXXa_PR.jpeg"), 
+                         "figureXXa_PR.pdf"), 
        dpi = 300, width = 13.5, height = 4, units = "in")
+
+ggplot(data = plot_data, 
+       aes(x = mean, y = HRS_sample_size, shape = Algorithm)) + 
+  geom_vline(aes(xintercept = value), 
+             data = truth %>% filter(measure == "PR")) +
+  geom_vline(aes(xintercept = null), 
+             data = truth %>% filter(measure == "PR"), lty = "dashed") +
+  geom_errorbar(aes(xmin = LCI, xmax = UCI, linetype = Algorithm), 
+                width = 0, linewidth = 0.8, 
+                position = position_dodge(-0.8)) +
+  geom_point(size = 3, position = position_dodge(-0.8), fill = "white") + 
+  scale_shape_manual(values = ptshp) + 
+  scale_linetype_manual(values = c("solid", "solid", "solid", "solid")) + 
+  facet_grid(cols = vars(Comparison)) + theme_bw() +
+  xlab("Prevalence Ratio (PR)") + ylab('"HRS" sample size') + 
+  theme(text = element_text(size = 24), 
+        panel.grid = element_blank(), 
+        legend.key.width = unit(2, "line"))  
+
+ggsave(filename = paste0(path_to_box, 
+                         "papers/paper2_model_comparison_ADAMS_prior/figures/", 
+                         "figureXXa_PR_bw.pdf"), 
+       dpi = 300, width = 13.5, height = 4, units = "in")
+
 
 #---- **PD plot ----
 plot_data <- results %>% 
@@ -244,8 +359,24 @@ plot_data <- results %>%
   mutate_at("HRS_sample_size", as.factor) %>% 
   mutate_at("Comparison", function(x) 
     factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
-  mutate_at("Algorithm", function(x) 
-    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW")))
+  mutate(
+    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
+      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+  ) 
+
+# ggplot(data = plot_data, 
+#        aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
+#   geom_vline(aes(xintercept = value), 
+#              data = truth %>% filter(measure == "PD")) +
+#   geom_vline(aes(xintercept = null), 
+#              data = truth %>% filter(measure == "PD"), lty = "dashed") +
+#   geom_point(size = 3, position = position_dodge(-0.8)) + 
+#   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
+#                 position = position_dodge(-0.8)) +
+#   facet_grid(cols = vars(Comparison)) + theme_bw() +
+#   xlab("Prevalence Difference (PD)") + ylab("HRS sample size") + 
+#   theme(text = element_text(size = 24)) 
+
 
 ggplot(data = plot_data, 
        aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
@@ -253,16 +384,42 @@ ggplot(data = plot_data,
              data = truth %>% filter(measure == "PD")) +
   geom_vline(aes(xintercept = null), 
              data = truth %>% filter(measure == "PD"), lty = "dashed") +
-  geom_point(size = 3, position = position_dodge(-0.8)) + 
-  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
+  geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0, linewidth = 0.8, 
                 position = position_dodge(-0.8)) +
+  geom_point(size = 3, position = position_dodge(-0.8), fill = "white") + 
+  scale_shape_manual(values = ptshp) + 
   facet_grid(cols = vars(Comparison)) + theme_bw() +
-  xlab("Prevalence Difference (PD)") + ylab("HRS sample size") + 
-  theme(text = element_text(size = 24))  
+  xlab("Prevalence Difference (PD)") + ylab('"HRS" sample size') + 
+  theme(text = element_text(size = 24),
+        panel.grid = element_blank(), 
+        legend.key.width = unit(2, "line")) 
 
 ggsave(filename = paste0(path_to_box, 
                          "papers/paper2_model_comparison_ADAMS_prior/figures/", 
-                         "figureXXb_PD.jpeg"), 
+                         "figureXXb_PD.pdf"), 
+       dpi = 300, width = 13.5, height = 4, units = "in")
+
+ggplot(data = plot_data, 
+       aes(x = mean, y = HRS_sample_size, shape = Algorithm)) + 
+  geom_vline(aes(xintercept = value), 
+             data = truth %>% filter(measure == "PD")) +
+  geom_vline(aes(xintercept = null), 
+             data = truth %>% filter(measure == "PD"), lty = "dashed") +
+  geom_errorbar(aes(xmin = LCI, xmax = UCI, linetype = Algorithm), 
+                width = 0, linewidth = 0.8, 
+                position = position_dodge(-0.8)) +
+  geom_point(size = 3, position = position_dodge(-0.8), fill = "white") + 
+  scale_shape_manual(values = ptshp) + 
+  scale_linetype_manual(values = c("solid", "solid", "solid", "solid")) + 
+  facet_grid(cols = vars(Comparison)) + theme_bw() +
+  xlab("Prevalence Difference (PD)") + ylab('"HRS" sample size') + 
+  theme(text = element_text(size = 24),
+        panel.grid = element_blank(), 
+        legend.key.width = unit(2, "line")) 
+
+ggsave(filename = paste0(path_to_box, 
+                         "papers/paper2_model_comparison_ADAMS_prior/figures/", 
+                         "figureXXb_PD_bw.pdf"), 
        dpi = 300, width = 13.5, height = 4, units = "in")
 
 #---- Figure XXa-b: 95% CI coverage PR + PD ----
@@ -285,39 +442,88 @@ plot_data <- results %>%
     factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
   mutate_at("HRS_sample_size", as.factor) %>% 
   mutate("coverage_percent" = coverage*100) %>%
-  mutate_at("Algorithm", function(x) 
-    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW")))
+  mutate(
+    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
+      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+  ) 
 
 #---- **PR plot ----
+# ggplot(data = plot_data %>% filter(measure == "PR"), 
+#        aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
+#            shape = Algorithm, color = Algorithm)) + 
+#   geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Comparison)) + 
+#   geom_hline(yintercept = 95, lty = "dashed") +
+#   #scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) + 
+#   #scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
+#   theme_bw() + ylab("95% interval coverage\n(PR)") + xlab("HRS Sample Size") +
+#   theme(text = element_text(size = 24))  
+
 ggplot(data = plot_data %>% filter(measure == "PR"), 
        aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
            shape = Algorithm, color = Algorithm)) + 
-  geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Comparison)) + 
-  geom_hline(yintercept = 95, lty = "dashed") +
-  #scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) + 
-  #scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
-  theme_bw() + ylab("95% interval coverage\n(PR)") + xlab("HRS Sample Size") +
-  theme(text = element_text(size = 24))      
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  facet_grid(cols = vars(Comparison)) + 
+  geom_hline(yintercept = 95, lty = "dotted", linewidth = 0.8) + 
+  theme_bw() + ylab("95% interval coverage\n(PR)") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line"))  
+
+ggplot(data = plot_data %>% filter(measure == "PR"), 
+       aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
+           shape = Algorithm)) + 
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  facet_grid(cols = vars(Comparison)) + 
+  geom_hline(yintercept = 95, lty = "dotted", linewidth = 0.8) + 
+  theme_bw() + ylab("95% interval coverage\n(PR)") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line"))  
 
 ggsave(filename = paste0(path_to_box, 
                          "papers/paper2_model_comparison_ADAMS_prior/figures/", 
-                         "figureXXa_PR_coverage.jpeg"), 
+                         "figureXXa_PR_coverage_bw.pdf"), 
        dpi = 300, width = 13.25, height = 4, units = "in")
 
 #---- **PD plot ----
 ggplot(data = plot_data %>% filter(measure == "PD"), 
        aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
            shape = Algorithm, color = Algorithm)) + 
-  geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Comparison)) + 
-  geom_hline(yintercept = 95, lty = "dashed") +
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  facet_grid(cols = vars(Comparison)) +
+  geom_hline(yintercept = 95, lty = "dotted", linewidth = 0.8) + 
   #scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) + 
   #scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
-  theme_bw() + ylab("95% interval coverage\n(PD)") + xlab("HRS Sample Size") +
-  theme(text = element_text(size = 24))      
+  theme_bw() + ylab("95% interval coverage\n(PD)") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line"))   
 
 ggsave(filename = paste0(path_to_box, 
                          "papers/paper2_model_comparison_ADAMS_prior/figures/", 
-                         "figureXXb_PD_coverage.jpeg"), 
+                         "figureXXb_PD_coverage.pdf"), 
+       dpi = 300, width = 13.25, height = 4, units = "in")
+
+ggplot(data = plot_data %>% filter(measure == "PD"), 
+       aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
+           shape = Algorithm)) + 
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  facet_grid(cols = vars(Comparison)) +
+  geom_hline(yintercept = 95, lty = "dotted", linewidth = 0.8) + 
+  #scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) + 
+  #scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
+  theme_bw() + ylab("95% interval coverage\n(PD)") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line"))   
+
+ggsave(filename = paste0(path_to_box, 
+                         "papers/paper2_model_comparison_ADAMS_prior/figures/", 
+                         "figureXXb_PD_coverage_bw.pdf"), 
        dpi = 300, width = 13.25, height = 4, units = "in")
 
 #---- Appendix Figure XX: bias dementia prevalence ----
@@ -350,34 +556,81 @@ plot_data <- results %>% ungroup() %>%
   summarize_at(c("error", "squared_error"), mean) %>% 
   rename(c("bias" = "error")) %>% 
   mutate("RMSE" = sqrt(squared_error)) %>%
-  mutate_at("Algorithm", function(x) 
-    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW")))
+  mutate(
+    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
+      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+  )
 
 #---- **plot ----
+# ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Algorithm, 
+#                              shape = Algorithm, color = Algorithm)) + 
+#   geom_line() + geom_point(size = 3) + 
+#   geom_hline(yintercept = 0, lty = "dashed") +
+#   theme_bw() + ylab("Bias") + xlab("HRS Sample Size") +
+#   facet_grid(cols = vars(Race)) +
+#   theme(text = element_text(size = 24)) 
+
 ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Algorithm, 
                              shape = Algorithm, color = Algorithm)) + 
-  geom_line() + geom_point(size = 3) + 
-  geom_hline(yintercept = 0, lty = "dashed") +
-  theme_bw() + ylab("Bias") + xlab("HRS Sample Size") +
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  geom_hline(yintercept = 0, lty = "dotted", linewidth = 0.8) +
+  theme_bw() + ylab("Bias") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
   facet_grid(cols = vars(Race)) +
-  theme(text = element_text(size = 24))      
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line")) 
 
 ggsave(filename = paste0(path_to_box, 
                          "papers/paper2_model_comparison_ADAMS_prior/figures/", 
-                         "appendix_figureXX_dem_prev_bias.jpeg"), 
+                         "appendix_figureXX_dem_prev_bias.pdf"), 
+       dpi = 300, width = 13.5, height = 4, units = "in")
+
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Algorithm, 
+                             shape = Algorithm)) + 
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  geom_hline(yintercept = 0, lty = "dotted", linewidth = 0.8) +
+  theme_bw() + ylab("Bias") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
+  facet_grid(cols = vars(Race)) +
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line")) 
+
+ggsave(filename = paste0(path_to_box, 
+                         "papers/paper2_model_comparison_ADAMS_prior/figures/", 
+                         "appendix_figureXX_dem_prev_bias_bw.pdf"), 
        dpi = 300, width = 13.5, height = 4, units = "in")
 
 #---- Appendix Figure XX: RMSE dementia prevalence ----
 ggplot(data = plot_data, aes(x = HRS_sample_size, y = RMSE, group = Algorithm, 
                              shape = Algorithm, color = Algorithm)) + 
-  geom_line() + geom_point(size = 3) + 
-  theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") +
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  theme_bw() + ylab("RMSE") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
   facet_grid(cols = vars(Race)) + ylim(0, 0.25) +
-  theme(text = element_text(size = 24))      
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line"))      
 
 ggsave(filename = paste0(path_to_box, 
                          "papers/paper2_model_comparison_ADAMS_prior/figures/", 
                          "appendix_figureXX_dem_prev_rmse.jpeg"), 
+       dpi = 300, width = 13.5, height = 4, units = "in") 
+
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = RMSE, group = Algorithm, 
+                             shape = Algorithm)) + 
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  theme_bw() + ylab("RMSE") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
+  facet_grid(cols = vars(Race)) + ylim(0, 0.25) +
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line"))      
+
+ggsave(filename = paste0(path_to_box, 
+                         "papers/paper2_model_comparison_ADAMS_prior/figures/", 
+                         "appendix_figureXX_dem_prev_rmse_bw.jpeg"), 
        dpi = 300, width = 13.5, height = 4, units = "in") 
 
 #---- Appendix Figure XX: PR + PD bias ----
@@ -433,34 +686,106 @@ plot_data <- results %>% ungroup() %>%
   mutate("RMSE" = sqrt(squared_error)) %>% 
   mutate_at("measure", function(x) 
     factor(x, levels = c("PR", "PD"))) %>%
-  mutate_at("Algorithm", function(x) 
-    factor(x, levels = c("BLMM", "ModHurd", "Hurd", "LKW")))
+  mutate(
+    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
+      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+  ) 
 
 #---- **plot ----
+
 ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Algorithm, 
                              shape = Algorithm, color = Algorithm)) + 
-  geom_line(size = 1) + geom_point(size = 3) + 
-  geom_hline(yintercept = 0, lty = "dashed") +
-  theme_bw() + ylab("Bias") + xlab("HRS Sample Size") + 
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  geom_hline(yintercept = 0, lty = "dotted", linewidth = 0.8) + 
+  theme_bw() + ylab("Bias") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
   ylim(c(-2.5, 3)) +
-  facet_grid(rows = vars(measure), cols = vars(Comparison)) + 
-  theme(text = element_text(size = 24))      
+  # facet_grid(rows = vars(measure), cols = vars(Comparison)) +
+  facet_grid(measure ~ Comparison, scales = "free_y") +
+  facetted_pos_scales(
+    y = list(
+      measure == "PR" ~ scale_y_continuous(limits = c(-2, 3)),
+      measure == "PD" ~ scale_y_continuous(limits = c(-0.5, 0.5))
+    )
+  ) +
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line"),
+        panel.spacing = unit(1, "lines"))      
 
 ggsave(filename = paste0(path_to_box, 
                          "papers/paper2_model_comparison_ADAMS_prior/figures/", 
-                         "appendix_figureXX_PR_PD_bias.jpeg"), 
+                         "appendix_figureXX_PR_PD_bias.pdf"), 
+       dpi = 300, width = 13.5, height = 4.5, units = "in") 
+
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Algorithm, 
+                             shape = Algorithm)) + 
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  geom_hline(yintercept = 0, lty = "dotted", linewidth = 0.8) + 
+  theme_bw() + ylab("Bias") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
+  ylim(c(-2.5, 3)) +
+  # facet_grid(rows = vars(measure), cols = vars(Comparison)) +
+  facet_grid(measure ~ Comparison, scales = "free_y") +
+  facetted_pos_scales(
+    y = list(
+      measure == "PR" ~ scale_y_continuous(limits = c(-2, 3)),
+      measure == "PD" ~ scale_y_continuous(limits = c(-0.5, 0.5))
+    )
+  ) +
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line"),
+        panel.spacing = unit(1, "lines"))      
+
+ggsave(filename = paste0(path_to_box, 
+                         "papers/paper2_model_comparison_ADAMS_prior/figures/", 
+                         "appendix_figureXX_PR_PD_bias_bw.pdf"), 
        dpi = 300, width = 13.5, height = 4.5, units = "in") 
 
 #---- Appendix Figure XX: PR + PD RMSE ----
 ggplot(data = plot_data, aes(x = HRS_sample_size, y = RMSE, group = Algorithm, 
                              color = Algorithm, shape = Algorithm)) + 
-  geom_line() + geom_point(size = 3) + 
-  theme_bw() + ylab("RMSE") + xlab("HRS Sample Size") + 
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  theme_bw() + ylab("RMSE") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
   ylim(c(0, 3)) +
-  facet_grid(rows = vars(measure), cols = vars(Comparison)) + 
-  theme(text = element_text(size = 24))      
+  facet_grid(measure ~ Comparison, scales = "free_y") +
+  facetted_pos_scales(
+    y = list(
+      measure == "PR" ~ scale_y_continuous(limits = c(0, 3)),
+      measure == "PD" ~ scale_y_continuous(limits = c(0, 0.5))
+    )
+  ) +
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line"),
+        panel.spacing = unit(1, "lines"))      
 
 ggsave(filename = paste0(path_to_box, 
                          "papers/paper2_model_comparison_ADAMS_prior/figures/", 
-                         "appendix_figureXX_PR_PD_rmse.jpeg"), 
+                         "appendix_figureXX_PR_PD_rmse.pdf"), 
+       dpi = 300, width = 13.5, height = 4.5, units = "in") 
+
+ggplot(data = plot_data, aes(x = HRS_sample_size, y = RMSE, group = Algorithm, 
+                             shape = Algorithm)) + 
+  geom_line(aes(linetype = Algorithm), linewidth = 0.8) + 
+  geom_point(size = 3, fill = "white") + 
+  theme_bw() + ylab("RMSE") + xlab('"HRS" Sample Size') +
+  scale_shape_manual(values = ptshp) + 
+  ylim(c(0, 3)) +
+  facet_grid(measure ~ Comparison, scales = "free_y") +
+  facetted_pos_scales(
+    y = list(
+      measure == "PR" ~ scale_y_continuous(limits = c(0, 3)),
+      measure == "PD" ~ scale_y_continuous(limits = c(0, 0.5))
+    )
+  ) +
+  theme(text = element_text(size = 24),
+        legend.key.width = unit(2, "line"),
+        panel.spacing = unit(1, "lines"))      
+
+ggsave(filename = paste0(path_to_box, 
+                         "papers/paper2_model_comparison_ADAMS_prior/figures/", 
+                         "appendix_figureXX_PR_PD_rmse_bw.pdf"), 
        dpi = 300, width = 13.5, height = 4.5, units = "in") 
