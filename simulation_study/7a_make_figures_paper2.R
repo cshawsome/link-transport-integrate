@@ -118,18 +118,7 @@ plot_data <- results %>%
   )
 
 #---- **plot ----
-ptshp <- c("B-LCMM" = 21, "ModHurd" = 22, "Hurd" = 23, "LKW" = 24)
-
-# ggplot(data = plot_data,
-#        aes(x = mean, y = HRS_sample_size, color = Algorithm, shape = Algorithm)) +
-#   geom_vline(aes(xintercept = prev), data = truth) +
-#   geom_point(size = 3, position = position_dodge(-0.8)) +
-#   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, linewidth = 1,
-#                 position = position_dodge(-0.8)) +
-#   facet_grid(cols = vars(Race)) + theme_bw() +
-#   xlab("Prevalence of dementia") + ylab("HRS sample size") +
-#   scale_x_continuous(limits = c(0, 0.45), breaks = seq(0.0, 0.45, by = 0.1)) +
-#   theme(text = element_text(size = 24))
+ptshp <- c("B-LCMM" = 21, "ModHurd" = 24, "Hurd" = 23, "LKW" = 22)
 
 ggplot(data = plot_data, 
        aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
@@ -196,15 +185,6 @@ plot_data <- results %>%
   mutate("coverage_percent" = dem*100)
 
 #---- **plot ----
-# ggplot(data = plot_data, 
-#        aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
-#            color = Algorithm, shape = Algorithm)) + 
-#   geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Race)) +
-#   geom_hline(yintercept = 95, lty = "dashed") +
-#   # scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) +
-#   # scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 1.75)) +
-#   theme_bw() + ylab("95% interval coverage") + xlab("HRS Sample Size") +
-#   theme(text = element_text(size = 24))     
 
 ggplot(data = plot_data, 
        aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
@@ -288,20 +268,6 @@ plot_data <- results %>%
       factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
   ) 
 
-# ggplot(data = plot_data, 
-#        aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
-#   geom_vline(aes(xintercept = value), 
-#              data = truth %>% filter(measure == "PR")) +
-#   geom_vline(aes(xintercept = null), 
-#              data = truth %>% filter(measure == "PR"), lty = "dashed") +
-#   geom_point(size = 3, position = position_dodge(-0.8)) + 
-#   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
-#                 position = position_dodge(-0.8)) +
-#   facet_grid(cols = vars(Comparison)) + theme_bw() +
-#   xlab("Prevalence Ratio (PR)") + ylab("HRS sample size") + 
-#   theme(text = element_text(size = 24))  
-
-
 ggplot(data = plot_data, 
        aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
   geom_vline(aes(xintercept = value), 
@@ -363,20 +329,6 @@ plot_data <- results %>%
     Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
       factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
   ) 
-
-# ggplot(data = plot_data, 
-#        aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
-#   geom_vline(aes(xintercept = value), 
-#              data = truth %>% filter(measure == "PD")) +
-#   geom_vline(aes(xintercept = null), 
-#              data = truth %>% filter(measure == "PD"), lty = "dashed") +
-#   geom_point(size = 3, position = position_dodge(-0.8)) + 
-#   geom_errorbar(aes(xmin = LCI, xmax = UCI), width = 0.4, size = 1, 
-#                 position = position_dodge(-0.8)) +
-#   facet_grid(cols = vars(Comparison)) + theme_bw() +
-#   xlab("Prevalence Difference (PD)") + ylab("HRS sample size") + 
-#   theme(text = element_text(size = 24)) 
-
 
 ggplot(data = plot_data, 
        aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
@@ -448,15 +400,6 @@ plot_data <- results %>%
   ) 
 
 #---- **PR plot ----
-# ggplot(data = plot_data %>% filter(measure == "PR"), 
-#        aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
-#            shape = Algorithm, color = Algorithm)) + 
-#   geom_line() + geom_point(size = 3) + facet_grid(cols = vars(Comparison)) + 
-#   geom_hline(yintercept = 95, lty = "dashed") +
-#   #scale_y_continuous(limits = c(0, 102), breaks = c(0, seq(80, 100, by = 5))) + 
-#   #scale_y_cut(breaks = c(79), space = 0.2, which = c(1, 2), scales = c(5, 0.5)) +
-#   theme_bw() + ylab("95% interval coverage\n(PR)") + xlab("HRS Sample Size") +
-#   theme(text = element_text(size = 24))  
 
 ggplot(data = plot_data %>% filter(measure == "PR"), 
        aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
@@ -469,6 +412,11 @@ ggplot(data = plot_data %>% filter(measure == "PR"),
   scale_shape_manual(values = ptshp) + 
   theme(text = element_text(size = 24),
         legend.key.width = unit(2, "line"))  
+
+ggsave(filename = paste0(path_to_box, 
+                         "papers/paper2_model_comparison_ADAMS_prior/figures/", 
+                         "figureXXa_PR_coverage.pdf"), 
+       dpi = 300, width = 13.25, height = 4, units = "in")
 
 ggplot(data = plot_data %>% filter(measure == "PR"), 
        aes(x = HRS_sample_size, y = coverage_percent, group = Algorithm, 
@@ -562,13 +510,6 @@ plot_data <- results %>% ungroup() %>%
   )
 
 #---- **plot ----
-# ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Algorithm, 
-#                              shape = Algorithm, color = Algorithm)) + 
-#   geom_line() + geom_point(size = 3) + 
-#   geom_hline(yintercept = 0, lty = "dashed") +
-#   theme_bw() + ylab("Bias") + xlab("HRS Sample Size") +
-#   facet_grid(cols = vars(Race)) +
-#   theme(text = element_text(size = 24)) 
 
 ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Algorithm, 
                              shape = Algorithm, color = Algorithm)) + 
@@ -706,7 +647,8 @@ ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Algorithm,
   facetted_pos_scales(
     y = list(
       measure == "PR" ~ scale_y_continuous(limits = c(-2, 3)),
-      measure == "PD" ~ scale_y_continuous(limits = c(-0.5, 0.5))
+      measure == "PD" ~ scale_y_continuous(limits = c(-0.08, 0.08),
+                                           breaks = c(-0.08, -0.04, 0, 0.04, 0.08))
     )
   ) +
   theme(text = element_text(size = 24),
@@ -731,7 +673,8 @@ ggplot(data = plot_data, aes(x = HRS_sample_size, y = bias, group = Algorithm,
   facetted_pos_scales(
     y = list(
       measure == "PR" ~ scale_y_continuous(limits = c(-2, 3)),
-      measure == "PD" ~ scale_y_continuous(limits = c(-0.5, 0.5))
+      measure == "PD" ~ scale_y_continuous(limits = c(-0.08, 0.08),
+                                           breaks = c(-0.08, -0.04, 0, 0.04, 0.08))
     )
   ) +
   theme(text = element_text(size = 24),
@@ -755,7 +698,7 @@ ggplot(data = plot_data, aes(x = HRS_sample_size, y = RMSE, group = Algorithm,
   facetted_pos_scales(
     y = list(
       measure == "PR" ~ scale_y_continuous(limits = c(0, 3)),
-      measure == "PD" ~ scale_y_continuous(limits = c(0, 0.5))
+      measure == "PD" ~ scale_y_continuous(limits = c(0, 0.08), breaks = c(0, 0.04, 0.08))
     )
   ) +
   theme(text = element_text(size = 24),
@@ -778,7 +721,7 @@ ggplot(data = plot_data, aes(x = HRS_sample_size, y = RMSE, group = Algorithm,
   facetted_pos_scales(
     y = list(
       measure == "PR" ~ scale_y_continuous(limits = c(0, 3)),
-      measure == "PD" ~ scale_y_continuous(limits = c(0, 0.5))
+      measure == "PD" ~ scale_y_continuous(limits = c(0, 0.08), breaks = c(0, 0.04, 0.08))
     )
   ) +
   theme(text = element_text(size = 24),
