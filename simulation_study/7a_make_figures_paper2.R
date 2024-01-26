@@ -113,12 +113,12 @@ plot_data <- results %>%
   mutate_at("Race", function(x) 
     factor(x, levels = c("White", "Black", "Hispanic"))) %>% 
   mutate(
-    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
-      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+    Algorithm = ifelse(Algorithm == "BLMM", "LTI", Algorithm) %>% 
+      factor(levels = c("LTI", "ModHurd", "Hurd", "LKW"))
   )
 
 #---- **plot ----
-ptshp <- c("B-LCMM" = 21, "ModHurd" = 24, "Hurd" = 23, "LKW" = 22)
+ptshp <- c("LTI" = 21, "ModHurd" = 24, "Hurd" = 23, "LKW" = 22)
 
 ggplot(data = plot_data, 
        aes(x = mean, y = HRS_sample_size, shape = Algorithm, color = Algorithm)) + 
@@ -178,8 +178,8 @@ plot_data <- results %>%
   mutate_at("Race", function(x) 
     factor(x, levels = c("White", "Black", "Hispanic"))) %>%
   mutate(
-    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
-      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+    Algorithm = ifelse(Algorithm == "BLMM", "LTI", Algorithm) %>% 
+      factor(levels = c("LTI", "ModHurd", "Hurd", "LKW"))
   ) %>% 
   mutate_at("HRS_sample_size", as.factor) %>% 
   mutate("coverage_percent" = dem*100)
@@ -264,8 +264,8 @@ plot_data <- results %>%
   mutate_at("Comparison", function(x) 
     factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
   mutate(
-    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
-      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+    Algorithm = ifelse(Algorithm == "BLMM", "LTI", Algorithm) %>% 
+      factor(levels = c("LTI", "ModHurd", "Hurd", "LKW"))
   ) 
 
 ggplot(data = plot_data, 
@@ -326,8 +326,8 @@ plot_data <- results %>%
   mutate_at("Comparison", function(x) 
     factor(x, levels = c("Black vs. White", "Hispanic vs. White"))) %>%
   mutate(
-    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
-      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+    Algorithm = ifelse(Algorithm == "BLMM", "LTI", Algorithm) %>% 
+      factor(levels = c("LTI", "ModHurd", "Hurd", "LKW"))
   ) 
 
 ggplot(data = plot_data, 
@@ -395,8 +395,8 @@ plot_data <- results %>%
   mutate_at("HRS_sample_size", as.factor) %>% 
   mutate("coverage_percent" = coverage*100) %>%
   mutate(
-    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
-      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+    Algorithm = ifelse(Algorithm == "BLMM", "LTI", Algorithm) %>% 
+      factor(levels = c("LTI", "ModHurd", "Hurd", "LKW"))
   ) 
 
 #---- **PR plot ----
@@ -505,8 +505,8 @@ plot_data <- results %>% ungroup() %>%
   rename(c("bias" = "error")) %>% 
   mutate("RMSE" = sqrt(squared_error)) %>%
   mutate(
-    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
-      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+    Algorithm = ifelse(Algorithm == "BLMM", "LTI", Algorithm) %>% 
+      factor(levels = c("LTI", "ModHurd", "Hurd", "LKW"))
   )
 
 #---- **plot ----
@@ -628,8 +628,8 @@ plot_data <- results %>% ungroup() %>%
   mutate_at("measure", function(x) 
     factor(x, levels = c("PR", "PD"))) %>%
   mutate(
-    Algorithm = ifelse(Algorithm == "BLMM", "B-LCMM", Algorithm) %>% 
-      factor(levels = c("B-LCMM", "ModHurd", "Hurd", "LKW"))
+    Algorithm = ifelse(Algorithm == "BLMM", "LTI", Algorithm) %>% 
+      factor(levels = c("LTI", "ModHurd", "Hurd", "LKW"))
   ) 
 
 #---- **plot ----
